@@ -1180,6 +1180,48 @@ function RangeControls({
 );
 }
 
+
+function MarginTargetControl({
+  marginTarget,
+  marginTargetDraft,
+  setMarginTargetDraft,
+  onSaveMarginTarget,
+}: {
+  marginTarget: number;
+  marginTargetDraft: string;
+  setMarginTargetDraft: (v: string) => void;
+  onSaveMarginTarget: () => void;
+}) {
+  return (
+    <div className="marginTargetTopWrap">
+      <div className="marginTargetTopText">
+        <div className="marginTargetTopKicker">Margin Target</div>
+        <div className="marginTargetTopTitle">Compare jobs against your target margin.</div>
+        <div className="marginTargetTopSub">
+          Used across job detail comparisons, high-risk flags, and Scale recoverable profit calculations.
+        </div>
+      </div>
+
+      <div className="marginTargetTopControls">
+        <div className="compactTargetInputGroup">
+          <input
+            className="compactTargetInput"
+            inputMode="decimal"
+            value={marginTargetDraft}
+            onChange={(e) => setMarginTargetDraft(e.target.value)}
+            aria-label="Margin target percentage"
+          />
+          <span>%</span>
+        </div>
+        <button className="btn btn-primary compactTargetSave" type="button" onClick={onSaveMarginTarget}>
+          Save Target
+        </button>
+        <div className="marginTargetCurrent">Current target: {fmtPct(marginTarget)}</div>
+      </div>
+    </div>
+  );
+}
+
 function TopBar({
   state,
   mode,
@@ -1860,31 +1902,6 @@ function ScaleOversightPanel({
               <span>Monthly Lift</span>
               <strong>{fmtMoney(monthlyLift)}</strong>
             </div>
-          </div>
-        </div>
-
-        <div className="scaleTargetCard">
-          <div className="scaleKicker">Margin Target</div>
-          <div className="targetInputRow">
-            <input
-              className="targetInput"
-              inputMode="decimal"
-              value={marginTargetDraft}
-              onChange={(e) => setMarginTargetDraft(e.target.value)}
-              aria-label="Margin target percentage"
-            />
-            <span>%</span>
-            <button className="btn btn-primary" type="button" onClick={onSaveMarginTarget}>
-              Save Target
-            </button>
-          </div>
-          <div className="targetHelp">
-            This target is used to flag high-risk jobs, identify profit leaks, and calculate recoverable profit.
-          </div>
-          <div className="targetChecklist">
-            <span>✓ High-risk alerts</span>
-            <span>✓ Recoverable profit</span>
-            <span>✓ Benchmarks</span>
           </div>
         </div>
 
@@ -2888,6 +2905,13 @@ useEffect(() => {
   onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
 />
 
+            <MarginTargetControl
+              marginTarget={marginTarget}
+              marginTargetDraft={marginTargetDraft}
+              setMarginTargetDraft={setMarginTargetDraft}
+              onSaveMarginTarget={saveMarginTarget}
+            />
+
             {view === "job" && jobKey ? (
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
             ) : view === "alljobs" ? (
@@ -3328,7 +3352,7 @@ html,body{background:#fff!important;color:#0f172a!important}
 .alertStatusPill{display:inline-flex;align-items:center;gap:9px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(254,242,242,.86);padding:9px 12px;font-size:12px;font-weight:950;color:rgba(185,28,28,.95);white-space:nowrap}
 .alertDot{width:9px;height:9px;border-radius:999px;background:rgba(52,211,153,.95);box-shadow:0 0 0 4px rgba(52,211,153,.14)}
 .alertDot.hot{background:rgba(239,68,68,.95);box-shadow:0 0 0 4px rgba(239,68,68,.14)}
-.scaleCommandGrid{display:grid;grid-template-columns:1.35fr .85fr .85fr;gap:16px;padding:18px 18px 4px}
+.scaleCommandGrid{display:grid;grid-template-columns:1.35fr .85fr;gap:16px;padding:18px 18px 4px}
 .scaleCommandHero{border-radius:22px;border:1px solid rgba(34,211,238,.18);background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(236,253,245,.72));box-shadow:0 18px 44px rgba(34,211,238,.08);padding:20px;border-left:5px solid rgba(34,211,238,.85)}
 .heroScaleTitle{font-size:26px;line-height:1.06;letter-spacing:-.04em}
 .scaleTargetCard,.scaleEmailCard{border-radius:22px;border:1px solid rgba(15,23,42,.085);background:rgba(255,255,255,.90);box-shadow:0 14px 38px rgba(2,6,23,.06);padding:18px}
@@ -3362,6 +3386,21 @@ html,body{background:#fff!important;color:#0f172a!important}
 @media(max-width:1300px){.scaleCommandGrid{grid-template-columns:1fr 1fr}.scaleCommandHero{grid-column:1/-1}.scaleGridPremiumV2{grid-template-columns:1fr 1fr}.benchmarkGridV2{grid-template-columns:1fr 1fr}.alertsExplainerCard{grid-column:span 2}}
 @media(max-width:760px){.scaleControlHead{align-items:flex-start;flex-direction:column}.scaleHeadRight{justify-content:flex-start}.scaleCommandGrid{grid-template-columns:1fr;padding:14px 14px 0}.scaleCommandHero{grid-column:auto}.scaleGridPremiumV2{grid-template-columns:1fr}.benchmarkGridV2{grid-template-columns:1fr}.alertsExplainerCard{grid-column:auto}.targetInputRow{flex-wrap:wrap}.targetInput{width:110px}.heroScaleTitle{font-size:23px}}
 
+
+
+/* Global margin target control for Core + Scale */
+.marginTargetTopWrap{margin:12px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(240,253,250,.70));box-shadow:0 14px 42px rgba(2,6,23,.065);padding:14px 16px}
+.marginTargetTopText{min-width:0}
+.marginTargetTopKicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.82)}
+.marginTargetTopTitle{margin-top:4px;font-size:17px;line-height:1.15;font-weight:980;letter-spacing:-.02em;color:rgba(15,23,42,.94)}
+.marginTargetTopSub{margin-top:4px;font-size:13px;line-height:1.4;font-weight:780;color:rgba(15,23,42,.58)}
+.marginTargetTopControls{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap;flex:0 0 auto}
+.compactTargetInputGroup{display:flex;align-items:center;gap:6px;border-radius:14px;border:1px solid rgba(15,23,42,.10);background:#fff;padding:7px 10px;box-shadow:0 8px 24px rgba(2,6,23,.04)}
+.compactTargetInput{width:54px;border:0;outline:none;background:transparent;text-align:center;font-size:16px;font-weight:980;color:#0f172a;padding:2px 0}
+.compactTargetInputGroup span{font-size:14px;font-weight:950;color:rgba(15,23,42,.68)}
+.compactTargetSave{padding:9px 12px;border-radius:13px;font-size:12.5px}
+.marginTargetCurrent{font-size:12px;font-weight:900;color:rgba(15,23,42,.52);white-space:nowrap}
+@media(max-width:760px){.marginTargetTopWrap{align-items:flex-start;flex-direction:column}.marginTargetTopControls{justify-content:flex-start}.marginTargetCurrent{width:100%}}
 
 
 /* Scale gating for Free/Core */
