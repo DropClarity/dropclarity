@@ -65,10 +65,10 @@ export default function Home() {
   featured: false,
   features: [
     "Everything in Core",
-    "Priority action items (what to fix next)",
-    "Real-time high risk job alerts (email + dashboard)",
-    "Early profit leak detection before jobs turn unprofitable",
+    "Identify exactly where you're losing money across jobs",
     "Recoverable profit identified automatically",
+    "Real-time high-risk job alerts (email + dashboard)",
+    "Priority action items (what to fix next)",
     "Advanced job benchmarking",
     "Team visibility",
   ],
