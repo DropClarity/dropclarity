@@ -200,15 +200,19 @@ function buildJobChartData(out: any) {
 function categorizeCostLine(description = "") {
   const d = description.toLowerCase();
 
-  if (["permit", "inspection", "license", "filing fee", "application fee", "disposal", "trip fee", "delivery fee", "admin"].some((k) => d.includes(k))) {
-    return "other";
+  if (["subcontractor", "subcontractors", "subcontract", "subbed", "subs", "sub contractor", "vendor labor", "outside labor", "contract labor", "third party"].some((k) => d.includes(k))) {
+    return "subs";
   }
 
-  if (["labor", "labour", "hours", "technician", "crew", "man hours"].some((k) => d.includes(k))) {
+  if (["labor", "labour", "hours", "technician", "crew", "man hours", "payroll", "wages", "installer"].some((k) => d.includes(k))) {
     return "labor";
   }
 
-  return "materials";
+  if (["material", "materials", "parts", "supplies", "supply", "equipment", "unit", "hardware", "pipe", "wire", "hvac", "furnace", "condenser", "coil", "compressor", "duct", "thermostat"].some((k) => d.includes(k))) {
+    return "materials";
+  }
+
+  return "other";
 }
 
 function buildCostMix(out: any) {
@@ -218,12 +222,14 @@ function buildCostMix(out: any) {
     return {
       labor: Number(mix.labor) || 0,
       materials: Number(mix.materials) || 0,
+      subs: Number(mix.subs) || 0,
       other: Number(mix.other) || 0,
     };
   }
 
   let labor = 0;
   let materials = 0;
+  let subs = 0;
   let other = 0;
 
   const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
@@ -236,21 +242,23 @@ function buildCostMix(out: any) {
         const amount = Number(line?.line_total || line?.amount || line?.total || line?.value || 0);
         const cat = String(line?.category || "").toLowerCase();
         const desc = String(line?.description || line?.name || "");
-        const finalCat = ["labor", "materials", "other"].includes(cat) ? cat : categorizeCostLine(desc);
+        const finalCat = ["labor", "materials", "subs", "other"].includes(cat) ? cat : categorizeCostLine(cat + " " + desc);
 
         if (finalCat === "labor") labor += amount;
-        else if (finalCat === "other") other += amount;
-        else materials += amount;
+        else if (finalCat === "subs") subs += amount;
+        else if (finalCat === "materials") materials += amount;
+        else other += amount;
       }
     } else {
       const cb = job?.cost_breakdown || {};
       labor += Number(cb.labor) || 0;
       materials += Number(cb.materials) || 0;
+      subs += Number(cb.subs) || 0;
       other += Number(cb.other) || 0;
     }
   }
 
-  return { labor, materials, other };
+  return { labor, materials, subs, other };
 }
 
 function drawProfitChart(canvas: HTMLCanvasElement, labels: string[], values: number[]) {
@@ -478,9 +486,10 @@ export default function AppPage() {
       ? `${losingJobs} job${losingJobs === 1 ? "" : "s"} need review before quoting similar work.`
       : `Average margin is ${pct(margin)} with ${losingJobs} losing jobs detected.`;
 
-  const totalMix = Math.max(1, costMix.labor + costMix.materials + costMix.other);
+  const totalMix = Math.max(1, costMix.labor + costMix.materials + costMix.subs + costMix.other);
   const laborShare = (costMix.labor / totalMix) * 100;
   const materialShare = (costMix.materials / totalMix) * 100;
+  const subsShare = (costMix.subs / totalMix) * 100;
 
   const insights = [
     {
@@ -491,7 +500,7 @@ export default function AppPage() {
     },
     {
       title: "Cost Structure",
-      detail: `Labor is ${pct(laborShare)} of costs and materials are ${pct(materialShare)}.`,
+      detail: `Labor is ${pct(laborShare)}, materials are ${pct(materialShare)}, and subs are ${pct(subsShare)} of costs.`,
       tag: laborShare > 35 ? "Needs attention" : "Healthy",
       color: laborShare > 35 ? "warn" : "good",
     },
@@ -507,6 +516,7 @@ export default function AppPage() {
     losingJobs > 0 ? "Review the losing job before quoting similar work again." : "Use this upload as a pricing benchmark for similar jobs.",
     laborShare > 35 ? "Review labor allocation and field hours." : "Monitor labor and supplier trends weekly.",
     materialShare > 70 ? "Engage suppliers for better material pricing." : "Keep tracking cost mix as more jobs are uploaded.",
+    subsShare > 35 ? "Review subcontractor scope, pricing, and markup assumptions." : "Track subcontractor exposure separately from materials.",
   ];
 
   function openFilePicker() {
@@ -791,6 +801,7 @@ export default function AppPage() {
         drawDonut(donutCanvasRef.current, [
           { label: "Labor", value: costMix.labor, color: "rgba(34,211,238,.95)" },
           { label: "Materials", value: costMix.materials, color: "rgba(124,58,237,.90)" },
+          { label: "Subs", value: costMix.subs, color: "rgba(251,146,60,.92)" },
           { label: "Other", value: costMix.other, color: "rgba(52,211,153,.90)" },
         ]);
       }
@@ -1076,14 +1087,15 @@ export default function AppPage() {
 
                 <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5">
                   <h3 className="text-lg font-black text-slate-950 lg:text-xl">Cost Mix</h3>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">All jobs combined — Labor vs Materials vs Other.</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">All jobs combined — Labor vs Materials vs Subs vs Other.</p>
 
                   <div className="mt-4 grid gap-6 md:grid-cols-[240px_1fr] md:items-center">
                     <canvas ref={donutCanvasRef} width={220} height={220} />
-                    <div className="grid gap-3 xl:grid-cols-3">
+                    <div className="grid gap-3 xl:grid-cols-4">
                       {[
                         ["Labor", costMix.labor, "bg-cyan-400"],
                         ["Materials", costMix.materials, "bg-violet-500"],
+                        ["Subs", costMix.subs, "bg-orange-400"],
                         ["Other", costMix.other, "bg-emerald-400"],
                       ].map(([label, value, color]) => (
                         <div key={label as string} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-sm font-bold leading-6 text-slate-600 lg:text-base">
