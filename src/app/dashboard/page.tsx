@@ -7,7 +7,7 @@ const API_BASE = "https://dropclarity.com/api";
 const FALLBACK_USER_ID = "anon";
 
 type DashboardMode = "ready" | "loading" | "error";
-type ViewMode = "dashboard" | "job" | "alljobs";
+type ViewMode = "dashboard" | "job" | "alljobs" | "highrisk";
 type RangeKey = "all" | "mtd" | "last7" | "last30" | "custom";
 
 type CostBreakdown = {
@@ -1554,6 +1554,7 @@ function ScaleOversightPanel({
   setEmailAlertsEnabled,
   userEmail,
   onOpenJob,
+  onOpenHighRisk,
 }: {
   state: DashboardState;
   plan: string;
@@ -1566,6 +1567,7 @@ function ScaleOversightPanel({
   setEmailAlertsEnabled: (v: boolean) => void;
   userEmail?: string | null;
   onOpenJob: (jobKey: string) => void;
+  onOpenHighRisk: () => void;
 }) {
   const jobs = getAllJobs(state);
   const fallbackMetrics = getScaleMetrics(state, marginTarget);
@@ -1857,7 +1859,17 @@ function ScaleOversightPanel({
 
       <div className="scaleGrid scaleGridPremiumV2">
         <div className="scaleCard">
-          <div className="scaleKicker">High-Risk Job Alerts</div>
+          <div className="scaleCardHeaderRow">
+            <div>
+              <div className="scaleKicker">High-Risk Job Alerts</div>
+              <div className="scaleCardSub">Jobs that are losing money or below your margin target.</div>
+            </div>
+            {displayedRiskJobs.length ? (
+              <button className="miniBtn viewAllAlertsBtn" type="button" onClick={onOpenHighRisk}>
+                View all
+              </button>
+            ) : null}
+          </div>
 
           <div className="alertList">
             {displayedRiskJobs.length ? (
@@ -1880,9 +1892,9 @@ function ScaleOversightPanel({
                         <button className="miniBtn" type="button" onClick={() => openJobFromRow(job)}>
                           Review Job
                         </button>
-                        <a className="miniBtn ghostMini" href="#jobsPanel">
+                        <button className="miniBtn ghostMini" type="button" onClick={onOpenHighRisk}>
                           View Jobs
-                        </a>
+                        </button>
                       </div>
                     </div>
                     <span className={profit < 0 ? "tag bad" : "tag warn"}>{profit < 0 ? "Critical" : "Risk"}</span>
@@ -1988,6 +2000,7 @@ function DashboardBody({
   state,
   setView,
   setJobKey,
+  onOpenHighRisk,
   view,
   reports,
   onDeleteReport,
@@ -2004,6 +2017,7 @@ function DashboardBody({
   state: DashboardState;
   setView: (v: ViewMode) => void;
   setJobKey: (v: string) => void;
+  onOpenHighRisk: () => void;
   view: ViewMode;
   reports: ReportRow[];
   onDeleteReport: (report: ReportRow, idx: number) => void;
@@ -2041,6 +2055,7 @@ function DashboardBody({
           setView("job");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
+        onOpenHighRisk={onOpenHighRisk}
       />
 
       <div className="grid">
@@ -2566,6 +2581,90 @@ function AllJobsView({
   );
 }
 
+
+function HighRiskJobsView({
+  state,
+  setView,
+  setJobKey,
+  refreshLocal,
+  userId,
+  access,
+  onLocked,
+  marginTarget,
+}: {
+  state: DashboardState;
+  setView: (v: ViewMode) => void;
+  setJobKey: (v: string) => void;
+  refreshLocal: () => void;
+  userId: string;
+  access: PlanAccess;
+  onLocked: (feature: string, requiredPlan: string) => void;
+  marginTarget: number;
+}) {
+  const jobs = getAllJobs(state);
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return jobs
+      .map((job, idx) => ({ job, idx, key: buildJobKey(job, idx) }))
+      .filter(({ job }) => parseNumberLoose(job.profit) < 0 || parseNumberLoose(job.margin_pct) < marginTarget)
+      .sort((a, b) => {
+        const ap = parseNumberLoose(a.job.profit);
+        const bp = parseNumberLoose(b.job.profit);
+        if (ap < 0 || bp < 0) return ap - bp;
+        return parseNumberLoose(a.job.margin_pct) - parseNumberLoose(b.job.margin_pct);
+      })
+      .filter(({ job }) => !q || `${job.job_name || ""} ${job.job_id || ""}`.toLowerCase().includes(q));
+  }, [jobs, marginTarget, search]);
+
+  return (
+    <div className="highRiskPage">
+      <div className="highRiskHero panel">
+        <div className="crumbs">
+          <div className="crumb">View: <strong>High-Risk Jobs</strong></div>
+          <div className="crumb"><strong>{String(filtered.length)}</strong> jobs below target</div>
+          <button className="crumbBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+        </div>
+        <div className="highRiskHeroBody">
+          <div>
+            <div className="sectionEyebrow">High-Risk Job Detail View</div>
+            <div className="highRiskTitle">Review every job that needs attention.</div>
+            <div className="highRiskSub">This view opens the full job detail editor for every job losing money or sitting below your {fmtPct(marginTarget)} margin target.</div>
+          </div>
+          <div className="highRiskSearchWrap">
+            <input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search high-risk jobs..." />
+          </div>
+        </div>
+      </div>
+
+      <div className="highRiskJobStack">
+        {filtered.length ? (
+          filtered.map(({ job, key }) => (
+            <div key={key} className="highRiskJobCard">
+              <JobEditor
+                jobKey={key}
+                base={job}
+                state={state}
+                showBack={false}
+                userId={userId}
+                access={access}
+                onLocked={onLocked}
+                onBack={() => {}}
+                onAllJobs={() => {}}
+                refreshLocal={refreshLocal}
+                marginTarget={marginTarget}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="panel"><div className="pad"><div className="empty">No high-risk jobs match this view.</div></div></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, isLoaded, isSignedIn } = useUser();
   const USER_ID = user?.id || FALLBACK_USER_ID;
@@ -2733,11 +2832,14 @@ useEffect(() => {
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
             ) : view === "alljobs" ? (
               <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} />
+            ) : view === "highrisk" ? (
+              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
             ) : (
               <DashboardBody
   state={visibleState}
   setView={setView}
   setJobKey={setJobKey}
+  onOpenHighRisk={() => { setView("highrisk"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
   view={view}
   reports={reports}
   onDeleteReport={handleDeleteReport}
@@ -3199,5 +3301,56 @@ html,body{background:#fff!important;color:#0f172a!important}
 .ruleList span{display:block;margin-top:3px;font-size:12.5px;line-height:1.4;color:rgba(15,23,42,.60);font-weight:800}
 @media(max-width:1300px){.scaleCommandGrid{grid-template-columns:1fr 1fr}.scaleCommandHero{grid-column:1/-1}.scaleGridPremiumV2{grid-template-columns:1fr 1fr}.benchmarkGridV2{grid-template-columns:1fr 1fr}.alertsExplainerCard{grid-column:span 2}}
 @media(max-width:760px){.scaleControlHead{align-items:flex-start;flex-direction:column}.scaleHeadRight{justify-content:flex-start}.scaleCommandGrid{grid-template-columns:1fr;padding:14px 14px 0}.scaleCommandHero{grid-column:auto}.scaleGridPremiumV2{grid-template-columns:1fr}.benchmarkGridV2{grid-template-columns:1fr}.alertsExplainerCard{grid-column:auto}.targetInputRow{flex-wrap:wrap}.targetInput{width:110px}.heroScaleTitle{font-size:23px}}
+
+
+/* Job comparison formatting fix */
+.comparisonPanel{overflow:hidden;border-color:rgba(34,211,238,.14);box-shadow:0 18px 58px rgba(2,6,23,.075)}
+.comparisonHead{align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.88))}
+.comparisonGrid{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(260px,.95fr) minmax(520px,1.55fr);gap:14px;padding:16px;align-items:stretch}
+.comparisonScoreCard,.comparisonDriverCard{border-radius:18px;border:1px solid rgba(15,23,42,.075);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.86));padding:16px;box-shadow:0 12px 30px rgba(2,6,23,.045);min-width:0}
+.comparisonLabel{font-size:11.5px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(15,23,42,.50)}
+.comparisonValue{margin-top:8px;font-size:30px;line-height:1;font-weight:990;letter-spacing:-.035em}
+.comparisonSub{margin-top:8px;font-size:13.5px;line-height:1.45;font-weight:800;color:rgba(15,23,42,.60)}
+.driverTitle{margin-top:8px;font-size:24px;line-height:1.05;font-weight:990;letter-spacing:-.03em;color:rgba(15,23,42,.92)}
+.comparisonTableWrap{border-radius:18px;border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.92);overflow:auto;box-shadow:0 12px 30px rgba(2,6,23,.045)}
+.comparisonTable{width:100%;min-width:520px;border-collapse:separate;border-spacing:0}
+.comparisonTable th,.comparisonTable td{padding:13px 14px;border-bottom:1px solid rgba(15,23,42,.065);text-align:left;white-space:nowrap}
+.comparisonTable th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.50);background:rgba(15,23,42,.025)}
+.comparisonTable td{font-size:14px;font-weight:850;color:rgba(15,23,42,.74)}
+.comparisonTable tr:last-child td{border-bottom:none}
+.driverGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0 16px 16px}
+.driverMini{border-radius:16px;border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.88);padding:13px;min-width:0}
+.driverMiniTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-size:13px;font-weight:950;color:rgba(15,23,42,.88)}
+.driverMiniTop strong{white-space:nowrap}
+.driverMiniSub{margin-top:7px;font-size:12.5px;line-height:1.4;font-weight:800;color:rgba(15,23,42,.58)}
+
+/* Cleaner real-time email alert spacing */
+.scaleEmailCard{display:flex;flex-direction:column;gap:12px}
+.scaleEmailCard .scaleKicker,.scaleEmailCard .emailAlertTitle,.scaleEmailCard .scaleText,.scaleEmailCard .emailDestination,.scaleEmailCard .emailLiveGrid,.scaleEmailCard .emailTriggerList,.scaleEmailCard .emailNote{margin-top:0}
+.emailLiveGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.emailLiveGrid div{border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(255,255,255,.76);padding:11px;min-width:0}
+.emailLiveGrid span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.48)}
+.emailLiveGrid strong{display:block;margin-top:4px;font-size:13px;line-height:1.25;font-weight:950;color:rgba(15,23,42,.86)}
+.emailTriggerList{display:flex;flex-direction:column;gap:7px;border-radius:14px;border:1px solid rgba(34,211,238,.12);background:linear-gradient(135deg,rgba(240,253,250,.78),rgba(255,255,255,.80));padding:11px}
+.emailTriggerList span{font-size:12.5px;line-height:1.35;font-weight:850;color:rgba(15,23,42,.70)}
+
+/* High-risk view all workflow */
+.scaleCardHeaderRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.scaleCardSub{margin-top:5px;font-size:12.5px;line-height:1.35;font-weight:800;color:rgba(15,23,42,.55)}
+.viewAllAlertsBtn{background:linear-gradient(90deg,rgba(34,211,238,.14),rgba(124,58,237,.14));border-color:rgba(124,58,237,.18);white-space:nowrap}
+.highRiskPage{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.highRiskHero{overflow:hidden}
+.highRiskHeroBody{padding:18px;display:grid;grid-template-columns:1.2fr .8fr;gap:14px;align-items:end}
+.highRiskTitle{margin-top:5px;font-size:28px;line-height:1.05;font-weight:990;letter-spacing:-.035em;color:rgba(15,23,42,.94)}
+.highRiskSub{margin-top:8px;font-size:15px;line-height:1.5;font-weight:780;color:rgba(15,23,42,.62);max-width:820px}
+.highRiskSearchWrap{display:flex;justify-content:flex-end}
+.highRiskJobStack{display:flex;flex-direction:column;gap:16px}
+.highRiskJobCard{border-radius:22px;border:1px solid rgba(239,68,68,.10);background:rgba(255,255,255,.64);box-shadow:0 18px 50px rgba(2,6,23,.065);padding:0;overflow:hidden}
+.highRiskJobCard .jobPage{margin-top:0;padding:14px}
+.highRiskJobCard .jobAnalysisHeader{display:none}
+.highRiskJobCard .jobStats{margin-bottom:0}
+
+@media(max-width:1300px){.comparisonGrid{grid-template-columns:1fr 1fr}.comparisonTableWrap{grid-column:1/-1}.driverGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.comparisonGrid{grid-template-columns:1fr;padding:14px}.comparisonTableWrap{grid-column:auto}.driverGrid{grid-template-columns:1fr;padding:0 14px 14px}.comparisonValue{font-size:26px}.emailLiveGrid{grid-template-columns:1fr}.highRiskHeroBody{grid-template-columns:1fr}.highRiskSearchWrap{justify-content:stretch}.scaleCardHeaderRow{align-items:stretch;flex-direction:column}.viewAllAlertsBtn{width:fit-content}}
 
 `;
