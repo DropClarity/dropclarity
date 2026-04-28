@@ -330,12 +330,6 @@ function MobileHeader({
                 💳 Manage Billing
               </button>
             ) : null}
-
-            {!isLoaded || !isSignedIn ? (
-              <div className="mt-3 border-t border-slate-100 pt-3">
-                <AuthButtons fullWidth />
-              </div>
-            ) : null}
           </div>
         </div>
       </details>
