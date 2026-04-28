@@ -1851,9 +1851,6 @@ function ScaleOversightPanel({
           >
             {emailAlertsEnabled ? "Pause Email Alerts" : "Enable Email Alerts"}
           </button>
-          <div className="emailNote">
-            Frontend setting is saved. Worker/email delivery must also be connected for live sending.
-          </div>
         </div>
       </div>
 
