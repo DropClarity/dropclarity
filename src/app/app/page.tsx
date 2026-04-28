@@ -660,14 +660,30 @@ export default function AppPage() {
       const payload = {
         user_id: USER_ID,
         period_label: "Latest Period",
-        files: uploadedItems.map((it, idx) => ({
-          uuid: it.uploaded?.uuid,
-          kind: idx === 0 ? "job_export" : "supporting",
-          filename: it.uploaded?.filename || it.file.name,
-          mime: it.uploaded?.mime || it.file.type || "application/octet-stream",
-          job_id: it.job_id.trim(),
-          role: it.role,
-        })),
+        files: uploadedItems.map((it, idx) => {
+  const filename = it.uploaded?.filename || it.file.name;
+  const mime = it.uploaded?.mime || it.file.type || "application/octet-stream";
+  const lower = filename.toLowerCase();
+
+  const isStructured =
+    lower.endsWith(".csv") ||
+    lower.endsWith(".xlsx") ||
+    lower.endsWith(".xls") ||
+    mime.includes("csv") ||
+    mime.includes("spreadsheet") ||
+    mime.includes("excel");
+
+  return {
+    uuid: it.uploaded?.uuid,
+    kind: idx === 0 ? "job_export" : "supporting",
+    filename,
+    mime,
+    job_id: it.job_id.trim(),
+    role: it.role,
+    parse_mode: isStructured ? "code" : "ai",
+    file_category: isStructured ? "structured" : "document",
+  };
+}),
       };
 
       const token = await getToken();
@@ -818,10 +834,6 @@ export default function AppPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm">
-                {access.label} Plan
-              </div>
-
-              <div className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm">
                 {analyzing ? "Analyzing…" : hasUploading ? "Uploading" : result ? "Completed" : "Ready"}
               </div>
             </div>
@@ -921,7 +933,6 @@ export default function AppPage() {
                 <div>
                   <div className="font-black text-slate-950">Drop files here</div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">or click Choose files. Tip: put the job export first.</div>
-                  <div className="mt-1 text-xs font-black text-slate-400">{planLimitText(access)}</div>
                 </div>
               </div>
             </div>
