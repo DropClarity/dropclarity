@@ -875,18 +875,63 @@ function buildCostMixParts(state: DashboardState): CostPart[] {
   ];
 }
 
-function getScaleMetrics(state: DashboardState) {
+function marginTargetKey(userId: string): string {
+  return `dc_margin_target_${userId}`;
+}
+
+function readMarginTarget(userId: string): number {
+  if (typeof window === "undefined") return 30;
+  try {
+    const raw = localStorage.getItem(marginTargetKey(userId));
+    const n = parseNumberLoose(raw);
+    return n > 0 && n <= 95 ? n : 30;
+  } catch {
+    return 30;
+  }
+}
+
+function writeMarginTarget(userId: string, target: number) {
+  if (typeof window === "undefined") return;
+  try {
+    const clean = Math.max(1, Math.min(95, parseNumberLoose(target)));
+    localStorage.setItem(marginTargetKey(userId), String(clean));
+  } catch {}
+}
+
+function emailAlertsKey(userId: string): string {
+  return `dc_email_alerts_enabled_${userId}`;
+}
+
+function readEmailAlertsEnabled(userId: string): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const raw = localStorage.getItem(emailAlertsKey(userId));
+    return raw == null ? true : raw === "true";
+  } catch {
+    return true;
+  }
+}
+
+function writeEmailAlertsEnabled(userId: string, enabled: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(emailAlertsKey(userId), String(enabled));
+  } catch {}
+}
+
+function getScaleMetrics(state: DashboardState, targetMarginPct = 30) {
   const jobs = getAllJobs(state);
   const losingJobs = jobs.filter((j) => parseNumberLoose(j.profit) < 0);
   const thinMarginJobs = jobs.filter((j) => {
+    const profit = parseNumberLoose(j.profit);
     const margin = parseNumberLoose(j.margin_pct);
-    return margin >= 0 && margin < 20;
+    return profit >= 0 && margin >= 0 && margin < targetMarginPct;
   });
 
   const recoverableOpportunity = jobs.reduce((sum, job) => {
     const revenue = parseNumberLoose(job.revenue);
     const profit = parseNumberLoose(job.profit);
-    const targetProfit = revenue * 0.25;
+    const targetProfit = revenue * (targetMarginPct / 100);
     const gap = targetProfit - profit;
     return sum + Math.max(0, gap);
   }, 0);
@@ -897,6 +942,8 @@ function getScaleMetrics(state: DashboardState) {
       : 0;
 
   const highRiskCount = losingJobs.length + thinMarginJobs.length;
+  const worstLoss = losingJobs.reduce((min, job) => Math.min(min, parseNumberLoose(job.profit)), 0);
+  const totalAtRiskRevenue = [...losingJobs, ...thinMarginJobs].reduce((sum, job) => sum + parseNumberLoose(job.revenue), 0);
 
   return {
     losingJobs,
@@ -904,6 +951,8 @@ function getScaleMetrics(state: DashboardState) {
     recoverableOpportunity,
     avgMargin,
     highRiskCount,
+    worstLoss,
+    totalAtRiskRevenue,
   };
 }
 
@@ -1416,132 +1465,213 @@ function ScaleOversightPanel({
   state,
   plan,
   scaleSummary,
+  marginTarget,
+  marginTargetDraft,
+  setMarginTargetDraft,
+  onSaveMarginTarget,
+  emailAlertsEnabled,
+  setEmailAlertsEnabled,
+  userEmail,
+  onOpenJob,
 }: {
   state: DashboardState;
   plan: string;
   scaleSummary: ScaleSummary | null;
+  marginTarget: number;
+  marginTargetDraft: string;
+  setMarginTargetDraft: (v: string) => void;
+  onSaveMarginTarget: () => void;
+  emailAlertsEnabled: boolean;
+  setEmailAlertsEnabled: (v: boolean) => void;
+  userEmail?: string | null;
+  onOpenJob: (jobKey: string) => void;
 }) {
-  const fallbackMetrics = getScaleMetrics(state);
+  const jobs = getAllJobs(state);
+  const fallbackMetrics = getScaleMetrics(state, marginTarget);
   const backendStats = scaleSummary?.stats || null;
   const backendBenchmarks = scaleSummary?.benchmarks || null;
-
-  const backendHighRiskJobs = Array.isArray(scaleSummary?.high_risk_jobs) ? scaleSummary.high_risk_jobs : [];
-  const backendLosingJobs = Array.isArray(scaleSummary?.losing_jobs) ? scaleSummary.losing_jobs : [];
-  const backendThinMarginJobs = Array.isArray(scaleSummary?.thin_margin_jobs) ? scaleSummary.thin_margin_jobs : [];
-  const backendTopOpportunities = Array.isArray(scaleSummary?.top_opportunities) ? scaleSummary.top_opportunities : [];
-
-  const alerts = Array.isArray(scaleSummary?.alerts) ? scaleSummary.alerts : [];
-  const leakBreakdown = Array.isArray(scaleSummary?.profit_leak_breakdown) ? scaleSummary.profit_leak_breakdown : [];
-  const structuredActions = Array.isArray(scaleSummary?.structured_actions) ? scaleSummary.structured_actions : [];
-
-  const metrics = {
-    losingJobs: fallbackMetrics.losingJobs,
-    thinMarginJobs: fallbackMetrics.thinMarginJobs,
-    recoverableOpportunity:
-      backendStats?.recoverable_profit != null
-        ? parseNumberLoose(backendStats.recoverable_profit)
-        : backendStats?.recoverable != null
-        ? parseNumberLoose(backendStats.recoverable)
-        : fallbackMetrics.recoverableOpportunity,
-    avgMargin:
-      backendStats?.avg_margin != null
-        ? parseNumberLoose(backendStats.avg_margin)
-        : backendBenchmarks?.avg_margin_pct != null
-        ? parseNumberLoose(backendBenchmarks.avg_margin_pct)
-        : fallbackMetrics.avgMargin,
-    highRiskCount:
-      backendStats?.high_risk_count != null
-        ? parseNumberLoose(backendStats.high_risk_count)
-        : fallbackMetrics.highRiskCount,
-  };
-
-  const visibleRiskJobs =
-    backendHighRiskJobs.length > 0
-      ? backendHighRiskJobs
-      : backendLosingJobs.length > 0
-      ? backendLosingJobs
-      : backendThinMarginJobs.length > 0
-      ? backendThinMarginJobs
-      : fallbackMetrics.losingJobs.map((job) => ({
-          name: job.job_name || job.job_id || "Unnamed job",
-          id: job.job_id || null,
-          profit: parseNumberLoose(job.profit),
-          margin: parseNumberLoose(job.margin_pct),
-          revenue: parseNumberLoose(job.revenue),
-          costs: parseNumberLoose(job.costs),
-        }));
-
-  const opportunities = backendTopOpportunities.length > 0 ? backendTopOpportunities : visibleRiskJobs;
   const access = getPlanAccess(plan);
   const isScale = access.canUseScale;
   const canPreviewScale = access.canPreviewScale;
-  const displayedRiskJobs = isScale ? visibleRiskJobs.slice(0, 3) : canPreviewScale ? visibleRiskJobs.slice(0, 1) : [];
-  const displayedAlerts = isScale ? alerts.slice(0, 2) : canPreviewScale ? alerts.slice(0, 1) : [];
 
-  const riskLevel = scaleSummary?.risk_level || "healthy";
+  const riskJobsFromData = jobs
+    .filter((job) => parseNumberLoose(job.profit) < 0 || parseNumberLoose(job.margin_pct) < marginTarget)
+    .sort((a, b) => {
+      const aProfit = parseNumberLoose(a.profit);
+      const bProfit = parseNumberLoose(b.profit);
+      if (aProfit < 0 || bProfit < 0) return aProfit - bProfit;
+      return parseNumberLoose(a.margin_pct) - parseNumberLoose(b.margin_pct);
+    });
+
+  const displayedRiskJobs = isScale ? riskJobsFromData.slice(0, 4) : canPreviewScale ? riskJobsFromData.slice(0, 1) : [];
+
+  const losingLossAmount = fallbackMetrics.losingJobs.reduce((sum, job) => {
+    const p = parseNumberLoose(job.profit);
+    return sum + Math.abs(Math.min(0, p));
+  }, 0);
+
+  const thinMarginOpportunity = fallbackMetrics.thinMarginJobs.reduce((sum, job) => {
+    const revenue = parseNumberLoose(job.revenue);
+    const profit = parseNumberLoose(job.profit);
+    const targetProfit = revenue * (marginTarget / 100);
+    return sum + Math.max(0, targetProfit - profit);
+  }, 0);
+
+  const materialTotal = parseNumberLoose((state.cost_mix || state.mix || {}).materials);
+  const laborTotal = parseNumberLoose((state.cost_mix || state.mix || {}).labor);
+  const subsTotal = parseNumberLoose((state.cost_mix || state.mix || {}).subs);
+  const otherTotal = parseNumberLoose((state.cost_mix || state.mix || {}).other);
+  const knownCosts = materialTotal + laborTotal + subsTotal + otherTotal;
+  const materialShare = knownCosts ? (materialTotal / knownCosts) * 100 : 0;
+  const laborShare = knownCosts ? (laborTotal / knownCosts) * 100 : 0;
+
+  const avgMargin =
+    backendStats?.avg_margin != null
+      ? parseNumberLoose(backendStats.avg_margin)
+      : backendBenchmarks?.avg_margin_pct != null
+      ? parseNumberLoose(backendBenchmarks.avg_margin_pct)
+      : fallbackMetrics.avgMargin;
+
+  const profitPerJob =
+    backendBenchmarks?.profit_per_job != null
+      ? parseNumberLoose(backendBenchmarks.profit_per_job)
+      : jobs.length
+      ? jobs.reduce((sum, j) => sum + parseNumberLoose(j.profit), 0) / jobs.length
+      : 0;
+
+  const totalRevenue = parseNumberLoose(state.summary?.revenue || backendStats?.total_revenue);
+  const totalCosts = parseNumberLoose(state.summary?.costs || backendStats?.total_costs);
+  const costRatio = totalRevenue ? (totalCosts / totalRevenue) * 100 : 0;
+
+  const recoverableOpportunity = fallbackMetrics.recoverableOpportunity;
+  const riskLevel: "healthy" | "warning" | "critical" =
+    fallbackMetrics.losingJobs.length > 0 ? "critical" : fallbackMetrics.thinMarginJobs.length > 0 ? "warning" : "healthy";
   const riskCls = riskLevel === "healthy" ? "ok" : riskLevel === "warning" ? "warn" : "bad";
 
+  const currentRange = rangeLabel((state.range as RangeKey) || "all");
   const summaryTitle =
-    scaleSummary?.priority_message ||
-    (metrics.highRiskCount > 0
-      ? `${metrics.highRiskCount} jobs need review this week.`
-      : "Profitability looks healthy across the latest analyzed jobs.");
+    fallbackMetrics.highRiskCount > 0
+      ? `${fallbackMetrics.highRiskCount} active high-risk alert${fallbackMetrics.highRiskCount === 1 ? "" : "s"} need review.`
+      : `No jobs are currently below your ${fmtPct(marginTarget)} target.`;
 
   const summaryCopy =
-    scaleSummary?.trend_summary ||
-    scaleSummary?.summary_text ||
-    "DropClarity is tracking margins, costs, and risk across your saved reports.";
+    fallbackMetrics.highRiskCount > 0
+      ? `Based on your ${fmtPct(marginTarget)} margin target, DropClarity found ${fmtMoney(recoverableOpportunity)} in recoverable profit opportunity across this ${currentRange.toLowerCase()} view.`
+      : `DropClarity is monitoring each saved job against your ${fmtPct(marginTarget)} margin target and will flag jobs that fall below it.`;
 
-  const benchmarkRows = [
+  const leakRows = [
     {
-      label: "Average Job Margin",
-      value: fmtPct(metrics.avgMargin),
-      note: metrics.avgMargin >= 25 ? "Above target" : "Below preferred target",
-      cls: metrics.avgMargin >= 25 ? "ok" : "warn",
+      label: "Losing jobs",
+      amount: losingLossAmount,
+      meta: `${fallbackMetrics.losingJobs.length} job${fallbackMetrics.losingJobs.length === 1 ? "" : "s"} below breakeven`,
+      fix: "Review price, labor, and material assumptions before quoting similar jobs again.",
+      cls: losingLossAmount > 0 ? "bad" : "ok",
     },
     {
-      label: "Profit Per Job",
-      value: fmtMoney(backendBenchmarks?.profit_per_job),
-      note: "Net profit divided by analyzed jobs",
-      cls: parseNumberLoose(backendBenchmarks?.profit_per_job) >= 0 ? "ok" : "bad",
+      label: "Thin-margin jobs",
+      amount: thinMarginOpportunity,
+      meta: `${fallbackMetrics.thinMarginJobs.length} job${fallbackMetrics.thinMarginJobs.length === 1 ? "" : "s"} below ${fmtPct(marginTarget)} target`,
+      fix: "Raise pricing, reduce costs, or flag these jobs before they turn negative.",
+      cls: thinMarginOpportunity > 0 ? "warn" : "ok",
     },
     {
-      label: "Cost Ratio",
-      value: fmtPct(backendBenchmarks?.cost_ratio_pct),
-      note: "Known costs as a share of revenue",
-      cls: parseNumberLoose(backendBenchmarks?.cost_ratio_pct) <= 75 ? "ok" : "warn",
-    },
-    {
-      label: "Recoverable Opportunity",
-      value: fmtMoney(metrics.recoverableOpportunity),
-      note: "Estimated gap to target margin",
-      cls: metrics.recoverableOpportunity > 0 ? "warn" : "ok",
+      label: "Materials exposure",
+      amount: materialTotal,
+      meta: `${fmtPct(materialShare)} of known costs`,
+      fix: "Review supplier pricing, equipment assumptions, parts markup, and purchasing consistency.",
+      cls: materialShare > 55 ? "warn" : "ok",
     },
   ];
 
-  const actionRows: StructuredAction[] =
-    structuredActions.length > 0
-      ? structuredActions.slice(0, 3)
-      : (scaleSummary?.actions || []).slice(0, 3).map((text): StructuredAction => ({
-          text,
-          title: undefined,
-          priority: riskLevel === "healthy" ? "low" : "medium",
-          impact: 0,
-          category: "Operations",
-        }));
+  const actionRows = [
+    {
+      title: `Recover ${fmtMoney(recoverableOpportunity)} by pricing to your ${fmtPct(marginTarget)} target`,
+      impact: recoverableOpportunity,
+      priority: recoverableOpportunity > 0 ? "high" : "low",
+      category: "margin_target",
+    },
+    {
+      title:
+        fallbackMetrics.losingJobs.length > 0
+          ? `Review ${fallbackMetrics.losingJobs.length} losing job${fallbackMetrics.losingJobs.length === 1 ? "" : "s"} first`
+          : "No losing jobs currently detected",
+      impact: losingLossAmount,
+      priority: losingLossAmount > 0 ? "critical" : "low",
+      category: "job_review",
+    },
+    {
+      title:
+        avgMargin < marginTarget
+          ? `Investigate why average margin is below your ${fmtPct(marginTarget)} target`
+          : `Average margin is above your ${fmtPct(marginTarget)} target`,
+      impact: Math.max(0, recoverableOpportunity - losingLossAmount),
+      priority: avgMargin < marginTarget ? "high" : "low",
+      category: "trend",
+    },
+  ];
+
+  const benchmarkRows = [
+    {
+      label: "Target Margin",
+      value: fmtPct(marginTarget),
+      note: "User-set target used for alerts",
+      cls: "ok",
+    },
+    {
+      label: "Average Job Margin",
+      value: fmtPct(avgMargin),
+      note: avgMargin >= marginTarget ? "Above target" : "Below target",
+      cls: avgMargin >= marginTarget ? "ok" : "warn",
+    },
+    {
+      label: "Profit Per Job",
+      value: fmtMoney(profitPerJob),
+      note: "Net profit divided by analyzed jobs",
+      cls: profitPerJob >= 0 ? "ok" : "bad",
+    },
+    {
+      label: "Cost Ratio",
+      value: fmtPct(costRatio),
+      note: "Known costs as a share of revenue",
+      cls: costRatio <= 100 - marginTarget ? "ok" : "warn",
+    },
+    {
+      label: "Recoverable Profit",
+      value: fmtMoney(recoverableOpportunity),
+      note: `Gap to ${fmtPct(marginTarget)} target`,
+      cls: recoverableOpportunity > 0 ? "warn" : "ok",
+    },
+    {
+      label: "Labor Share",
+      value: fmtPct(laborShare),
+      note: "Labor as a share of known costs",
+      cls: laborShare > 50 ? "warn" : "ok",
+    },
+  ];
+
+  const openJobFromRow = (job: JobRow) => {
+    const idx = jobs.findIndex((j) => j === job);
+    if (idx >= 0) onOpenJob(buildJobKey(job, idx));
+  };
 
   return (
-    <div className="scalePanel">
-      <div className="panelHead">
+    <div className="scalePanel premiumScalePanel">
+      <div className="panelHead scaleControlHead">
         <div>
-          <div className="panelTitle">Scale Profit Oversight</div>
+          <div className="panelTitle">Scale Profit Control Center</div>
           <div className="panelSub">
-            Profit leaks, risk alerts, benchmarks, and next actions in one view.
+            High-risk job alerts, recoverable profit, margin targets, and real-time email alerts in one operating view.
           </div>
         </div>
 
-        <div className={`tag ${riskCls}`}>
-          {isScale ? "Scale active" : canPreviewScale ? "Scale preview" : "Scale locked"} · {riskLevel}
+        <div className="scaleHeadRight">
+          <div className={`tag ${riskCls}`}>
+            {isScale ? "Scale active" : canPreviewScale ? "Scale preview" : "Scale locked"} · {riskLevel}
+          </div>
+          <div className="alertStatusPill">
+            <span className={fallbackMetrics.highRiskCount > 0 ? "alertDot hot" : "alertDot"} />
+            {fallbackMetrics.highRiskCount} Active High-Risk Alert{fallbackMetrics.highRiskCount === 1 ? "" : "s"}
+          </div>
         </div>
       </div>
 
@@ -1550,133 +1680,188 @@ function ScaleOversightPanel({
           <strong>{canPreviewScale ? "Scale preview mode" : "Scale features locked"}</strong>
           <span>
             {canPreviewScale
-              ? "Preview Scale insights here. Full alerts, impact, and team views unlock on Scale."
-              : "Upgrade to Scale for profit leaks, risk alerts, priority actions, benchmarks, and team views."}
+              ? "Preview Scale value here. Full real-time alerts, impact tracking, and action workflows unlock on Scale."
+              : "Upgrade to Scale for high-risk alerts, recoverable profit estimates, margin targets, and real-time email alerting."}
           </span>
         </div>
       ) : null}
 
-      <div className="scaleGrid scaleGridPremium">
-        <div className="scaleCard dark scaleHeroCard">
+      <div className="scaleCommandGrid">
+        <div className="scaleCommandHero">
           <div className="scaleKicker">Weekly Profit Intelligence</div>
-
-          <div className="scaleTitle">{summaryTitle}</div>
-
+          <div className="scaleTitle heroScaleTitle">{summaryTitle}</div>
           <div className="scaleText">{summaryCopy}</div>
 
           <div className="scaleMiniStats">
             <div>
-              <span>Risk Jobs</span>
-              <strong>{String(metrics.highRiskCount)}</strong>
+              <span>At-Risk Jobs</span>
+              <strong>{String(fallbackMetrics.highRiskCount)}</strong>
             </div>
             <div>
-              <span>Opportunity</span>
-              <strong>{fmtMoney(metrics.recoverableOpportunity)}</strong>
+              <span>Recoverable Profit</span>
+              <strong>{fmtMoney(recoverableOpportunity)}</strong>
+            </div>
+            <div>
+              <span>Worst Job Loss</span>
+              <strong className={fallbackMetrics.worstLoss < 0 ? "neg" : ""}>{fmtMoney(fallbackMetrics.worstLoss)}</strong>
             </div>
           </div>
         </div>
 
-        <div className="scaleCard">
-          <div className="scaleKicker">Profit Leak Breakdown</div>
-
-          <div className="leakList">
-            {isScale && leakBreakdown.length ? (
-              leakBreakdown.slice(0, 3).map((leak, idx) => (
-                <div className="leakItem" key={`${leak.type || leak.label || "leak"}-${idx}`}>
-                  <div className="leakTop">
-                    <div>
-                      <div className="leakName">{leak.label || leak.type || "Profit leak"}</div>
-                      <div className="leakMeta">
-                        {String(leak.jobs_count || 0)} jobs · {leak.severity || "watch"}
-                      </div>
-                    </div>
-                    <div className={`leakAmount ${parseNumberLoose(leak.amount) > 0 ? "warn" : "ok"}`}>
-                      {fmtMoney(leak.amount)}
-                    </div>
-                  </div>
-                  {leak.fix ? <div className="leakFix">{leak.fix}</div> : null}
-                </div>
-              ))
-            ) : (
-              <div className="empty compact">
-                {isScale ? "No major profit leaks detected." : "Profit leaks unlock on Scale."}
-              </div>
-            )}
+        <div className="scaleTargetCard">
+          <div className="scaleKicker">Margin Target</div>
+          <div className="targetInputRow">
+            <input
+              className="targetInput"
+              inputMode="decimal"
+              value={marginTargetDraft}
+              onChange={(e) => setMarginTargetDraft(e.target.value)}
+              aria-label="Margin target percentage"
+            />
+            <span>%</span>
+            <button className="btn btn-primary" type="button" onClick={onSaveMarginTarget}>
+              Save Target
+            </button>
+          </div>
+          <div className="targetHelp">
+            This target is used to flag high-risk jobs, identify profit leaks, and calculate recoverable profit.
+          </div>
+          <div className="targetChecklist">
+            <span>✓ High-risk alerts</span>
+            <span>✓ Recoverable profit</span>
+            <span>✓ Benchmarks</span>
           </div>
         </div>
 
+        <div className="scaleEmailCard">
+          <div className="scaleKicker">Real-Time Email Alerts</div>
+          <div className="emailAlertTitle">{emailAlertsEnabled ? "Email alerts are enabled" : "Email alerts are paused"}</div>
+          <div className="scaleText">
+            Send an email when a job loses money, falls below your margin target, or needs immediate review.
+          </div>
+          <div className="emailDestination">
+            <span>Alert destination</span>
+            <strong>{userEmail || "Account email"}</strong>
+          </div>
+          <button
+            className={emailAlertsEnabled ? "btn btn-danger-soft" : "btn btn-primary"}
+            type="button"
+            onClick={() => setEmailAlertsEnabled(!emailAlertsEnabled)}
+          >
+            {emailAlertsEnabled ? "Pause Email Alerts" : "Enable Email Alerts"}
+          </button>
+          <div className="emailNote">
+            Frontend setting is saved. Worker/email delivery must also be connected for live sending.
+          </div>
+        </div>
+      </div>
+
+      <div className="scaleGrid scaleGridPremiumV2">
         <div className="scaleCard">
           <div className="scaleKicker">High-Risk Job Alerts</div>
 
           <div className="alertList">
-            {displayedRiskJobs.map((job, idx) => (
-              <div className="alertItem" key={`${job.id || job.name || "job"}-${idx}`}>
-                <div>
-                  <div className="alertName">{job.name || job.id || "Unnamed job"}</div>
-                  <div className="alertMeta">
-                    Profit {fmtMoney(job.profit)} · Margin {fmtPct(job.margin)}
-                  </div>
-                </div>
-                <span className="tag bad">Risk</span>
-              </div>
-            ))}
-
-            {!displayedRiskJobs.length && <div className="empty compact">{canPreviewScale ? "No high-risk jobs detected." : "Risk alerts unlock on Scale."}</div>}
-
-            {displayedAlerts.map((alert, idx) => (
-              <div className="alertItem soft" key={`${alert.title || "alert"}-${idx}`}>
-                <div>
-                  <div className="alertName">{alert.title || "Watch item"}</div>
-                  <div className="alertMeta">{alert.message || "Review this item."}</div>
-                </div>
-                <span className={`tag ${alert.level === "critical" || alert.level === "warning" ? "bad" : alert.level === "watch" ? "warn" : "ok"}`}>
-                  {alert.level || "info"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="scaleCard">
-          <div className="scaleKicker">Priority Actions</div>
-
-          <div className="actionStack">
-            {isScale && actionRows.length ? (
-              actionRows.map((action, idx) => {
-                const priority = String(action.priority || "medium").toLowerCase();
-                const cls =
-                  priority === "critical" || priority === "high"
-                    ? "bad"
-                    : priority === "medium"
-                    ? "warn"
-                    : "ok";
-
-                const actionTitle =
-                  String(action.title || action.text || "Review profitability opportunity").trim();
+            {displayedRiskJobs.length ? (
+              displayedRiskJobs.map((job, idx) => {
+                const profit = parseNumberLoose(job.profit);
+                const margin = parseNumberLoose(job.margin_pct);
+                const label = profit < 0 ? "Loss" : "Below Target";
+                const issue =
+                  profit < 0
+                    ? "This job is below breakeven and should be reviewed first."
+                    : `Margin is below your ${fmtPct(marginTarget)} target.`;
 
                 return (
-                  <div className="actionCard" key={`${actionTitle}-${idx}`}>
-                    <div className="actionTop">
-                      <span className={`tag ${cls}`}>{action.priority || "medium"}</span>
-                      {parseNumberLoose(action.impact) > 0 ? <strong>{fmtMoney(action.impact)}</strong> : null}
+                  <div className="alertItem premiumAlert" key={`${job.job_id || job.job_name || "job"}-${idx}`}>
+                    <div className="alertMain">
+                      <div className="alertName">{job.job_name || job.job_id || "Unnamed job"}</div>
+                      <div className="alertMeta">
+                        {label}: {fmtMoney(profit)} · Margin {fmtPct(margin)}
+                      </div>
+                      <div className="alertIssue">Issue: {issue}</div>
+                      <div className="alertActions">
+                        <button className="miniBtn" type="button" onClick={() => openJobFromRow(job)}>
+                          Review Job
+                        </button>
+                        <a className="miniBtn ghostMini" href="#jobsPanel">
+                          View Jobs
+                        </a>
+                      </div>
                     </div>
-                    <div className="actionName">{actionTitle}</div>
-                    {action.category ? <div className="actionMeta">{action.category}</div> : null}
+                    <span className={profit < 0 ? "tag bad" : "tag warn"}>{profit < 0 ? "Critical" : "Risk"}</span>
                   </div>
                 );
               })
             ) : (
               <div className="empty compact">
-                {isScale ? "No immediate actions required." : "Priority actions unlock on Scale."}
+                {canPreviewScale ? `No jobs are currently below your ${fmtPct(marginTarget)} target.` : "High-risk alerts unlock on Scale."}
               </div>
             )}
           </div>
         </div>
 
-        <div className="scaleCard wideScaleCard">
-          <div className="scaleKicker">Advanced Benchmarks</div>
+        <div className="scaleCard">
+          <div className="scaleKicker">Where You're Losing Money</div>
 
-          <div className="benchmarkGrid">
+          <div className="leakList">
+            {isScale || canPreviewScale ? (
+              leakRows.map((leak) => (
+                <div className="leakItem premiumLeak" key={leak.label}>
+                  <div className="leakTop">
+                    <div>
+                      <div className="leakName">{leak.label}</div>
+                      <div className="leakMeta">{leak.meta}</div>
+                    </div>
+                    <div className={`leakAmount ${leak.cls}`}>{fmtMoney(leak.amount)}</div>
+                  </div>
+                  <div className="leakFix">{leak.fix}</div>
+                </div>
+              ))
+            ) : (
+              <div className="empty compact">Profit leak breakdown unlocks on Scale.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="scaleCard">
+          <div className="scaleKicker">What To Fix First</div>
+
+          <div className="actionStack">
+            {isScale || canPreviewScale ? (
+              actionRows.map((action, idx) => {
+                const cls =
+                  action.priority === "critical" || action.priority === "high"
+                    ? "bad"
+                    : action.priority === "low"
+                    ? "ok"
+                    : "warn";
+
+                return (
+                  <div className="actionCard premiumAction" key={`${action.title}-${idx}`}>
+                    <div className="actionTop">
+                      <span className={`tag ${cls}`}>#{idx + 1} {action.priority}</span>
+                      {action.impact > 0 ? <strong>{fmtMoney(action.impact)}</strong> : null}
+                    </div>
+                    <div className="actionName">{action.title}</div>
+                    <div className="actionMeta">{action.category}</div>
+                    <div className="actionButtons">
+                      <a className="miniBtn" href="#jobsPanel">
+                        {idx === 0 ? "Apply Pricing Strategy" : idx === 1 ? "Review Jobs" : "View Trend"}
+                      </a>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="empty compact">Priority actions unlock on Scale.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="scaleCard wideScaleCard">
+          <div className="scaleKicker">Performance Snapshot</div>
+
+          <div className="benchmarkGrid benchmarkGridV2">
             {benchmarkRows.map((row) => (
               <div className="benchmarkRow" key={row.label}>
                 <div>
@@ -1689,35 +1874,18 @@ function ScaleOversightPanel({
           </div>
         </div>
 
-        <div className="scaleCard teamScaleCard">
-          <div className="scaleKicker">Team Visibility</div>
-
-          <div className="scaleTitle small">Manager-ready profit view</div>
-
-          <div className="scaleText">
-            Share the same profit view with owners, managers, and finance.
+        <div className="scaleCard alertsExplainerCard">
+          <div className="scaleKicker">Alert Rules</div>
+          <div className="ruleList">
+            <div><b>Critical</b><span>Profit is below $0.</span></div>
+            <div><b>High risk</b><span>Margin is below your {fmtPct(marginTarget)} target.</span></div>
+            <div><b>Email</b><span>Send immediately when a new critical alert is detected.</span></div>
           </div>
-
-          <div className="teamPills">
-            <span>Owner</span>
-            <span>Manager</span>
-            <span>Finance</span>
-          </div>
-
-          {scaleSummary?.latest_report ? (
-            <div className="latestReport">
-              <div className="latestReportLabel">Latest report</div>
-              <div className="latestReportValue">
-                {scaleSummary.latest_report.period_label || "Latest Period"} · {fmtMoney(scaleSummary.latest_report.net_profit)}
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     </div>
   );
 }
-
 
 function DashboardBody({
   state,
@@ -1728,6 +1896,13 @@ function DashboardBody({
   onDeleteReport,
   plan,
   scaleSummary,
+  marginTarget,
+  marginTargetDraft,
+  setMarginTargetDraft,
+  onSaveMarginTarget,
+  emailAlertsEnabled,
+  setEmailAlertsEnabled,
+  userEmail,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
@@ -1737,6 +1912,13 @@ function DashboardBody({
   onDeleteReport: (report: ReportRow, idx: number) => void;
   plan: string;
   scaleSummary: ScaleSummary | null;
+  marginTarget: number;
+  marginTargetDraft: string;
+  setMarginTargetDraft: (v: string) => void;
+  onSaveMarginTarget: () => void;
+  emailAlertsEnabled: boolean;
+  setEmailAlertsEnabled: (v: boolean) => void;
+  userEmail?: string | null;
 }) {
   const jobs = getAllJobs(state);
   const insights = Array.isArray(state.insights) ? state.insights : [];
@@ -1746,7 +1928,23 @@ function DashboardBody({
       <DashboardHero state={state} />
       <Kpis state={state} />
       <ChartsPanel state={state} view={view} />
-      <ScaleOversightPanel state={state} plan={plan} scaleSummary={scaleSummary} />
+      <ScaleOversightPanel
+        state={state}
+        plan={plan}
+        scaleSummary={scaleSummary}
+        marginTarget={marginTarget}
+        marginTargetDraft={marginTargetDraft}
+        setMarginTargetDraft={setMarginTargetDraft}
+        onSaveMarginTarget={onSaveMarginTarget}
+        emailAlertsEnabled={emailAlertsEnabled}
+        setEmailAlertsEnabled={setEmailAlertsEnabled}
+        userEmail={userEmail}
+        onOpenJob={(key) => {
+          setJobKey(key);
+          setView("job");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
       <div className="grid">
         <div className="mainCol">
@@ -2268,6 +2466,9 @@ export default function DashboardPage() {
   const [range, setRange] = useState<RangeKey>("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [marginTarget, setMarginTarget] = useState<number>(30);
+  const [marginTargetDraft, setMarginTargetDraft] = useState<string>("30");
+  const [emailAlertsEnabled, setEmailAlertsEnabledState] = useState<boolean>(true);
 
   const loadAndRender = useCallback(async () => {
     if (!isLoaded) return;
@@ -2305,9 +2506,26 @@ export default function DashboardPage() {
 useEffect(() => {
   if (!isLoaded) return;
 
+  const savedTarget = readMarginTarget(USER_ID);
+  setMarginTarget(savedTarget);
+  setMarginTargetDraft(String(savedTarget));
+  setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
   setDeletedReportKeys(readDeletedReports(USER_ID));
   loadAndRender();
 }, [USER_ID, isLoaded, loadAndRender]);
+
+  const saveMarginTarget = () => {
+    const next = Math.max(1, Math.min(95, parseNumberLoose(marginTargetDraft)));
+    setMarginTarget(next);
+    setMarginTargetDraft(String(next));
+    writeMarginTarget(USER_ID, next);
+  };
+
+  const setEmailAlertsEnabled = (enabled: boolean) => {
+    setEmailAlertsEnabledState(enabled);
+    writeEmailAlertsEnabled(USER_ID, enabled);
+  };
+
 
   const refreshLocal = () => {};
 
@@ -2386,6 +2604,13 @@ useEffect(() => {
   onDeleteReport={handleDeleteReport}
   plan={plan}
   scaleSummary={scaleSummary}
+  marginTarget={marginTarget}
+  marginTargetDraft={marginTargetDraft}
+  setMarginTargetDraft={setMarginTargetDraft}
+  onSaveMarginTarget={saveMarginTarget}
+  emailAlertsEnabled={emailAlertsEnabled}
+  setEmailAlertsEnabled={setEmailAlertsEnabled}
+  userEmail={user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null}
 />
             )}
           </>
@@ -2792,5 +3017,48 @@ html,body{background:#fff!important;color:#0f172a!important}
 .alertItem,.benchmarkRow,.leakItem,.actionCard{padding:13px;border-color:rgba(15,23,42,.08);background:rgba(255,255,255,.84)}.alertName,.benchmarkLabel,.leakName,.actionName{font-size:15px;line-height:1.3}.alertMeta,.benchmarkNote,.leakMeta,.actionMeta,.leakFix{font-size:13px;line-height:1.45;color:rgba(15,23,42,.62)}.benchmarkValue,.leakAmount{font-size:16px}.benchmarkGrid{gap:10px}.gateBanner{padding:14px 16px;font-size:14px;line-height:1.5;color:rgba(15,23,42,.68)}
 .jobAnalysisHeader{padding:18px 20px}.sectionEyebrow{font-size:12px}.sectionTitle{font-size:23px}.sectionSubtle{font-size:14px;color:rgba(15,23,42,.60)}.jobStats{gap:12px}.jobDetailPad{padding:18px}.jobTable th{font-size:12.5px;color:rgba(15,23,42,.66)}.jobTable td{padding:14px 10px}.cellEdit{font-size:15px;padding:12px}.cellHint{font-size:12.5px;color:rgba(15,23,42,.58)}.supportGrid{gap:14px}.noteBox{min-height:130px}
 @media(max-width:760px){.panelHead{padding:16px}.panelTitle{font-size:19px}.panelSub{font-size:14px}.scaleGrid,.scaleGridPremium{padding:14px}.scaleCard{padding:15px}.heroTitle,.jobHeroTitle{font-size:27px}.sectionSubtle{text-align:left}}
+
+
+
+/* Scale Profit Control Center premium rewrite */
+.premiumScalePanel{border-color:rgba(124,58,237,.13);box-shadow:0 26px 80px rgba(2,6,23,.105)}
+.scaleControlHead{align-items:flex-start}
+.scaleHeadRight{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.alertStatusPill{display:inline-flex;align-items:center;gap:9px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(254,242,242,.86);padding:9px 12px;font-size:12px;font-weight:950;color:rgba(185,28,28,.95);white-space:nowrap}
+.alertDot{width:9px;height:9px;border-radius:999px;background:rgba(52,211,153,.95);box-shadow:0 0 0 4px rgba(52,211,153,.14)}
+.alertDot.hot{background:rgba(239,68,68,.95);box-shadow:0 0 0 4px rgba(239,68,68,.14)}
+.scaleCommandGrid{display:grid;grid-template-columns:1.35fr .85fr .85fr;gap:16px;padding:18px 18px 4px}
+.scaleCommandHero{border-radius:22px;border:1px solid rgba(34,211,238,.18);background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(236,253,245,.72));box-shadow:0 18px 44px rgba(34,211,238,.08);padding:20px;border-left:5px solid rgba(34,211,238,.85)}
+.heroScaleTitle{font-size:26px;line-height:1.06;letter-spacing:-.04em}
+.scaleTargetCard,.scaleEmailCard{border-radius:22px;border:1px solid rgba(15,23,42,.085);background:rgba(255,255,255,.90);box-shadow:0 14px 38px rgba(2,6,23,.06);padding:18px}
+.targetInputRow{display:flex;gap:8px;align-items:center;margin-top:12px}
+.targetInput{width:90px;border-radius:14px;border:1px solid rgba(15,23,42,.12);background:#fff;padding:12px;font-size:18px;font-weight:980;color:#0f172a;outline:none;text-align:center}
+.targetInput:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.18)}
+.targetInputRow span{font-size:18px;font-weight:950;color:rgba(15,23,42,.75)}
+.targetHelp{margin-top:12px;font-size:13px;line-height:1.45;font-weight:800;color:rgba(15,23,42,.60)}
+.targetChecklist{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.targetChecklist span{border-radius:999px;border:1px solid rgba(16,185,129,.16);background:rgba(16,185,129,.08);padding:6px 8px;font-size:11.5px;font-weight:950;color:rgba(5,150,105,.95)}
+.emailAlertTitle{margin-top:9px;font-size:18px;line-height:1.1;font-weight:980;color:rgba(15,23,42,.94);letter-spacing:-.025em}
+.emailDestination{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:13px 0;border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(248,250,252,.9);padding:10px}
+.emailDestination span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.48)}
+.emailDestination strong{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.82);text-align:right;word-break:break-all}
+.emailNote{margin-top:10px;font-size:11.5px;line-height:1.35;font-weight:800;color:rgba(15,23,42,.46)}
+.btn-danger-soft{border-color:rgba(239,68,68,.18);background:rgba(254,242,242,.86);color:rgba(185,28,28,.96)}
+.scaleGridPremiumV2{grid-template-columns:1.15fr 1fr 1fr;align-items:start}
+.premiumAlert{align-items:flex-start;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(248,250,252,.92))}
+.alertMain{min-width:0}
+.alertIssue{margin-top:6px;font-size:12.75px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.68)}
+.alertActions,.actionButtons{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ghostMini{background:rgba(248,250,252,.92);text-decoration:none;color:rgba(15,23,42,.82)}
+.premiumLeak,.premiumAction{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.86))}
+.leakAmount.bad{color:rgba(220,38,38,.95)}
+.benchmarkGridV2{grid-template-columns:1fr 1fr 1fr}
+.alertsExplainerCard{grid-column:span 1}
+.ruleList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.ruleList div{border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(255,255,255,.76);padding:11px}
+.ruleList b{display:block;font-size:13px;color:rgba(15,23,42,.92);font-weight:950}
+.ruleList span{display:block;margin-top:3px;font-size:12.5px;line-height:1.4;color:rgba(15,23,42,.60);font-weight:800}
+@media(max-width:1300px){.scaleCommandGrid{grid-template-columns:1fr 1fr}.scaleCommandHero{grid-column:1/-1}.scaleGridPremiumV2{grid-template-columns:1fr 1fr}.benchmarkGridV2{grid-template-columns:1fr 1fr}.alertsExplainerCard{grid-column:span 2}}
+@media(max-width:760px){.scaleControlHead{align-items:flex-start;flex-direction:column}.scaleHeadRight{justify-content:flex-start}.scaleCommandGrid{grid-template-columns:1fr;padding:14px 14px 0}.scaleCommandHero{grid-column:auto}.scaleGridPremiumV2{grid-template-columns:1fr}.benchmarkGridV2{grid-template-columns:1fr}.alertsExplainerCard{grid-column:auto}.targetInputRow{flex-wrap:wrap}.targetInput{width:110px}.heroScaleTitle{font-size:23px}}
 
 `;
