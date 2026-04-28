@@ -21,42 +21,42 @@ const pricing = [
     ],
   },
   {
-    id: "core",
-    name: "DropClarity Core",
-    price: "$499/mo",
-    subtitle: "Complete job profitability visibility",
-    description:
-      "For home service businesses that want a complete profitability dashboard to catch margin problems and cost leaks.",
-    cta: "Start Core",
-    featured: true,
-    features: [
-      "Job profitability analysis (revenue, costs, margin)",
-      "Full dashboard with KPIs + profit trends",
-      "Profit by job + losing job detection",
-      "Cost breakdown (labor, materials, other)",
-      "Saved report history",
-      "Exportable job reports",
-    ],
-  },
-  {
-    id: "scale",
-    name: "DropClarity Scale",
-    price: "$999/mo",
-    subtitle: "Automated profit oversight",
-    description:
-      "For growing home service teams that want priority actions, alerts, benchmarks, team visibility, and ongoing profit leak oversight.",
-    cta: "Start Scale",
-    featured: false,
-    features: [
-      "Everything in Core",
-      "Priority action items (what to fix next)",
-      "High-risk job alerts",
-      "Weekly profit leak summaries",
-      "Advanced job benchmarking",
-      "Recoverable profit opportunity estimates",
-      "Team visibility",
-    ],
-  },
+  id: "core",
+  name: "DropClarity Core",
+  price: "$499/mo",
+  subtitle: "See exactly where your profit is made and lost",
+  description:
+    "For home service businesses that want full visibility into job profitability to identify margin issues, cost leaks, and underperforming work.",
+  cta: "Start Core",
+  featured: true,
+  features: [
+    "Job profitability analysis (revenue, costs, margin)",
+    "Full dashboard with KPIs + profit trends",
+    "Profit by job + losing job detection",
+    "Cost breakdown (labor, materials, other)",
+    "Saved report history",
+    "Exportable job reports",
+  ],
+},
+{
+  id: "scale",
+  name: "DropClarity Scale",
+  price: "$999/mo",
+  subtitle: "Real-time profit protection & automated alerts",
+  description:
+    "For growing home service teams that want to automatically detect profit leaks, flag high-risk jobs, and take action before losses grow.",
+  cta: "Start Scale",
+  featured: false,
+  features: [
+    "Everything in Core",
+    "Priority action items (what to fix next)",
+    "🚨 Real-time high-risk job alerts (email + dashboard)",
+    "📉 Profit leak detection before jobs go negative",
+    "💰 Recoverable profit identified automatically",
+    "Advanced job benchmarking",
+    "Team visibility",
+  ],
+},
 ];
 
 export default function PricingPage() {
