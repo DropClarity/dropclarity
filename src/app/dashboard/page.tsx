@@ -1776,7 +1776,7 @@ function ScaleOversightPanel({
 
       <div className="scaleCommandGrid">
         <div className="scaleCommandHero">
-          <div className="scaleKicker">Weekly Profit Intelligence</div>
+          <div className="scaleKicker">Profit Intelligence</div>
           <div className="scaleTitle heroScaleTitle">{summaryTitle}</div>
           <div className="scaleText">{summaryCopy}</div>
 
