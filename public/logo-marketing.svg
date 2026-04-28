@@ -1,0 +1,20 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DropClarity marketing logo</title>
+  <desc id="desc">Large DropClarity wordmark with profitability chart icon.</desc>
+  <defs>
+    <linearGradient id="dcGradient" x1="56" y1="56" x2="248" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(56 56)">
+    <rect x="0" y="0" width="248" height="248" rx="62" fill="white"/>
+    <rect x="14" y="14" width="220" height="220" rx="54" stroke="url(#dcGradient)" stroke-width="18"/>
+    <rect x="66" y="160" width="32" height="50" rx="7" fill="url(#dcGradient)"/>
+    <rect x="114" y="128" width="32" height="82" rx="7" fill="url(#dcGradient)"/>
+    <rect x="162" y="94" width="32" height="116" rx="7" fill="url(#dcGradient)"/>
+    <path d="M62 118L106 74L138 106L196 48" stroke="url(#dcGradient)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M166 48H196V78" stroke="url(#dcGradient)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="356" y="221" fill="#07122E" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="148" font-weight="700" letter-spacing="-6">DropClarity</text>
+</svg>

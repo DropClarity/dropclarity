@@ -1,0 +1,17 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DropClarity icon</title>
+  <desc id="desc">Profitability chart icon with upward trend line.</desc>
+  <defs>
+    <linearGradient id="dcGradient" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="white"/>
+  <rect x="14" y="14" width="100" height="100" rx="24" stroke="url(#dcGradient)" stroke-width="8"/>
+  <rect x="38" y="80" width="14" height="22" rx="3" fill="url(#dcGradient)"/>
+  <rect x="60" y="66" width="14" height="36" rx="3" fill="url(#dcGradient)"/>
+  <rect x="82" y="51" width="14" height="51" rx="3" fill="url(#dcGradient)"/>
+  <path d="M36 61L56 41L70 55L96 29" stroke="url(#dcGradient)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M83 29H96V42" stroke="url(#dcGradient)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
