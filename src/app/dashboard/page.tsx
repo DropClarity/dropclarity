@@ -251,7 +251,7 @@ function getPlanAccess(plan: string): PlanAccess {
     canUseCustomCategories: canUseCore,
     canSaveJobEdits: canUseCore,
     canViewJobDetail: true,
-    canPreviewScale: canUseCore,
+    canPreviewScale: isScale,
   };
 }
 
@@ -1741,6 +1741,69 @@ function ScaleOversightPanel({
     if (idx >= 0) onOpenJob(buildJobKey(job, idx));
   };
 
+  if (!isScale) {
+    const lockedFeatures = [
+      {
+        title: "Real-time email alerts",
+        text: "Automatically notify the right people when a job loses money or drops below your margin target.",
+      },
+      {
+        title: "Recoverable profit opportunities",
+        text: "Surface the profit gap between current performance and your target margin without showing Core users the full Scale engine.",
+      },
+      {
+        title: "Advanced job benchmarking",
+        text: "Compare high-risk jobs against similar or recent jobs to identify what is driving margin differences.",
+      },
+    ];
+
+    return (
+      <div className="scalePanel premiumScalePanel scaleLockedPanel">
+        <div className="panelHead scaleControlHead">
+          <div>
+            <div className="panelTitle">Scale Profit Control Center</div>
+            <div className="panelSub">
+              Upgrade to Scale to unlock real-time high-risk job alerts, recoverable profit tracking, priority action workflows, advanced benchmarking, and automated email alerts.
+            </div>
+          </div>
+
+          <div className="scaleHeadRight">
+            <div className="lockedScaleBadge"><span className="lockGlyph">🔒</span> Scale locked</div>
+          </div>
+        </div>
+
+        <div className="lockedScaleHero">
+          <div className="lockedScaleIcon">🔒</div>
+          <div>
+            <div className="lockedScaleKicker">Scale upgrade</div>
+            <div className="lockedScaleTitle">Protect profit automatically as jobs are analyzed.</div>
+            <div className="lockedScaleText">
+              Your Core dashboard shows job profitability, trends, and cost breakdowns. Scale adds the automated oversight layer for teams that want DropClarity to flag issues, estimate recoverable profit, and trigger alerts without manually reviewing every job.
+            </div>
+            <div className="lockedScaleActions">
+              <a className="btn btn-primary" href="/#pricing">Upgrade to Scale</a>
+              <button className="btn" type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+                Keep reviewing Core dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="lockedFeatureGrid">
+          {lockedFeatures.map((feature) => (
+            <div className="lockedFeatureCard" key={feature.title}>
+              <div className="lockedFeatureTop">
+                <span className="lockedMiniIcon">🔒</span>
+                <div className="lockedFeatureTitle">{feature.title}</div>
+              </div>
+              <div className="lockedFeatureText">{feature.text}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="scalePanel premiumScalePanel">
       <div className="panelHead scaleControlHead">
@@ -1845,7 +1908,7 @@ function ScaleOversightPanel({
             <span>✓ Cost spike needs review</span>
           </div>
           <button
-            className={emailAlertsEnabled ? "btn btn-danger-soft" : "btn btn-primary"}
+            className={emailAlertsEnabled ? "emailPauseLink" : "btn btn-primary"}
             type="button"
             onClick={() => setEmailAlertsEnabled(!emailAlertsEnabled)}
           >
@@ -3299,6 +3362,27 @@ html,body{background:#fff!important;color:#0f172a!important}
 @media(max-width:1300px){.scaleCommandGrid{grid-template-columns:1fr 1fr}.scaleCommandHero{grid-column:1/-1}.scaleGridPremiumV2{grid-template-columns:1fr 1fr}.benchmarkGridV2{grid-template-columns:1fr 1fr}.alertsExplainerCard{grid-column:span 2}}
 @media(max-width:760px){.scaleControlHead{align-items:flex-start;flex-direction:column}.scaleHeadRight{justify-content:flex-start}.scaleCommandGrid{grid-template-columns:1fr;padding:14px 14px 0}.scaleCommandHero{grid-column:auto}.scaleGridPremiumV2{grid-template-columns:1fr}.benchmarkGridV2{grid-template-columns:1fr}.alertsExplainerCard{grid-column:auto}.targetInputRow{flex-wrap:wrap}.targetInput{width:110px}.heroScaleTitle{font-size:23px}}
 
+
+
+/* Scale gating for Free/Core */
+.scaleLockedPanel{border-color:rgba(15,23,42,.09);box-shadow:0 20px 58px rgba(2,6,23,.075)}
+.lockedScaleBadge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid rgba(15,23,42,.10);background:rgba(248,250,252,.92);padding:8px 11px;font-size:12px;font-weight:950;color:rgba(71,85,105,.86);white-space:nowrap}
+.lockGlyph,.lockedMiniIcon{filter:grayscale(1);opacity:.72}
+.lockedScaleHero{margin:18px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:flex-start;border-radius:22px;border:1px solid rgba(15,23,42,.08);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(248,250,252,.88));box-shadow:0 16px 44px rgba(2,6,23,.06);padding:20px}
+.lockedScaleIcon{width:42px;height:42px;border-radius:16px;border:1px solid rgba(15,23,42,.10);background:rgba(241,245,249,.86);display:flex;align-items:center;justify-content:center;font-size:19px;filter:grayscale(1);opacity:.78}
+.lockedScaleKicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(15,23,42,.46)}
+.lockedScaleTitle{margin-top:6px;font-size:26px;line-height:1.08;font-weight:990;letter-spacing:-.035em;color:rgba(15,23,42,.94)}
+.lockedScaleText{margin-top:9px;max-width:920px;font-size:14.5px;line-height:1.55;font-weight:780;color:rgba(15,23,42,.62)}
+.lockedScaleActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.lockedFeatureGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0 18px 18px}
+.lockedFeatureCard{border-radius:18px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.88);box-shadow:0 12px 30px rgba(2,6,23,.045);padding:16px;min-height:132px}
+.lockedFeatureTop{display:flex;align-items:center;gap:10px}
+.lockedMiniIcon{width:28px;height:28px;border-radius:999px;border:1px solid rgba(15,23,42,.10);background:rgba(241,245,249,.84);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto}
+.lockedFeatureTitle{font-size:15px;line-height:1.25;font-weight:970;color:rgba(15,23,42,.90)}
+.lockedFeatureText{margin-top:10px;font-size:13px;line-height:1.48;font-weight:760;color:rgba(15,23,42,.58)}
+.emailPauseLink{align-self:flex-start;background:transparent;border:none;color:rgba(100,116,139,.95);padding:6px 2px;font-size:13px;font-weight:850;cursor:pointer;text-decoration:none}
+.emailPauseLink:hover{color:rgba(15,23,42,.92);text-decoration:underline}
+@media(max-width:900px){.lockedFeatureGrid{grid-template-columns:1fr}.lockedScaleHero{grid-template-columns:1fr}.lockedScaleTitle{font-size:23px}}
 
 /* Job comparison formatting fix */
 .comparisonPanel{overflow:hidden;border-color:rgba(34,211,238,.14);box-shadow:0 18px 58px rgba(2,6,23,.075)}
