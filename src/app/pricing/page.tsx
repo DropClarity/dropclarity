@@ -49,10 +49,10 @@ const pricing = [
   featured: false,
   features: [
     "Everything in Core",
-    "Identify exactly where you're losing money across jobs",
+    "Identify where you're losing money",
     "Recoverable profit identified automatically",
-    "Real-time high-risk job alerts (email + dashboard)",
-    "Priority action items (what to fix next)",
+    "Real-time high-risk job alerts",
+    "Priority actions (what to fix next)",
     "Advanced job benchmarking",
     "Team visibility",
   ],
