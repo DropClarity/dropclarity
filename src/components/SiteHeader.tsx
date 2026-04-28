@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useClerk, useUser } from "@clerk/nextjs";
@@ -23,9 +24,7 @@ const PLAN_LABELS: Record<VisiblePlan, string> = {
 function normalizePlan(rawPlan: unknown): VisiblePlan {
   const plan = String(rawPlan || "free").toLowerCase().trim();
 
-  // Legacy support:
-  // Your old "pro" plan is now the new "core" plan.
-  // This keeps existing metadata/Stripe users from showing the wrong label.
+  // Legacy support: old "pro" plan now maps to "core".
   if (plan === "pro" || plan === "core") return "core";
   if (plan === "scale") return "scale";
 
@@ -101,7 +100,13 @@ function PlanBadge({ plan }: { plan: VisiblePlan }) {
   );
 }
 
-function AuthButtons({ fullWidth = false }: { fullWidth?: boolean }) {
+function AuthButtons({
+  fullWidth = false,
+  onAction,
+}: {
+  fullWidth?: boolean;
+  onAction?: () => void;
+}) {
   const { openSignIn, openSignUp } = useClerk();
 
   return (
@@ -112,7 +117,10 @@ function AuthButtons({ fullWidth = false }: { fullWidth?: boolean }) {
     >
       <button
         type="button"
-        onClick={() => openSignIn()}
+        onClick={() => {
+          onAction?.();
+          openSignIn();
+        }}
         className={
           fullWidth
             ? "w-full rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 shadow-sm"
@@ -124,7 +132,10 @@ function AuthButtons({ fullWidth = false }: { fullWidth?: boolean }) {
 
       <button
         type="button"
-        onClick={() => openSignUp()}
+        onClick={() => {
+          onAction?.();
+          openSignUp();
+        }}
         className={
           fullWidth
             ? "w-full rounded-full bg-slate-900 px-5 py-3 text-sm font-black text-white shadow"
@@ -140,9 +151,11 @@ function AuthButtons({ fullWidth = false }: { fullWidth?: boolean }) {
 function NavLinks({
   pathname,
   mobile = false,
+  onNavigate,
 }: {
   pathname: string;
   mobile?: boolean;
+  onNavigate?: () => void;
 }) {
   return (
     <>
@@ -154,6 +167,7 @@ function NavLinks({
           <Link
             key={item.href}
             href={item.href}
+            onClick={onNavigate}
             className={
               mobile
                 ? isActive
@@ -273,66 +287,79 @@ function MobileHeader({
   isLoaded: boolean;
   isSignedIn: boolean | undefined;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <div className="flex h-full items-center justify-between sm:hidden">
-      <Link href="/" className="flex items-center">
+      <Link href="/" className="flex items-center" onClick={closeMenu}>
         <img src="/logo.svg" alt="DropClarity" className="h-8 w-auto" />
       </Link>
 
-      <details className="group relative">
-        <summary className="flex cursor-pointer list-none items-center justify-center rounded-xl border border-slate-300 bg-white p-2.5 shadow-sm [&::-webkit-details-marker]:hidden">
+      <div className="relative">
+        <button
+          type="button"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+          className="flex cursor-pointer list-none items-center justify-center rounded-xl border border-slate-300 bg-white p-2.5 shadow-sm"
+        >
           <div className="flex flex-col gap-[4px]">
-            <span className="block h-[2px] w-5 rounded-full bg-slate-900 transition group-open:translate-y-[6px] group-open:rotate-45" />
-            <span className="block h-[2px] w-5 rounded-full bg-slate-900 transition group-open:opacity-0" />
-            <span className="block h-[2px] w-5 rounded-full bg-slate-900 transition group-open:-translate-y-[6px] group-open:-rotate-45" />
+            <span
+              className={`block h-[2px] w-5 rounded-full bg-slate-900 transition ${
+                menuOpen ? "translate-y-[6px] rotate-45" : ""
+              }`}
+            />
+            <span
+              className={`block h-[2px] w-5 rounded-full bg-slate-900 transition ${
+                menuOpen ? "opacity-0" : ""
+              }`}
+            />
+            <span
+              className={`block h-[2px] w-5 rounded-full bg-slate-900 transition ${
+                menuOpen ? "-translate-y-[6px] -rotate-45" : ""
+              }`}
+            />
           </div>
-        </summary>
+        </button>
 
-        <div className="fixed left-4 right-4 top-[104px] z-[10000] max-h-[calc(100vh-128px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
-          <div className="flex flex-col gap-1">
-            {!isLoaded || !isSignedIn ? (
-              <div className="mb-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                <div className="text-sm font-black text-slate-950">
-                  Welcome to DropClarity
-                </div>
-                <div className="mt-1 text-xs font-bold leading-relaxed text-slate-500">
-                  Log in or create an account to access uploads, dashboard,
-                  billing, and saved job history.
-                </div>
-
-                <div className="mt-3">
-                  <AuthButtons fullWidth />
-                </div>
-              </div>
-            ) : (
-              <div className="mb-3 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                <AccountButton />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-black text-slate-950">
-                    My account
+        {menuOpen ? (
+          <div className="fixed left-4 right-4 top-[104px] z-[10000] max-h-[calc(100vh-128px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
+            <div className="flex flex-col gap-1">
+              {!isLoaded || !isSignedIn ? (
+                <div className="mb-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="text-sm font-black text-slate-950">
+                    Welcome to DropClarity
                   </div>
-                  <div className="truncate text-xs font-bold text-slate-400">
-                    Dashboard ready
+                  <div className="mt-1 text-xs font-bold leading-relaxed text-slate-500">
+                    Log in or create an account to access uploads, dashboard,
+                    billing, and saved job history.
+                  </div>
+
+                  <div className="mt-3">
+                    <AuthButtons fullWidth onAction={closeMenu} />
                   </div>
                 </div>
-                <PlanBadge plan={plan} />
-              </div>
-            )}
+              ) : (
+                <div className="mb-3 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <AccountButton />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-black text-slate-950">
+                      My account
+                    </div>
+                    <div className="truncate text-xs font-bold text-slate-400">
+                      Tap your profile photo to manage account or billing.
+                    </div>
+                  </div>
+                  <PlanBadge plan={plan} />
+                </div>
+              )}
 
-            <NavLinks pathname={pathname} mobile />
-
-            {isLoaded && isSignedIn ? (
-              <button
-                type="button"
-                onClick={openBillingPortal}
-                className="rounded-xl px-4 py-3 text-left font-bold text-slate-900 hover:bg-slate-50"
-              >
-                💳 Manage Billing
-              </button>
-            ) : null}
+              <NavLinks pathname={pathname} mobile onNavigate={closeMenu} />
+            </div>
           </div>
-        </div>
-      </details>
+        ) : null}
+      </div>
     </div>
   );
 }
