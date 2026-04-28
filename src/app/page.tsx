@@ -67,7 +67,7 @@ export default function Home() {
     "Everything in Core",
     "Priority action items (what to fix next)",
     "Real-time high risk job alerts (email + dashboard)",
-    "Profit leak detection before jobs go negative",
+    "Early profit leak detection before jobs turn unprofitable",
     "Recoverable profit identified automatically",
     "Advanced job benchmarking",
     "Team visibility",
