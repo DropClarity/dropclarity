@@ -50,9 +50,9 @@ const pricing = [
   features: [
     "Everything in Core",
     "Priority action items (what to fix next)",
-    "🚨 Real-time high-risk job alerts (email + dashboard)",
-    "📉 Profit leak detection before jobs go negative",
-    "💰 Recoverable profit identified automatically",
+    "Real-time high risk job alerts (email + dashboard)",
+    "Profit leak detection before jobs go negative",
+    "Recoverable profit identified automatically",
     "Advanced job benchmarking",
     "Team visibility",
   ],
