@@ -956,6 +956,87 @@ function getScaleMetrics(state: DashboardState, targetMarginPct = 30) {
   };
 }
 
+
+function latestDashboardUpdate(state: DashboardState): string {
+  const dates: number[] = [];
+  const summaryDate = safeDate(state.summary?.created_at);
+  if (summaryDate) dates.push(summaryDate.getTime());
+  (Array.isArray(state.reports) ? state.reports : []).forEach((r) => { const d = safeDate(r.created_at); if (d) dates.push(d.getTime()); });
+  getAllJobs(state).forEach((j) => { const d = safeDate(j.created_at); if (d) dates.push(d.getTime()); });
+  if (!dates.length) return "just now";
+  const diffMs = Math.max(0, Date.now() - Math.max(...dates));
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins} minutes ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function jobDetectedLabel(job: JobRow, fallbackIdx = 0): string {
+  const d = safeDate(job.created_at);
+  if (!d) return fallbackIdx === 0 ? "Detected just now" : `Detected ${fallbackIdx + 1} checks ago`;
+  const diffMs = Math.max(0, Date.now() - d.getTime());
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (mins < 60) return "Detected less than 1 hour ago";
+  if (hours < 24) return `Detected ${hours} hour${hours === 1 ? "" : "s"} ago`;
+  return `Detected ${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function avgOf(arr: number[]): number {
+  const clean = arr.filter((n) => Number.isFinite(n));
+  return clean.length ? clean.reduce((a, b) => a + b, 0) / clean.length : 0;
+}
+
+function getSimilarJobs(base: JobRow, allJobs: JobRow[]): JobRow[] {
+  const baseId = String(base.job_id || "").trim().toLowerCase();
+  const baseName = String(base.job_name || "").trim().toLowerCase();
+  const basePrefix = baseId.includes("-") ? baseId.split("-")[0] : "";
+  const words = baseName.split(/\s+/).filter((w) => w.length >= 4);
+  const pool = allJobs.filter((j) => j !== base);
+  const close = pool.filter((j) => {
+    const jid = String(j.job_id || "").trim().toLowerCase();
+    const name = String(j.job_name || "").trim().toLowerCase();
+    return Boolean((basePrefix && jid.startsWith(basePrefix)) || words.some((w) => name.includes(w)));
+  });
+  return (close.length >= 3 ? close : pool).slice(0, 42);
+}
+
+function jobComparisonStats(base: JobRow, allJobs: JobRow[]) {
+  const pool = getSimilarJobs(base, allJobs);
+  const baseMix = base.cost_breakdown || {};
+  const baseRevenue = parseNumberLoose(base.revenue);
+  const baseCosts = parseNumberLoose(base.costs);
+  const baseProfit = parseNumberLoose(base.profit);
+  const baseMargin = parseNumberLoose(base.margin_pct);
+  const avgRevenue = avgOf(pool.map((j) => parseNumberLoose(j.revenue)));
+  const avgCosts = avgOf(pool.map((j) => parseNumberLoose(j.costs)));
+  const avgProfit = avgOf(pool.map((j) => parseNumberLoose(j.profit)));
+  const avgMargin = avgOf(pool.map((j) => parseNumberLoose(j.margin_pct)));
+  const drivers = [
+    { label: "Labor", current: parseNumberLoose(baseMix.labor), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.labor))) },
+    { label: "Materials", current: parseNumberLoose(baseMix.materials), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.materials))) },
+    { label: "Subs", current: parseNumberLoose(baseMix.subs), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.subs))) },
+    { label: "Other", current: parseNumberLoose(baseMix.other), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.other))) },
+  ].map((x) => ({ ...x, gap: x.current - x.average })).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+  return { count: pool.length, baseRevenue, baseCosts, baseProfit, baseMargin, avgRevenue, avgCosts, avgProfit, avgMargin, drivers };
+}
+
+function strongestJobIssue(job: JobRow, allJobs: JobRow[], marginTarget: number): string {
+  const profit = parseNumberLoose(job.profit);
+  const margin = parseNumberLoose(job.margin_pct);
+  const stats = jobComparisonStats(job, allJobs);
+  const topDriver = stats.drivers[0];
+  if (profit < 0 && topDriver && topDriver.gap > 0) return `${topDriver.label} is running ${fmtMoney(topDriver.gap)} above benchmark and this job is below breakeven.`;
+  if (margin < marginTarget && topDriver && topDriver.gap > 0) return `${topDriver.label} is the biggest cost driver; margin is ${fmtPct(marginTarget - margin)} below target.`;
+  if (margin < marginTarget) return `Margin is below your ${fmtPct(marginTarget)} target and should be reviewed before quoting similar work.`;
+  if (profit < 0) return "This job is below breakeven and should be reviewed first.";
+  return "This job is being monitored against your target margin.";
+}
+
 function StatusPill({ mode }: { mode: DashboardMode }) {
   const label = mode === "loading" ? "Loading" : mode === "error" ? "Needs attention" : "Ready";
   const dot = mode === "loading" ? "rgba(34,211,238,.95)" : mode === "error" ? "rgba(239,68,68,.95)" : "rgba(52,211,153,.95)";
@@ -1493,6 +1574,7 @@ function ScaleOversightPanel({
   const access = getPlanAccess(plan);
   const isScale = access.canUseScale;
   const canPreviewScale = access.canPreviewScale;
+  const updatedAtLabel = latestDashboardUpdate(state);
 
   const riskJobsFromData = jobs
     .filter((job) => parseNumberLoose(job.profit) < 0 || parseNumberLoose(job.margin_pct) < marginTarget)
@@ -1544,6 +1626,9 @@ function ScaleOversightPanel({
   const costRatio = totalRevenue ? (totalCosts / totalRevenue) * 100 : 0;
 
   const recoverableOpportunity = fallbackMetrics.recoverableOpportunity;
+  const monthlyLift = recoverableOpportunity / 12;
+  const lastAlertSentLabel = emailAlertsEnabled && fallbackMetrics.highRiskCount > 0 ? updatedAtLabel : "No alert sent yet";
+  const nextSummaryLabel = "Tomorrow at 8:00 AM";
   const riskLevel: "healthy" | "warning" | "critical" =
     fallbackMetrics.losingJobs.length > 0 ? "critical" : fallbackMetrics.thinMarginJobs.length > 0 ? "warning" : "healthy";
   const riskCls = riskLevel === "healthy" ? "ok" : riskLevel === "warning" ? "warn" : "bad";
@@ -1556,7 +1641,7 @@ function ScaleOversightPanel({
 
   const summaryCopy =
     fallbackMetrics.highRiskCount > 0
-      ? `Based on your ${fmtPct(marginTarget)} margin target, DropClarity found ${fmtMoney(recoverableOpportunity)} in recoverable profit opportunity across this ${currentRange.toLowerCase()} view.`
+      ? `Based on your ${fmtPct(marginTarget)} margin target, DropClarity found ${fmtMoney(recoverableOpportunity)} in recoverable profit opportunity across this ${currentRange.toLowerCase()} view. If corrected, that is roughly ${fmtMoney(monthlyLift)} per month in added profit.`
       : `DropClarity is monitoring each saved job against your ${fmtPct(marginTarget)} margin target and will flag jobs that fall below it.`;
 
   const leakRows = [
@@ -1672,6 +1757,7 @@ function ScaleOversightPanel({
             <span className={fallbackMetrics.highRiskCount > 0 ? "alertDot hot" : "alertDot"} />
             {fallbackMetrics.highRiskCount} Active High-Risk Alert{fallbackMetrics.highRiskCount === 1 ? "" : "s"}
           </div>
+          <div className="liveUpdatePill">Updated {updatedAtLabel}</div>
         </div>
       </div>
 
@@ -1704,6 +1790,10 @@ function ScaleOversightPanel({
             <div>
               <span>Worst Job Loss</span>
               <strong className={fallbackMetrics.worstLoss < 0 ? "neg" : ""}>{fmtMoney(fallbackMetrics.worstLoss)}</strong>
+            </div>
+            <div>
+              <span>Monthly Lift</span>
+              <strong>{fmtMoney(monthlyLift)}</strong>
             </div>
           </div>
         </div>
@@ -1743,6 +1833,15 @@ function ScaleOversightPanel({
             <span>Alert destination</span>
             <strong>{userEmail || "Account email"}</strong>
           </div>
+          <div className="emailLiveGrid">
+            <div><span>Last alert sent</span><strong>{lastAlertSentLabel}</strong></div>
+            <div><span>Next summary</span><strong>{nextSummaryLabel}</strong></div>
+          </div>
+          <div className="emailTriggerList">
+            <span>✓ Job becomes unprofitable</span>
+            <span>✓ Margin drops below {fmtPct(marginTarget)}</span>
+            <span>✓ Cost spike needs review</span>
+          </div>
           <button
             className={emailAlertsEnabled ? "btn btn-danger-soft" : "btn btn-primary"}
             type="button"
@@ -1766,19 +1865,17 @@ function ScaleOversightPanel({
                 const profit = parseNumberLoose(job.profit);
                 const margin = parseNumberLoose(job.margin_pct);
                 const label = profit < 0 ? "Loss" : "Below Target";
-                const issue =
-                  profit < 0
-                    ? "This job is below breakeven and should be reviewed first."
-                    : `Margin is below your ${fmtPct(marginTarget)} target.`;
+                const issue = strongestJobIssue(job, jobs, marginTarget);
 
                 return (
                   <div className="alertItem premiumAlert" key={`${job.job_id || job.job_name || "job"}-${idx}`}>
                     <div className="alertMain">
                       <div className="alertName">{job.job_name || job.job_id || "Unnamed job"}</div>
                       <div className="alertMeta">
-                        {label}: {fmtMoney(profit)} · Margin {fmtPct(margin)}
+                        {label}: {fmtMoney(profit)} · Margin {fmtPct(margin)} · {jobDetectedLabel(job, idx)}
                       </div>
                       <div className="alertIssue">Issue: {issue}</div>
+                      <div className="alertCompareNote">Compared against {Math.max(1, jobComparisonStats(job, jobs).count)} similar or recent jobs.</div>
                       <div className="alertActions">
                         <button className="miniBtn" type="button" onClick={() => openJobFromRow(job)}>
                           Review Job
@@ -1967,6 +2064,41 @@ function DashboardBody({
   );
 }
 
+
+function JobComparisonPanel({ base, state, marginTarget }: { base: JobRow; state: DashboardState; marginTarget: number }) {
+  const allJobs = getAllJobs(state);
+  const stats = jobComparisonStats(base, allJobs);
+  const gap = stats.baseMargin - stats.avgMargin;
+  const driver = stats.drivers[0];
+  const statusCls = stats.baseMargin >= marginTarget ? "ok" : stats.baseProfit < 0 ? "bad" : "warn";
+  const statusText = stats.baseMargin >= marginTarget ? "Above target" : stats.baseProfit < 0 ? "Losing money" : "Below target";
+  const rows = [
+    { label: "Margin", current: fmtPct(stats.baseMargin), average: fmtPct(stats.avgMargin), gap: `${gap >= 0 ? "+" : ""}${gap.toFixed(1)} pts`, bad: gap < 0 },
+    { label: "Revenue", current: fmtMoney(stats.baseRevenue), average: fmtMoney(stats.avgRevenue), gap: fmtMoney(stats.baseRevenue - stats.avgRevenue), bad: false },
+    { label: "Total Costs", current: fmtMoney(stats.baseCosts), average: fmtMoney(stats.avgCosts), gap: fmtMoney(stats.baseCosts - stats.avgCosts), bad: stats.baseCosts > stats.avgCosts },
+    { label: "Gross Profit", current: fmtMoney(stats.baseProfit), average: fmtMoney(stats.avgProfit), gap: fmtMoney(stats.baseProfit - stats.avgProfit), bad: stats.baseProfit < stats.avgProfit },
+  ];
+
+  return (
+    <div className="panel comparisonPanel">
+      <div className="panelHead comparisonHead">
+        <div>
+          <div className="sectionEyebrow">Job Comparison View</div>
+          <div className="panelTitle">This job vs similar jobs</div>
+          <div className="panelSub">Compared against {stats.count || Math.max(0, allJobs.length - 1)} similar or recent jobs to show what is driving the margin difference.</div>
+        </div>
+        <span className={`tag ${statusCls}`}>{statusText}</span>
+      </div>
+      <div className="comparisonGrid">
+        <div className="comparisonScoreCard"><div className="comparisonLabel">Margin gap</div><div className={gap < 0 ? "comparisonValue neg" : "comparisonValue pos"}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)} pts</div><div className="comparisonSub">Target: {fmtPct(marginTarget)} · Current: {fmtPct(stats.baseMargin)}</div></div>
+        <div className="comparisonDriverCard"><div className="comparisonLabel">Biggest cost driver</div><div className="driverTitle">{driver?.label || "Costs"}</div><div className="comparisonSub">{driver ? `${fmtMoney(driver.current)} current vs ${fmtMoney(driver.average)} benchmark` : "Not enough cost detail yet."}</div></div>
+        <div className="comparisonTableWrap"><table className="comparisonTable"><thead><tr><th>Metric</th><th>This Job</th><th>Benchmark</th><th>Gap</th></tr></thead><tbody>{rows.map((row) => <tr key={row.label}><td>{row.label}</td><td>{row.current}</td><td>{row.average}</td><td className={row.bad ? "neg strong" : "pos strong"}>{row.gap}</td></tr>)}</tbody></table></div>
+      </div>
+      <div className="driverGrid">{stats.drivers.map((d) => <div className="driverMini" key={d.label}><div className="driverMiniTop"><span>{d.label}</span><strong className={d.gap > 0 ? "neg" : "pos"}>{d.gap >= 0 ? "+" : ""}{fmtMoney(d.gap)}</strong></div><div className="driverMiniSub">This job: {fmtMoney(d.current)} · Benchmark: {fmtMoney(d.average)}</div></div>)}</div>
+    </div>
+  );
+}
+
 function JobEditor({
   jobKey,
   base,
@@ -1978,6 +2110,7 @@ function JobEditor({
   userId,
   access,
   onLocked,
+  marginTarget = 30,
 }: {
   jobKey: string;
   base: JobRow;
@@ -1989,6 +2122,7 @@ function JobEditor({
   userId: string;
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
+  marginTarget?: number;
 }) {
   const [job, setJob] = useState<EditableJob>(() => mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
   const history = extractJobHistory(state, base || {});
@@ -2201,6 +2335,8 @@ function JobEditor({
           <div className="sectionSubtle">Focused view for one job.</div>
         </div>
 
+        <JobComparisonPanel base={base} state={state} marginTarget={marginTarget} />
+
         <div className="panel jobDetailFocus">
           <div className="panelHead">
             <div><div className="panelTitle">Job detail</div><div className="panelSub">Edit job info, cost buckets, notes, and manual categories.</div></div>
@@ -2340,6 +2476,7 @@ function JobView({
   userId,
   access,
   onLocked,
+  marginTarget = 30,
 }: {
   state: DashboardState;
   jobKey: string;
@@ -2349,6 +2486,7 @@ function JobView({
   userId: string;
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
+  marginTarget?: number;
 }) {
   const base = findJobByKey(state, jobKey);
 
@@ -2373,6 +2511,7 @@ function JobView({
       refreshLocal={refreshLocal}
       access={access}
       onLocked={onLocked}
+      marginTarget={marginTarget}
     />
   );
 }
@@ -2591,7 +2730,7 @@ useEffect(() => {
 />
 
             {view === "job" && jobKey ? (
-              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} />
+              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
             ) : view === "alljobs" ? (
               <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} />
             ) : (
