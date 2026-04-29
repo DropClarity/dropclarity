@@ -89,7 +89,7 @@ export default function PricingPage() {
             Premium job profitability intelligence
           </div>
 
-          <h1 className="mx-auto max-w-4xl text-[31px] font-black leading-[1.04] tracking-[-0.045em] text-slate-950 sm:text-[40px] md:text-[46px] lg:text-[52px]">
+          <h1 className="mx-auto max-w-5xl text-[30px] font-black leading-[1.06] tracking-[-0.04em] text-slate-950 sm:text-[38px] md:text-[44px] lg:text-[50px]">
             Pricing built around finding profit leaks before they keep costing you.
           </h1>
 
