@@ -84,7 +84,7 @@ export default function FAQPage() {
             Frequently asked questions
           </div>
 
-          <h1 className="mx-auto max-w-xl text-4xl font-black leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[56px]">
+          <h1 className="mx-auto max-w-4xl text-4xl font-black leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[56px]">
             Questions before you upload?
           </h1>
 
