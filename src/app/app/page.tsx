@@ -5,7 +5,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 
 const API_BASE = "https://dropclarity.com/api";
 
-type FileRole = "" | "revenue" | "cost";
+type FileRole = "" | "revenue" | "cost" | "combined";
 
 type QueueItem = {
   id: string;
@@ -22,7 +22,7 @@ type QueueItem = {
   };
   job_id: string;
   role: FileRole;
-  suggestedRole?: "revenue" | "cost" | "unknown";
+  suggestedRole?: "revenue" | "cost" | "combined" | "unknown";
 };
 
 type AssignmentError = {
@@ -153,8 +153,9 @@ function shortLabel(s: string) {
   return s.length <= 10 ? s : `${s.slice(0, 10)}…`;
 }
 
-function inferRoleFromName(name: string): "revenue" | "cost" | "unknown" {
+function inferRoleFromName(name: string): "revenue" | "cost" | "combined" | "unknown" {
   const s = name.toLowerCase();
+  if (s.includes("combined") || s.includes("job summary") || s.includes("job_summary") || s.includes("job-cost") || s.includes("job cost")) return "combined";
   if (s.includes("invoice") || s.includes("revenue") || s.includes("sales")) return "revenue";
   if (s.includes("bill") || s.includes("vendor") || s.includes("expense") || s.includes("cost") || s.includes("receipt")) return "cost";
   return "unknown";
@@ -634,7 +635,7 @@ export default function AppPage() {
     uploadedItems.forEach((it) => {
       const error: AssignmentError = {};
       if (!it.job_id.trim()) error.job_id = true;
-      if (it.role !== "revenue" && it.role !== "cost") error.role = true;
+      if (it.role !== "revenue" && it.role !== "cost" && it.role !== "combined") error.role = true;
       if (error.job_id || error.role) nextErrors[it.id] = error;
     });
 
@@ -759,7 +760,7 @@ export default function AppPage() {
         const current = { ...(next[id] || {}) };
 
         if ("job_id" in patch && String(patch.job_id || "").trim()) current.job_id = false;
-        if ("role" in patch && (patch.role === "revenue" || patch.role === "cost")) current.role = false;
+        if ("role" in patch && (patch.role === "revenue" || patch.role === "cost" || patch.role === "combined")) current.role = false;
 
         if (!current.job_id && !current.role) delete next[id];
         else next[id] = current;
@@ -1243,10 +1244,12 @@ export default function AppPage() {
                         ? "bg-emerald-50 text-emerald-700"
                         : it.role === "cost"
                         ? "bg-violet-50 text-violet-700"
+                        : it.role === "combined"
+                        ? "bg-cyan-50 text-cyan-700"
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {it.role ? it.role : "type needed"}
+                    {it.role === "combined" ? "Combined Invoice" : it.role ? it.role : "type needed"}
                   </span>
                 </div>
 
@@ -1293,6 +1296,7 @@ export default function AppPage() {
                       <option value="">Select type</option>
                       <option value="revenue">Revenue</option>
                       <option value="cost">Cost</option>
+                      <option value="combined">Combined Invoice</option>
                     </select>
 
                     {roleMissing && (
@@ -1310,7 +1314,7 @@ export default function AppPage() {
 
       <div className="flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
         <div className="text-xs font-bold leading-5 text-slate-500">
-          Revenue = money earned. Cost = bills, receipts, expenses.
+          Revenue = money earned. Cost = bills, receipts, expenses. Combined Invoice = one file that includes both revenue and costs.
         </div>
 
         <div className="flex justify-end gap-3">
