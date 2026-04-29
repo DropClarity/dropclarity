@@ -813,14 +813,14 @@ export default function AppPage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-white">
-      <section className="relative z-0 overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_8%,#f8fbff_24%,#ffffff_100%)] px-3 py-12 sm:px-4 sm:py-16">
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-[-12%] top-[40px] h-[360px] w-[520px] rounded-full bg-violet-200/35 blur-[90px]" />
-          <div className="absolute right-[-10%] top-[20px] h-[360px] w-[560px] rounded-full bg-cyan-200/40 blur-[95px]" />
-          <div className="absolute left-[35%] top-[260px] h-[320px] w-[520px] rounded-full bg-emerald-100/45 blur-[100px]" />
+      <section className="relative z-0 overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_18%,#f8fbff_52%,#ffffff_100%)] px-4 py-10 sm:px-5 sm:py-14 lg:px-6 lg:py-16">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute left-[-35%] top-[40px] h-[260px] w-[340px] rounded-full bg-violet-100/35 blur-[82px] sm:left-[-12%] sm:h-[360px] sm:w-[520px] sm:bg-violet-200/35 sm:blur-[90px]" />
+          <div className="absolute right-[-42%] top-[55px] h-[280px] w-[360px] rounded-full bg-cyan-100/35 blur-[86px] sm:right-[-10%] sm:top-[20px] sm:h-[360px] sm:w-[560px] sm:bg-cyan-200/40 sm:blur-[95px]" />
+          <div className="absolute left-[20%] top-[320px] h-[220px] w-[320px] rounded-full bg-emerald-50/45 blur-[88px] sm:left-[35%] sm:top-[260px] sm:h-[320px] sm:w-[520px] sm:bg-emerald-100/45 sm:blur-[100px]" />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1920px] px-1 sm:px-2">
+        <div className="relative z-10 mx-auto w-full max-w-[1920px] px-0 sm:px-2">
           <input
             ref={fileRef}
             type="file"
@@ -895,8 +895,8 @@ export default function AppPage() {
             </button>
           </div>
 
-          <div className="relative z-10 overflow-hidden rounded-[22px] border border-slate-100 bg-white/80 shadow-xl shadow-slate-200/70 backdrop-blur">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-white/80 p-5">
+          <div className="relative z-10 overflow-hidden rounded-[22px] border border-slate-100 bg-white/90 shadow-xl shadow-slate-200/70 backdrop-blur">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-white/90 p-5">
               <div>
                 <h2 className="font-black tracking-tight text-slate-950">Upload Queue</h2>
                 <p className="mt-1 text-sm font-semibold text-slate-500">Add multiple files — each uploads separately.</p>
@@ -936,7 +936,7 @@ export default function AppPage() {
                 e.preventDefault();
                 addFiles(e.dataTransfer.files);
               }}
-              className="m-5 cursor-pointer touch-manipulation rounded-3xl border border-dashed border-slate-300 bg-white/70 p-5"
+              className="m-5 cursor-pointer touch-manipulation rounded-3xl border border-dashed border-slate-300 bg-white/90 p-5"
             >
               <div className="flex items-center gap-4">
                 <UploadGradientIcon />
@@ -1012,7 +1012,7 @@ export default function AppPage() {
 
           {result && (
             <div className="mt-5 overflow-hidden rounded-[22px] border border-slate-100 bg-white/80 text-[15px] leading-6 shadow-xl shadow-slate-200/70 backdrop-blur lg:text-base">
-              <div className="flex flex-col justify-between gap-4 border-b border-slate-100 bg-white/80 p-5 sm:flex-row sm:items-start">
+              <div className="flex flex-col justify-between gap-4 border-b border-slate-100 bg-white/90 p-5 sm:flex-row sm:items-start">
                 <div>
                   <h2 className="text-xl font-black tracking-tight text-slate-950 lg:text-2xl">Results</h2>
                   <p className="mt-1 text-sm font-semibold leading-6 text-slate-500 lg:text-base">KPIs + smart insights + job-level charts + actions.</p>
