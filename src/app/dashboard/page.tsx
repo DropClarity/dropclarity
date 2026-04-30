@@ -611,6 +611,87 @@ function filterDeletedReports(reports: ReportRow[], deletedKeys: string[]): Repo
   return (Array.isArray(reports) ? reports : []).filter((r, idx) => !blocked.has(reportDeleteKey(r, idx)));
 }
 
+function extractJobsFromReports(reports: ReportRow[]): JobRow[] {
+  return (Array.isArray(reports) ? reports : []).flatMap((report) => {
+    const rows = report.jobs || report.job_rows || report.job_details || [];
+    return (Array.isArray(rows) ? rows : []).map((job) => ({
+      ...job,
+      report_id: job.report_id || report.id || report.analysis_id,
+      period_label: job.period_label || report.period_label,
+      created_at: job.created_at || report.created_at,
+    }));
+  });
+}
+
+function rebuildDashboardFromVisibleReports(state: DashboardState, visibleReports: ReportRow[]): DashboardState {
+  const jobs = extractJobsFromReports(visibleReports);
+  const fallbackJobs = getAllJobs(state);
+  const reportKeys = new Set(
+    visibleReports.flatMap((r) => [String(r.id || ""), String(r.analysis_id || "")]).filter(Boolean)
+  );
+
+  const visibleJobs = jobs.length
+    ? jobs
+    : fallbackJobs.filter((job) => {
+        const reportId = String(job.report_id || "");
+        return !reportId || reportKeys.has(reportId);
+      });
+
+  const revenue = visibleJobs.length
+    ? visibleJobs.reduce((sum, job) => sum + parseNumberLoose(job.revenue), 0)
+    : visibleReports.reduce((sum, report) => sum + parseNumberLoose(report.revenue), 0);
+
+  const costs = visibleJobs.length
+    ? visibleJobs.reduce((sum, job) => sum + parseNumberLoose(job.costs), 0)
+    : visibleReports.reduce((sum, report) => sum + parseNumberLoose(report.costs), 0);
+
+  const netProfit = visibleJobs.length
+    ? visibleJobs.reduce((sum, job) => sum + parseNumberLoose(job.profit), 0)
+    : visibleReports.reduce((sum, report) => sum + parseNumberLoose(report.net_profit), 0);
+
+  const marginPct = revenue ? (netProfit / revenue) * 100 : 0;
+  const losingJobsCount = visibleJobs.filter((job) => parseNumberLoose(job.profit) < 0).length;
+
+  const costMix = visibleJobs.reduce(
+    (mix, job) => {
+      const cb = job.cost_breakdown || {};
+      mix.labor += parseNumberLoose(cb.labor);
+      mix.materials += parseNumberLoose(cb.materials);
+      mix.subs += parseNumberLoose(cb.subs);
+      mix.other += parseNumberLoose(cb.other);
+      return mix;
+    },
+    { labor: 0, materials: 0, subs: 0, other: 0 }
+  );
+
+  const latestReport = visibleReports
+    .slice()
+    .sort((a, b) => new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime())[0];
+
+  return {
+    ...state,
+    reports: visibleReports,
+    all_jobs: visibleJobs,
+    lowest_profit_jobs: visibleJobs.slice().sort((a, b) => parseNumberLoose(a.profit) - parseNumberLoose(b.profit)),
+    jobs_losing_money: visibleJobs.filter((job) => parseNumberLoose(job.profit) < 0),
+    cost_mix: costMix,
+    mix: costMix,
+    summary: {
+      ...(state.summary || {}),
+      id: latestReport?.id || latestReport?.analysis_id || state.summary?.id || null,
+      period_label: latestReport?.period_label || state.summary?.period_label,
+      created_at: latestReport?.created_at || state.summary?.created_at || null,
+      revenue,
+      costs,
+      net_profit: netProfit,
+      margin_pct: marginPct,
+      jobs_count: visibleJobs.length,
+      losing_jobs_count: losingJobsCount,
+      reports_count: visibleReports.length,
+    },
+  };
+}
+
 function editKey(userId: string): string {
   return `dc_job_edits_${userId}`;
 }
@@ -1689,7 +1770,7 @@ function PastReports({ reports, onDeleteReport }: { reports: ReportRow[]; onDele
       <div className="panelHead">
         <div>
           <div className="panelTitle">Past Reports</div>
-          <div className="panelSub">Saved snapshots from prior uploads.</div>
+          <div className="panelSub">Saved upload snapshots. Delete an upload if it was submitted in error; dashboard totals will adjust.</div>
         </div>
       </div>
 
@@ -1707,7 +1788,7 @@ function PastReports({ reports, onDeleteReport }: { reports: ReportRow[]; onDele
                     </div>
                     <div className="reportActions">
                       <div className={p < 0 ? "neg strong" : "pos strong"}>{fmtMoney(p)}</div>
-                      <button className="deleteReportBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Hide this report from dashboard">×</button>
+                      <button className="deleteReportBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Delete this upload from dashboard totals">×</button>
                     </div>
                   </div>
                   <div className="itemMeta">Revenue: <b>{fmtMoney(r.revenue)}</b> • Costs: <b>{fmtMoney(r.costs)}</b> • Margin: <b>{fmtPct(r.margin_pct)}</b></div>
@@ -3042,13 +3123,25 @@ useEffect(() => {
     [state.reports, deletedReportKeys]
   );
 
-  const visibleState = useMemo(() => ({ ...state, reports }), [state, reports]);
+  const visibleState = useMemo(
+    () => rebuildDashboardFromVisibleReports(state, reports),
+    [state, reports]
+  );
 
   const handleDeleteReport = (report: ReportRow, idx: number) => {
+    const ok = window.confirm(
+      "Delete this upload from the dashboard view? This removes it from totals, charts, job logs, and past reports on this browser. Use Refresh to re-sync from the server if needed."
+    );
+
+    if (!ok) return;
+
     const key = reportDeleteKey(report, idx);
     const next = Array.from(new Set([...deletedReportKeys, key]));
     setDeletedReportKeys(next);
     writeDeletedReports(USER_ID, next);
+
+    setView("dashboard");
+    setJobKey("");
   };
 
   const openUpgradePrompt = (feature: string, requiredPlan: string) => {
