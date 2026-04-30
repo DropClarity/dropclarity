@@ -4333,17 +4333,16 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 
 /* Simpler margin target save button */
 .compactTargetSave {
-  background-color: #3B82F6 !important;
-  color: #ffffff !important;
-  border-color: #3B82F6 !important;
-  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18) !important;
+  background-color: #F1F5F9 !important;   /* soft slate */
+  color: #0F172A !important;              /* same as your other buttons/text */
+  border: 1px solid #E2E8F0 !important;   /* subtle border */
+  box-shadow: none !important;
   background-image: none !important;
 }
 
 .compactTargetSave:hover {
-  background-color: #2563EB !important;
-  border-color: #2563EB !important;
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22) !important;
+  background-color: #E2E8F0 !important;
+  border-color: #CBD5F5 !important;
 }
 
 @media(max-width:1100px){.insightImpact{max-width:52%}}
