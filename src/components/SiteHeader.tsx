@@ -9,7 +9,7 @@ type VisiblePlan = "free" | "core" | "scale";
 
 const navItems = [
   { label: "Home", href: "/" },
-  { label: "App", href: "/app" },
+  { label: "Analyze", href: "/app" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/faq" },
   { label: "Dashboard", href: "/dashboard" },
