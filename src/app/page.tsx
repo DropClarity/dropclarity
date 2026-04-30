@@ -198,11 +198,11 @@ export default function Home() {
             <div className="relative min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl shadow-blue-200/70">
               <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div>
-                  <div className="text-sm font-black text-slate-950">DropClarity Job Profitability</div>
-                  <div className="mt-1 text-xs font-bold text-slate-400">Latest upload • 24 jobs analyzed</div>
+                  <div className="text-sm font-black text-slate-950">Live Profit Intelligence</div>
+                  <div className="mt-1 text-xs font-bold text-slate-400">Latest upload • 24 jobs analyzed • Monitoring active</div>
                 </div>
                 <div className="w-fit rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 shadow-sm shadow-rose-100">
-                  ⚠ 5 Profit Leaks Detected
+                  ⚠ 5 High-Risk Jobs Detected
                 </div>
               </div>
 
@@ -225,8 +225,8 @@ export default function Home() {
 
                 <div className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
                   <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
-                    <div className="font-black text-slate-950">Profit by Job</div>
-                    <div className="mt-1 text-xs font-bold text-slate-400">Green = profitable, red = losing money</div>
+                    <div className="font-black text-slate-950">Job Profit Visualized</div>
+                    <div className="mt-1 text-xs font-bold text-slate-400">Shows which jobs are profitable, thin, or actively losing money</div>
 
                     <div className="mt-6 flex h-44 items-end justify-center gap-8 border-b border-slate-100 px-4 sm:h-48 sm:gap-12 sm:px-8">
                       <div className="flex min-w-0 flex-col items-center">
@@ -269,28 +269,28 @@ export default function Home() {
                   </div>
 
                   <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
-                    <div className="font-black text-slate-950">Smart Insights</div>
-                    <div className="mt-1 text-xs font-bold text-slate-400">Operator-ready recommendations</div>
+                    <div className="font-black text-slate-950">AI Profit Intelligence</div>
+                    <div className="mt-1 text-xs font-bold text-slate-400">Live alerts, benchmarks, and next-step actions</div>
 
                     <div className="mt-5 space-y-3">
                       <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100">
-                        <div className="text-sm font-black text-rose-700">5 jobs are leaking profit</div>
+                        <div className="text-sm font-black text-rose-700">5 jobs flagged as high-risk</div>
                         <div className="mt-1 text-xs font-bold leading-5 text-rose-700/80">
-                          Labor and material costs pushed several jobs below target margin.
+                          Margin dropped below target due to labor overages and material variance.
                         </div>
                       </div>
 
                       <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
-                        <div className="text-sm font-black text-amber-700">Pricing may be too low</div>
+                        <div className="text-sm font-black text-amber-700">Pricing below benchmark range</div>
                         <div className="mt-1 text-xs font-bold leading-5 text-amber-700/80">
-                          Similar jobs should be quoted higher before the next dispatch or install.
+                          Similar jobs are consistently closing at higher margins than this work.
                         </div>
                       </div>
 
                       <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-                        <div className="text-sm font-black text-violet-700">Recommended next step</div>
+                        <div className="text-sm font-black text-violet-700">Immediate action recommended</div>
                         <div className="mt-1 text-xs font-bold leading-5 text-violet-700/80">
-                          Review the bottom 5 jobs and adjust labor assumptions, materials markup, or service pricing.
+                          Review the bottom 5 jobs and adjust pricing, labor assumptions, and material markup before the next dispatch.
                         </div>
                       </div>
                     </div>
@@ -300,13 +300,13 @@ export default function Home() {
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
                   <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                      <div className="text-sm font-black">Operator summary</div>
+                      <div className="text-sm font-black">Profit control summary</div>
                       <div className="mt-1 text-sm font-semibold leading-6 text-white/70">
-                        24 jobs analyzed. 5 jobs need attention. Estimated recoverable margin opportunity: $14,800+.
+                        24 jobs analyzed. 5 high-risk jobs detected. $14,800+ in recoverable profit identified this week.
                       </div>
                     </div>
                     <div className="w-full rounded-full bg-white px-4 py-3 text-center text-xs font-black text-slate-950 md:w-fit">
-                      View Full Report
+                      Open Dashboard
                     </div>
                   </div>
                 </div>
