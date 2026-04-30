@@ -4296,21 +4296,4 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 @media(max-width:768px){.pageTitle{font-size:30px!important}.topbar{align-items:flex-start!important}.kpis{grid-template-columns:1fr 1fr!important}.heroBody{padding:16px!important}.reportsManageLink{align-self:flex-start}.statusRow .riskPill{width:auto!important;justify-content:center}}
 @media(max-width:480px){.pageTitle{font-size:28px!important}.pageSub{font-size:14px!important}.kpis{grid-template-columns:1fr!important}.heroTitle{font-size:24px!important}.reportsManageLink{padding:6px 0}.statusRow .riskPill{width:100%!important}}
 
-
-/* Dashboard page only: keep the shared site header visible while scrolling.
-   This does not restyle the dashboard content, colors, spacing, or cards. */
-header,
-.site-header,
-.siteHeader,
-.app-header,
-.appHeader,
-[data-site-header],
-[data-header],
-[data-dropclarity-header]{
-  position:sticky!important;
-  top:0!important;
-  z-index:2147483000!important;
-}
-
-
 `;
