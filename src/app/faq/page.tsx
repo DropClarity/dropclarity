@@ -46,7 +46,7 @@ export default function FAQPage() {
         ],
         [
           "Is this a one-time analysis or ongoing tracking?",
-          "Both are possible. You can start with a one-time scan, then upgrade to weekly monitoring if you want ongoing visibility into profitability trends and problem jobs.",
+          "Both are possible. You can start with a one-time scan, then upgrade to ongoing monitoring if you want better visibility into profitability trends and problem jobs.",
         ],
         [
           "Can I cancel anytime?",
@@ -77,55 +77,57 @@ export default function FAQPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
       <section className="relative overflow-hidden border-b border-slate-100">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,.16),transparent_34%),radial-gradient(circle_at_80%_30%,rgba(59,130,246,.14),transparent_32%),linear-gradient(180deg,#ffffff,#f8fbff)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,.16),transparent_34%),radial-gradient(circle_at_82%_22%,rgba(34,211,238,.13),transparent_34%),linear-gradient(180deg,#ffffff,#f8fbff)]" />
 
-        <div className="relative mx-auto max-w-6xl px-5 py-20 text-center sm:px-8 sm:py-24">
-          <div className="mx-auto mb-6 inline-flex rounded-full border border-violet-200 bg-white px-4 py-2 text-xs font-black text-violet-700 shadow-sm sm:text-sm">
-            Frequently asked questions
-          </div>
+        <div className="relative mx-auto w-full max-w-[1760px] px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-18">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mx-auto mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
+              Frequently asked questions
+            </div>
 
-          <h1 className="mx-auto max-w-4xl text-4xl font-black leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[56px]">
-            Questions before you upload?
-          </h1>
+            <h1 className="mx-auto max-w-4xl text-[34px] font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-[42px] lg:text-[48px]">
+              Questions before you upload?
+            </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base font-semibold leading-8 text-slate-600 sm:text-lg">
-            Here’s what operators usually want to know before using DropClarity for job profitability analysis.
-          </p>
+            <p className="mx-auto mt-4 max-w-2xl text-[15px] font-semibold leading-7 text-slate-600 sm:text-base">
+              Here’s what operators usually want to know before using DropClarity for job profitability analysis.
+            </p>
 
-          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-            <a
-              href="/app"
-              className="rounded-full bg-violet-500 px-7 py-4 text-center text-sm font-black text-white shadow-xl shadow-violet-200 transition hover:bg-violet-600"
-            >
-              Run a Free Profitability Scan
-            </a>
-            <a
-              href="/pricing"
-              className="rounded-full border border-slate-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-800 shadow-sm transition hover:border-violet-200"
-            >
-              View Pricing
-            </a>
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <a
+                href="/app"
+                className="rounded-full bg-violet-500 px-7 py-3.5 text-center text-sm font-black text-white shadow-xl shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-600"
+              >
+                Run a Free Profitability Scan
+              </a>
+              <a
+                href="/pricing"
+                className="rounded-full border border-slate-200 bg-white px-7 py-3.5 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/50"
+              >
+                View Pricing
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8">
-        <div className="grid gap-14 lg:grid-cols-[300px_minmax(0,1fr)] xl:gap-24">
+      <section className="mx-auto w-full max-w-[1760px] px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[290px_minmax(0,1fr)] xl:gap-12">
           <aside>
-            <div className="sticky top-36 rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-100">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+            <div className="sticky top-28 rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-xl shadow-slate-100 backdrop-blur sm:p-6">
+              <h2 className="text-xl font-black tracking-[-0.025em] text-slate-950">
                 FAQ topics
               </h2>
-              <p className="mt-4 font-semibold leading-7 text-slate-500">
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
                 Browse common questions about the product, uploads, pricing, and security.
               </p>
 
-              <div className="mt-7 space-y-3">
+              <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                 {faqGroups.map((group) => (
                   <a
                     key={group.id}
                     href={`#${group.id}`}
-                    className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-800 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-800 transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
                   >
                     {group.title}
                   </a>
@@ -134,27 +136,41 @@ export default function FAQPage() {
             </div>
           </aside>
 
-          <div className="space-y-14">
+          <div className="space-y-8 lg:space-y-10">
             {faqGroups.map((group) => (
-              <section key={group.id} id={group.id} className="scroll-mt-40">
-                <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-                  {group.title}
-                </h2>
+              <section
+                key={group.id}
+                id={group.id}
+                className="scroll-mt-32 rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-xl shadow-slate-100/80 backdrop-blur sm:p-6 lg:p-7"
+              >
+                <div className="mb-5 flex flex-col gap-1 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <div className="text-[11px] font-black uppercase tracking-[0.08em] text-cyan-600">
+                      {group.id}
+                    </div>
+                    <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-[28px]">
+                      {group.title}
+                    </h2>
+                  </div>
+                  <div className="text-sm font-bold text-slate-400">
+                    {group.items.length} answers
+                  </div>
+                </div>
 
-                <div className="mt-6 space-y-3">
+                <div className="space-y-3">
                   {group.items.map(([question, answer]) => (
                     <details
                       key={question}
-                      className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-violet-200"
+                      className="group rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-violet-200 hover:shadow-md hover:shadow-slate-100 sm:p-5"
                     >
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-black text-slate-950">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-black leading-6 text-slate-950 sm:text-base">
                         <span>{question}</span>
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-lg font-black text-slate-700 transition group-open:rotate-45">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-lg font-black text-slate-700 transition group-open:rotate-45 group-open:bg-violet-50 group-open:text-violet-700">
                           +
                         </span>
                       </summary>
 
-                      <p className="mt-4 max-w-3xl font-semibold leading-7 text-slate-500">
+                      <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-500 sm:text-[15px]">
                         {answer}
                       </p>
                     </details>
@@ -166,20 +182,28 @@ export default function FAQPage() {
         </div>
       </section>
 
-      <section className="bg-slate-50 px-4 py-12 sm:px-6 sm:py-14">
-        <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
-          <h2 className="max-w-3xl text-xl font-bold leading-snug tracking-tight text-slate-950 sm:text-2xl lg:text-[26px]">
+      <section className="px-5 pb-12 sm:px-8 lg:px-10">
+        <div className="mx-auto flex w-full max-w-[1760px] flex-col items-start justify-between gap-6 rounded-[24px] border border-slate-200/80 bg-slate-50/90 p-6 shadow-xl shadow-slate-100 sm:p-8 lg:flex-row lg:items-center">
+          <h2 className="max-w-3xl text-xl font-black leading-snug tracking-[-0.025em] text-slate-950 sm:text-2xl lg:text-[28px]">
             Ready to see which jobs are helping or hurting profit?
             <br className="hidden sm:block" />
-            Start <span className="font-normal text-slate-700">with a simple upload.</span>
+            <span className="font-semibold text-slate-700">Start with a simple upload.</span>
           </h2>
 
-          <a
-            href="/pricing"
-            className="w-full rounded-full bg-violet-500 px-8 py-3 text-center text-sm font-black text-white shadow-xl shadow-violet-200 transition hover:bg-violet-600 sm:w-auto sm:px-14"
-          >
-            View Pricing
-          </a>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <a
+              href="/app"
+              className="rounded-full bg-violet-500 px-8 py-3.5 text-center text-sm font-black text-white shadow-xl shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-600 sm:px-10"
+            >
+              Upload Files
+            </a>
+            <a
+              href="/pricing"
+              className="rounded-full border border-slate-200 bg-white px-8 py-3.5 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 sm:px-10"
+            >
+              View Pricing
+            </a>
+          </div>
         </div>
       </section>
     </main>
