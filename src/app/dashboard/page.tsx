@@ -4331,18 +4331,18 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 .insightRecommendation span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(15,23,42,.46)}
 .insightRecommendation p{margin:4px 0 0;font-size:13px;line-height:1.45;font-weight:820;color:rgba(15,23,42,.66);overflow-wrap:anywhere}
 
-/* Simpler margin target save button */
+/* Simpler margin target save button (slightly emphasized SaaS style) */
 .compactTargetSave {
-  background-color: #F1F5F9 !important;   /* soft slate */
-  color: #0F172A !important;              /* same as your other buttons/text */
-  border: 1px solid #E2E8F0 !important;   /* subtle border */
+  background-color: #EEF2FF !important;   /* light indigo */
+  color: #0F172A !important;              /* consistent text color */
+  border: 1px solid #E0E7FF !important;   /* soft border */
   box-shadow: none !important;
   background-image: none !important;
 }
 
 .compactTargetSave:hover {
-  background-color: #E2E8F0 !important;
-  border-color: #CBD5F5 !important;
+  background-color: #E0E7FF !important;
+  border-color: #C7D2FE !important;
 }
 
 @media(max-width:1100px){.insightImpact{max-width:52%}}
