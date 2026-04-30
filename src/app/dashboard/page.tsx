@@ -4332,8 +4332,19 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 .insightRecommendation p{margin:4px 0 0;font-size:13px;line-height:1.45;font-weight:820;color:rgba(15,23,42,.66);overflow-wrap:anywhere}
 
 /* Simpler margin target save button */
-.compactTargetSave{background:#0f172a!important;color:#fff!important;border-color:#0f172a!important;box-shadow:0 10px 22px rgba(15,23,42,.14)!important;background-image:none!important}
-.compactTargetSave:hover{background:#1e293b!important;border-color:#1e293b!important;box-shadow:0 14px 28px rgba(15,23,42,.18)!important}
+.compactTargetSave {
+  background-color: #3B82F6 !important;
+  color: #ffffff !important;
+  border-color: #3B82F6 !important;
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18) !important;
+  background-image: none !important;
+}
+
+.compactTargetSave:hover {
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22) !important;
+}
 
 @media(max-width:1100px){.insightImpact{max-width:52%}}
 @media(max-width:760px){.insightsPad{padding:14px}.insightTop{flex-direction:column;gap:9px}.insightImpact{max-width:100%;width:fit-content}.insightCard{padding:13px}.insightTitle{font-size:14.5px}.insightDetail,.insightRecommendation p{font-size:12.75px}.compactTargetSave{width:auto}}
