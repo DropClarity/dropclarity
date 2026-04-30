@@ -24,7 +24,6 @@ const PLAN_LABELS: Record<VisiblePlan, string> = {
 function normalizePlan(rawPlan: unknown): VisiblePlan {
   const plan = String(rawPlan || "free").toLowerCase().trim();
 
-  // Legacy support: old "pro" plan now maps to "core".
   if (plan === "pro" || plan === "core") return "core";
   if (plan === "scale") return "scale";
 
@@ -69,8 +68,6 @@ function AccountButton() {
         elements: {
           avatarBox:
             "h-10 w-10 ring-2 ring-slate-200 transition hover:ring-slate-300",
-          userButtonPopoverCard: "z-[1000000]",
-          userButtonPopoverActionButton: "z-[1000000]",
         },
       }}
     >
@@ -321,14 +318,12 @@ function TabletHeader({
 }
 
 function MobileHeader({
-  pathname,
   plan,
   isLoaded,
   isSignedIn,
   menuOpen,
   setMenuOpen,
 }: {
-  pathname: string;
   plan: VisiblePlan;
   isLoaded: boolean;
   isSignedIn: boolean | undefined;
@@ -391,6 +386,7 @@ function MobileMenu({
         ) : (
           <div className="mb-3 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
             <AccountButton />
+
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-black text-slate-950">
                 {user?.firstName ? `Hi, ${user.firstName}` : "My account"}
@@ -399,6 +395,7 @@ function MobileMenu({
                 Tap your profile photo to manage account or billing.
               </div>
             </div>
+
             <PlanBadge plan={plan} />
           </div>
         )}
@@ -419,7 +416,20 @@ export default function SiteHeader() {
 
   return (
     <>
-      <header className="fixed left-0 right-0 top-0 z-[99999] h-[88px] border-b border-slate-200 bg-white sm:h-[96px]">
+      <style jsx global>{`
+        .cl-userButtonPopoverCard,
+        .cl-userButtonPopoverRootBox,
+        .cl-popoverBox,
+        .cl-card {
+          z-index: 1000000 !important;
+        }
+
+        [data-radix-popper-content-wrapper] {
+          z-index: 1000000 !important;
+        }
+      `}</style>
+
+      <header className="fixed left-0 right-0 top-0 z-[9000] h-[88px] border-b border-slate-200 bg-white sm:h-[96px]">
         <div className="mx-auto h-full max-w-[1600px] px-5 sm:px-8">
           <DesktopHeader
             pathname={pathname}
@@ -439,7 +449,6 @@ export default function SiteHeader() {
           />
 
           <MobileHeader
-            pathname={pathname}
             plan={plan}
             isLoaded={isLoaded}
             isSignedIn={isSignedIn}
