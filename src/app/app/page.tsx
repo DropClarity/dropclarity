@@ -39,6 +39,31 @@ type JobRow = {
   margin: number;
 };
 
+type CostMix = {
+  labor: number;
+  materials: number;
+  subs: number;
+  other: number;
+};
+
+type CostMixBucket = {
+  key: keyof CostMix;
+  label: string;
+  value: number;
+  chartValue: number;
+  color: string;
+  colorClass: string;
+  note: string;
+  isCredit: boolean;
+};
+
+type CostMixDisplay = {
+  buckets: CostMixBucket[];
+  donutParts: { label: string; value: number; color: string }[];
+  totalActivity: number;
+  totalCredits: number;
+  hasCredits: boolean;
+};
 
 type PlanKey = "free" | "core" | "scale";
 
@@ -216,7 +241,7 @@ function categorizeCostLine(description = "") {
   return "other";
 }
 
-function buildCostMix(out: any) {
+function buildCostMix(out: any): CostMix {
   const mix = out?.cost_mix && typeof out.cost_mix === "object" ? out.cost_mix : null;
 
   if (mix) {
@@ -260,6 +285,43 @@ function buildCostMix(out: any) {
   }
 
   return { labor, materials, subs, other };
+}
+
+function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
+  const bucketMeta: Array<Omit<CostMixBucket, "value" | "chartValue" | "note" | "isCredit">> = [
+    { key: "labor", label: "Labor", color: "rgba(34,211,238,.95)", colorClass: "bg-cyan-400" },
+    { key: "materials", label: "Materials", color: "rgba(124,58,237,.90)", colorClass: "bg-violet-500" },
+    { key: "subs", label: "Subs", color: "rgba(251,146,60,.92)", colorClass: "bg-orange-400" },
+    { key: "other", label: "Other", color: "rgba(52,211,153,.90)", colorClass: "bg-emerald-400" },
+  ];
+
+  const buckets = bucketMeta.map((meta) => {
+    const value = Number(costMix?.[meta.key]) || 0;
+    const isCredit = value < 0;
+
+    return {
+      ...meta,
+      value,
+      chartValue: Math.abs(value),
+      isCredit,
+      note: isCredit ? "Credit / adjustment" : value > 0 ? "Cost" : "No activity",
+    };
+  });
+
+  const totalActivity = buckets.reduce((sum, bucket) => sum + bucket.chartValue, 0);
+  const totalCredits = buckets.reduce((sum, bucket) => sum + Math.min(0, bucket.value), 0);
+
+  return {
+    buckets,
+    donutParts: buckets.map((bucket) => ({
+      label: bucket.label,
+      value: bucket.chartValue,
+      color: bucket.color,
+    })),
+    totalActivity,
+    totalCredits,
+    hasCredits: totalCredits < 0,
+  };
 }
 
 function drawProfitChart(canvas: HTMLCanvasElement, labels: string[], values: number[]) {
@@ -411,7 +473,10 @@ function drawDonut(canvas: HTMLCanvasElement, parts: { label: string; value: num
   let ang = -Math.PI / 2;
 
   parts.forEach((p) => {
-    const a2 = ang + (Math.max(0, p.value) / total) * Math.PI * 2;
+    const safeValue = Math.max(0, p.value);
+    if (safeValue <= 0.01) return;
+
+    const a2 = ang + (safeValue / total) * Math.PI * 2;
     ctx.beginPath();
     ctx.arc(cx, cy, r, ang, a2);
     ctx.strokeStyle = p.color;
@@ -433,7 +498,7 @@ function drawDonut(canvas: HTMLCanvasElement, parts: { label: string; value: num
 
   ctx.fillStyle = "rgba(15,23,42,.52)";
   ctx.font = "800 12px ui-sans-serif, system-ui";
-  ctx.fillText("share", cx, cy + 16);
+  ctx.fillText("activity", cx, cy + 16);
 }
 
 export default function AppPage() {
@@ -466,6 +531,7 @@ export default function AppPage() {
 
   const chartData = useMemo(() => buildJobChartData(result || {}), [result]);
   const costMix = useMemo(() => buildCostMix(result || {}), [result]);
+  const costMixDisplay = useMemo(() => buildCostMixDisplay(costMix), [costMix]);
 
   const kpis = result?.kpis || {};
   const revenue = Number(kpis.revenue) || 0;
@@ -487,10 +553,10 @@ export default function AppPage() {
       ? `${losingJobs} job${losingJobs === 1 ? "" : "s"} need review before quoting similar work.`
       : `Average margin is ${pct(margin)} with ${losingJobs} losing jobs detected.`;
 
-  const totalMix = Math.max(1, costMix.labor + costMix.materials + costMix.subs + costMix.other);
-  const laborShare = (costMix.labor / totalMix) * 100;
-  const materialShare = (costMix.materials / totalMix) * 100;
-  const subsShare = (costMix.subs / totalMix) * 100;
+  const totalMix = Math.max(1, costMixDisplay.totalActivity);
+  const laborShare = (Math.abs(costMix.labor) / totalMix) * 100;
+  const materialShare = (Math.abs(costMix.materials) / totalMix) * 100;
+  const subsShare = (Math.abs(costMix.subs) / totalMix) * 100;
 
   const insights = [
     {
@@ -690,7 +756,7 @@ export default function AppPage() {
     filename,
     mime,
     job_id: it.job_id.trim(),
-    role: it.role,
+    role: it.role === "combined" ? "combined_invoice" : it.role,
     parse_mode: isStructured ? "code" : "ai",
     file_category: isStructured ? "structured" : "document",
   };
@@ -799,15 +865,10 @@ export default function AppPage() {
       }
 
       if (donutCanvasRef.current) {
-        drawDonut(donutCanvasRef.current, [
-          { label: "Labor", value: costMix.labor, color: "rgba(34,211,238,.95)" },
-          { label: "Materials", value: costMix.materials, color: "rgba(124,58,237,.90)" },
-          { label: "Subs", value: costMix.subs, color: "rgba(251,146,60,.92)" },
-          { label: "Other", value: costMix.other, color: "rgba(52,211,153,.90)" },
-        ]);
+        drawDonut(donutCanvasRef.current, costMixDisplay.donutParts);
       }
     });
-  }, [result, chartData, costMix]);
+  }, [result, chartData, costMixDisplay]);
 
   const baseButton = "rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md active:scale-[0.99]";
   const disabledButton = "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:shadow-none";
@@ -1087,23 +1148,43 @@ export default function AppPage() {
                 </div>
 
                 <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5">
-                  <h3 className="text-lg font-black text-slate-950 lg:text-xl">Cost Mix</h3>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">All jobs combined — Labor vs Materials vs Subs vs Other.</p>
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                    <div>
+                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">Cost Mix</h3>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                        All jobs combined — donut uses absolute cost activity so negative credits do not distort the chart. The cards still show the true signed bucket totals used for profit.
+                      </p>
+                    </div>
+
+                    {costMixDisplay.hasCredits && (
+                      <div className="w-fit rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">
+                        Credits applied: {money(costMixDisplay.totalCredits)}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="mt-4 grid gap-6 md:grid-cols-[240px_1fr] md:items-center">
                     <canvas ref={donutCanvasRef} width={220} height={220} />
                     <div className="grid gap-3 xl:grid-cols-4">
-                      {[
-                        ["Labor", costMix.labor, "bg-cyan-400"],
-                        ["Materials", costMix.materials, "bg-violet-500"],
-                        ["Subs", costMix.subs, "bg-orange-400"],
-                        ["Other", costMix.other, "bg-emerald-400"],
-                      ].map(([label, value, color]) => (
-                        <div key={label as string} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-sm font-bold leading-6 text-slate-600 lg:text-base">
-                          <span className={`h-3 w-3 rounded ${color}`} />
-                          <span>
-                            <b className="text-slate-900">{label}</b> — {money(value as number)}
-                          </span>
+                      {costMixDisplay.buckets.map((bucket) => (
+                        <div
+                          key={bucket.key}
+                          className={`rounded-2xl border p-4 text-sm font-bold leading-6 lg:text-base ${
+                            bucket.isCredit
+                              ? "border-emerald-100 bg-emerald-50/60 text-emerald-800"
+                              : "border-slate-100 bg-slate-50/70 text-slate-600"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`h-3 w-3 rounded ${bucket.colorClass}`} />
+                            <span>
+                              <b className="text-slate-900">{bucket.label}</b> — {money(bucket.value)}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 text-xs font-black uppercase tracking-wider text-slate-400">
+                            {bucket.note}
+                          </div>
                         </div>
                       ))}
                     </div>
