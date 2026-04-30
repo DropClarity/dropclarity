@@ -3586,14 +3586,13 @@ useEffect(() => {
           </div>
         ) : (
           <>
-            <div className="dashboardStickyShell">
-              <TopBar
+            <TopBar
   state={visibleState}
   mode={mode}
   onRefresh={loadAndRender}
   plan={plan}
 />
-              <RangeControls
+            <RangeControls
   range={range}
   setRange={changeRange}
   customFrom={customFrom}
@@ -3605,7 +3604,6 @@ useEffect(() => {
   canExport={access.canExport}
   onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
 />
-            </div>
 
             <MarginTargetControl
               marginTarget={marginTarget}
@@ -4297,42 +4295,5 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 .sideStack .panelHead{align-items:flex-start!important}
 @media(max-width:768px){.pageTitle{font-size:30px!important}.topbar{align-items:flex-start!important}.kpis{grid-template-columns:1fr 1fr!important}.heroBody{padding:16px!important}.reportsManageLink{align-self:flex-start}.statusRow .riskPill{width:auto!important;justify-content:center}}
 @media(max-width:480px){.pageTitle{font-size:28px!important}.pageSub{font-size:14px!important}.kpis{grid-template-columns:1fr!important}.heroTitle{font-size:24px!important}.reportsManageLink{padding:6px 0}.statusRow .riskPill{width:100%!important}}
-
-/* Sticky dashboard header fix */
-.dashboardStickyShell{
-  position:sticky;
-  top:0;
-  z-index:900;
-  margin:-58px 0 16px;
-  padding:58px 0 2px;
-  background:
-    radial-gradient(1100px 520px at 10% -10%,rgba(124,58,237,.12),transparent 58%),
-    radial-gradient(900px 520px at 92% 0%,rgba(34,211,238,.12),transparent 62%),
-    linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.88));
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-}
-.dashboardStickyShell::after{
-  content:"";
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:-14px;
-  height:14px;
-  pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,0));
-}
-.dashboardStickyShell .topbar{
-  margin-bottom:12px;
-}
-.dashboardStickyShell .rangeWrap{
-  margin:0;
-}
-@media(max-width:760px){
-  .dashboardStickyShell{
-    margin:-32px -16px 14px;
-    padding:32px 16px 2px;
-  }
-}
 
 `;
