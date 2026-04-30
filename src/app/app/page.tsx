@@ -875,14 +875,15 @@ export default function AppPage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-white">
-      <section className="relative z-0 overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_18%,#f8fbff_52%,#ffffff_100%)] px-4 py-10 sm:px-5 sm:py-14 lg:px-6 lg:py-16">
+      <style dangerouslySetInnerHTML={{ __html: analyzePageCss }} />
+      <section className="analyzeShell relative z-0 overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_18%,#f8fbff_52%,#ffffff_100%)] px-4 py-8 sm:px-5 sm:py-10 lg:px-6 lg:py-12">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute left-[-35%] top-[40px] h-[260px] w-[340px] rounded-full bg-violet-100/35 blur-[82px] sm:left-[-12%] sm:h-[360px] sm:w-[520px] sm:bg-violet-200/35 sm:blur-[90px]" />
           <div className="absolute right-[-42%] top-[55px] h-[280px] w-[360px] rounded-full bg-cyan-100/35 blur-[86px] sm:right-[-10%] sm:top-[20px] sm:h-[360px] sm:w-[560px] sm:bg-cyan-200/40 sm:blur-[95px]" />
           <div className="absolute left-[20%] top-[320px] h-[220px] w-[320px] rounded-full bg-emerald-50/45 blur-[88px] sm:left-[35%] sm:top-[260px] sm:h-[320px] sm:w-[520px] sm:bg-emerald-100/45 sm:blur-[100px]" />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1920px] px-0 sm:px-2">
+        <div className="analyzeWrap relative z-10 mx-auto w-full px-0 sm:px-2">
           <input
             ref={fileRef}
             type="file"
@@ -894,7 +895,7 @@ export default function AppPage() {
             }}
           />
 
-          <div className="mb-4 flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+          <div className="analyzeTopbar mb-4 flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
             <div>
               <div className="pageKicker">Profitability Workspace</div>
 
@@ -912,7 +913,7 @@ export default function AppPage() {
             </div>
           </div>
 
-          <div className="relative z-20 mb-4 flex flex-wrap gap-3">
+          <div className="analyzeActions relative z-20 mb-4 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={(e) => {
@@ -957,7 +958,7 @@ export default function AppPage() {
             </button>
           </div>
 
-          <div className="relative z-10 overflow-hidden rounded-[22px] border border-slate-100 bg-white/90 shadow-xl shadow-slate-200/70 backdrop-blur">
+          <div className="uploadPanel relative z-10 overflow-hidden rounded-[22px] border border-slate-100 bg-white/90 shadow-xl shadow-slate-200/70 backdrop-blur">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-white/90 p-5">
               <div>
                 <h2 className="font-black tracking-tight text-slate-950">Upload Queue</h2>
@@ -1073,7 +1074,7 @@ export default function AppPage() {
           </div>
 
           {result && (
-            <div className="mt-5 overflow-hidden rounded-[22px] border border-slate-100 bg-white/80 text-[15px] leading-6 shadow-xl shadow-slate-200/70 backdrop-blur lg:text-base">
+            <div className="resultsPanel mt-5 overflow-hidden rounded-[22px] border border-slate-100 bg-white/80 text-[15px] leading-6 shadow-xl shadow-slate-200/70 backdrop-blur lg:text-base">
               <div className="flex flex-col justify-between gap-4 border-b border-slate-100 bg-white/90 p-5 sm:flex-row sm:items-start">
                 <div>
                   <h2 className="text-xl font-black tracking-tight text-slate-950 lg:text-2xl">Results</h2>
@@ -1092,8 +1093,8 @@ export default function AppPage() {
                 </div>
               </div>
 
-              <div className="p-5">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+              <div className="resultsBody p-5">
+                <div className="resultKpiGrid grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
                   {[
                     ["Revenue", money(revenue), ""],
                     ["Costs", money(costs), ""],
@@ -1109,7 +1110,7 @@ export default function AppPage() {
                   ))}
                 </div>
 
-                <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5">
+                <div className="smartSummaryPanel mt-4 rounded-3xl border border-slate-100 bg-white p-5">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
                       <div className="text-sm font-black uppercase tracking-wider text-slate-400">Smart Summary</div>
@@ -1127,7 +1128,7 @@ export default function AppPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <div className="analysisGrid mt-4 grid gap-4 xl:grid-cols-2">
                   <div className="rounded-3xl border border-slate-100 bg-white p-5">
                     <div className="mb-3">
                       <h3 className="text-lg font-black text-slate-950 lg:text-xl">Profit by Job</h3>
@@ -1147,7 +1148,7 @@ export default function AppPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-5">
+                <div className="costMixPanel mt-4 rounded-3xl border border-slate-100 bg-white p-5">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                     <div>
                       <h3 className="text-lg font-black text-slate-950 lg:text-xl">Cost Mix</h3>
@@ -1191,7 +1192,7 @@ export default function AppPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                <div className="bottomAnalysisGrid mt-4 grid gap-4 xl:grid-cols-2">
                   <div className="rounded-3xl border border-slate-100 bg-white p-5">
                     <h3 className="text-lg font-black text-slate-950 lg:text-xl">Smart Insights</h3>
                     <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">What matters most from this upload right now.</p>
@@ -1236,8 +1237,8 @@ export default function AppPage() {
       </section>
 
 {jobModalOpen && (
-  <div className="fixed inset-0 z-[10000] grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm">
-    <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+  <div className="assignModalOverlay fixed inset-0 z-[10000] grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm">
+    <div className="assignModal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
       <div className="relative border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -1443,4 +1444,39 @@ function JobList({ rows, mode }: { rows: JobRow[]; mode: "profit" | "revcost" })
     </div>
   );
 }
+
+const analyzePageCss = `
+.analyzeShell{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#0f172a!important}
+.analyzeWrap{width:min(1760px,calc(100vw - 44px));max-width:1760px;margin:0 auto}
+.analyzeTopbar{align-items:flex-start;margin-bottom:18px}
+.pageKicker{width:fit-content;margin-bottom:10px;border:1px solid rgba(34,211,238,.28);background:rgba(255,255,255,.86);box-shadow:0 10px 28px rgba(34,211,238,.10);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:950;color:rgba(8,145,178,.95)}
+.pageTitle{margin:0;max-width:980px;font-size:clamp(30px,3.25vw,42px);line-height:1.05;font-weight:990;letter-spacing:-.045em;color:rgba(2,6,23,.96)}
+.gradText{background:linear-gradient(90deg,#06b6d4,#8b5cf6,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pageSub{margin-top:9px;max-width:860px;color:rgba(51,65,85,.78);font-size:clamp(14px,1.2vw,17px);line-height:1.5;font-weight:750}
+.analyzeActions{margin-bottom:16px}
+.analyzeActions button,.analyzeActions a{min-height:44px}
+.uploadPanel,.resultsPanel{border-color:rgba(15,23,42,.085)!important;box-shadow:0 20px 58px rgba(2,6,23,.09)!important;border-radius:22px!important}
+.uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important;border-bottom-color:rgba(15,23,42,.075)!important}
+.uploadPanel h2,.resultsPanel h2{font-size:20px!important;line-height:1.15;letter-spacing:-.025em;color:rgba(15,23,42,.97)!important}
+.uploadPanel p,.resultsPanel p{color:rgba(15,23,42,.62)!important;font-weight:760!important}
+.uploadPanel [role="button"]{margin:18px!important;padding:18px!important;border-radius:22px!important;border-color:rgba(15,23,42,.16)!important;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.uploadPanel [role="button"]:hover{transform:translateY(-1px);box-shadow:0 18px 44px rgba(2,6,23,.08);border-color:rgba(34,211,238,.35)!important}
+.resultsBody{padding:18px!important}
+.resultKpiGrid{gap:12px!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
+.resultKpiGrid>div{border-color:rgba(15,23,42,.08)!important;border-radius:18px!important;box-shadow:0 14px 34px rgba(2,6,23,.055)!important;padding:16px!important}
+.resultKpiGrid>div div:first-child{font-size:12px!important;color:rgba(15,23,42,.56)!important}
+.resultKpiGrid>div div:nth-child(2){font-size:24px!important;line-height:1.05!important;letter-spacing:-.02em!important}
+.smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{border-color:rgba(15,23,42,.08)!important;box-shadow:0 12px 34px rgba(2,6,23,.055)!important;border-radius:22px!important;padding:18px!important}
+.smartSummaryPanel h3{font-size:clamp(22px,2.2vw,30px)!important;line-height:1.08!important;letter-spacing:-.035em!important}
+.analysisGrid,.bottomAnalysisGrid{gap:16px!important}
+.analysisGrid h3,.bottomAnalysisGrid h3,.costMixPanel h3{font-size:20px!important;line-height:1.15!important;letter-spacing:-.02em!important}
+.analysisGrid p,.bottomAnalysisGrid p,.costMixPanel p{font-size:14px!important;line-height:1.5!important;color:rgba(15,23,42,.62)!important;font-weight:760!important}
+.costMixPanel canvas{width:min(220px,100%)!important;margin:0 auto}
+.assignModal{max-width:min(1120px,calc(100vw - 32px))!important;border-radius:28px!important}
+.assignModal h2{font-size:clamp(22px,2.4vw,28px)!important;line-height:1.08!important;letter-spacing:-.035em!important}
+@media(max-width:1280px){.analyzeWrap{width:min(100%,calc(100vw - 32px))}.resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:900px){.resultKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.uploadPanel>div:first-child,.resultsPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}}
+@media(max-width:760px){.analyzeShell{padding-top:32px!important;padding-bottom:28px!important}.analyzeWrap{width:100%;padding:0 16px!important}.pageTitle{font-size:29px!important;line-height:1.08!important}.pageSub{font-size:14px!important;line-height:1.48!important}.analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}.analyzeActions button{width:100%;justify-content:center}.uploadPanel [role="button"]{margin:14px!important;padding:16px!important}.uploadPanel [role="button"]>div{align-items:flex-start!important}.resultKpiGrid{grid-template-columns:1fr!important}.smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}.costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}.assignModalOverlay{padding:12px!important;place-items:end center!important}.assignModal{max-height:92vh!important;border-radius:24px 24px 0 0!important}}
+@media(max-width:420px){.analyzeWrap{padding:0 12px!important}.pageTitle{font-size:27px!important}}
+`;
 
