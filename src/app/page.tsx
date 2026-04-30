@@ -298,19 +298,14 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 grid grid-cols-1 gap-2 text-[11px] font-black text-slate-500 min-[420px]:grid-cols-3">
-                      {[
-                        ["Alerts", "Real-time alerts"],
-                        ["Benchmarks", "Benchmark comparisons"],
-                        ["Signals", "Profit Signals"],
-                      ].map(([shortLabel, fullLabel]) => (
+
+                    <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black text-slate-500">
+                      {["Live Alerts", "Benchmarks", "Profit Signals"].map((label) => (
                         <div
-                          key={fullLabel}
-                          className="min-w-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-2 text-center leading-none"
-                          title={fullLabel}
+                          key={label}
+                          className="inline-flex min-w-fit flex-1 items-center justify-center whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center leading-none sm:flex-none"
                         >
-                          <span className="whitespace-nowrap sm:hidden">{shortLabel}</span>
-                          <span className="hidden whitespace-nowrap sm:inline">{fullLabel}</span>
+                          {label}
                         </div>
                       ))}
                     </div>
