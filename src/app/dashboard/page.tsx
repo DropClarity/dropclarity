@@ -7,8 +7,16 @@ const API_BASE = "https://dropclarity.com/api";
 const FALLBACK_USER_ID = "anon";
 
 type DashboardMode = "ready" | "loading" | "error";
-type ViewMode = "dashboard" | "job" | "alljobs" | "highrisk";
+type ViewMode = "dashboard" | "job" | "alljobs" | "highrisk" | "reports";
 type RangeKey = "all" | "mtd" | "last7" | "last30" | "custom";
+type JobsSortKey = "date" | "profit" | "margin" | "revenue";
+type ReportsSortKey = "newest" | "oldest" | "profit_low" | "profit_high" | "revenue_high";
+
+type ReportTotals = {
+  revenue: number;
+  costs: number;
+  netProfit: number;
+};
 
 type CostBreakdown = {
   labor?: number;
@@ -524,17 +532,17 @@ async function apiGetDashboard(token: string | null, range: RangeKey, customFrom
   });
 
   const text = await res.text();
-  let data: any = null;
+  let data: { error?: string } | DashboardState | null = null;
 
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(text) as DashboardState;
   } catch {}
 
   if (!res.ok) {
-    throw new Error(data?.error || text || `Dashboard failed (${res.status})`);
+    throw new Error((data as { error?: string } | null)?.error || text || `Dashboard failed (${res.status})`);
   }
 
-  return data || {};
+  return (data as DashboardState) || {};
 }
 
 
@@ -548,17 +556,17 @@ async function apiGetScaleSummary(token: string | null): Promise<ScaleSummary> {
   });
 
   const text = await res.text();
-  let data: any = null;
+  let data: { error?: string } | ScaleSummary | null = null;
 
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(text) as ScaleSummary;
   } catch {}
 
   if (!res.ok) {
-    throw new Error(data?.error || text || `Scale summary failed (${res.status})`);
+    throw new Error((data as { error?: string } | null)?.error || text || `Scale summary failed (${res.status})`);
   }
 
-  return data || {};
+  return (data as ScaleSummary) || {};
 }
 
 function getAllJobs(state: DashboardState): JobRow[] {
@@ -1675,7 +1683,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
 
 function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: string) => void }) {
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"date" | "profit" | "margin" | "revenue">("date");
+  const [sort, setSort] = useState<JobsSortKey>("date");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -1707,7 +1715,7 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
 
         <div className="tableTools">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search job..." className="searchInput" />
-          <select value={sort} onChange={(e) => setSort(e.target.value as any)} className="selectInput">
+          <select value={sort} onChange={(e) => setSort(e.target.value as JobsSortKey)} className="selectInput">
             <option value="date">Newest</option>
             <option value="profit">Lowest profit</option>
             <option value="margin">Lowest margin</option>
@@ -1764,20 +1772,43 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
   );
 }
 
-function PastReports({ reports, onDeleteReport }: { reports: ReportRow[]; onDeleteReport: (report: ReportRow, idx: number) => void }) {
+function PastReports({
+  reports,
+  totalReports,
+  hiddenReportsCount,
+  onDeleteReport,
+  onManageReports,
+}: {
+  reports: ReportRow[];
+  totalReports: number;
+  hiddenReportsCount: number;
+  onDeleteReport: (report: ReportRow, idx: number) => void;
+  onManageReports: () => void;
+}) {
   return (
     <div className="panel">
-      <div className="panelHead">
+      <div className="panelHead responsiveHead">
         <div>
           <div className="panelTitle">Past Reports</div>
-          <div className="panelSub">Saved upload snapshots. Delete an upload if it was submitted in error; dashboard totals will adjust.</div>
+          <div className="panelSub">
+            Saved upload snapshots. Manage all reports to delete old or mistaken uploads from dashboard totals.
+          </div>
         </div>
+        <button className="miniBtn manageReportsBtn" type="button" onClick={onManageReports}>
+          Manage all reports
+        </button>
       </div>
 
       <div className="pad">
+        <div className="reportMiniStats">
+          <span>{totalReports} total</span>
+          <span>{reports.length} active</span>
+          {hiddenReportsCount > 0 ? <span>{hiddenReportsCount} hidden</span> : null}
+        </div>
+
         {reports.length ? (
           <div className="list">
-            {reports.slice(0, 15).map((r, idx) => {
+            {reports.slice(0, 8).map((r, idx) => {
               const p = parseNumberLoose(r.net_profit);
               return (
                 <div className="item" key={`${r.id || r.created_at}-${idx}`}>
@@ -1797,8 +1828,14 @@ function PastReports({ reports, onDeleteReport }: { reports: ReportRow[]; onDele
             })}
           </div>
         ) : (
-          <div className="empty">No reports yet.</div>
+          <div className="empty">No active reports in this view.</div>
         )}
+
+        {reports.length > 8 ? (
+          <button className="btn reportFullWidthBtn" type="button" onClick={onManageReports}>
+            View {reports.length - 8} more report{reports.length - 8 === 1 ? "" : "s"}
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -2351,7 +2388,10 @@ function DashboardBody({
   onOpenHighRisk,
   view,
   reports,
+  allReportsCount,
+  hiddenReportsCount,
   onDeleteReport,
+  onManageReports,
   plan,
   scaleSummary,
   marginTarget,
@@ -2368,7 +2408,10 @@ function DashboardBody({
   onOpenHighRisk: () => void;
   view: ViewMode;
   reports: ReportRow[];
+  allReportsCount: number;
+  hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
+  onManageReports: () => void;
   plan: string;
   scaleSummary: ScaleSummary | null;
   marginTarget: number;
@@ -2420,7 +2463,7 @@ function DashboardBody({
         </div>
 
         <div className="sideStack">
-          <PastReports reports={reports} onDeleteReport={onDeleteReport} />
+          <PastReports reports={reports} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} />
           <Insights insights={insights} />
         </div>
       </div>
@@ -3016,6 +3059,187 @@ function HighRiskJobsView({
   );
 }
 
+function ReportsManagerView({
+  allReports,
+  activeReports,
+  deletedReportKeys,
+  onBack,
+  onDeleteReport,
+  onRestoreReport,
+  onDeleteAllReports,
+  onRestoreAllReports,
+  onRefresh,
+}: {
+  allReports: ReportRow[];
+  activeReports: ReportRow[];
+  deletedReportKeys: string[];
+  onBack: () => void;
+  onDeleteReport: (report: ReportRow, originalIdx: number) => void;
+  onRestoreReport: (report: ReportRow, originalIdx: number) => void;
+  onDeleteAllReports: () => void;
+  onRestoreAllReports: () => void;
+  onRefresh: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<ReportsSortKey>("newest");
+
+  const deletedSet = useMemo(() => new Set(deletedReportKeys.map(String)), [deletedReportKeys]);
+  const hiddenCount = allReports.filter((report, idx) => deletedSet.has(reportDeleteKey(report, idx))).length;
+  const activeCount = activeReports.length;
+
+  const totals = useMemo<ReportTotals>(() => {
+    return activeReports.reduce<ReportTotals>(
+      (sum: ReportTotals, report: ReportRow) => {
+        return {
+          revenue: sum.revenue + parseNumberLoose(report.revenue),
+          costs: sum.costs + parseNumberLoose(report.costs),
+          netProfit: sum.netProfit + parseNumberLoose(report.net_profit),
+        };
+      },
+      { revenue: 0, costs: 0, netProfit: 0 }
+    );
+  }, [activeReports]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    const mapped = allReports
+      .map((report, originalIdx) => {
+        const key = reportDeleteKey(report, originalIdx);
+        const hidden = deletedSet.has(key);
+        return { report, originalIdx, key, hidden };
+      })
+      .filter(({ report }) => {
+        if (!q) return true;
+        return `${report.period_label || ""} ${report.id || ""} ${report.analysis_id || ""} ${dateTimeLabel(report.created_at)}`.toLowerCase().includes(q);
+      });
+
+    mapped.sort((a, b) => {
+      if (sort === "oldest") return new Date(a.report.created_at || "").getTime() - new Date(b.report.created_at || "").getTime();
+      if (sort === "profit_low") return parseNumberLoose(a.report.net_profit) - parseNumberLoose(b.report.net_profit);
+      if (sort === "profit_high") return parseNumberLoose(b.report.net_profit) - parseNumberLoose(a.report.net_profit);
+      if (sort === "revenue_high") return parseNumberLoose(b.report.revenue) - parseNumberLoose(a.report.revenue);
+      return new Date(b.report.created_at || "").getTime() - new Date(a.report.created_at || "").getTime();
+    });
+
+    return mapped;
+  }, [allReports, deletedSet, search, sort]);
+
+  return (
+    <div className="reportsManagerPage">
+      <div className="panel reportsManagerHero">
+        <div className="crumbs">
+          <div className="crumb">View: <strong>Manage Reports</strong></div>
+          <div className="crumb"><strong>{activeCount}</strong> active</div>
+          <div className="crumb"><strong>{hiddenCount}</strong> hidden</div>
+          <button className="crumbBtn" type="button" onClick={onBack}>← Back to dashboard</button>
+        </div>
+
+        <div className="reportsManagerBody">
+          <div>
+            <div className="sectionEyebrow">Report Management</div>
+            <div className="reportsManagerTitle">Clean up mistaken uploads without losing control.</div>
+            <div className="reportsManagerSub">
+              Hide a report to remove it from dashboard totals, charts, job logs, cost mix, credits, and Scale metrics. Restore hidden reports anytime.
+            </div>
+          </div>
+
+          <div className="reportsSummaryCard">
+            <div className="kv"><span>Active Reports</span><strong>{activeCount}</strong></div>
+            <div className="kv"><span>Hidden Reports</span><strong>{hiddenCount}</strong></div>
+            <div className="divider" />
+            <div className="kv"><span>Active Revenue</span><strong>{fmtMoney(totals.revenue)}</strong></div>
+            <div className="kv"><span>Active Costs</span><strong>{fmtMoney(totals.costs)}</strong></div>
+            <div className="kv"><span>Active Net Profit</span><strong className={totals.netProfit < 0 ? "neg" : "pos"}>{fmtMoney(totals.netProfit)}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel reportsManagerPanel">
+        <div className="panelHead responsiveHead">
+          <div>
+            <div className="panelTitle">All Reports</div>
+            <div className="panelSub">Search, sort, hide, restore, or clear all report snapshots.</div>
+          </div>
+
+          <div className="tableTools reportManagerTools">
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reports..." className="searchInput" />
+            <select value={sort} onChange={(e) => setSort(e.target.value as ReportsSortKey)} className="selectInput">
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="profit_low">Lowest profit</option>
+              <option value="profit_high">Highest profit</option>
+              <option value="revenue_high">Highest revenue</option>
+            </select>
+            <button className="btn" type="button" onClick={onRefresh}>Refresh</button>
+          </div>
+        </div>
+
+        <div className="reportsBulkActions">
+          <button className="btn btn-danger-soft" type="button" onClick={onDeleteAllReports} disabled={!allReports.length || activeCount === 0}>
+            Hide all active reports
+          </button>
+          <button className="btn" type="button" onClick={onRestoreAllReports} disabled={hiddenCount === 0}>
+            Restore hidden reports
+          </button>
+        </div>
+
+        <div className="tableWrap">
+          {rows.length ? (
+            <table className="jobsTable reportsTable">
+              <thead>
+                <tr>
+                  <th>Report</th>
+                  <th>Date</th>
+                  <th>Revenue</th>
+                  <th>Costs</th>
+                  <th>Net Profit</th>
+                  <th>Margin</th>
+                  <th>Status</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ report, originalIdx, key, hidden }) => {
+                  const p = parseNumberLoose(report.net_profit);
+                  return (
+                    <tr key={key} className={hidden ? "hiddenReportRow" : ""}>
+                      <td>
+                        <div className="jobName">{report.period_label || "Report"}</div>
+                        <div className="jobMeta">{report.id || report.analysis_id || "Saved upload"}</div>
+                      </td>
+                      <td>{dateTimeLabel(report.created_at)}</td>
+                      <td>{fmtMoney(report.revenue)}</td>
+                      <td>{fmtMoney(report.costs)}</td>
+                      <td className={p < 0 ? "neg strong" : "pos strong"}>{fmtMoney(p)}</td>
+                      <td>{fmtPct(report.margin_pct)}</td>
+                      <td><span className={hidden ? "tag warn" : "tag ok"}>{hidden ? "Hidden" : "Active"}</span></td>
+                      <td>
+                        {hidden ? (
+                          <button className="miniBtn" type="button" onClick={() => onRestoreReport(report, originalIdx)}>
+                            Restore
+                          </button>
+                        ) : (
+                          <button className="miniBtn reportHideBtn" type="button" onClick={() => onDeleteReport(report, originalIdx)}>
+                            Hide
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div className="empty">No reports match this search.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function DashboardPage() {
   const { user, isLoaded, isSignedIn } = useUser();
   const USER_ID = user?.id || FALLBACK_USER_ID;
@@ -3085,9 +3309,9 @@ export default function DashboardPage() {
       setState({ ...(data || {}), range });
       setScaleSummary(scaleData);
       setMode("ready");
-    } catch (e: any) {
+    } catch (e: unknown) {
       setMode("error");
-      setError(e?.message || String(e));
+      setError(e instanceof Error ? e.message : String(e));
       console.error(e);
     }
   }, [isLoaded, isSignedIn, getToken, range, customFrom, customTo]);
@@ -3118,29 +3342,78 @@ useEffect(() => {
 
   const refreshLocal = () => {};
 
-  const reports = useMemo(
-    () => filterDeletedReports(Array.isArray(state.reports) ? state.reports : [], deletedReportKeys),
-    [state.reports, deletedReportKeys]
+  const allReports = useMemo(
+    () => (Array.isArray(state.reports) ? state.reports : []),
+    [state.reports]
   );
+
+  const reports = useMemo(
+    () => filterDeletedReports(allReports, deletedReportKeys),
+    [allReports, deletedReportKeys]
+  );
+
+  const hiddenReportsCount = useMemo(() => {
+    const deletedSet = new Set(deletedReportKeys.map(String));
+    return allReports.filter((report, idx) => deletedSet.has(reportDeleteKey(report, idx))).length;
+  }, [allReports, deletedReportKeys]);
 
   const visibleState = useMemo(
     () => rebuildDashboardFromVisibleReports(state, reports),
     [state, reports]
   );
 
+  const persistDeletedReports = (keys: string[]) => {
+    const next = Array.from(new Set(keys.map(String)));
+    setDeletedReportKeys(next);
+    writeDeletedReports(USER_ID, next);
+  };
+
   const handleDeleteReport = (report: ReportRow, idx: number) => {
     const ok = window.confirm(
-      "Delete this upload from the dashboard view? This removes it from totals, charts, job logs, and past reports on this browser. Use Refresh to re-sync from the server if needed."
+      "Hide this upload from dashboard totals? This removes it from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this browser. You can restore it from Manage Reports."
     );
 
     if (!ok) return;
 
-    const key = reportDeleteKey(report, idx);
-    const next = Array.from(new Set([...deletedReportKeys, key]));
-    setDeletedReportKeys(next);
-    writeDeletedReports(USER_ID, next);
+    const originalIdx = allReports.findIndex((r, originalIndex) => {
+      if (r === report) return true;
+      const sameId = (r.id && report.id && r.id === report.id) || (r.analysis_id && report.analysis_id && r.analysis_id === report.analysis_id);
+      if (sameId) return true;
+      return (
+        reportDeleteKey(r, originalIndex) === reportDeleteKey(report, idx) ||
+        (String(r.created_at || "") === String(report.created_at || "") &&
+          String(r.period_label || "") === String(report.period_label || "") &&
+          parseNumberLoose(r.net_profit) === parseNumberLoose(report.net_profit))
+      );
+    });
+    const key = reportDeleteKey(report, originalIdx >= 0 ? originalIdx : idx);
+    persistDeletedReports([...deletedReportKeys, key]);
 
-    setView("dashboard");
+    setJobKey("");
+  };
+
+  const handleRestoreReport = (_report: ReportRow, idx: number) => {
+    const key = reportDeleteKey(_report, idx);
+    persistDeletedReports(deletedReportKeys.filter((x) => x !== key));
+    setJobKey("");
+  };
+
+  const handleDeleteAllReports = () => {
+    const ok = window.confirm(
+      "Hide all active reports from dashboard totals? This will clear the dashboard view on this browser, but you can restore hidden reports from this same page."
+    );
+
+    if (!ok) return;
+
+    const allKeys = allReports.map((report, idx) => reportDeleteKey(report, idx));
+    persistDeletedReports(allKeys);
+    setView("reports");
+    setJobKey("");
+  };
+
+  const handleRestoreAllReports = () => {
+    persistDeletedReports([]);
+    setView("reports");
     setJobKey("");
   };
 
@@ -3204,6 +3477,18 @@ useEffect(() => {
               <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} />
             ) : view === "highrisk" ? (
               <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
+            ) : view === "reports" ? (
+              <ReportsManagerView
+                allReports={allReports}
+                activeReports={reports}
+                deletedReportKeys={deletedReportKeys}
+                onBack={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                onDeleteReport={handleDeleteReport}
+                onRestoreReport={handleRestoreReport}
+                onDeleteAllReports={handleDeleteAllReports}
+                onRestoreAllReports={handleRestoreAllReports}
+                onRefresh={loadAndRender}
+              />
             ) : (
               <DashboardBody
   state={visibleState}
@@ -3212,7 +3497,10 @@ useEffect(() => {
   onOpenHighRisk={() => { setView("highrisk"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
   view={view}
   reports={reports}
+  allReportsCount={allReports.length}
+  hiddenReportsCount={hiddenReportsCount}
   onDeleteReport={handleDeleteReport}
+  onManageReports={() => { setView("reports"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
   plan={plan}
   scaleSummary={scaleSummary}
   marginTarget={marginTarget}
@@ -3777,5 +4065,26 @@ html,body{background:#fff!important;color:#0f172a!important}
 .creditKpiNote{margin-top:6px;font-size:12px;line-height:1.35;font-weight:760;color:rgba(15,23,42,.52)}
 @media(max-width:1100px){.creditKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.creditKpiGrid{grid-template-columns:1fr}.creditAppliedPill{width:fit-content}}
+
+
+/* Report manager view */
+.manageReportsBtn{background:linear-gradient(90deg,rgba(34,211,238,.12),rgba(124,58,237,.12));border-color:rgba(124,58,237,.16)}
+.reportMiniStats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.reportMiniStats span{border-radius:999px;border:1px solid rgba(15,23,42,.08);background:rgba(248,250,252,.86);padding:6px 9px;font-size:11.5px;font-weight:950;color:rgba(15,23,42,.58)}
+.reportFullWidthBtn{width:100%;justify-content:center;margin-top:12px}
+.reportsManagerPage{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.reportsManagerHero{overflow:hidden}
+.reportsManagerBody{padding:18px;display:grid;grid-template-columns:1.25fr .75fr;gap:16px;align-items:stretch}
+.reportsManagerTitle{margin-top:5px;font-size:30px;line-height:1.05;font-weight:990;letter-spacing:-.04em;color:rgba(15,23,42,.95)}
+.reportsManagerSub{margin-top:8px;font-size:15px;line-height:1.5;font-weight:780;color:rgba(15,23,42,.62);max-width:850px}
+.reportsSummaryCard{border-radius:18px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.88);padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 34px rgba(2,6,23,.045)}
+.reportsManagerPanel{overflow:hidden}
+.reportManagerTools{align-items:center}
+.reportsBulkActions{display:flex;gap:10px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid rgba(15,23,42,.06);background:rgba(248,250,252,.52)}
+.reportsBulkActions .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.reportsTable{min-width:980px}
+.hiddenReportRow td{opacity:.62;background:rgba(248,250,252,.78)}
+.reportHideBtn{border-color:rgba(239,68,68,.18);background:rgba(254,242,242,.78);color:rgba(185,28,28,.96)}
+@media(max-width:900px){.reportsManagerBody{grid-template-columns:1fr}.reportsManagerTitle{font-size:26px}.reportManagerTools{width:100%;justify-content:stretch}.reportManagerTools .btn{justify-content:center}}
 
 `;
