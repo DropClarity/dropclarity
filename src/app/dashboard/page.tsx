@@ -631,6 +631,122 @@ function extractJobsFromReports(reports: ReportRow[]): JobRow[] {
   });
 }
 
+function getReportJobs(report: ReportRow, allJobs: JobRow[] = []): JobRow[] {
+  const embedded = report.jobs || report.job_rows || report.job_details || [];
+
+  if (Array.isArray(embedded) && embedded.length) {
+    return embedded.map((job) => ({
+      ...job,
+      report_id: job.report_id || report.id || report.analysis_id,
+      period_label: job.period_label || report.period_label,
+      created_at: job.created_at || report.created_at,
+    }));
+  }
+
+  const reportIds = new Set(
+    [report.id, report.analysis_id]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean)
+  );
+
+  if (!reportIds.size) return [];
+
+  return (Array.isArray(allJobs) ? allJobs : []).filter((job) =>
+    reportIds.has(String(job.report_id || "").trim())
+  );
+}
+
+function cleanReportPeriodLabel(label: unknown): string {
+  const raw = String(label || "").trim();
+  if (!raw) return "";
+  if (raw.toLowerCase() === "latest period") return "";
+  return raw;
+}
+
+function reportUploadType(report: ReportRow, jobs: JobRow[] = []): string {
+  const text = `${report.period_label || ""} ${report.id || ""} ${report.analysis_id || ""} ${jobs
+    .map((job) => `${job.job_name || ""} ${job.job_id || ""}`)
+    .join(" ")}`.toLowerCase();
+
+  if (/credit|refund|returned|memo/.test(text)) return "Credit / Refund";
+  if (/adjust|adj|warranty/.test(text)) return "Adjustment";
+  if (jobs.length > 1) return "Multi-job upload";
+  return "Standard upload";
+}
+
+function getReportCreditTotal(report: ReportRow, allJobs: JobRow[] = []): number {
+  return getReportJobs(report, allJobs).reduce((sum, job) => sum + getJobCreditTotal(job), 0);
+}
+
+function getReportDisplayInfo(report: ReportRow, allJobs: JobRow[] = []) {
+  const jobs = getReportJobs(report, allJobs);
+  const uniqueNames = Array.from(
+    new Set(
+      jobs
+        .map((job) => String(job.job_name || job.job_id || "").trim())
+        .filter(Boolean)
+    )
+  );
+  const uniqueIds = Array.from(
+    new Set(jobs.map((job) => String(job.job_id || "").trim()).filter(Boolean))
+  );
+
+  const cleanPeriod = cleanReportPeriodLabel(report.period_label);
+  const uploadType = reportUploadType(report, jobs);
+
+  let title = cleanPeriod || "Report";
+
+  if (uniqueNames.length === 1) {
+    title = uniqueNames[0];
+  } else if (uniqueNames.length > 1) {
+    title = `${uniqueNames[0]} + ${uniqueNames.length - 1} more job${uniqueNames.length - 1 === 1 ? "" : "s"}`;
+  } else if (uniqueIds.length === 1) {
+    title = uniqueIds[0];
+  } else if (!cleanPeriod) {
+    title = `Upload ${String(report.id || report.analysis_id || "").slice(0, 8) || "Report"}`;
+  }
+
+  const jobIdLabel = uniqueIds.length
+    ? uniqueIds.slice(0, 3).join(", ") + (uniqueIds.length > 3 ? ` +${uniqueIds.length - 3}` : "")
+    : "No Job ID detected";
+
+  const details = [
+    jobIdLabel,
+    dateTimeLabel(report.created_at),
+    cleanPeriod || "Saved upload",
+  ].filter(Boolean);
+
+  const tags = [uploadType];
+  if (jobs.length > 0) tags.push(`${jobs.length} job${jobs.length === 1 ? "" : "s"}`);
+  if (getReportCreditTotal(report, allJobs) > 0) tags.push("Has credits");
+
+  return {
+    title,
+    subtitle: details.join(" • "),
+    tags,
+    jobs,
+    jobIdLabel,
+    uploadType,
+  };
+}
+
+function reportSearchText(report: ReportRow, allJobs: JobRow[] = []): string {
+  const info = getReportDisplayInfo(report, allJobs);
+
+  return [
+    info.title,
+    info.subtitle,
+    info.tags.join(" "),
+    report.period_label,
+    report.id,
+    report.analysis_id,
+    dateTimeLabel(report.created_at),
+    getReportJobs(report, allJobs).map((job) => `${job.job_name || ""} ${job.job_id || ""}`).join(" "),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
 function rebuildDashboardFromVisibleReports(state: DashboardState, visibleReports: ReportRow[]): DashboardState {
   const jobs = extractJobsFromReports(visibleReports);
   const fallbackJobs = getAllJobs(state);
@@ -1774,12 +1890,14 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
 
 function PastReports({
   reports,
+  allJobs,
   totalReports,
   hiddenReportsCount,
   onDeleteReport,
   onManageReports,
 }: {
   reports: ReportRow[];
+  allJobs: JobRow[];
   totalReports: number;
   hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
@@ -1810,19 +1928,27 @@ function PastReports({
           <div className="list">
             {reports.slice(0, 8).map((r, idx) => {
               const p = parseNumberLoose(r.net_profit);
+              const info = getReportDisplayInfo(r, allJobs);
+              const creditTotal = getReportCreditTotal(r, allJobs);
+
               return (
-                <div className="item" key={`${r.id || r.created_at}-${idx}`}>
+                <div className="item reportPreviewItem" key={`${r.id || r.created_at}-${idx}`}>
                   <div className="itemTop">
                     <div>
-                      <div className="itemName">{r.period_label || "Report"}</div>
-                      <div className="itemMeta">{dateTimeLabel(r.created_at)}</div>
+                      <div className="itemName reportItemTitle">{info.title}</div>
+                      <div className="itemMeta">{info.subtitle}</div>
+                      <div className="reportTagRow">
+                        {info.tags.slice(0, 3).map((tag) => (
+                          <span className="reportInfoTag" key={tag}>{tag}</span>
+                        ))}
+                      </div>
                     </div>
                     <div className="reportActions">
                       <div className={p < 0 ? "neg strong" : "pos strong"}>{fmtMoney(p)}</div>
-                      <button className="deleteReportBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Delete this upload from dashboard totals">×</button>
+                      <button className="deleteReportBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Hide this upload from dashboard totals">×</button>
                     </div>
                   </div>
-                  <div className="itemMeta">Revenue: <b>{fmtMoney(r.revenue)}</b> • Costs: <b>{fmtMoney(r.costs)}</b> • Margin: <b>{fmtPct(r.margin_pct)}</b></div>
+                  <div className="itemMeta">Revenue: <b>{fmtMoney(r.revenue)}</b> • Costs: <b>{fmtMoney(r.costs)}</b> • Margin: <b>{fmtPct(r.margin_pct)}</b>{creditTotal > 0 ? <> • Credits: <b>{fmtMoney(creditTotal)}</b></> : null}</div>
                 </div>
               );
             })}
@@ -2463,7 +2589,7 @@ function DashboardBody({
         </div>
 
         <div className="sideStack">
-          <PastReports reports={reports} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} />
+          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} />
           <Insights insights={insights} />
         </div>
       </div>
@@ -3062,6 +3188,7 @@ function HighRiskJobsView({
 function ReportsManagerView({
   allReports,
   activeReports,
+  allJobs,
   deletedReportKeys,
   onBack,
   onDeleteReport,
@@ -3072,6 +3199,7 @@ function ReportsManagerView({
 }: {
   allReports: ReportRow[];
   activeReports: ReportRow[];
+  allJobs: JobRow[];
   deletedReportKeys: string[];
   onBack: () => void;
   onDeleteReport: (report: ReportRow, originalIdx: number) => void;
@@ -3107,11 +3235,13 @@ function ReportsManagerView({
       .map((report, originalIdx) => {
         const key = reportDeleteKey(report, originalIdx);
         const hidden = deletedSet.has(key);
-        return { report, originalIdx, key, hidden };
+        const info = getReportDisplayInfo(report, allJobs);
+        const creditTotal = getReportCreditTotal(report, allJobs);
+        return { report, originalIdx, key, hidden, info, creditTotal };
       })
       .filter(({ report }) => {
         if (!q) return true;
-        return `${report.period_label || ""} ${report.id || ""} ${report.analysis_id || ""} ${dateTimeLabel(report.created_at)}`.toLowerCase().includes(q);
+        return reportSearchText(report, allJobs).includes(q);
       });
 
     mapped.sort((a, b) => {
@@ -3123,7 +3253,7 @@ function ReportsManagerView({
     });
 
     return mapped;
-  }, [allReports, deletedSet, search, sort]);
+  }, [allReports, allJobs, deletedSet, search, sort]);
 
   return (
     <div className="reportsManagerPage">
@@ -3159,7 +3289,7 @@ function ReportsManagerView({
         <div className="panelHead responsiveHead">
           <div>
             <div className="panelTitle">All Reports</div>
-            <div className="panelSub">Search, sort, hide, restore, or clear all report snapshots.</div>
+            <div className="panelSub">Search by job name, Job ID, upload type, date, or report ID. Hide mistaken uploads and dashboard totals update immediately.</div>
           </div>
 
           <div className="tableTools reportManagerTools">
@@ -3189,7 +3319,7 @@ function ReportsManagerView({
             <table className="jobsTable reportsTable">
               <thead>
                 <tr>
-                  <th>Report</th>
+                  <th>Report / Job</th>
                   <th>Date</th>
                   <th>Revenue</th>
                   <th>Costs</th>
@@ -3200,19 +3330,29 @@ function ReportsManagerView({
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ report, originalIdx, key, hidden }) => {
+                {rows.map(({ report, originalIdx, key, hidden, info, creditTotal }) => {
                   const p = parseNumberLoose(report.net_profit);
                   return (
                     <tr key={key} className={hidden ? "hiddenReportRow" : ""}>
                       <td>
-                        <div className="jobName">{report.period_label || "Report"}</div>
-                        <div className="jobMeta">{report.id || report.analysis_id || "Saved upload"}</div>
+                        <div className="reportNameWrap">
+                          <div>
+                            <div className="jobName reportManagerJobName">{info.title}</div>
+                            <div className="jobMeta">{info.subtitle}</div>
+                            <div className="reportIdText">Report ID: {report.id || report.analysis_id || "Saved upload"}</div>
+                            <div className="reportTagRow">
+                              {info.tags.map((tag) => (
+                                <span className="reportInfoTag" key={tag}>{tag}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td>{dateTimeLabel(report.created_at)}</td>
                       <td>{fmtMoney(report.revenue)}</td>
                       <td>{fmtMoney(report.costs)}</td>
                       <td className={p < 0 ? "neg strong" : "pos strong"}>{fmtMoney(p)}</td>
-                      <td>{fmtPct(report.margin_pct)}</td>
+                      <td>{fmtPct(report.margin_pct)}{creditTotal > 0 ? <div className="reportCreditText">Credits {fmtMoney(creditTotal)}</div> : null}</td>
                       <td><span className={hidden ? "tag warn" : "tag ok"}>{hidden ? "Hidden" : "Active"}</span></td>
                       <td>
                         {hidden ? (
@@ -3481,6 +3621,7 @@ useEffect(() => {
               <ReportsManagerView
                 allReports={allReports}
                 activeReports={reports}
+                allJobs={getAllJobs(state)}
                 deletedReportKeys={deletedReportKeys}
                 onBack={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                 onDeleteReport={handleDeleteReport}
@@ -4086,5 +4227,20 @@ html,body{background:#fff!important;color:#0f172a!important}
 .hiddenReportRow td{opacity:.62;background:rgba(248,250,252,.78)}
 .reportHideBtn{border-color:rgba(239,68,68,.18);background:rgba(254,242,242,.78);color:rgba(185,28,28,.96)}
 @media(max-width:900px){.reportsManagerBody{grid-template-columns:1fr}.reportsManagerTitle{font-size:26px}.reportManagerTools{width:100%;justify-content:stretch}.reportManagerTools .btn{justify-content:center}}
+
+
+
+/* Report manager job identity upgrade */
+.reportPreviewItem{transition:border-color .12s ease,box-shadow .12s ease,transform .08s ease}
+.reportPreviewItem:hover{border-color:rgba(34,211,238,.18);box-shadow:0 14px 34px rgba(2,6,23,.065);transform:translateY(-1px)}
+.reportItemTitle,.reportManagerJobName{letter-spacing:-.015em}
+.reportNameWrap{display:flex;align-items:flex-start;gap:10px;min-width:280px}
+.reportIdText{margin-top:5px;font-size:11.5px;line-height:1.35;font-weight:800;color:rgba(15,23,42,.42);max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reportTagRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.reportInfoTag{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(15,23,42,.08);background:rgba(248,250,252,.92);padding:4px 7px;font-size:10.5px;line-height:1;font-weight:950;color:rgba(15,23,42,.58);white-space:nowrap}
+.reportCreditText{margin-top:5px;font-size:11.5px;font-weight:950;color:rgba(5,150,105,.95);white-space:nowrap}
+.reportsTable td:first-child{min-width:360px}
+.reportsTable .jobMeta{max-width:520px;white-space:normal;line-height:1.35}
+@media(max-width:760px){.reportIdText{white-space:normal}.reportsTable td:first-child{min-width:300px}.reportNameWrap{min-width:260px}}
 
 `;
