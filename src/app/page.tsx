@@ -199,10 +199,11 @@ export default function Home() {
               <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div>
                   <div className="text-sm font-black text-slate-950">Live Profit Intelligence</div>
-                  <div className="mt-1 text-xs font-bold text-slate-400">Latest upload • 24 jobs analyzed • Monitoring active</div>
+                  <div className="mt-1 text-xs font-bold text-slate-400">Latest upload • 24 jobs analyzed</div>
+                  <div className="mt-1 text-xs font-black text-emerald-600">● Live monitoring active — tracking new jobs automatically</div>
                 </div>
                 <div className="w-fit rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 shadow-sm shadow-rose-100">
-                  ⚠ 5 High-Risk Jobs Detected
+                  🚨 5 High-Risk Jobs Detected — alerts sent
                 </div>
               </div>
 
@@ -214,7 +215,7 @@ export default function Home() {
                     ["Net Profit", "$67,730", "text-emerald-600"],
                     ["Margin", "23.8%", ""],
                     ["Jobs", "24", ""],
-                    ["Losing Jobs", "5", "text-rose-600"],
+                    ["High-Risk Jobs", "5", "text-rose-600"],
                   ].map(([label, value, color]) => (
                     <div key={label} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                       <div className="text-[10px] font-black uppercase leading-tight tracking-wider text-slate-400">{label}</div>
@@ -245,11 +246,11 @@ export default function Home() {
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {[
-                        ["HVAC Install", "$18,420", "Revenue $42,500 • Costs $24,080"],
-                        ["Roof Repair", "$9,740", "Revenue $28,900 • Costs $19,160"],
-                        ["Plumbing Job", "-$3,250", "Labor overrun • Materials above estimate"],
-                        ["Electrical Job", "-$1,180", "Underpriced service package"],
-                      ].map(([name, profit, meta]) => {
+                        ["HVAC Install", "$18,420", "Revenue $42,500 • Costs $24,080", "Healthy"],
+                        ["Roof Repair", "$9,740", "Revenue $28,900 • Costs $19,160", "Healthy"],
+                        ["Plumbing Job", "-$3,250", "Labor overrun • Materials above estimate", "Critical"],
+                        ["Electrical Job", "-$1,180", "Underpriced service package", "Critical"],
+                      ].map(([name, profit, meta, status]) => {
                         const losing = profit.includes("-");
                         return (
                           <div key={name} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -262,6 +263,9 @@ export default function Home() {
                             <div className={`mt-1 break-words text-[11px] font-bold ${losing ? "text-rose-500/80" : "text-slate-400"}`}>
                               {meta}
                             </div>
+                            <div className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black ${losing ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+                              {status}
+                            </div>
                           </div>
                         );
                       })}
@@ -269,30 +273,36 @@ export default function Home() {
                   </div>
 
                   <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
-                    <div className="font-black text-slate-950">AI Profit Intelligence</div>
-                    <div className="mt-1 text-xs font-bold text-slate-400">Live alerts, benchmarks, and next-step actions</div>
+                    <div className="font-black text-slate-950">AI Profit Intelligence Engine</div>
+                    <div className="mt-1 text-xs font-bold text-slate-400">Continuously analyzing job performance, benchmarks, and risk signals</div>
 
                     <div className="mt-5 space-y-3">
                       <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100">
-                        <div className="text-sm font-black text-rose-700">5 jobs flagged as high-risk</div>
+                        <div className="text-sm font-black text-rose-700">5 jobs actively losing margin</div>
                         <div className="mt-1 text-xs font-bold leading-5 text-rose-700/80">
-                          Margin dropped below target due to labor overages and material variance.
+                          Triggered by labor overruns and material cost variance.
                         </div>
                       </div>
 
                       <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
                         <div className="text-sm font-black text-amber-700">Pricing below benchmark range</div>
                         <div className="mt-1 text-xs font-bold leading-5 text-amber-700/80">
-                          Similar jobs are consistently closing at higher margins than this work.
+                          Similar jobs are closing at higher margins across your service mix.
                         </div>
                       </div>
 
                       <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
                         <div className="text-sm font-black text-violet-700">Immediate action recommended</div>
                         <div className="mt-1 text-xs font-bold leading-5 text-violet-700/80">
-                          Review the bottom 5 jobs and adjust pricing, labor assumptions, and material markup before the next dispatch.
+                          Adjust pricing, labor assumptions, and material markup before the next dispatch.
                         </div>
                       </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 text-[11px] font-black text-slate-500 sm:grid-cols-3">
+                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center">Real-time alerts</div>
+                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center">Benchmark comparisons</div>
+                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center">AI recommendations</div>
                     </div>
                   </div>
                 </div>
@@ -300,22 +310,22 @@ export default function Home() {
                 <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
                   <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                      <div className="text-sm font-black">Profit control summary</div>
+                      <div className="text-sm font-black">$14,800+ in recoverable profit identified this week</div>
                       <div className="mt-1 text-sm font-semibold leading-6 text-white/70">
-                        24 jobs analyzed. 5 high-risk jobs detected. $14,800+ in recoverable profit identified this week.
+                        5 jobs need immediate attention before more margin is lost.
                       </div>
                     </div>
                     <div className="w-full rounded-full bg-white px-4 py-3 text-center text-xs font-black text-slate-950 md:w-fit">
-                      Open Dashboard
+                      Review High-Risk Jobs
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
-
       <section className="mx-auto w-full max-w-[1500px] px-5 py-14 text-center sm:px-8 sm:py-16 lg:px-10">
         <div className="mx-auto max-w-3xl">
           <h2 className="mx-auto max-w-3xl text-[28px] font-black leading-[1.16] tracking-[-0.035em] text-slate-950 sm:text-[34px] lg:text-[38px]">
