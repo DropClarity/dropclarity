@@ -69,6 +69,8 @@ function AccountButton() {
         elements: {
           avatarBox:
             "h-10 w-10 ring-2 ring-slate-200 transition hover:ring-slate-300",
+          userButtonPopoverCard: "z-[1000000]",
+          userButtonPopoverActionButton: "z-[1000000]",
         },
       }}
     >
