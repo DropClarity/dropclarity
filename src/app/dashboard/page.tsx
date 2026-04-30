@@ -119,6 +119,20 @@ type EditableJob = {
 type CustomCategory = { name: string; amount: number };
 type CostPart = { label: string; value: number; color: string; shadow: string };
 
+type CreditMetrics = {
+  totalCredits: number;
+  profitRecoveredFromCredits: number;
+  jobsWithCredits: number;
+  avgCreditPerJob: number;
+  avgCreditPerCreditJob: number;
+  creditRatePct: number;
+  creditsByBucket: Required<CostBreakdown>;
+  biggestCreditJob: JobRow | null;
+  biggestCreditAmount: number;
+  positiveCostActivity: number;
+  netCostAfterCredits: number;
+};
+
 type ScaleSummaryJob = {
   revenue?: number;
   costs?: number;
@@ -387,6 +401,11 @@ function exportAllJobsCsv(state: DashboardState) {
       "Materials",
       "Subs",
       "Other",
+      "Total Credits",
+      "Labor Credits",
+      "Materials Credits",
+      "Subs Credits",
+      "Other Credits",
       "Status",
     ],
   ];
@@ -407,6 +426,11 @@ function exportAllJobsCsv(state: DashboardState) {
       parseNumberLoose(job.cost_breakdown?.materials),
       parseNumberLoose(job.cost_breakdown?.subs),
       parseNumberLoose(job.cost_breakdown?.other),
+      getJobCreditTotal(job),
+      getBucketCreditAmount(job.cost_breakdown?.labor),
+      getBucketCreditAmount(job.cost_breakdown?.materials),
+      getBucketCreditAmount(job.cost_breakdown?.subs),
+      getBucketCreditAmount(job.cost_breakdown?.other),
       status.label,
     ]);
   });
@@ -957,6 +981,77 @@ function getScaleMetrics(state: DashboardState, targetMarginPct = 30) {
 }
 
 
+function getBucketCreditAmount(value: unknown): number {
+  const n = parseNumberLoose(value);
+  return n < 0 ? Math.abs(n) : 0;
+}
+
+function getJobCreditTotal(job: JobRow): number {
+  const cb = job?.cost_breakdown || {};
+  return (
+    getBucketCreditAmount(cb.labor) +
+    getBucketCreditAmount(cb.materials) +
+    getBucketCreditAmount(cb.subs) +
+    getBucketCreditAmount(cb.other)
+  );
+}
+
+function getPositiveBucketAmount(value: unknown): number {
+  return Math.max(0, parseNumberLoose(value));
+}
+
+function getCreditMetrics(state: DashboardState): CreditMetrics {
+  const jobs = getAllJobs(state);
+  const creditsByBucket = {
+    labor: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.labor), 0),
+    materials: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.materials), 0),
+    subs: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.subs), 0),
+    other: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.other), 0),
+  };
+
+  const jobCreditRows = jobs
+    .map((job) => ({ job, credit: getJobCreditTotal(job) }))
+    .filter((row) => row.credit > 0)
+    .sort((a, b) => b.credit - a.credit);
+
+  const totalCredits = creditsByBucket.labor + creditsByBucket.materials + creditsByBucket.subs + creditsByBucket.other;
+
+  const positiveCostActivity = jobs.reduce((sum, j) => {
+    const cb = j.cost_breakdown || {};
+    return (
+      sum +
+      getPositiveBucketAmount(cb.labor) +
+      getPositiveBucketAmount(cb.materials) +
+      getPositiveBucketAmount(cb.subs) +
+      getPositiveBucketAmount(cb.other)
+    );
+  }, 0);
+
+  const netCostAfterCredits = parseNumberLoose(state.summary?.costs);
+  const jobsWithCredits = jobCreditRows.length;
+
+  return {
+    totalCredits,
+    profitRecoveredFromCredits: totalCredits,
+    jobsWithCredits,
+    avgCreditPerJob: jobs.length ? totalCredits / jobs.length : 0,
+    avgCreditPerCreditJob: jobsWithCredits ? totalCredits / jobsWithCredits : 0,
+    creditRatePct: jobs.length ? (jobsWithCredits / jobs.length) * 100 : 0,
+    creditsByBucket,
+    biggestCreditJob: jobCreditRows[0]?.job || null,
+    biggestCreditAmount: jobCreditRows[0]?.credit || 0,
+    positiveCostActivity,
+    netCostAfterCredits,
+  };
+}
+
+function getCreditRows(state: DashboardState) {
+  return getAllJobs(state)
+    .map((job, idx) => ({ job, idx, key: buildJobKey(job, idx), credit: getJobCreditTotal(job) }))
+    .filter((row) => row.credit > 0)
+    .sort((a, b) => b.credit - a.credit);
+}
+
 function latestDashboardUpdate(state: DashboardState): string {
   const dates: number[] = [];
   const summaryDate = safeDate(state.summary?.created_at);
@@ -1329,6 +1424,8 @@ function Kpis({ state }: { state: DashboardState }) {
 
   const cards = [
     { label: "Total Net Profit", value: fmtMoney(s.net_profit), sub: "Revenue minus costs", cls: profit < 0 ? "neg" : "pos" },
+    { label: "Profit Recovered", value: fmtMoney(getCreditMetrics(state).profitRecoveredFromCredits), sub: "From credits/refunds", cls: "pos" },
+    { label: "Jobs With Credits", value: String(getCreditMetrics(state).jobsWithCredits), sub: `Avg credit: ${fmtMoney(getCreditMetrics(state).avgCreditPerCreditJob)}`, cls: "" },
     { label: "Total Revenue", value: fmtMoney(s.revenue), sub: `Avg/job: ${fmtMoney(avgJobRevenue)}`, cls: "" },
     { label: "Total Costs", value: fmtMoney(s.costs), sub: `Cost ratio: ${fmtPct(costRatio)}`, cls: "" },
     { label: "Total Margin", value: fmtPct(s.margin_pct), sub: "Blended margin", cls: "" },
@@ -1408,16 +1505,92 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
         </div>
         <div className="mixList gridMix">
           {parts.map((p) => {
-            const total = parts.reduce((s, x) => s + Math.max(0, x.value), 0) || 1;
-            const share = (p.value / total) * 100;
+            const total = parts.reduce((s, x) => s + Math.abs(x.value), 0) || 1;
+            const visualValue = Math.abs(p.value);
+            const share = (visualValue / total) * 100;
+            const isCredit = p.value < 0;
             return (
-              <div className="mixRow" key={p.label}>
-                <div className="mixTop"><span><span className="sw" style={{ background: p.color }} /> <b>{p.label}</b></span><span>{fmtMoney(p.value)}</span></div>
-                <div className="barTrack"><div className="barFill" style={{ width: `${Math.min(100, share)}%`, background: p.color }} /></div>
-                <div className="mixSub">{fmtPct(share)} of known costs</div>
+              <div className={isCredit ? "mixRow creditMixRow" : "mixRow"} key={p.label}>
+                <div className="mixTop"><span><span className="sw" style={{ background: p.color }} /> <b>{p.label}</b></span><span className={isCredit ? "creditText" : ""}>{fmtMoney(p.value)}</span></div>
+                <div className="barTrack"><div className={isCredit ? "barFill creditBarFill" : "barFill"} style={{ width: `${Math.min(100, share)}%`, background: p.color }} /></div>
+                <div className="mixSub">{fmtPct(share)} of cost activity {isCredit ? "(credit / reduction)" : ""}</div>
               </div>
             );
           })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreditRecoveryPanel({ state, onOpenJob }: { state: DashboardState; onOpenJob: (jobKey: string) => void }) {
+  const metrics = useMemo(() => getCreditMetrics(state), [state]);
+  const creditRows = useMemo(() => getCreditRows(state).slice(0, 6), [state]);
+  const bucketRows = [
+    { label: "Labor credits", value: metrics.creditsByBucket.labor, color: "rgba(34,211,238,.95)" },
+    { label: "Materials credits", value: metrics.creditsByBucket.materials, color: "rgba(124,58,237,.90)" },
+    { label: "Subs credits", value: metrics.creditsByBucket.subs, color: "rgba(37,99,235,.90)" },
+    { label: "Other credits", value: metrics.creditsByBucket.other, color: "rgba(52,211,153,.90)" },
+  ];
+  const maxBucket = Math.max(...bucketRows.map((b) => b.value), 1);
+  const hasCredits = metrics.totalCredits > 0;
+
+  return (
+    <div className="panel creditRecoveryPanel">
+      <div className="panelHead responsiveHead">
+        <div>
+          <div className="panelTitle">Credits & Profit Recovery</div>
+          <div className="panelSub">
+            Tracks credit memos, warranty refunds, supplier credits, and negative invoice lines without distorting the cost mix visuals.
+          </div>
+        </div>
+        <span className={hasCredits ? "tag ok" : "tag"}>{hasCredits ? "Credits detected" : "No credits in view"}</span>
+      </div>
+
+      <div className="creditRecoveryGrid">
+        <div className="creditHeroCard">
+          <div className="creditKicker">Profit recovered from credits</div>
+          <div className="creditHeroValue">{fmtMoney(metrics.profitRecoveredFromCredits)}</div>
+          <div className="creditHeroSub">
+            Negative cost lines reduce job cost and increase net profit by the same amount. This stays separate from the donut so credits do not create misleading cost shares.
+          </div>
+          <div className="creditMiniStats">
+            <div><span>Total Credits</span><strong>{fmtMoney(metrics.totalCredits)}</strong></div>
+            <div><span>Jobs With Credits</span><strong>{metrics.jobsWithCredits}</strong></div>
+            <div><span>Avg / Credit Job</span><strong>{fmtMoney(metrics.avgCreditPerCreditJob)}</strong></div>
+            <div><span>Credit Job Rate</span><strong>{fmtPct(metrics.creditRatePct)}</strong></div>
+          </div>
+        </div>
+
+        <div className="creditBucketCard">
+          <div className="creditKicker">Credits by bucket</div>
+          <div className="creditBucketList">
+            {bucketRows.map((b) => {
+              const share = (b.value / maxBucket) * 100;
+              return (
+                <div className="creditBucketRow" key={b.label}>
+                  <div className="creditBucketTop"><span><span className="sw" style={{ background: b.color }} />{b.label}</span><strong>{fmtMoney(b.value)}</strong></div>
+                  <div className="barTrack"><div className="barFill creditBarFill" style={{ width: `${Math.min(100, share)}%`, background: b.color }} /></div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="creditJobsCard">
+          <div className="creditKicker">Credit-heavy jobs</div>
+          <div className="creditJobList">
+            {creditRows.length ? (
+              creditRows.map(({ job, key, credit }) => (
+                <button className="creditJobRow" key={key} type="button" onClick={() => onOpenJob(key)}>
+                  <span><b>{job.job_name || job.job_id || "Unnamed job"}</b><small>{job.job_id || "No Job ID"} · {dateLabel(job.created_at)}</small></span>
+                  <strong>{fmtMoney(credit)}</strong>
+                </button>
+              ))
+            ) : (
+              <div className="empty compact">No negative cost lines were found in this date range.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1477,6 +1650,7 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
                 <th>Revenue</th>
                 <th>Costs</th>
                 <th>Profit</th>
+                <th>Credits</th>
                 <th>Margin</th>
                 <th>Status</th>
                 <th />
@@ -1495,6 +1669,7 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
                     <td>{fmtMoney(job.revenue)}</td>
                     <td>{fmtMoney(job.costs)}</td>
                     <td className={parseNumberLoose(job.profit) < 0 ? "neg strong" : "pos strong"}>{fmtMoney(job.profit)}</td>
+                    <td className={getJobCreditTotal(job) > 0 ? "creditText strong" : ""}>{getJobCreditTotal(job) > 0 ? fmtMoney(getJobCreditTotal(job)) : "—"}</td>
                     <td>{fmtPct(job.margin_pct)}</td>
                     <td><span className={`tag ${status.cls}`}>{status.label}</span></td>
                     <td><button className="miniBtn" type="button" onClick={() => onOpenJob(key)}>View</button></td>
@@ -1669,6 +1844,7 @@ function ScaleOversightPanel({
   const totalCosts = parseNumberLoose(state.summary?.costs || backendStats?.total_costs);
   const costRatio = totalRevenue ? (totalCosts / totalRevenue) * 100 : 0;
 
+  const creditMetrics = getCreditMetrics(state);
   const recoverableOpportunity = fallbackMetrics.recoverableOpportunity;
   const monthlyLift = recoverableOpportunity / 12;
   const lastAlertSentLabel = emailAlertsEnabled && fallbackMetrics.highRiskCount > 0 ? updatedAtLabel : "No alert sent yet";
@@ -1702,6 +1878,13 @@ function ScaleOversightPanel({
       meta: `${fallbackMetrics.thinMarginJobs.length} job${fallbackMetrics.thinMarginJobs.length === 1 ? "" : "s"} below ${fmtPct(marginTarget)} target`,
       fix: "Raise pricing, reduce costs, or flag these jobs before they turn negative.",
       cls: thinMarginOpportunity > 0 ? "warn" : "ok",
+    },
+    {
+      label: "Credits recovered",
+      amount: creditMetrics.totalCredits,
+      meta: `${creditMetrics.jobsWithCredits} job${creditMetrics.jobsWithCredits === 1 ? "" : "s"} with supplier/warranty credits`,
+      fix: "Track these separately so credits improve profit without making cost mix charts misleading.",
+      cls: creditMetrics.totalCredits > 0 ? "ok" : "ok",
     },
     {
       label: "Materials exposure",
@@ -1769,6 +1952,12 @@ function ScaleOversightPanel({
       value: fmtMoney(recoverableOpportunity),
       note: `Gap to ${fmtPct(marginTarget)} target`,
       cls: recoverableOpportunity > 0 ? "warn" : "ok",
+    },
+    {
+      label: "Total Credits",
+      value: fmtMoney(creditMetrics.totalCredits),
+      note: `${creditMetrics.jobsWithCredits} jobs with negative cost lines`,
+      cls: creditMetrics.totalCredits > 0 ? "ok" : "ok",
     },
     {
       label: "Labor Share",
@@ -1893,6 +2082,10 @@ function ScaleOversightPanel({
             <div>
               <span>Recoverable Profit</span>
               <strong>{fmtMoney(recoverableOpportunity)}</strong>
+            </div>
+            <div>
+              <span>Credits Recovered</span>
+              <strong>{fmtMoney(creditMetrics.totalCredits)}</strong>
             </div>
             <div>
               <span>Worst Job Loss</span>
@@ -2115,6 +2308,14 @@ function DashboardBody({
     <>
       <DashboardHero state={state} />
       <Kpis state={state} />
+      <CreditRecoveryPanel
+        state={state}
+        onOpenJob={(key) => {
+          setJobKey(key);
+          setView("job");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
       <ChartsPanel state={state} view={view} />
       <ScaleOversightPanel
         state={state}
@@ -2405,6 +2606,7 @@ function JobEditor({
               <div className="divider" />
               <div className="kv"><span>Revenue</span><strong>{fmtMoney(job.revenue)}</strong></div>
               <div className="kv"><span>Known Costs</span><strong>{fmtMoney(knownCosts)}</strong></div>
+              <div className="kv"><span>Credits Applied</span><strong className="creditText">{fmtMoney(getJobCreditTotal(base))}</strong></div>
             </div>
           </div>
         </div>
@@ -2416,6 +2618,7 @@ function JobEditor({
           <div className="stat"><div className="statLabel">Gross Margin</div><div className={`statValue ${gm < 0 ? "neg" : "pos"}`}>{fmtPct(gm)}</div><div className="statSub">Based on edited values.</div></div>
           <div className="stat"><div className="statLabel">Revenue</div><div className="statValue">{fmtMoney(job.revenue)}</div><div className="statSub">Editable below.</div></div>
           <div className="stat"><div className="statLabel">Known Costs</div><div className="statValue">{fmtMoney(knownCosts)}</div><div className="statSub">Cost buckets + custom.</div></div>
+          <div className="stat"><div className="statLabel">Credits Applied</div><div className="statValue creditText">{fmtMoney(getJobCreditTotal(base))}</div><div className="statSub">Negative cost lines on this job.</div></div>
           <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{job.custom_categories.length}</div><div className="statSub">Commission, subs, reserves, etc.</div></div>
         </div>
 
@@ -2965,7 +3168,7 @@ html,body{background:#fff!important;color:#0f172a!important}
 .btn{padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.85);color:rgba(15,23,42,.90);font-weight:900;font-size:13px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,background .12s ease,border-color .12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:8px}.btn:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(2,6,23,.10);border-color:rgba(34,211,238,.25)}.btn-primary{background:linear-gradient(90deg,rgba(34,211,238,.20),rgba(124,58,237,.20));border-color:rgba(34,211,238,.28)}.btn-mini{padding:8px 11px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.86);color:rgba(15,23,42,.88);font-weight:900;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}.btn-danger{border-color:rgba(239,68,68,.18);color:rgba(185,28,28,.96);background:rgba(239,68,68,.08)}.buttonRow{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .rangeWrap{margin:16px 0;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-radius:22px;border:1px solid var(--line2);background:rgba(255,255,255,.82);box-shadow:0 14px 44px rgba(2,6,23,.07);padding:12px 14px}.rangeLabel{font-weight:950;color:#0f172a}.rangeSub{margin-top:3px;color:rgba(15,23,42,.55);font-weight:750;font-size:12.5px}.rangeRight{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}.rangeButtons{display:flex;flex-wrap:wrap;gap:8px}.rangeBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 13px;font-weight:950;font-size:13px;color:rgba(15,23,42,.74);cursor:pointer}.rangeBtn.active{background:#0f172a;color:#fff;border-color:#0f172a;box-shadow:0 14px 34px rgba(15,23,42,.16)}.customDates{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.customDates input,.searchInput,.selectInput{border:1px solid var(--line);background:#fff;border-radius:14px;padding:11px 12px;font-weight:850;color:#0f172a;outline:none}.wideSearch{width:100%}
 .panel{border-radius:var(--radius);border:1px solid var(--line2);background:var(--panel);backdrop-filter:blur(14px);box-shadow:var(--shadow);overflow:hidden}.panelHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 14px 12px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.70))}.panelTitle{font-weight:950;letter-spacing:-.02em;color:rgba(15,23,42,.94);font-size:18px}.panelSub{margin-top:4px;color:var(--muted2);font-size:13px;line-height:1.4;font-weight:750}.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(340px,.68fr);gap:14px;margin-top:12px;width:100%}.mainCol,.sideStack{display:flex;flex-direction:column;gap:14px}.pad{padding:14px}.hero,.jobHero{border-radius:22px;border:1px solid var(--line2);background:rgba(255,255,255,.86);box-shadow:0 18px 60px rgba(2,6,23,.08);overflow:hidden;margin-top:12px}.heroBody,.jobHeroBody{padding:16px 16px 14px;display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.heroTitle,.jobHeroTitle{font-size:30px;line-height:1.05;font-weight:980;letter-spacing:-.03em;color:rgba(15,23,42,.94)}.heroSub,.jobHeroSub{margin-top:8px;font-size:15px;line-height:1.5;color:rgba(15,23,42,.64);font-weight:750;max-width:740px}.heroBadges{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}.summaryCard,.jobSummaryCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86);padding:12px;display:flex;flex-direction:column;gap:10px}.kv{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:14px;font-weight:850;color:rgba(15,23,42,.70)}.kv strong{color:rgba(15,23,42,.94)}.divider{height:1px;background:rgba(15,23,42,.06);margin:4px 0 2px}
-.kpis{padding:14px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.kpi,.stat{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.84);box-shadow:0 14px 40px rgba(2,6,23,.06);padding:12px}.kLabel,.statLabel{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.52);font-weight:900}.kValue,.statValue{margin-top:7px;font-weight:980;font-size:22px;letter-spacing:-.02em;color:rgba(15,23,42,.90)}.kSub,.statSub{margin-top:7px;font-size:13px;line-height:1.35;color:rgba(15,23,42,.58);font-weight:760}.pos{color:rgba(5,150,105,.95)!important}.neg{color:rgba(220,38,38,.95)!important}.strong{font-weight:950}.charts,.jobCharts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.jobCharts{gap:12px}.chartCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.82);padding:12px;overflow:hidden;box-shadow:0 12px 38px rgba(2,6,23,.055)}.chartCard.wide{grid-column:1/-1}.chartHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:8px}.chartTitle{font-weight:950;letter-spacing:-.01em;color:rgba(15,23,42,.92);font-size:17px}.chartSub{color:rgba(15,23,42,.55);font-size:13px;font-weight:750}canvas{width:100%;height:auto;display:block}.trendEmpty{border-radius:18px;border:1px dashed rgba(15,23,42,.14);background:rgba(255,255,255,.55);padding:16px;color:rgba(15,23,42,.72);font-weight:850;font-size:14px;line-height:1.45}.mixList{display:flex;flex-direction:column;gap:14px}.gridMix{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mixRow{border:1px solid var(--line2);background:rgba(255,255,255,.82);border-radius:16px;padding:12px}.mixTop{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:rgba(15,23,42,.72);font-weight:850}.sw{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:7px}.barTrack{height:8px;border-radius:999px;background:rgba(15,23,42,.06);overflow:hidden;margin-top:8px}.barFill{height:100%;border-radius:999px}.mixSub{margin-top:6px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}
+.kpis{padding:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.kpi,.stat{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.84);box-shadow:0 14px 40px rgba(2,6,23,.06);padding:12px}.kLabel,.statLabel{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.52);font-weight:900}.kValue,.statValue{margin-top:7px;font-weight:980;font-size:22px;letter-spacing:-.02em;color:rgba(15,23,42,.90)}.kSub,.statSub{margin-top:7px;font-size:13px;line-height:1.35;color:rgba(15,23,42,.58);font-weight:760}.pos{color:rgba(5,150,105,.95)!important}.neg{color:rgba(220,38,38,.95)!important}.strong{font-weight:950}.charts,.jobCharts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.jobCharts{gap:12px}.chartCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.82);padding:12px;overflow:hidden;box-shadow:0 12px 38px rgba(2,6,23,.055)}.chartCard.wide{grid-column:1/-1}.chartHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:8px}.chartTitle{font-weight:950;letter-spacing:-.01em;color:rgba(15,23,42,.92);font-size:17px}.chartSub{color:rgba(15,23,42,.55);font-size:13px;font-weight:750}canvas{width:100%;height:auto;display:block}.trendEmpty{border-radius:18px;border:1px dashed rgba(15,23,42,.14);background:rgba(255,255,255,.55);padding:16px;color:rgba(15,23,42,.72);font-weight:850;font-size:14px;line-height:1.45}.mixList{display:flex;flex-direction:column;gap:14px}.gridMix{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mixRow{border:1px solid var(--line2);background:rgba(255,255,255,.82);border-radius:16px;padding:12px}.mixTop{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:rgba(15,23,42,.72);font-weight:850}.sw{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:7px}.barTrack{height:8px;border-radius:999px;background:rgba(15,23,42,.06);overflow:hidden;margin-top:8px}.barFill{height:100%;border-radius:999px}.mixSub{margin-top:6px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}
 .tableTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.searchInput{min-width:220px}.tableWrap{overflow:auto}.jobsTable{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}.jobsTable th,.jobsTable td{padding:13px 14px;border-bottom:1px solid rgba(15,23,42,.06);text-align:left;font-size:13.5px;font-weight:750;color:rgba(15,23,42,.72);vertical-align:middle}.jobsTable th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.44);font-weight:950;background:rgba(15,23,42,.025)}.jobName{font-weight:950;color:#0f172a;font-size:14px}.jobMeta,.itemMeta{margin-top:5px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}.miniBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:950;font-size:12px;cursor:pointer}.tag{padding:6px 10px;border-radius:999px;border:1px solid var(--line2);font-weight:950;font-size:11.5px;white-space:nowrap;background:rgba(15,23,42,.04);color:rgba(15,23,42,.78)}.tag.ok{border-color:rgba(52,211,153,.22);color:rgba(5,150,105,.95);background:rgba(52,211,153,.10)}.tag.warn{border-color:rgba(245,158,11,.22);color:rgba(180,83,9,.95);background:rgba(245,158,11,.10)}.tag.bad{border-color:rgba(239,68,68,.22);color:rgba(220,38,38,.95);background:rgba(239,68,68,.10)}.list{display:flex;flex-direction:column;gap:10px}.item{border-radius:18px;border:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.86);padding:11px}.itemTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.itemName{font-weight:950;font-size:14px;color:rgba(15,23,42,.88)}.reportActions{display:flex;align-items:center;gap:10px}.deleteReportBtn{width:26px;height:26px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(239,68,68,.08);color:rgba(185,28,28,.95);font-weight:950;font-size:16px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.empty{text-align:center;padding:24px;color:rgba(15,23,42,.55);border:1px dashed rgba(15,23,42,.14);border-radius:18px;background:rgba(255,255,255,.55);font-weight:850;margin:14px}.error{border:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.08);color:rgba(15,23,42,.86);border-radius:18px;padding:14px;font-weight:850;font-size:13px;white-space:pre-wrap}
 .crumbs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,.72));position:relative;z-index:20;pointer-events:auto}.crumb{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;color:rgba(15,23,42,.72)}.crumb strong{color:rgba(15,23,42,.92)}.crumbBtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.82);font-weight:950;font-size:12.5px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,border-color .12s ease;text-decoration:none;color:rgba(15,23,42,.90)}.crumbBtn.secondary{margin-left:0}.jobPage{display:flex;flex-direction:column;gap:12px;margin-top:12px}.jobAnalysisHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(240,253,250,.72));box-shadow:0 14px 40px rgba(2,6,23,.055);padding:14px 16px}.sectionEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.86)}.sectionTitle{margin-top:4px;font-size:20px;line-height:1.1;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.94)}.sectionSubtle{font-size:12.5px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.50);text-align:right}.jobDetailFocus{border:1px solid rgba(34,211,238,.14);box-shadow:0 18px 60px rgba(34,211,238,.08)}.jobStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.jobDetailFocus{border-radius:18px}.jobDetailPad{overflow-x:auto}.jobTable{width:100%;min-width:1320px;table-layout:fixed;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86)}.jobTable th,.jobTable td{padding:12px 8px;border-bottom:1px solid rgba(15,23,42,.06);vertical-align:middle;font-size:12.5px}.jobTable th{text-align:left;font-weight:950;color:rgba(15,23,42,.86);background:rgba(15,23,42,.035);position:sticky;top:0;z-index:2;font-size:12px;white-space:nowrap}.cellEdit{border:1px solid rgba(15,23,42,.12);background:#ffffff;border-radius:12px;padding:10px 10px;font-weight:800;font-size:14px;color:#0f172a!important;width:100%;outline:none;transition:border-color .12s ease,box-shadow .12s ease;position:relative;z-index:2;caret-color:#0f172a}.cellEdit:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.2)}.cellHint{margin-top:6px;font-size:11.5px;color:rgba(15,23,42,.62);font-weight:750}.customRemoveWrap{display:flex;justify-content:center;align-items:center}.supportGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.miniPanel{box-shadow:none}.noteBox{min-height:110px;resize:vertical}
 
