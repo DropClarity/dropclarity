@@ -1424,8 +1424,6 @@ function Kpis({ state }: { state: DashboardState }) {
 
   const cards = [
     { label: "Total Net Profit", value: fmtMoney(s.net_profit), sub: "Revenue minus costs", cls: profit < 0 ? "neg" : "pos" },
-    { label: "Profit Recovered", value: fmtMoney(getCreditMetrics(state).profitRecoveredFromCredits), sub: "From credits/refunds", cls: "pos" },
-    { label: "Jobs With Credits", value: String(getCreditMetrics(state).jobsWithCredits), sub: `Avg credit: ${fmtMoney(getCreditMetrics(state).avgCreditPerCreditJob)}`, cls: "" },
     { label: "Total Revenue", value: fmtMoney(s.revenue), sub: `Avg/job: ${fmtMoney(avgJobRevenue)}`, cls: "" },
     { label: "Total Costs", value: fmtMoney(s.costs), sub: `Cost ratio: ${fmtPct(costRatio)}`, cls: "" },
     { label: "Total Margin", value: fmtPct(s.margin_pct), sub: "Blended margin", cls: "" },
@@ -1455,11 +1453,64 @@ function Kpis({ state }: { state: DashboardState }) {
   );
 }
 
+function CreditRefundKpis({ state }: { state: DashboardState }) {
+  const metrics = getCreditMetrics(state);
+
+  if (metrics.totalCredits <= 0) {
+    return null;
+  }
+
+  const cards = [
+    {
+      label: "Profit Recovered",
+      value: fmtMoney(metrics.profitRecoveredFromCredits),
+      sub: "Credits/refunds reducing job cost",
+    },
+    {
+      label: "Total Credits",
+      value: fmtMoney(metrics.totalCredits),
+      sub: "Negative invoice lines detected",
+    },
+    {
+      label: "Jobs w/ Credits",
+      value: String(metrics.jobsWithCredits),
+      sub: "Jobs with refunds or credits",
+    },
+    {
+      label: "Avg Credit / Job",
+      value: fmtMoney(metrics.avgCreditPerCreditJob),
+      sub: "Across credit jobs only",
+    },
+  ];
+
+  return (
+    <div className="creditKpiPanel">
+      <div className="creditKpiHead">
+        <div>
+          <div className="creditKpiTitle">Credit / Refund Tracking</div>
+          <div className="creditKpiSub">A quiet check for supplier credits, warranty refunds, and credit memos. These are included in profit but kept from distorting cost mix visuals.</div>
+        </div>
+      </div>
+
+      <div className="creditKpiGrid">
+        {cards.map((c) => (
+          <div className="creditKpiCard" key={c.label}>
+            <div className="creditKpiLabel">{c.label}</div>
+            <div className="creditKpiValue">{c.value}</div>
+            <div className="creditKpiNote">{c.sub}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode }) {
   const profitRef = useRef<HTMLCanvasElement | null>(null);
   const revCostRef = useRef<HTMLCanvasElement | null>(null);
   const jobs = getAllJobs(state);
   const parts = useMemo(() => buildCostMixParts(state), [state]);
+  const creditMetrics = useMemo(() => getCreditMetrics(state), [state]);
 
   useEffect(() => {
     if (view !== "dashboard") return;
@@ -1497,100 +1548,44 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
       </div>
 
       <div className="chartCard wide">
-        <div className="chartHead">
+        <div className="chartHead responsiveHead">
           <div>
             <div className="chartTitle">Cost Mix</div>
-            <div className="chartSub">Labor, materials, subs, and other costs</div>
+            <div className="chartSub">
+              Donut/list visuals use absolute cost activity, while each card still shows the true signed bucket total.
+            </div>
           </div>
+
+          {creditMetrics.totalCredits > 0 ? (
+            <span className="creditAppliedPill">Credits applied: -{fmtMoney(creditMetrics.totalCredits).replace("$", "$")}</span>
+          ) : null}
         </div>
+
         <div className="mixList gridMix">
           {parts.map((p) => {
             const total = parts.reduce((s, x) => s + Math.abs(x.value), 0) || 1;
             const visualValue = Math.abs(p.value);
             const share = (visualValue / total) * 100;
             const isCredit = p.value < 0;
+
             return (
               <div className={isCredit ? "mixRow creditMixRow" : "mixRow"} key={p.label}>
-                <div className="mixTop"><span><span className="sw" style={{ background: p.color }} /> <b>{p.label}</b></span><span className={isCredit ? "creditText" : ""}>{fmtMoney(p.value)}</span></div>
-                <div className="barTrack"><div className={isCredit ? "barFill creditBarFill" : "barFill"} style={{ width: `${Math.min(100, share)}%`, background: p.color }} /></div>
-                <div className="mixSub">{fmtPct(share)} of cost activity {isCredit ? "(credit / reduction)" : ""}</div>
+                <div className="mixTop">
+                  <span><span className="sw" style={{ background: p.color }} /> <b>{p.label}</b></span>
+                  <span className={isCredit ? "creditText" : ""}>{fmtMoney(p.value)}</span>
+                </div>
+                <div className="barTrack">
+                  <div
+                    className={isCredit ? "barFill creditBarFill" : "barFill"}
+                    style={{ width: `${Math.min(100, share)}%`, background: p.color }}
+                  />
+                </div>
+                <div className="mixSub">
+                  {fmtPct(share)} of cost activity{isCredit ? " • credit/refund bucket" : ""}
+                </div>
               </div>
             );
           })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CreditRecoveryPanel({ state, onOpenJob }: { state: DashboardState; onOpenJob: (jobKey: string) => void }) {
-  const metrics = useMemo(() => getCreditMetrics(state), [state]);
-  const creditRows = useMemo(() => getCreditRows(state).slice(0, 6), [state]);
-  const bucketRows = [
-    { label: "Labor credits", value: metrics.creditsByBucket.labor, color: "rgba(34,211,238,.95)" },
-    { label: "Materials credits", value: metrics.creditsByBucket.materials, color: "rgba(124,58,237,.90)" },
-    { label: "Subs credits", value: metrics.creditsByBucket.subs, color: "rgba(37,99,235,.90)" },
-    { label: "Other credits", value: metrics.creditsByBucket.other, color: "rgba(52,211,153,.90)" },
-  ];
-  const maxBucket = Math.max(...bucketRows.map((b) => b.value), 1);
-  const hasCredits = metrics.totalCredits > 0;
-
-  return (
-    <div className="panel creditRecoveryPanel">
-      <div className="panelHead responsiveHead">
-        <div>
-          <div className="panelTitle">Credits & Profit Recovery</div>
-          <div className="panelSub">
-            Tracks credit memos, warranty refunds, supplier credits, and negative invoice lines without distorting the cost mix visuals.
-          </div>
-        </div>
-        <span className={hasCredits ? "tag ok" : "tag"}>{hasCredits ? "Credits detected" : "No credits in view"}</span>
-      </div>
-
-      <div className="creditRecoveryGrid">
-        <div className="creditHeroCard">
-          <div className="creditKicker">Profit recovered from credits</div>
-          <div className="creditHeroValue">{fmtMoney(metrics.profitRecoveredFromCredits)}</div>
-          <div className="creditHeroSub">
-            Negative cost lines reduce job cost and increase net profit by the same amount. This stays separate from the donut so credits do not create misleading cost shares.
-          </div>
-          <div className="creditMiniStats">
-            <div><span>Total Credits</span><strong>{fmtMoney(metrics.totalCredits)}</strong></div>
-            <div><span>Jobs With Credits</span><strong>{metrics.jobsWithCredits}</strong></div>
-            <div><span>Avg / Credit Job</span><strong>{fmtMoney(metrics.avgCreditPerCreditJob)}</strong></div>
-            <div><span>Credit Job Rate</span><strong>{fmtPct(metrics.creditRatePct)}</strong></div>
-          </div>
-        </div>
-
-        <div className="creditBucketCard">
-          <div className="creditKicker">Credits by bucket</div>
-          <div className="creditBucketList">
-            {bucketRows.map((b) => {
-              const share = (b.value / maxBucket) * 100;
-              return (
-                <div className="creditBucketRow" key={b.label}>
-                  <div className="creditBucketTop"><span><span className="sw" style={{ background: b.color }} />{b.label}</span><strong>{fmtMoney(b.value)}</strong></div>
-                  <div className="barTrack"><div className="barFill creditBarFill" style={{ width: `${Math.min(100, share)}%`, background: b.color }} /></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="creditJobsCard">
-          <div className="creditKicker">Credit-heavy jobs</div>
-          <div className="creditJobList">
-            {creditRows.length ? (
-              creditRows.map(({ job, key, credit }) => (
-                <button className="creditJobRow" key={key} type="button" onClick={() => onOpenJob(key)}>
-                  <span><b>{job.job_name || job.job_id || "Unnamed job"}</b><small>{job.job_id || "No Job ID"} · {dateLabel(job.created_at)}</small></span>
-                  <strong>{fmtMoney(credit)}</strong>
-                </button>
-              ))
-            ) : (
-              <div className="empty compact">No negative cost lines were found in this date range.</div>
-            )}
-          </div>
         </div>
       </div>
     </div>
@@ -1650,8 +1645,8 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
                 <th>Revenue</th>
                 <th>Costs</th>
                 <th>Profit</th>
-                <th>Credits</th>
                 <th>Margin</th>
+                <th>Credits</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -1669,8 +1664,10 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
                     <td>{fmtMoney(job.revenue)}</td>
                     <td>{fmtMoney(job.costs)}</td>
                     <td className={parseNumberLoose(job.profit) < 0 ? "neg strong" : "pos strong"}>{fmtMoney(job.profit)}</td>
-                    <td className={getJobCreditTotal(job) > 0 ? "creditText strong" : ""}>{getJobCreditTotal(job) > 0 ? fmtMoney(getJobCreditTotal(job)) : "—"}</td>
                     <td>{fmtPct(job.margin_pct)}</td>
+                    <td className={getJobCreditTotal(job) > 0 ? "creditText strong" : ""}>
+                      {getJobCreditTotal(job) > 0 ? fmtMoney(getJobCreditTotal(job)) : "—"}
+                    </td>
                     <td><span className={`tag ${status.cls}`}>{status.label}</span></td>
                     <td><button className="miniBtn" type="button" onClick={() => onOpenJob(key)}>View</button></td>
                   </tr>
@@ -2308,15 +2305,8 @@ function DashboardBody({
     <>
       <DashboardHero state={state} />
       <Kpis state={state} />
-      <CreditRecoveryPanel
-        state={state}
-        onOpenJob={(key) => {
-          setJobKey(key);
-          setView("job");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-      />
       <ChartsPanel state={state} view={view} />
+      <CreditRefundKpis state={state} />
       <ScaleOversightPanel
         state={state}
         plan={plan}
@@ -2328,7 +2318,7 @@ function DashboardBody({
         emailAlertsEnabled={emailAlertsEnabled}
         setEmailAlertsEnabled={setEmailAlertsEnabled}
         userEmail={userEmail}
-        onOpenJob={(key) => {
+        onOpenJob={(key: string) => {
           setJobKey(key);
           setView("job");
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2340,7 +2330,7 @@ function DashboardBody({
         <div className="mainCol">
           <JobsLog
             jobs={jobs}
-            onOpenJob={(key) => {
+            onOpenJob={(key: string) => {
               setJobKey(key);
               setView("job");
               window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3170,7 +3160,7 @@ html,body{background:#fff!important;color:#0f172a!important}
 .panel{border-radius:var(--radius);border:1px solid var(--line2);background:var(--panel);backdrop-filter:blur(14px);box-shadow:var(--shadow);overflow:hidden}.panelHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 14px 12px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.70))}.panelTitle{font-weight:950;letter-spacing:-.02em;color:rgba(15,23,42,.94);font-size:18px}.panelSub{margin-top:4px;color:var(--muted2);font-size:13px;line-height:1.4;font-weight:750}.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(340px,.68fr);gap:14px;margin-top:12px;width:100%}.mainCol,.sideStack{display:flex;flex-direction:column;gap:14px}.pad{padding:14px}.hero,.jobHero{border-radius:22px;border:1px solid var(--line2);background:rgba(255,255,255,.86);box-shadow:0 18px 60px rgba(2,6,23,.08);overflow:hidden;margin-top:12px}.heroBody,.jobHeroBody{padding:16px 16px 14px;display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.heroTitle,.jobHeroTitle{font-size:30px;line-height:1.05;font-weight:980;letter-spacing:-.03em;color:rgba(15,23,42,.94)}.heroSub,.jobHeroSub{margin-top:8px;font-size:15px;line-height:1.5;color:rgba(15,23,42,.64);font-weight:750;max-width:740px}.heroBadges{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}.summaryCard,.jobSummaryCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86);padding:12px;display:flex;flex-direction:column;gap:10px}.kv{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:14px;font-weight:850;color:rgba(15,23,42,.70)}.kv strong{color:rgba(15,23,42,.94)}.divider{height:1px;background:rgba(15,23,42,.06);margin:4px 0 2px}
 .kpis{padding:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.kpi,.stat{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.84);box-shadow:0 14px 40px rgba(2,6,23,.06);padding:12px}.kLabel,.statLabel{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.52);font-weight:900}.kValue,.statValue{margin-top:7px;font-weight:980;font-size:22px;letter-spacing:-.02em;color:rgba(15,23,42,.90)}.kSub,.statSub{margin-top:7px;font-size:13px;line-height:1.35;color:rgba(15,23,42,.58);font-weight:760}.pos{color:rgba(5,150,105,.95)!important}.neg{color:rgba(220,38,38,.95)!important}.strong{font-weight:950}.charts,.jobCharts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.jobCharts{gap:12px}.chartCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.82);padding:12px;overflow:hidden;box-shadow:0 12px 38px rgba(2,6,23,.055)}.chartCard.wide{grid-column:1/-1}.chartHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:8px}.chartTitle{font-weight:950;letter-spacing:-.01em;color:rgba(15,23,42,.92);font-size:17px}.chartSub{color:rgba(15,23,42,.55);font-size:13px;font-weight:750}canvas{width:100%;height:auto;display:block}.trendEmpty{border-radius:18px;border:1px dashed rgba(15,23,42,.14);background:rgba(255,255,255,.55);padding:16px;color:rgba(15,23,42,.72);font-weight:850;font-size:14px;line-height:1.45}.mixList{display:flex;flex-direction:column;gap:14px}.gridMix{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mixRow{border:1px solid var(--line2);background:rgba(255,255,255,.82);border-radius:16px;padding:12px}.mixTop{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:rgba(15,23,42,.72);font-weight:850}.sw{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:7px}.barTrack{height:8px;border-radius:999px;background:rgba(15,23,42,.06);overflow:hidden;margin-top:8px}.barFill{height:100%;border-radius:999px}.mixSub{margin-top:6px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}
 .tableTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.searchInput{min-width:220px}.tableWrap{overflow:auto}.jobsTable{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}.jobsTable th,.jobsTable td{padding:13px 14px;border-bottom:1px solid rgba(15,23,42,.06);text-align:left;font-size:13.5px;font-weight:750;color:rgba(15,23,42,.72);vertical-align:middle}.jobsTable th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.44);font-weight:950;background:rgba(15,23,42,.025)}.jobName{font-weight:950;color:#0f172a;font-size:14px}.jobMeta,.itemMeta{margin-top:5px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}.miniBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:950;font-size:12px;cursor:pointer}.tag{padding:6px 10px;border-radius:999px;border:1px solid var(--line2);font-weight:950;font-size:11.5px;white-space:nowrap;background:rgba(15,23,42,.04);color:rgba(15,23,42,.78)}.tag.ok{border-color:rgba(52,211,153,.22);color:rgba(5,150,105,.95);background:rgba(52,211,153,.10)}.tag.warn{border-color:rgba(245,158,11,.22);color:rgba(180,83,9,.95);background:rgba(245,158,11,.10)}.tag.bad{border-color:rgba(239,68,68,.22);color:rgba(220,38,38,.95);background:rgba(239,68,68,.10)}.list{display:flex;flex-direction:column;gap:10px}.item{border-radius:18px;border:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.86);padding:11px}.itemTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.itemName{font-weight:950;font-size:14px;color:rgba(15,23,42,.88)}.reportActions{display:flex;align-items:center;gap:10px}.deleteReportBtn{width:26px;height:26px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(239,68,68,.08);color:rgba(185,28,28,.95);font-weight:950;font-size:16px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.empty{text-align:center;padding:24px;color:rgba(15,23,42,.55);border:1px dashed rgba(15,23,42,.14);border-radius:18px;background:rgba(255,255,255,.55);font-weight:850;margin:14px}.error{border:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.08);color:rgba(15,23,42,.86);border-radius:18px;padding:14px;font-weight:850;font-size:13px;white-space:pre-wrap}
-.crumbs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,.72));position:relative;z-index:20;pointer-events:auto}.crumb{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;color:rgba(15,23,42,.72)}.crumb strong{color:rgba(15,23,42,.92)}.crumbBtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.82);font-weight:950;font-size:12.5px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,border-color .12s ease;text-decoration:none;color:rgba(15,23,42,.90)}.crumbBtn.secondary{margin-left:0}.jobPage{display:flex;flex-direction:column;gap:12px;margin-top:12px}.jobAnalysisHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(240,253,250,.72));box-shadow:0 14px 40px rgba(2,6,23,.055);padding:14px 16px}.sectionEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.86)}.sectionTitle{margin-top:4px;font-size:20px;line-height:1.1;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.94)}.sectionSubtle{font-size:12.5px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.50);text-align:right}.jobDetailFocus{border:1px solid rgba(34,211,238,.14);box-shadow:0 18px 60px rgba(34,211,238,.08)}.jobStats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.jobDetailFocus{border-radius:18px}.jobDetailPad{overflow-x:auto}.jobTable{width:100%;min-width:1320px;table-layout:fixed;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86)}.jobTable th,.jobTable td{padding:12px 8px;border-bottom:1px solid rgba(15,23,42,.06);vertical-align:middle;font-size:12.5px}.jobTable th{text-align:left;font-weight:950;color:rgba(15,23,42,.86);background:rgba(15,23,42,.035);position:sticky;top:0;z-index:2;font-size:12px;white-space:nowrap}.cellEdit{border:1px solid rgba(15,23,42,.12);background:#ffffff;border-radius:12px;padding:10px 10px;font-weight:800;font-size:14px;color:#0f172a!important;width:100%;outline:none;transition:border-color .12s ease,box-shadow .12s ease;position:relative;z-index:2;caret-color:#0f172a}.cellEdit:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.2)}.cellHint{margin-top:6px;font-size:11.5px;color:rgba(15,23,42,.62);font-weight:750}.customRemoveWrap{display:flex;justify-content:center;align-items:center}.supportGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.miniPanel{box-shadow:none}.noteBox{min-height:110px;resize:vertical}
+.crumbs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,.72));position:relative;z-index:20;pointer-events:auto}.crumb{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;color:rgba(15,23,42,.72)}.crumb strong{color:rgba(15,23,42,.92)}.crumbBtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.82);font-weight:950;font-size:12.5px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,border-color .12s ease;text-decoration:none;color:rgba(15,23,42,.90)}.crumbBtn.secondary{margin-left:0}.jobPage{display:flex;flex-direction:column;gap:12px;margin-top:12px}.jobAnalysisHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(240,253,250,.72));box-shadow:0 14px 40px rgba(2,6,23,.055);padding:14px 16px}.sectionEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.86)}.sectionTitle{margin-top:4px;font-size:20px;line-height:1.1;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.94)}.sectionSubtle{font-size:12.5px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.50);text-align:right}.jobDetailFocus{border:1px solid rgba(34,211,238,.14);box-shadow:0 18px 60px rgba(34,211,238,.08)}.jobStats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.jobDetailFocus{border-radius:18px}.jobDetailPad{overflow-x:auto}.jobTable{width:100%;min-width:1320px;table-layout:fixed;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86)}.jobTable th,.jobTable td{padding:12px 8px;border-bottom:1px solid rgba(15,23,42,.06);vertical-align:middle;font-size:12.5px}.jobTable th{text-align:left;font-weight:950;color:rgba(15,23,42,.86);background:rgba(15,23,42,.035);position:sticky;top:0;z-index:2;font-size:12px;white-space:nowrap}.cellEdit{border:1px solid rgba(15,23,42,.12);background:#ffffff;border-radius:12px;padding:10px 10px;font-weight:800;font-size:14px;color:#0f172a!important;width:100%;outline:none;transition:border-color .12s ease,box-shadow .12s ease;position:relative;z-index:2;caret-color:#0f172a}.cellEdit:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.2)}.cellHint{margin-top:6px;font-size:11.5px;color:rgba(15,23,42,.62);font-weight:750}.customRemoveWrap{display:flex;justify-content:center;align-items:center}.supportGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.miniPanel{box-shadow:none}.noteBox{min-height:110px;resize:vertical}
 
 .scalePanel{
   margin-top:12px;
@@ -3675,5 +3665,24 @@ html,body{background:#fff!important;color:#0f172a!important}
 
 @media(max-width:1300px){.comparisonGrid{grid-template-columns:1fr 1fr}.comparisonTableWrap{grid-column:1/-1}.driverGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.comparisonGrid{grid-template-columns:1fr;padding:14px}.comparisonTableWrap{grid-column:auto}.driverGrid{grid-template-columns:1fr;padding:0 14px 14px}.comparisonValue{font-size:26px}.emailLiveGrid{grid-template-columns:1fr}.highRiskHeroBody{grid-template-columns:1fr}.highRiskSearchWrap{justify-content:stretch}.scaleCardHeaderRow{align-items:stretch;flex-direction:column}.viewAllAlertsBtn{width:fit-content}}
+
+
+/* Clean credit/refund integration */
+.creditText{color:rgba(5,150,105,.96)!important}
+.creditAppliedPill{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(16,185,129,.18);background:rgba(236,253,245,.88);color:rgba(5,150,105,.96);padding:8px 11px;font-size:12px;font-weight:950;white-space:nowrap}
+.creditMixRow{border-color:rgba(16,185,129,.18);background:linear-gradient(180deg,rgba(236,253,245,.64),rgba(255,255,255,.86))}
+.creditBarFill{opacity:.72}
+.creditStat{border-color:rgba(16,185,129,.16);background:linear-gradient(180deg,rgba(236,253,245,.60),rgba(255,255,255,.86))}
+.creditKpiPanel{margin-top:12px;border-radius:20px;border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.82);box-shadow:0 16px 44px rgba(2,6,23,.055);overflow:hidden}
+.creditKpiHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 0}
+.creditKpiTitle{font-size:14px;font-weight:950;color:rgba(15,23,42,.90);letter-spacing:-.01em}
+.creditKpiSub{margin-top:3px;font-size:12.5px;line-height:1.4;font-weight:760;color:rgba(15,23,42,.52);max-width:920px}
+.creditKpiGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px 16px}
+.creditKpiCard{border-radius:16px;border:1px solid rgba(15,23,42,.065);background:rgba(248,250,252,.78);padding:12px;box-shadow:none}
+.creditKpiLabel{font-size:10.5px;text-transform:uppercase;letter-spacing:.075em;color:rgba(15,23,42,.48);font-weight:950}
+.creditKpiValue{margin-top:6px;font-size:18px;line-height:1.05;font-weight:980;color:rgba(15,23,42,.92);letter-spacing:-.015em}
+.creditKpiNote{margin-top:6px;font-size:12px;line-height:1.35;font-weight:760;color:rgba(15,23,42,.52)}
+@media(max-width:1100px){.creditKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.creditKpiGrid{grid-template-columns:1fr}.creditAppliedPill{width:fit-content}}
 
 `;
