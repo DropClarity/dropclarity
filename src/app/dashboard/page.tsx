@@ -1513,7 +1513,7 @@ function MarginTargetControl({
           />
           <span>%</span>
         </div>
-        <button className="btn btn-primary compactTargetSave" type="button" onClick={onSaveMarginTarget}>
+        <button className="btn compactTargetSave" type="button" onClick={onSaveMarginTarget}>
           Save Target
         </button>
         <div className="marginTargetCurrent">Current target: {fmtPct(marginTarget)}</div>
@@ -1970,26 +1970,42 @@ function PastReports({
 
 function Insights({ insights }: { insights: Insight[] }) {
   return (
-    <div className="panel">
-      <div className="panelHead">
+    <div className="panel insightsPanel">
+      <div className="panelHead insightsPanelHead">
         <div>
           <div className="panelTitle">Latest AI Insights</div>
           <div className="panelSub">Highlights from the latest report.</div>
         </div>
       </div>
 
-      <div className="pad">
+      <div className="pad insightsPad">
         {insights.length ? (
-          <div className="list">
+          <div className="insightList">
             {insights.slice(0, 4).map((i, idx) => {
               const impact = String(i.impact || "").toLowerCase();
               const cls = impact.includes("high") || impact.includes("critical") ? "bad" : impact.includes("medium") || impact.includes("moderate") ? "warn" : "ok";
+              const title = String(i.title || "Insight").trim();
+              const impactLabel = String(i.impact || "Insight").trim();
+              const detail = String(i.detail || "").trim();
+              const recommendation = String(i.recommendation || "").trim();
+
               return (
-                <div className="item" key={`${i.title}-${idx}`}>
-                  <div className="itemTop"><div className="itemName">{i.title || "Insight"}</div><span className={`tag ${cls}`}>{i.impact || "Insight"}</span></div>
-                  <div className="itemMeta">{i.detail}</div>
-                  {i.recommendation ? <div className="itemMeta"><b>Recommended:</b> {i.recommendation}</div> : null}
-                </div>
+                <article className="insightCard" key={`${title}-${idx}`}>
+                  <div className="insightTop">
+                    <div className="insightTitleWrap">
+                      <div className="insightTitle">{title}</div>
+                      {detail ? <p className="insightDetail">{detail}</p> : null}
+                    </div>
+                    <span className={`insightImpact ${cls}`}>{impactLabel}</span>
+                  </div>
+
+                  {recommendation ? (
+                    <div className="insightRecommendation">
+                      <span>Recommended</span>
+                      <p>{recommendation}</p>
+                    </div>
+                  ) : null}
+                </article>
               );
             })}
           </div>
@@ -4295,5 +4311,31 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 .sideStack .panelHead{align-items:flex-start!important}
 @media(max-width:768px){.pageTitle{font-size:30px!important}.topbar{align-items:flex-start!important}.kpis{grid-template-columns:1fr 1fr!important}.heroBody{padding:16px!important}.reportsManageLink{align-self:flex-start}.statusRow .riskPill{width:auto!important;justify-content:center}}
 @media(max-width:480px){.pageTitle{font-size:28px!important}.pageSub{font-size:14px!important}.kpis{grid-template-columns:1fr!important}.heroTitle{font-size:24px!important}.reportsManageLink{padding:6px 0}.statusRow .riskPill{width:100%!important}}
+
+
+/* Latest AI Insights responsive cleanup */
+.insightsPanel{overflow:hidden}
+.insightsPanelHead{align-items:flex-start}
+.insightsPad{padding:18px}
+.insightList{display:flex;flex-direction:column;gap:12px;min-width:0}
+.insightCard{min-width:0;border-radius:18px;border:1px solid rgba(15,23,42,.08);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.72));box-shadow:0 10px 28px rgba(2,6,23,.045);padding:14px 14px 13px;overflow:hidden}
+.insightTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0}
+.insightTitleWrap{min-width:0;flex:1 1 auto}
+.insightTitle{font-size:15px;line-height:1.25;font-weight:980;letter-spacing:-.015em;color:rgba(15,23,42,.92);overflow-wrap:anywhere}
+.insightDetail{margin:7px 0 0;font-size:13px;line-height:1.45;font-weight:780;color:rgba(15,23,42,.62);overflow-wrap:anywhere}
+.insightImpact{flex:0 1 auto;max-width:44%;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid rgba(15,23,42,.10);background:rgba(248,250,252,.92);padding:7px 10px;font-size:11.5px;line-height:1.2;font-weight:950;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.insightImpact.ok{border-color:rgba(16,185,129,.20);background:rgba(16,185,129,.08);color:rgba(5,150,105,.96)}
+.insightImpact.warn{border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.10);color:rgba(180,83,9,.96)}
+.insightImpact.bad{border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.10);color:rgba(220,38,38,.96)}
+.insightRecommendation{margin-top:11px;border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(255,255,255,.72);padding:10px 11px;min-width:0}
+.insightRecommendation span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(15,23,42,.46)}
+.insightRecommendation p{margin:4px 0 0;font-size:13px;line-height:1.45;font-weight:820;color:rgba(15,23,42,.66);overflow-wrap:anywhere}
+
+/* Simpler margin target save button */
+.compactTargetSave{background:#0f172a!important;color:#fff!important;border-color:#0f172a!important;box-shadow:0 10px 22px rgba(15,23,42,.14)!important;background-image:none!important}
+.compactTargetSave:hover{background:#1e293b!important;border-color:#1e293b!important;box-shadow:0 14px 28px rgba(15,23,42,.18)!important}
+
+@media(max-width:1100px){.insightImpact{max-width:52%}}
+@media(max-width:760px){.insightsPad{padding:14px}.insightTop{flex-direction:column;gap:9px}.insightImpact{max-width:100%;width:fit-content}.insightCard{padding:13px}.insightTitle{font-size:14.5px}.insightDetail,.insightRecommendation p{font-size:12.75px}.compactTargetSave{width:auto}}
 
 `;
