@@ -200,7 +200,7 @@ export default function Home() {
                 <div>
                   <div className="text-sm font-black text-slate-950">Live Profit Intelligence</div>
                   <div className="mt-1 text-xs font-bold text-slate-400">Latest upload • 24 jobs analyzed</div>
-                  <div className="mt-1 text-xs font-black text-emerald-600">● Live monitoring active — tracking new jobs automatically</div>
+                  <div className="mt-1 text-xs font-black text-emerald-600">● Live monitoring active: tracking new jobs automatically</div>
                 </div>
                 <div className="w-fit rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 shadow-sm shadow-rose-100">
                   🚨 5 High-Risk Jobs Detected — alerts sent
@@ -248,7 +248,7 @@ export default function Home() {
                       {[
                         ["HVAC Install", "$18,420", "Revenue $42,500 • Costs $24,080", "Healthy"],
                         ["Roof Repair", "$9,740", "Revenue $28,900 • Costs $19,160", "Healthy"],
-                        ["Plumbing Job", "-$3,250", "Labor overrun • Materials above estimate", "Critical"],
+                        ["Plumbing Job", "-$3,250", "Labor overrun", "Critical"],
                         ["Electrical Job", "-$1,180", "Underpriced service package", "Critical"],
                       ].map(([name, profit, meta, status]) => {
                         const losing = profit.includes("-");
@@ -298,11 +298,21 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-
-                    <div className="mt-4 grid gap-2 text-[11px] font-black text-slate-500 sm:grid-cols-3">
-                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center">Real-time alerts</div>
-                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center">Benchmark comparisons</div>
-                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center">AI recommendations</div>
+                    <div className="mt-4 grid grid-cols-1 gap-2 text-[11px] font-black text-slate-500 min-[420px]:grid-cols-3">
+                      {[
+                        ["Alerts", "Real-time alerts"],
+                        ["Benchmarks", "Benchmark comparisons"],
+                        ["Signals", "Profit Signals"],
+                      ].map(([shortLabel, fullLabel]) => (
+                        <div
+                          key={fullLabel}
+                          className="min-w-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-2 text-center leading-none"
+                          title={fullLabel}
+                        >
+                          <span className="whitespace-nowrap sm:hidden">{shortLabel}</span>
+                          <span className="hidden whitespace-nowrap sm:inline">{fullLabel}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
