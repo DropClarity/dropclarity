@@ -24,6 +24,7 @@ const PLAN_LABELS: Record<VisiblePlan, string> = {
 function normalizePlan(rawPlan: unknown): VisiblePlan {
   const plan = String(rawPlan || "free").toLowerCase().trim();
 
+  // Legacy support: old "pro" plan now maps to "core".
   if (plan === "pro" || plan === "core") return "core";
   if (plan === "scale") return "scale";
 
@@ -369,34 +370,30 @@ export default function SiteHeader() {
   const plan = getPlanFromUser(user);
 
   return (
-    <>
-      <header className="fixed left-0 right-0 top-0 z-[99999] h-[88px] border-b border-slate-200 bg-white sm:h-[96px]">
-        <div className="mx-auto h-full max-w-[1600px] px-5 sm:px-8">
-          <DesktopHeader
-            pathname={pathname}
-            plan={plan}
-            isLoaded={isLoaded}
-            isSignedIn={isSignedIn}
-            user={user}
-          />
+    <header className="sticky top-0 z-[9999] h-[88px] border-b border-slate-200 bg-white sm:h-[96px]">
+      <div className="mx-auto h-full max-w-[1600px] px-5 sm:px-8">
+        <DesktopHeader
+          pathname={pathname}
+          plan={plan}
+          isLoaded={isLoaded}
+          isSignedIn={isSignedIn}
+          user={user}
+        />
 
-          <TabletHeader
-            pathname={pathname}
-            plan={plan}
-            isLoaded={isLoaded}
-            isSignedIn={isSignedIn}
-          />
+        <TabletHeader
+          pathname={pathname}
+          plan={plan}
+          isLoaded={isLoaded}
+          isSignedIn={isSignedIn}
+        />
 
-          <MobileHeader
-            pathname={pathname}
-            plan={plan}
-            isLoaded={isLoaded}
-            isSignedIn={isSignedIn}
-          />
-        </div>
-      </header>
-
-      <div className="h-[88px] sm:h-[96px]" aria-hidden="true" />
-    </>
+        <MobileHeader
+          pathname={pathname}
+          plan={plan}
+          isLoaded={isLoaded}
+          isSignedIn={isSignedIn}
+        />
+      </div>
+    </header>
   );
 }
