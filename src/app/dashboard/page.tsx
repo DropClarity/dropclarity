@@ -1538,7 +1538,7 @@ function TopBar({
   const margin = parseNumberLoose(s?.margin_pct);
   const losing = parseNumberLoose(s?.losing_jobs_count);
   const profitHealth = !s ? "warn" : profit < 0 || losing > 0 ? "bad" : margin < 20 ? "warn" : "ok";
-  const healthLabel = profitHealth === "bad" ? "Profit risk" : profitHealth === "warn" ? "Needs optimization" : "Healthy";
+  const healthLabel = profitHealth === "bad" ? "⚠ Profit risk" : profitHealth === "warn" ? "Needs optimization" : "Healthy";
 
   return (
     <div className="topbar">
@@ -1562,7 +1562,7 @@ function TopBar({
 
       <div className="statusRow">
         <StatusPill mode={mode} />
-        {s ? <div className={`pill health ${profitHealth}`}>{healthLabel}</div> : null}
+        {s ? <div className={`pill health ${profitHealth} ${profitHealth === "bad" ? "riskPill" : ""}`}>{healthLabel}</div> : null}
 
 
 <button className="btn" type="button" onClick={onRefresh}>
@@ -1909,11 +1909,12 @@ function PastReports({
         <div>
           <div className="panelTitle">Past Reports</div>
           <div className="panelSub">
-            Saved upload snapshots. Manage all reports to delete old or mistaken uploads from dashboard totals.
+            Saved upload snapshots. Review or hide mistaken uploads from dashboard totals.
           </div>
         </div>
-        <button className="miniBtn manageReportsBtn" type="button" onClick={onManageReports}>
-          Manage all reports
+        <button className="reportsManageLink" type="button" onClick={onManageReports}>
+          Manage
+          <span aria-hidden="true">→</span>
         </button>
       </div>
 
@@ -1958,8 +1959,8 @@ function PastReports({
         )}
 
         {reports.length > 8 ? (
-          <button className="btn reportFullWidthBtn" type="button" onClick={onManageReports}>
-            View {reports.length - 8} more report{reports.length - 8 === 1 ? "" : "s"}
+          <button className="reportMoreLink" type="button" onClick={onManageReports}>
+            View {reports.length - 8} more report{reports.length - 8 === 1 ? "" : "s"} →
           </button>
         ) : null}
       </div>
@@ -2553,8 +2554,8 @@ function DashboardBody({
 
   return (
     <>
-      <DashboardHero state={state} />
       <Kpis state={state} />
+      <DashboardHero state={state} />
       <ChartsPanel state={state} view={view} />
       <CreditRefundKpis state={state} />
       <ScaleOversightPanel
@@ -4268,5 +4269,31 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 @media (max-width:768px){.dc-bg{padding-top:28px;background:#fff!important}.wrap{width:100%!important;padding-inline:16px!important}.pageTitle{font-size:34px;line-height:1.04}.pageSub{font-size:15px}.topbar{margin-bottom:14px}.statusRow{width:100%}.statusRow .btn,.statusRow a.btn{flex:1 1 auto;justify-content:center}.rangeWrap,.marginTargetTopWrap,.hero,.panel,.scalePanel,.chartCard,.creditKpiPanel{border-radius:18px}.panelHead,.responsiveHead{flex-direction:column;align-items:stretch!important}.tableTools,.reportManagerTools{width:100%;display:grid;grid-template-columns:1fr;gap:10px}.searchInput,.selectInput{width:100%;min-width:0}.heroBody,.jobHeroBody{padding:18px}.heroTitle,.jobHeroTitle{font-size:28px}.heroSub,.jobHeroSub{font-size:14.5px}.kpis,.creditKpiGrid,.gridMix,.jobStats{grid-template-columns:1fr}.kpi,.stat{min-height:auto}.scaleCommandGrid,.scaleGridPremiumV2{padding:14px;gap:14px}.scaleMiniStats{grid-template-columns:1fr 1fr}.scaleHeadRight{justify-content:flex-start}.scaleControlHead{align-items:flex-start!important}.benchmarkGridV2{grid-template-columns:1fr}.lockedFeatureGrid{grid-template-columns:1fr}.comparisonGrid{grid-template-columns:1fr;padding:14px}.driverGrid{grid-template-columns:1fr;padding:0 14px 14px}.supportGrid{grid-template-columns:1fr}.jobDetailPad{padding:14px}.jobTable{min-width:1180px}.jobsTable{min-width:880px}.reportsTable{min-width:980px}.reportsBulkActions{padding:14px}.reportsBulkActions .btn{width:100%;justify-content:center}.reportsManagerBody{padding:16px}.reportsManagerTitle{font-size:25px}.crumbs{align-items:flex-start}.crumbBtn{margin-left:0!important}.creditAppliedPill{white-space:normal;line-height:1.25}.emailLiveGrid{grid-template-columns:1fr}}
 @media (max-width:480px){.wrap{padding-inline:12px!important}.pageTitle{font-size:30px}.pageKicker{font-size:11px}.btn,.rangeBtn{width:100%;justify-content:center}.rangeButtons .rangeBtn{width:auto}.customDates{display:grid;grid-template-columns:1fr;gap:8px}.heroBody,.jobHeroBody,.panelHead,.pad,.chartCard{padding:14px}.kValue,.statValue{font-size:22px}.scaleMiniStats{grid-template-columns:1fr}.reportActions{align-items:flex-end;flex-direction:column}.itemTop{gap:8px}.reportsManagerSub,.heroSub,.panelSub{font-size:13.5px}.upgradeModal{border-radius:22px;padding:20px}.upgradeTitle{font-size:23px}.jobsTable th,.jobsTable td{padding:12px 12px}.reportNameWrap{min-width:240px}.reportsTable td:first-child{min-width:280px}}
 @media (hover:none) and (pointer:coarse){.btn,.miniBtn,.rangeBtn,.deleteReportBtn,.crumbBtn{min-height:44px}.deleteReportBtn{min-width:44px}.btn:hover,.miniBtn:hover,.reportPreviewItem:hover{transform:none;box-shadow:inherit}}
+
+
+/* DropClarity final polish: tighter dashboard header, KPI-first rhythm, sharper risk state, modest report controls */
+.dashboardIntro{display:flex;flex-direction:column;gap:6px!important;max-width:980px!important}
+.pageKicker{margin-bottom:2px!important;padding:5px 10px!important;font-size:11px!important;box-shadow:0 8px 22px rgba(34,211,238,.08)!important}
+.pageTitle{font-size:clamp(30px,2.55vw,42px)!important;line-height:1.06!important;letter-spacing:-.038em!important;max-width:900px!important}
+.pageSub{margin-top:2px!important;font-size:clamp(14px,1.1vw,16px)!important;line-height:1.42!important;max-width:760px!important;color:rgba(51,65,85,.72)!important}
+.topbar{margin-bottom:14px!important;align-items:center!important}
+.statusRow .riskPill{border-color:rgba(239,68,68,.34)!important;background:linear-gradient(135deg,rgba(254,242,242,.96),rgba(255,255,255,.86))!important;color:rgba(185,28,28,.98)!important;box-shadow:0 14px 34px rgba(239,68,68,.14),0 0 0 1px rgba(239,68,68,.08) inset!important;font-weight:990!important}
+.statusRow .riskPill::after{content:"";width:7px;height:7px;border-radius:999px;background:rgba(239,68,68,.95);box-shadow:0 0 0 4px rgba(239,68,68,.13);margin-left:2px}
+.kpis{padding:16px!important;gap:12px!important}
+.kpi{min-height:104px!important}
+.hero{margin-top:12px!important}
+.heroBody{padding:18px 20px!important;gap:16px!important}
+.heroTitle{font-size:clamp(24px,1.75vw,32px)!important;line-height:1.08!important}
+.heroSub{font-size:clamp(14px,1vw,15.5px)!important;line-height:1.42!important;max-width:760px!important}
+.summaryCard{padding:15px!important;gap:10px!important}
+.reportsManageLink{appearance:none;border:0;background:transparent;color:rgba(15,23,42,.58);font-size:12.5px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:6px 2px;border-radius:999px;white-space:nowrap;transition:color .12s ease,transform .08s ease}
+.reportsManageLink:hover{color:rgba(8,145,178,.96);transform:translateX(1px)}
+.reportsManageLink span{font-size:13px;line-height:1;color:rgba(8,145,178,.85)}
+.reportMoreLink{appearance:none;width:100%;border:0;background:transparent;color:rgba(8,145,178,.92);font-size:12.5px;font-weight:950;cursor:pointer;padding:10px 4px;margin-top:8px;text-align:center;border-radius:12px}
+.reportMoreLink:hover{background:rgba(34,211,238,.07)}
+.manageReportsBtn{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.sideStack .panelHead{align-items:flex-start!important}
+@media(max-width:768px){.pageTitle{font-size:30px!important}.topbar{align-items:flex-start!important}.kpis{grid-template-columns:1fr 1fr!important}.heroBody{padding:16px!important}.reportsManageLink{align-self:flex-start}.statusRow .riskPill{width:auto!important;justify-content:center}}
+@media(max-width:480px){.pageTitle{font-size:28px!important}.pageSub{font-size:14px!important}.kpis{grid-template-columns:1fr!important}.heroTitle{font-size:24px!important}.reportsManageLink{padding:6px 0}.statusRow .riskPill{width:100%!important}}
 
 `;
