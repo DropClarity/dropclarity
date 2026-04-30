@@ -2062,7 +2062,7 @@ function ScaleOversightPanel({
       return parseNumberLoose(a.margin_pct) - parseNumberLoose(b.margin_pct);
     });
 
-  const displayedRiskJobs = isScale ? riskJobsFromData.slice(0, 4) : canPreviewScale ? riskJobsFromData.slice(0, 1) : [];
+  const displayedRiskJobs = isScale ? riskJobsFromData.slice(0, 3) : canPreviewScale ? riskJobsFromData.slice(0, 1) : [];
 
   const losingLossAmount = fallbackMetrics.losingJobs.reduce((sum, job) => {
     const p = parseNumberLoose(job.profit);
@@ -4347,5 +4347,136 @@ html,body{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-renderi
 
 @media(max-width:1100px){.insightImpact{max-width:52%}}
 @media(max-width:760px){.insightsPad{padding:14px}.insightTop{flex-direction:column;gap:9px}.insightImpact{max-width:100%;width:fit-content}.insightCard{padding:13px}.insightTitle{font-size:14.5px}.insightDetail,.insightRecommendation p{font-size:12.75px}.compactTargetSave{width:auto}}
+
+
+/* Mobile/tablet horizontal scroll fix for wide dashboard sections */
+.dc-bg,
+.wrap,
+.grid,
+.mainCol,
+.sideStack,
+.panel,
+.chartCard,
+.scalePanel,
+.jobPage,
+.reportsManagerPage,
+.highRiskPage {
+  min-width: 0;
+}
+
+.tableWrap,
+.jobDetailPad,
+.comparisonTableWrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+  scrollbar-width: thin;
+}
+
+.tableWrap::-webkit-scrollbar,
+.jobDetailPad::-webkit-scrollbar,
+.comparisonTableWrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tableWrap::-webkit-scrollbar-thumb,
+.jobDetailPad::-webkit-scrollbar-thumb,
+.comparisonTableWrap::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .18);
+}
+
+.tableWrap::-webkit-scrollbar-track,
+.jobDetailPad::-webkit-scrollbar-track,
+.comparisonTableWrap::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, .04);
+}
+
+.jobsTable,
+.reportsTable,
+.jobTable,
+.comparisonTable {
+  table-layout: auto;
+}
+
+@media(max-width:768px){
+  .tableWrap,
+  .jobDetailPad,
+  .comparisonTableWrap {
+    border-radius: 0 0 18px 18px;
+    cursor: grab;
+  }
+
+  .tableWrap::after,
+  .jobDetailPad::after,
+  .comparisonTableWrap::after {
+    content: "Swipe sideways to view more →";
+    display: block;
+    position: sticky;
+    left: 0;
+    width: fit-content;
+    margin: 10px 12px 12px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, .08);
+    background: rgba(248, 250, 252, .92);
+    color: rgba(15, 23, 42, .56);
+    font-size: 11.5px;
+    font-weight: 900;
+    pointer-events: none;
+  }
+
+  .jobsTable { min-width: 920px !important; }
+  .reportsTable { min-width: 1040px !important; }
+  .jobTable { min-width: 1200px !important; }
+  .comparisonTable { min-width: 620px !important; }
+}
+
+/* High-risk job alerts spacing cleanup */
+.alertList {
+  gap: 12px !important;
+}
+
+.alertItem.premiumAlert {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  padding: 14px !important;
+}
+
+.alertItem.premiumAlert > .tag {
+  align-self: flex-start;
+}
+
+.alertMain {
+  width: 100%;
+  min-width: 0;
+}
+
+.alertName {
+  overflow-wrap: anywhere;
+}
+
+.alertMeta,
+.alertIssue,
+.alertCompareNote {
+  overflow-wrap: anywhere;
+}
+
+.alertActions {
+  gap: 8px;
+}
+
+@media(max-width:760px){
+  .alertActions .miniBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 
 `;
