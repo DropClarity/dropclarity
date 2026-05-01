@@ -50,4 +50,4 @@ export default function HowItWorks() {
       `}</style>
     </main>
   );
-}Í
+}
