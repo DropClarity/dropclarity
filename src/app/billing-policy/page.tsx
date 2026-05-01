@@ -170,7 +170,7 @@ const pageCss = `
 .dcPage {
   min-height: 100vh;
   width: 100%;
-  padding: clamp(28px, 4vw, 56px) 0 clamp(56px, 7vw, 96px);
+  padding: clamp(24px, 3.5vw, 48px) 0 clamp(48px, 6vw, 84px);
   background:
     radial-gradient(900px 480px at 2% -6%, rgba(124, 58, 237, 0.075), transparent 64%),
     radial-gradient(980px 520px at 98% -4%, rgba(34, 211, 238, 0.11), transparent 62%),
@@ -186,7 +186,7 @@ const pageCss = `
 }
 
 .legalHero {
-  padding: clamp(14px, 2vw, 24px) 0 clamp(24px, 3vw, 36px);
+  padding: clamp(12px, 1.6vw, 20px) 0 clamp(20px, 2.6vw, 30px);
   border-bottom: 1px solid rgba(15, 23, 42, 0.07);
 }
 
@@ -204,7 +204,7 @@ const pageCss = `
   max-width: 900px;
   margin: 0;
   color: #0f172a;
-  font-size: clamp(34px, 3.1vw, 52px);
+  font-size: clamp(28px, 2.45vw, 42px);
   font-weight: 900;
   line-height: 1.04;
   letter-spacing: -0.052em;
@@ -213,7 +213,7 @@ const pageCss = `
 .legalUpdated {
   margin: 12px 0 0;
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
   line-height: 1.55;
 }
@@ -222,7 +222,7 @@ const pageCss = `
   max-width: 1180px;
   margin: 20px 0 0;
   color: #334155;
-  font-size: clamp(15.5px, 1.05vw, 17px);
+  font-size: clamp(14px, 0.95vw, 15.5px);
   font-weight: 600;
   line-height: 1.75;
 }
@@ -233,9 +233,9 @@ const pageCss = `
 
 .legalSection {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: clamp(18px, 2.2vw, 32px);
-  padding: clamp(30px, 3vw, 44px) 0;
+  padding: clamp(24px, 2.5vw, 36px) 0;
   border-bottom: 1px solid rgba(15, 23, 42, 0.07);
 }
 
@@ -247,14 +247,14 @@ const pageCss = `
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 23px;
+  height: 23px;
   margin-top: 2px;
   border: 1px solid rgba(79, 70, 229, 0.16);
   border-radius: 999px;
   background: rgba(79, 70, 229, 0.075);
   color: #4f46e5;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 850;
   line-height: 1;
   flex: 0 0 auto;
@@ -268,7 +268,7 @@ const pageCss = `
   max-width: 920px;
   margin: 0;
   color: #0f172a;
-  font-size: clamp(19px, 1.45vw, 24px);
+  font-size: clamp(16.5px, 1.2vw, 20px);
   font-weight: 900;
   line-height: 1.22;
   letter-spacing: -0.028em;
@@ -276,9 +276,9 @@ const pageCss = `
 
 .legalCopy p {
   max-width: 1160px;
-  margin: 12px 0 0;
+  margin: 9px 0 0;
   color: #334155;
-  font-size: clamp(15px, 1vw, 16.5px);
+  font-size: clamp(13.5px, 0.92vw, 15px);
   font-weight: 600;
   line-height: 1.72;
 }
@@ -291,9 +291,9 @@ const pageCss = `
 }
 
 .legalCopy li {
-  margin-top: 8px;
+  margin-top: 6px;
   color: #334155;
-  font-size: clamp(15px, 1vw, 16.5px);
+  font-size: clamp(13.5px, 0.92vw, 15px);
   font-weight: 600;
   line-height: 1.68;
 }
@@ -315,7 +315,7 @@ const pageCss = `
   }
 
   .legalHero h1 {
-    font-size: clamp(34px, 4vw, 46px);
+    font-size: clamp(27px, 3.5vw, 38px);
   }
 }
 
@@ -333,25 +333,25 @@ const pageCss = `
   }
 
   .legalHero h1 {
-    font-size: clamp(32px, 7vw, 40px);
+    font-size: clamp(24px, 5.6vw, 31px);
   }
 
   .legalIntro,
   .legalCopy p,
   .legalCopy li {
-    font-size: 15.5px;
-    line-height: 1.72;
+    font-size: 13.5px;
+    line-height: 1.65;
   }
 
   .legalSection {
-    grid-template-columns: 34px minmax(0, 1fr);
-    gap: 14px;
-    padding: 28px 0;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 12px;
+    padding: 22px 0;
   }
 
   .legalNumber {
-    width: 24px;
-    height: 24px;
+    width: 21px;
+    height: 21px;
   }
 }
 
@@ -374,34 +374,34 @@ const pageCss = `
   }
 
   .legalHero h1 {
-    font-size: clamp(30px, 8vw, 36px);
+    font-size: clamp(23px, 6.4vw, 29px);
     letter-spacing: -0.045em;
   }
 
   .legalUpdated {
-    font-size: 12.5px;
+    font-size: 11.5px;
   }
 
   .legalIntro {
     margin-top: 18px;
-    font-size: 15.5px;
-    line-height: 1.72;
+    font-size: 13.5px;
+    line-height: 1.65;
   }
 
   .legalSection {
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 26px 0;
+    gap: 9px;
+    padding: 21px 0;
   }
 
   .legalCopy h2 {
-    font-size: 20px;
+    font-size: 16.5px;
   }
 
   .legalCopy p,
   .legalCopy li {
-    font-size: 15.25px;
-    line-height: 1.7;
+    font-size: 13.25px;
+    line-height: 1.64;
   }
 }
 
@@ -411,11 +411,11 @@ const pageCss = `
   }
 
   .legalHero h1 {
-    font-size: 29px;
+    font-size: 23px;
   }
 
   .legalCopy h2 {
-    font-size: 19px;
+    font-size: 16px;
   }
 }
 `;
