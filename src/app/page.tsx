@@ -1,7 +1,5 @@
 "use client";
 
-import PageContainer from "@/components/PageContainer";
-
 type PlanId = "core" | "scale";
 
 type PricingPlan = {
@@ -140,13 +138,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950 [font-family:ui-sans-serif,system-ui,-apple-system,Segoe_UI,Roboto,Arial]">
-      <PageContainer>
-        <div className="space-y-16 sm:space-y-20 lg:space-y-24">
-
       <section className="relative overflow-hidden border-b border-slate-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_28%,rgba(139,92,246,.18),transparent_32%),radial-gradient(circle_at_82%_72%,rgba(59,130,246,.18),transparent_36%),linear-gradient(135deg,#ffffff,#ffffff,#f8fbff)]" />
 
-        <div className="relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-12 sm:px-8 sm:py-14 lg:grid-cols-[0.86fr_1.14fr] lg:px-10 lg:py-18 xl:gap-16 2xl:py-20">
+        <div className="relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:grid-cols-[0.86fr_1.14fr] lg:px-10 lg:py-24 xl:gap-16 2xl:py-28">
           <div className="w-full max-w-[760px]">
             <div className="mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
               Built for HVAC, plumbing, roofing, electrical, and home service operators
@@ -336,7 +331,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="mx-auto w-full max-w-[1500px] px-5 py-14 text-center sm:px-8 sm:py-16 lg:px-10">
+      <section className="mx-auto w-full max-w-[1500px] px-5 py-16 text-center sm:px-8 sm:py-20 lg:px-10 lg:py-24">
         <div className="mx-auto max-w-3xl">
           <h2 className="mx-auto max-w-3xl text-[28px] font-black leading-[1.16] tracking-[-0.035em] text-slate-950 sm:text-[34px] lg:text-[38px]">
             You think the job made money.{" "}
@@ -375,7 +370,7 @@ export default function Home() {
       </section>
 
       <section className="border-y border-slate-100 bg-slate-50/70">
-        <div className="mx-auto w-full max-w-[1500px] px-5 py-14 text-center sm:px-8 sm:py-16 lg:px-10">
+        <div className="mx-auto w-full max-w-[1500px] px-5 py-16 text-center sm:px-8 sm:py-20 lg:px-10 lg:py-24">
           <h2 className="mx-auto max-w-4xl text-[28px] font-black leading-tight tracking-[-0.035em] text-slate-950 sm:text-[34px]">
             Built for the home service businesses where job margins matter most
           </h2>
@@ -403,7 +398,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[1500px] px-5 py-14 text-center sm:px-8 sm:py-16 lg:px-10">
+      <section className="mx-auto w-full max-w-[1500px] px-5 py-16 text-center sm:px-8 sm:py-20 lg:px-10 lg:py-24">
         <h2 className="text-[28px] font-black tracking-[-0.035em] text-slate-950 sm:text-[34px]">How it Works</h2>
         <p className="mx-auto mt-4 max-w-3xl text-[15px] font-semibold leading-7 text-slate-500 sm:text-[16px]">
           DropClarity turns messy job files into a clean profitability dashboard so you can stop guessing and start making better pricing decisions.
@@ -433,7 +428,7 @@ export default function Home() {
       </section>
 
       <section className="border-y border-slate-100 bg-slate-950 text-white">
-        <div className="mx-auto grid w-full max-w-[1500px] gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-10">
+        <div className="mx-auto grid w-full max-w-[1500px] gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-10 lg:py-24">
           <div>
             <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black text-white">
               ROI-focused profitability clarity
@@ -462,7 +457,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="pricing" className="px-5 py-14 sm:px-8 sm:py-16 lg:px-10">
+      <section id="pricing" className="px-5 py-16 sm:px-8 sm:py-20 lg:px-10 lg:py-24">
         <div className="mx-auto w-full max-w-[1600px]">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-[30px] font-black leading-tight tracking-[-0.035em] text-slate-950 sm:text-[38px]">
@@ -550,7 +545,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="faq" className="bg-slate-50/80 px-5 py-14 sm:px-8 sm:py-16 lg:px-10">
+      <section id="faq" className="bg-slate-50/80 px-5 pt-16 pb-24 sm:px-8 sm:pt-20 sm:pb-28 lg:px-10 lg:pt-24 lg:pb-32">
         <div className="mx-auto w-full max-w-[1200px]">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mx-auto mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
@@ -585,8 +580,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-        </div>
-      </PageContainer>
     </main>
   );
 }
