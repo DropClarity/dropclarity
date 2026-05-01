@@ -3,92 +3,149 @@ export default function BillingPolicyPage() {
     <main className="dcPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <div className="billingWrap">
-        <section className="billingHero">
-          <div className="billingKicker">
-            <span className="billingKickerDot" /> Billing Policy
-          </div>
-
-          <h1 className="billingTitle">
-            Simple billing terms for{" "}
-            <span className="billingGradText">DropClarity.</span>
-          </h1>
-
-          <p className="billingLede">
-            This policy explains how DropClarity subscriptions, renewals,
-            cancellations, refunds, failed payments, and plan changes work.
+      <div className="legalInner">
+        <section className="legalHero">
+          <p className="legalEyebrow">Billing Policy</p>
+          <h1>Billing Policy</h1>
+          <p className="legalUpdated">Last updated: May 1, 2026</p>
+          <p className="legalIntro">
+            This Billing Policy explains how DropClarity subscriptions, renewals,
+            cancellations, refunds, failed payments, plan changes, trials, and
+            billing support work when using the platform.
           </p>
         </section>
 
-        <section className="billingContent">
-          <div className="billingNotice">
-            This page should match your actual Stripe checkout, pricing, refund,
-            and cancellation settings before going live.
-          </div>
+        <section className="legalGrid" aria-label="Billing Policy sections">
+          <article className="legalCard legalCardWide legalNotice">
+            <h2>Important Billing Note</h2>
+            <p>
+              This page should match your actual Stripe checkout, pricing, refund,
+              cancellation, and billing portal settings before going live.
+            </p>
+          </article>
 
-          {sections.map((section) => (
-            <div className="billingBlock" key={section.title}>
-              <h2>{section.title}</h2>
-              <p>{section.text}</p>
-            </div>
-          ))}
+          <article className="legalCard">
+            <h2>1. Subscription Plans</h2>
+            <p>
+              DropClarity offers paid subscription plans that may include different
+              usage limits, dashboards, exports, alerts, priority features, and
+              support levels.
+            </p>
+            <p>
+              Current plan details are shown on the Pricing page, checkout page,
+              or billing portal. Plan features and limits may change over time.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>2. Billing Cycle</h2>
+            <p>
+              Subscriptions are billed on a recurring monthly basis unless otherwise
+              stated at checkout.
+            </p>
+            <p>
+              Your payment method will be charged automatically at the start of
+              each billing cycle until your subscription is canceled.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>3. Payment Processing</h2>
+            <p>
+              Payments are processed by our payment provider. DropClarity does not
+              store full payment card numbers on its own systems.
+            </p>
+            <p>
+              You are responsible for keeping your payment method current and
+              ensuring your billing information is accurate.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>4. Failed Payments</h2>
+            <p>
+              If a payment fails, access to paid features may be limited, suspended,
+              or canceled until payment is successfully completed.
+            </p>
+            <p>
+              We may attempt to notify you of failed payments through the account
+              email address on file.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>5. Cancellations</h2>
+            <p>
+              You may cancel your subscription through your billing portal or by
+              contacting <strong>info@dropclarity.com</strong>.
+            </p>
+            <p>
+              Cancellation stops future renewals. Access may continue through the
+              end of the current paid billing period unless otherwise stated.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>6. Refunds</h2>
+            <p>
+              Unless required by law or explicitly agreed in writing, subscription
+              payments are generally non-refundable.
+            </p>
+            <p>
+              Because DropClarity provides access to software, analysis tools, and
+              usage-based value during the billing period, partial-month refunds
+              are not guaranteed.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>7. Plan Changes</h2>
+            <p>
+              If you upgrade or downgrade your plan, billing may be prorated or
+              adjusted depending on payment provider settings.
+            </p>
+            <p>
+              Any plan change terms shown during checkout or inside your billing
+              portal will apply to that change.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>8. Trials, Coupons, and Promotions</h2>
+            <p>
+              DropClarity may offer trials, discounts, coupons, or promotional
+              pricing from time to time.
+            </p>
+            <p>
+              Promotional terms may change or expire according to the offer shown
+              at the time of purchase.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>9. Taxes</h2>
+            <p>
+              Prices may not include applicable taxes unless stated during checkout
+              or on the pricing page.
+            </p>
+            <p>
+              You are responsible for any taxes, duties, or similar charges
+              associated with your purchase where applicable.
+            </p>
+          </article>
+
+          <article className="legalCard legalCardWide">
+            <h2>10. Billing Support</h2>
+            <p>
+              Billing questions, subscription issues, cancellation questions, or
+              payment concerns can be sent to <strong>info@dropclarity.com</strong>.
+            </p>
+          </article>
         </section>
       </div>
     </main>
   );
 }
-
-const sections = [
-  {
-    title: "Subscription Plans",
-    text:
-      "DropClarity offers paid subscription plans that may include different usage limits, dashboards, exports, alerts, priority features, and support levels. Current plan details are shown on the Pricing page, checkout page, or billing portal.",
-  },
-  {
-    title: "Billing Cycle",
-    text:
-      "Subscriptions are billed on a recurring monthly basis unless otherwise stated at checkout. Your payment method will be charged automatically at the start of each billing cycle.",
-  },
-  {
-    title: "Payment Processing",
-    text:
-      "Payments are processed by our payment provider. DropClarity does not store full payment card numbers. You are responsible for keeping your payment method current and ensuring your billing information is accurate.",
-  },
-  {
-    title: "Failed Payments",
-    text:
-      "If a payment fails, access to paid features may be limited, suspended, or canceled until payment is successfully completed. We may attempt to notify you of failed payments through the account email on file.",
-  },
-  {
-    title: "Cancellations",
-    text:
-      "You may cancel your subscription through your billing portal or by contacting info@dropclarity.com. Cancellation stops future renewals. Access may continue through the end of the current paid billing period unless otherwise stated.",
-  },
-  {
-    title: "Refunds",
-    text:
-      "Unless required by law or explicitly agreed in writing, subscription payments are generally non-refundable. Because DropClarity provides access to software, analysis tools, and usage-based value during the billing period, partial-month refunds are not guaranteed.",
-  },
-  {
-    title: "Plan Changes",
-    text:
-      "If you upgrade or downgrade your plan, billing may be prorated or adjusted depending on payment provider settings and the terms shown during checkout or in your billing portal.",
-  },
-  {
-    title: "Trials, Coupons, and Promotions",
-    text:
-      "DropClarity may offer trials, discounts, coupons, or promotional pricing. Promotional terms may change or expire according to the offer shown at the time of purchase.",
-  },
-  {
-    title: "Taxes",
-    text:
-      "Prices may not include applicable taxes unless stated. You are responsible for any taxes, duties, or similar charges associated with your purchase where applicable.",
-  },
-  {
-    title: "Billing Support",
-    text: "Billing questions can be sent to info@dropclarity.com.",
-  },
-];
 
 const pageCss = `
 .dcPage,
@@ -98,152 +155,162 @@ const pageCss = `
 
 .dcPage {
   min-height: 100vh;
-  padding: 72px 0 64px;
+  padding: 54px 0 64px;
   background:
-    radial-gradient(900px 500px at 0% -10%, rgba(124,58,237,.12), transparent 65%),
-    radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,.16), transparent 62%),
+    radial-gradient(900px 500px at 0% -10%, rgba(124, 58, 237, 0.08), transparent 64%),
+    radial-gradient(900px 500px at 100% 0%, rgba(34, 211, 238, 0.1), transparent 62%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0f172a;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   overflow-x: hidden;
 }
 
-.billingWrap {
-  max-width: 1000px;
+.legalInner {
+  width: min(100% - 40px, 1120px);
   margin: 0 auto;
-  padding: 0 20px;
 }
 
-.billingHero {
-  padding: 44px;
-  border-radius: 30px;
-  background: rgba(255,255,255,.96);
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 24px 70px rgba(15,23,42,.09);
+.legalHero {
+  padding: 34px 0 22px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
 }
 
-.billingKicker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.legalEyebrow {
+  margin: 0 0 12px;
+  color: #4f46e5;
   font-size: 12px;
-  font-weight: 950;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #0891b2;
 }
 
-.billingKickerDot {
-  width: 7px;
-  height: 7px;
-  background: #22d3ee;
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(34,211,238,.14);
-}
-
-.billingTitle {
-  max-width: 900px;
-  font-size: 48px;
-  line-height: 1.04;
-  font-weight: 950;
-  letter-spacing: -.05em;
-  margin: 20px 0 0;
-  color: #0f172a;
-}
-
-.billingGradText {
-  background: linear-gradient(90deg, #06b6d4, #6366f1, #7c3aed);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.billingLede {
-  max-width: 900px;
-  margin: 18px 0 0;
-  color: #475569;
-  font-size: 18px;
-  line-height: 1.65;
-  font-weight: 650;
-}
-
-.billingContent {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.billingNotice {
-  border: 1px solid rgba(245,158,11,.22);
-  background: rgba(255,251,235,.92);
-  color: rgba(120,53,15,.95);
-  border-radius: 18px;
-  padding: 15px 16px;
-  font-size: 14px;
-  line-height: 1.55;
-  font-weight: 750;
-}
-
-.billingBlock {
-  background: rgba(255,255,255,.96);
-  border-radius: 22px;
-  padding: 24px;
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 14px 38px rgba(15,23,42,.055);
-}
-
-.billingBlock h2 {
+.legalHero h1 {
   margin: 0;
   color: #0f172a;
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: clamp(34px, 5vw, 54px);
   font-weight: 900;
-  letter-spacing: -.02em;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
 }
 
-.billingBlock p {
-  margin: 9px 0 0;
+.legalUpdated {
+  margin: 14px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.legalIntro {
+  max-width: 850px;
+  margin: 18px 0 0;
+  color: #475569;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.72;
+}
+
+.legalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 28px 0 0;
+}
+
+.legalCard {
+  padding: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.055);
+}
+
+.legalCardWide {
+  grid-column: 1 / -1;
+}
+
+.legalNotice {
+  border-color: rgba(245, 158, 11, 0.22);
+  background: rgba(255, 251, 235, 0.92);
+  box-shadow: 0 16px 44px rgba(120, 53, 15, 0.06);
+}
+
+.legalNotice h2 {
+  color: rgba(120, 53, 15, 0.95);
+}
+
+.legalNotice p {
+  color: rgba(120, 53, 15, 0.9);
+}
+
+.legalCard h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.legalCard p {
+  margin: 10px 0 0;
   color: #475569;
   font-size: 15.5px;
-  line-height: 1.65;
-  font-weight: 650;
+  font-weight: 600;
+  line-height: 1.7;
 }
 
-@media(max-width: 768px) {
+.legalCard strong {
+  color: #0f172a;
+  font-weight: 850;
+}
+
+@media (max-width: 820px) {
   .dcPage {
-    padding: 44px 0;
+    padding: 40px 0 52px;
   }
 
-  .billingHero {
-    padding: 28px;
-    border-radius: 24px;
+  .legalInner {
+    width: min(100% - 32px, 1120px);
   }
 
-  .billingTitle {
-    font-size: 36px;
+  .legalHero {
+    padding: 24px 0 20px;
   }
 
-  .billingLede {
+  .legalIntro {
     font-size: 16px;
   }
+
+  .legalGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding-top: 22px;
+  }
+
+  .legalCard {
+    padding: 20px;
+    border-radius: 20px;
+  }
 }
 
-@media(max-width: 480px) {
-  .billingWrap {
-    padding: 0 16px;
+@media (max-width: 520px) {
+  .legalInner {
+    width: min(100% - 28px, 1120px);
   }
 
-  .billingHero {
-    padding: 24px;
+  .legalHero h1 {
+    font-size: 34px;
+    letter-spacing: -0.045em;
   }
 
-  .billingTitle {
-    font-size: 32px;
+  .legalCard h2 {
+    font-size: 18px;
   }
 
-  .billingBlock {
-    padding: 20px;
+  .legalCard p {
+    font-size: 15px;
   }
 }
 `;
