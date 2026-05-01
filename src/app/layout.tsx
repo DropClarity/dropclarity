@@ -37,40 +37,40 @@ export default function RootLayout({
 
             <main className="flex-1 bg-white">{children}</main>
 
-            <footer className="w-full border-t border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100/70">
-              <div className="w-full px-5 py-12 sm:px-8">
-                <div className="mx-auto w-full max-w-[1400px]">
-                  <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="max-w-xl">
+            <footer className="w-full border-t border-slate-200 bg-[radial-gradient(900px_420px_at_12%_0%,rgba(124,58,237,0.055),transparent_58%),radial-gradient(780px_360px_at_92%_12%,rgba(34,211,238,0.07),transparent_62%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]">
+              <div className="w-full px-5 py-12 sm:px-8 sm:py-14">
+                <div className="mx-auto w-full max-w-[1700px]">
+                  <div className="grid gap-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-start xl:grid-cols-[1.45fr_0.55fr]">
+                    <div className="max-w-2xl">
                       <img
                         src="/logo.svg"
                         alt="DropClarity"
                         className="h-8 w-auto"
                       />
 
-                      <p className="mt-4 max-w-lg text-sm font-semibold leading-6 text-slate-600">
+                      <p className="mt-4 max-w-xl text-sm font-semibold leading-6 text-slate-600">
                         Job profitability analysis for contractors, trades, and
                         service operators who want to find the jobs quietly
                         draining profit.
                       </p>
 
                       <div className="mt-5 flex flex-wrap gap-2">
-                        <span className="rounded-full border border-cyan-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
+                        <span className="rounded-full border border-cyan-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
                           Revenue
                         </span>
-                        <span className="rounded-full border border-violet-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
+                        <span className="rounded-full border border-violet-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
                           Costs
                         </span>
-                        <span className="rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
+                        <span className="rounded-full border border-emerald-200/80 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
                           Margin
                         </span>
-                        <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
+                        <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-black text-slate-700 shadow-sm">
                           Profit Leaks
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1fr_auto] lg:gap-16">
+                    <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1fr_auto] lg:justify-end lg:gap-16">
                       <div>
                         <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                           Company
@@ -95,13 +95,13 @@ export default function RootLayout({
                         </div>
 
                         <div className="mt-4 flex gap-3">
-                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                          <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
                             in
                           </div>
-                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                          <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
                             𝕏
                           </div>
-                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                          <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
                             ◎
                           </div>
                         </div>
@@ -109,7 +109,7 @@ export default function RootLayout({
                     </div>
                   </div>
 
-                  <div className="mt-10 border-t border-slate-200 pt-6">
+                  <div className="mt-10 border-t border-slate-300/70 pt-6">
                     <div className="flex flex-col gap-3 text-xs font-semibold text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                       <p>
                         © {new Date().getFullYear()} DropClarity. All rights
