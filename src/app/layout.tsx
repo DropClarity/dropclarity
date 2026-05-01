@@ -35,11 +35,11 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col bg-white">
             <SiteHeader />
 
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 bg-white">{children}</main>
 
             <footer className="w-full border-t border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100/70">
-              <div className="px-5 py-12 sm:px-8">
-                <div className="mx-auto max-w-[1400px]">
+              <div className="w-full px-5 py-12 sm:px-8">
+                <div className="mx-auto w-full max-w-[1400px]">
                   <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-xl">
                       <img
