@@ -3,26 +3,28 @@ export default function PrivacyPolicy() {
     <main className="dcPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <div className="wrap">
-        <section className="hero">
-          <div className="kicker">
-            <span className="kickerDot" /> Privacy & Data
+      <div className="privacyWrap">
+        <section className="privacyHero">
+          <div className="privacyKicker">
+            <span className="privacyKickerDot" /> Privacy & Data
           </div>
 
-          <h1>
+          <h1 className="privacyTitle">
             Your data stays{" "}
-            <span className="gradText">secure, private, and controlled.</span>
+            <span className="privacyGradText">
+              secure, private, and controlled.
+            </span>
           </h1>
 
-          <p className="lede">
+          <p className="privacyLede">
             DropClarity is built for businesses handling real financial data. We
             treat your job files, cost data, and revenue data with strict
             security and privacy standards.
           </p>
         </section>
 
-        <section className="content">
-          <div className="block">
+        <section className="privacyContent">
+          <div className="privacyBlock">
             <h2>Information We Collect</h2>
             <p>
               We collect information necessary to provide our services,
@@ -35,7 +37,7 @@ export default function PrivacyPolicy() {
             </ul>
           </div>
 
-          <div className="block">
+          <div className="privacyBlock">
             <h2>How Your Data Is Used</h2>
             <p>
               Your data is used to deliver job profitability insights, including
@@ -43,7 +45,7 @@ export default function PrivacyPolicy() {
             </p>
           </div>
 
-          <div className="block">
+          <div className="privacyBlock">
             <h2>AI Processing</h2>
             <p>
               Uploaded data may be processed by AI systems to extract structured
@@ -52,7 +54,7 @@ export default function PrivacyPolicy() {
             </p>
           </div>
 
-          <div className="block">
+          <div className="privacyBlock">
             <h2>Third-Party Services</h2>
             <p>We use secure third-party providers including:</p>
             <ul>
@@ -63,7 +65,7 @@ export default function PrivacyPolicy() {
             </ul>
           </div>
 
-          <div className="block">
+          <div className="privacyBlock">
             <h2>Data Security</h2>
             <p>
               We implement safeguards including secure infrastructure, access
@@ -72,7 +74,7 @@ export default function PrivacyPolicy() {
             </p>
           </div>
 
-          <div className="block">
+          <div className="privacyBlock">
             <h2>Your Control</h2>
             <p>
               You retain ownership of your data. You may request deletion of
@@ -80,7 +82,7 @@ export default function PrivacyPolicy() {
             </p>
           </div>
 
-          <div className="block">
+          <div className="privacyBlock">
             <h2>Contact</h2>
             <p>
               Questions about privacy can be sent to{" "}
@@ -94,7 +96,8 @@ export default function PrivacyPolicy() {
 }
 
 const pageCss = `
-* {
+.dcPage,
+.dcPage * {
   box-sizing: border-box;
 }
 
@@ -107,15 +110,16 @@ const pageCss = `
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0f172a;
+  overflow-x: hidden;
 }
 
-.wrap {
+.privacyWrap {
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-.hero {
+.privacyHero {
   padding: 44px;
   border-radius: 30px;
   background: rgba(255,255,255,.96);
@@ -123,7 +127,7 @@ const pageCss = `
   box-shadow: 0 24px 70px rgba(15,23,42,.09);
 }
 
-.kicker {
+.privacyKicker {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -134,7 +138,7 @@ const pageCss = `
   color: #0891b2;
 }
 
-.kickerDot {
+.privacyKickerDot {
   width: 7px;
   height: 7px;
   background: #22d3ee;
@@ -142,7 +146,7 @@ const pageCss = `
   box-shadow: 0 0 0 4px rgba(34,211,238,.14);
 }
 
-h1 {
+.privacyTitle {
   max-width: 900px;
   font-size: 48px;
   line-height: 1.04;
@@ -152,30 +156,30 @@ h1 {
   color: #0f172a;
 }
 
-.gradText {
+.privacyGradText {
   background: linear-gradient(90deg, #06b6d4, #6366f1, #7c3aed);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-.lede {
+.privacyLede {
   max-width: 900px;
-  margin-top: 18px;
+  margin: 18px 0 0;
   color: #475569;
   font-size: 18px;
   line-height: 1.65;
   font-weight: 650;
 }
 
-.content {
+.privacyContent {
   margin-top: 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.block {
+.privacyBlock {
   background: rgba(255,255,255,.96);
   border-radius: 22px;
   padding: 24px;
@@ -183,7 +187,7 @@ h1 {
   box-shadow: 0 14px 38px rgba(15,23,42,.055);
 }
 
-.block h2 {
+.privacyBlock h2 {
   margin: 0;
   color: #0f172a;
   font-size: 20px;
@@ -192,7 +196,7 @@ h1 {
   letter-spacing: -.02em;
 }
 
-.block p {
+.privacyBlock p {
   margin: 9px 0 0;
   color: #475569;
   font-size: 15.5px;
@@ -200,13 +204,13 @@ h1 {
   font-weight: 650;
 }
 
-.block ul {
+.privacyBlock ul {
   margin: 10px 0 0;
   padding-left: 20px;
   color: #475569;
 }
 
-.block li {
+.privacyBlock li {
   margin-top: 6px;
   color: #475569;
   font-size: 15px;
@@ -214,7 +218,7 @@ h1 {
   font-weight: 650;
 }
 
-.block strong {
+.privacyBlock strong {
   color: #0f172a;
   font-weight: 850;
 }
@@ -224,34 +228,34 @@ h1 {
     padding: 44px 0;
   }
 
-  .hero {
+  .privacyHero {
     padding: 28px;
     border-radius: 24px;
   }
 
-  h1 {
+  .privacyTitle {
     font-size: 36px;
   }
 
-  .lede {
+  .privacyLede {
     font-size: 16px;
   }
 }
 
 @media(max-width: 480px) {
-  .wrap {
+  .privacyWrap {
     padding: 0 16px;
   }
 
-  .hero {
+  .privacyHero {
     padding: 24px;
   }
 
-  h1 {
+  .privacyTitle {
     font-size: 32px;
   }
 
-  .block {
+  .privacyBlock {
     padding: 20px;
   }
 }
