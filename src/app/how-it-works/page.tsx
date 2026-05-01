@@ -21,27 +21,102 @@ export default function HowItWorksPage() {
       <section className="howBody">
         <div className="howInner">
           <section className="stepsWrap">
-            <div className="stepsIntro">
-              <div className="sectionEyebrow">The process</div>
-              <h2>Simple enough to use today. Powerful enough to catch what spreadsheets miss.</h2>
-              <p>
-                Upload the files you already have. DropClarity uses AI to read,
-                organize, and interpret job financial data so you can understand
-                risk faster.
-              </p>
+            <div className="processVisual" aria-label="DropClarity AI file analysis preview">
+              <div className="visualGlow" />
+
+              <div className="fileCard visualCard">
+                <div className="visualLabel">Files uploaded</div>
+
+                <div className="fileRow">
+                  <span className="fileIcon sheet">XLS</span>
+                  <span>Job Costs.xlsx</span>
+                </div>
+
+                <div className="fileRow">
+                  <span className="fileIcon pdf">PDF</span>
+                  <span>Invoices.pdf</span>
+                </div>
+
+                <div className="fileRow">
+                  <span className="fileIcon sheet">CSV</span>
+                  <span>Labor Report.csv</span>
+                </div>
+              </div>
+
+              <div className="aiCore">
+                <span>AI</span>
+              </div>
+
+              <div className="metricCard revenue visualCard">
+                <span>Revenue</span>
+                <strong>$1.24M</strong>
+              </div>
+
+              <div className="metricCard costs visualCard">
+                <span>Costs</span>
+                <strong>$860K</strong>
+              </div>
+
+              <div className="metricCard margin visualCard">
+                <span>Margin</span>
+                <strong>31%</strong>
+              </div>
+
+              <div className="profitCard visualCard">
+                <div className="profitHeader">
+                  <strong>Job Profitability</strong>
+                  <span>Live view</span>
+                </div>
+
+                <div className="profitTable">
+                  <div className="profitGrid tableHead">
+                    <span>Job</span>
+                    <span>Revenue</span>
+                    <span>Net</span>
+                    <span>Status</span>
+                  </div>
+
+                  {visualRows.map((row) => (
+                    <div className="profitGrid" key={row.job}>
+                      <span>{row.job}</span>
+                      <span>{row.revenue}</span>
+                      <span className={row.netClass}>{row.net}</span>
+                      <span className={`status ${row.statusClass}`}>{row.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="alertCard visualCard">
+                <div className="bellIcon">!</div>
+                <div>
+                  <strong>High-risk job detected</strong>
+                  <p>Building C is below target margin</p>
+                </div>
+                <span>Just now</span>
+              </div>
             </div>
 
-            <div className="steps">
-              {steps.map((step, i) => (
-                <article className="stepRow" key={step.title}>
-                  <div className="stepNumber">{i + 1}</div>
+            <div className="stepsColumn">
+              <div className="sectionEyebrow">The process</div>
+              <h2>AI turns uploaded job files into clear profit decisions.</h2>
+              <p className="stepsIntroCopy">
+                Upload the files you already have. DropClarity reads, organizes,
+                and interprets job financial data so you can understand risk faster.
+              </p>
 
-                  <div className="stepContent">
-                    <h2>{step.title}</h2>
-                    <p>{step.desc}</p>
-                  </div>
-                </article>
-              ))}
+              <div className="steps">
+                {steps.map((step, i) => (
+                  <article className="stepRow" key={step.title}>
+                    <div className="stepNumber">{i + 1}</div>
+
+                    <div className="stepContent">
+                      <h2>{step.title}</h2>
+                      <p>{step.desc}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -102,6 +177,33 @@ const steps = [
   {
     title: "Take action with confidence",
     desc: "Use the insights to adjust pricing, review cost issues, improve job performance, and protect margin before the same problem repeats.",
+  },
+];
+
+const visualRows = [
+  {
+    job: "Building A",
+    revenue: "$120K",
+    net: "$40K",
+    status: "Healthy",
+    netClass: "goodNet",
+    statusClass: "healthy",
+  },
+  {
+    job: "Building B",
+    revenue: "$95K",
+    net: "$5K",
+    status: "Watch",
+    netClass: "warnNet",
+    statusClass: "watch",
+  },
+  {
+    job: "Building C",
+    revenue: "$110K",
+    net: "-$15K",
+    status: "At Risk",
+    netClass: "badNet",
+    statusClass: "risk",
   },
 ];
 
@@ -194,21 +296,38 @@ const pageCss = `
 
 /* Content */
 .howBody {
-  padding: 42px 0 72px;
+  padding: 48px 0 72px;
   background: #ffffff;
 }
 
 .stepsWrap {
   display: grid;
-  grid-template-columns: 0.72fr 1fr;
-  gap: 48px;
+  grid-template-columns: minmax(420px, 0.95fr) minmax(520px, 1fr);
+  gap: 64px;
   align-items: start;
 }
 
-.stepsIntro {
-  position: sticky;
-  top: 96px;
-  padding-top: 6px;
+.stepsColumn {
+  padding-top: 18px;
+}
+
+.stepsColumn > h2 {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: #0f172a;
+  font-size: 30px;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  font-weight: 930;
+}
+
+.stepsIntroCopy {
+  max-width: 680px;
+  margin: 12px 0 24px;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 620;
 }
 
 .sectionEyebrow {
@@ -220,25 +339,318 @@ const pageCss = `
   text-transform: uppercase;
 }
 
-.stepsIntro h2,
-.sectionHeader h2 {
-  margin: 12px 0 0;
+/* Visual */
+.processVisual {
+  position: sticky;
+  top: 92px;
+  min-height: 590px;
+  border: 1px solid rgba(124, 58, 237, 0.10);
+  border-radius: 30px;
+  background:
+    radial-gradient(500px 300px at 50% 30%, rgba(124, 58, 237, 0.16), transparent 62%),
+    radial-gradient(420px 300px at 12% 12%, rgba(34, 211, 238, 0.09), transparent 58%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.07);
+  padding: 28px;
+  overflow: hidden;
+}
+
+.visualGlow {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.06) 48%, transparent 100%),
+    linear-gradient(0deg, transparent 0%, rgba(34, 211, 238, 0.055) 50%, transparent 100%);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.visualCard {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.fileCard {
+  top: 34px;
+  left: 34px;
+  width: 220px;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.visualLabel {
   color: #0f172a;
-  font-size: 30px;
-  line-height: 1.12;
-  letter-spacing: -0.035em;
-  font-weight: 930;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  margin-bottom: 14px;
 }
 
-.stepsIntro p,
-.sectionHeader p {
-  margin: 12px 0 0;
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   color: #475569;
-  font-size: 15px;
-  line-height: 1.7;
-  font-weight: 620;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 0;
 }
 
+.fileIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 950;
+}
+
+.fileIcon.sheet {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.11);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+.fileIcon.pdf {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.16);
+}
+
+.aiCore {
+  position: absolute;
+  z-index: 1;
+  top: 162px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.55), transparent 35%),
+    linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  box-shadow:
+    0 0 0 16px rgba(124, 58, 237, 0.10),
+    0 0 0 34px rgba(124, 58, 237, 0.045),
+    0 22px 50px rgba(109, 40, 217, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aiCore::before,
+.aiCore::after {
+  content: "";
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.26), transparent);
+  width: 440px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.aiCore::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.aiCore span {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  font-size: 31px;
+  font-weight: 950;
+  letter-spacing: -0.05em;
+}
+
+.metricCard {
+  width: 120px;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.metricCard span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metricCard strong {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.metricCard.revenue {
+  top: 70px;
+  right: 92px;
+}
+
+.metricCard.revenue strong {
+  color: #059669;
+}
+
+.metricCard.costs {
+  top: 162px;
+  right: 42px;
+}
+
+.metricCard.margin {
+  top: 252px;
+  right: 76px;
+}
+
+.metricCard.margin strong {
+  color: #6d28d9;
+}
+
+.profitCard {
+  left: 34px;
+  right: 34px;
+  bottom: 122px;
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.profitHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profitHeader strong {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.profitHeader span {
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #6d28d9;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.profitTable {
+  margin-top: 14px;
+}
+
+.profitGrid {
+  display: grid;
+  grid-template-columns: 1fr 0.78fr 0.68fr 0.76fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.tableHead {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 850;
+  padding-top: 0;
+}
+
+.goodNet {
+  color: #059669;
+}
+
+.warnNet {
+  color: #ca8a04;
+}
+
+.badNet {
+  color: #dc2626;
+}
+
+.status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.status.healthy {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.10);
+}
+
+.status.watch {
+  color: #c2410c;
+  background: rgba(249, 115, 22, 0.10);
+}
+
+.status.risk {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.10);
+}
+
+.alertCard {
+  left: 34px;
+  right: 34px;
+  bottom: 28px;
+  min-height: 72px;
+  border-radius: 18px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.bellIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 950;
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.22);
+}
+
+.alertCard strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.alertCard p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.alertCard > span {
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #6d28d9;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+/* Steps */
 .steps {
   display: flex;
   flex-direction: column;
@@ -291,6 +703,23 @@ const pageCss = `
 
 .sectionHeader {
   max-width: 780px;
+}
+
+.sectionHeader h2 {
+  margin: 12px 0 0;
+  color: #0f172a;
+  font-size: 30px;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  font-weight: 930;
+}
+
+.sectionHeader p {
+  margin: 12px 0 0;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 620;
 }
 
 .valueGrid {
@@ -378,12 +807,17 @@ const pageCss = `
 @media (max-width: 1180px) {
   .stepsWrap {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 34px;
   }
 
-  .stepsIntro {
-    position: static;
-    max-width: 820px;
+  .processVisual {
+    position: relative;
+    top: auto;
+    min-height: 560px;
+  }
+
+  .stepsColumn {
+    padding-top: 0;
   }
 
   .valueGrid {
@@ -412,7 +846,71 @@ const pageCss = `
     padding: 30px 0 56px;
   }
 
-  .stepsIntro h2,
+  .processVisual {
+    min-height: 640px;
+    border-radius: 24px;
+    padding: 20px;
+  }
+
+  .fileCard {
+    top: 22px;
+    left: 22px;
+    right: 22px;
+    width: auto;
+  }
+
+  .aiCore {
+    top: 198px;
+    width: 86px;
+    height: 86px;
+  }
+
+  .aiCore span {
+    font-size: 26px;
+  }
+
+  .metricCard.revenue {
+    top: 176px;
+    right: 26px;
+  }
+
+  .metricCard.costs {
+    top: 252px;
+    left: 26px;
+    right: auto;
+  }
+
+  .metricCard.margin {
+    top: 252px;
+    right: 26px;
+  }
+
+  .profitCard {
+    left: 22px;
+    right: 22px;
+    bottom: 116px;
+  }
+
+  .profitGrid {
+    grid-template-columns: 1fr 0.7fr 0.7fr;
+  }
+
+  .profitGrid span:nth-child(4) {
+    display: none;
+  }
+
+  .alertCard {
+    left: 22px;
+    right: 22px;
+    bottom: 22px;
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .alertCard > span {
+    display: none;
+  }
+
+  .stepsColumn > h2,
   .sectionHeader h2 {
     font-size: 26px;
   }
@@ -463,9 +961,27 @@ const pageCss = `
     font-size: 15px;
   }
 
+  .processVisual {
+    min-height: 610px;
+  }
+
+  .metricCard {
+    width: 104px;
+    padding: 12px;
+  }
+
+  .metricCard strong {
+    font-size: 14px;
+  }
+
+  .profitCard,
   .valueCard,
   .cta {
     padding: 20px;
+  }
+
+  .profitCard {
+    padding: 16px;
   }
 }
 `;
