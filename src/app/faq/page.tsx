@@ -60,7 +60,7 @@ export default function FAQPage() {
       items: [
         [
           "Is my data secure and private?",
-          "DropClarity is designed to handle business files carefully. As the product matures, stronger account controls, data retention settings, and security policies should be clearly shown before selling to larger customers.",
+          "DropClarity is designed to handle business files carefully. Your uploaded files are used to generate the analysis and dashboard results connected to your account.",
         ],
         [
           "Do I need to connect integrations?",
@@ -75,22 +75,23 @@ export default function FAQPage() {
   ];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
+    <main className="min-h-screen overflow-x-hidden bg-white text-slate-950 [font-family:ui-sans-serif,system-ui,-apple-system,Segoe_UI,Roboto,Arial]">
       <section className="relative overflow-hidden border-b border-slate-100">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,.16),transparent_34%),radial-gradient(circle_at_82%_22%,rgba(34,211,238,.13),transparent_34%),linear-gradient(180deg,#ffffff,#f8fbff)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(1050px_520px_at_12%_-12%,rgba(124,58,237,.13),transparent_58%),radial-gradient(900px_520px_at_92%_4%,rgba(34,211,238,.12),transparent_62%),linear-gradient(180deg,#ffffff,#fbfdff)]" />
 
-        <div className="relative mx-auto w-full max-w-[1760px] px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-18">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mx-auto mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
+        <div className="relative mx-auto w-full max-w-[1600px] px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-18">
+          <div className="mx-auto max-w-5xl text-center">
+            <div className="mx-auto mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-[12px] font-black text-violet-700 shadow-[0_10px_28px_rgba(124,58,237,.10)] sm:text-[13px]">
               Frequently asked questions
             </div>
 
-            <h1 className="mx-auto max-w-4xl text-[34px] font-black leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-[42px] lg:text-[48px]">
+            <h1 className="mx-auto max-w-5xl text-[30px] font-black leading-[1.07] tracking-[-0.045em] text-slate-950 sm:text-[38px] lg:text-[44px] xl:text-[48px]">
               Questions before you upload?
             </h1>
 
-            <p className="mx-auto mt-4 max-w-2xl text-[15px] font-semibold leading-7 text-slate-600 sm:text-base">
-              Here’s what operators usually want to know before using DropClarity for job profitability analysis.
+            <p className="mx-auto mt-5 max-w-3xl text-[15px] font-bold leading-7 text-slate-600 sm:text-[16px] lg:text-[17px]">
+              Here’s what operators usually want to know before using
+              DropClarity for job profitability analysis.
             </p>
 
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
@@ -111,95 +112,103 @@ export default function FAQPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[1760px] px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
-        <div className="grid gap-8 lg:grid-cols-[290px_minmax(0,1fr)] xl:gap-12">
-          <aside>
-            <div className="sticky top-28 rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-xl shadow-slate-100 backdrop-blur sm:p-6">
-              <h2 className="text-xl font-black tracking-[-0.025em] text-slate-950">
-                FAQ topics
-              </h2>
-              <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
-                Browse common questions about the product, uploads, pricing, and security.
-              </p>
+      <section className="px-5 py-14 sm:px-8 sm:py-16 lg:px-10">
+        <div className="mx-auto w-full max-w-[1600px]">
+          <div className="grid gap-8 lg:grid-cols-[290px_minmax(0,1fr)] xl:gap-12">
+            <aside>
+              <div className="sticky top-28 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(2,6,23,.08)]">
+                <h2 className="text-[23px] font-black leading-tight tracking-[-0.03em] text-slate-950 sm:text-[25px]">
+                  FAQ topics
+                </h2>
 
-              <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                {faqGroups.map((group) => (
-                  <a
-                    key={group.id}
-                    href={`#${group.id}`}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-800 transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
-                  >
-                    {group.title}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </aside>
+                <p className="mt-3 text-[14px] font-semibold leading-6 text-slate-500 sm:text-[15px]">
+                  Browse common questions about the product, uploads, pricing,
+                  and security.
+                </p>
 
-          <div className="space-y-8 lg:space-y-10">
-            {faqGroups.map((group) => (
-              <section
-                key={group.id}
-                id={group.id}
-                className="scroll-mt-32 rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-xl shadow-slate-100/80 backdrop-blur sm:p-6 lg:p-7"
-              >
-                <div className="mb-5 flex flex-col gap-1 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <div className="text-[11px] font-black uppercase tracking-[0.08em] text-cyan-600">
-                      {group.id}
-                    </div>
-                    <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-[28px]">
-                      {group.title}
-                    </h2>
-                  </div>
-                  <div className="text-sm font-bold text-slate-400">
-                    {group.items.length} answers
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {group.items.map(([question, answer]) => (
-                    <details
-                      key={question}
-                      className="group rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-violet-200 hover:shadow-md hover:shadow-slate-100 sm:p-5"
+                <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                  {faqGroups.map((group) => (
+                    <a
+                      key={group.id}
+                      href={`#${group.id}`}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-800 transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
                     >
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-black leading-6 text-slate-950 sm:text-base">
-                        <span>{question}</span>
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-lg font-black text-slate-700 transition group-open:rotate-45 group-open:bg-violet-50 group-open:text-violet-700">
-                          +
-                        </span>
-                      </summary>
-
-                      <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-500 sm:text-[15px]">
-                        {answer}
-                      </p>
-                    </details>
+                      {group.title}
+                    </a>
                   ))}
                 </div>
-              </section>
-            ))}
+              </div>
+            </aside>
+
+            <div className="space-y-8 lg:space-y-10">
+              {faqGroups.map((group) => (
+                <section
+                  key={group.id}
+                  id={group.id}
+                  className="scroll-mt-32 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(2,6,23,.08)] sm:p-7 lg:p-8"
+                >
+                  <div className="mb-6 flex flex-col gap-1 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <div className="text-[11px] font-black uppercase tracking-[0.08em] text-cyan-600">
+                        {group.id}
+                      </div>
+
+                      <h2 className="mt-1 text-[23px] font-black leading-tight tracking-[-0.03em] text-slate-950 sm:text-[28px]">
+                        {group.title}
+                      </h2>
+                    </div>
+
+                    <div className="text-sm font-bold text-slate-400">
+                      {group.items.length} answers
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {group.items.map(([question, answer]) => (
+                      <details
+                        key={question}
+                        className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(2,6,23,.035)] transition open:shadow-[0_16px_44px_rgba(2,6,23,.07)] sm:p-6"
+                      >
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-black text-slate-950 sm:text-[16px]">
+                          <span>{question}</span>
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-50 text-lg leading-none text-slate-600 transition group-open:rotate-45 group-open:bg-violet-50 group-open:text-violet-700">
+                            +
+                          </span>
+                        </summary>
+
+                        <p className="mt-4 max-w-4xl text-[14px] font-semibold leading-7 text-slate-500 sm:text-[15px]">
+                          {answer}
+                        </p>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="px-5 pb-12 sm:px-8 lg:px-10">
-        <div className="mx-auto flex w-full max-w-[1760px] flex-col items-start justify-between gap-6 rounded-[24px] border border-slate-200/80 bg-slate-50/90 p-6 shadow-xl shadow-slate-100 sm:p-8 lg:flex-row lg:items-center">
-          <h2 className="max-w-3xl text-xl font-black leading-snug tracking-[-0.025em] text-slate-950 sm:text-2xl lg:text-[28px]">
+      <section className="bg-slate-50 px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
+        <div className="mx-auto flex w-full max-w-[1300px] flex-col items-start justify-between gap-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(2,6,23,.07)] sm:p-8 lg:flex-row lg:items-center">
+          <h2 className="max-w-3xl text-[22px] font-black leading-tight tracking-[-0.03em] text-slate-950 sm:text-[28px]">
             Ready to see which jobs are helping or hurting profit?
             <br className="hidden sm:block" />
-            <span className="font-semibold text-slate-700">Start with a simple upload.</span>
+            <span className="font-semibold text-slate-600">
+              Start with a simple upload.
+            </span>
           </h2>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <a
               href="/app"
-              className="rounded-full bg-violet-500 px-8 py-3.5 text-center text-sm font-black text-white shadow-xl shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-600 sm:px-10"
+              className="rounded-full bg-violet-500 px-8 py-4 text-center text-sm font-black text-white shadow-xl shadow-violet-200 transition hover:bg-violet-600 sm:px-12"
             >
               Upload Files
             </a>
             <a
               href="/pricing"
-              className="rounded-full border border-slate-200 bg-white px-8 py-3.5 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 sm:px-10"
+              className="rounded-full border border-slate-200 bg-white px-8 py-4 text-center text-sm font-black text-slate-800 shadow-sm transition hover:border-violet-200 sm:px-12"
             >
               View Pricing
             </a>
