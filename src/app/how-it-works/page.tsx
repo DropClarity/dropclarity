@@ -10,10 +10,9 @@ export default function HowItWorksPage() {
           <h1>From uploaded files to profit clarity.</h1>
 
           <p>
-            DropClarity turns messy job data into clear, actionable insights —
-            without manual entry. Upload your files and see which jobs are
-            making money, which are underperforming, and where margin is quietly
-            leaking.
+            DropClarity turns messy job data into actionable insights
+            without manual entry. Upload your files to see which jobs make money, 
+            which underperform, and where margin is  quietly leaking.
           </p>
         </div>
       </section>
