@@ -16,14 +16,6 @@ export default function BillingPolicyPage() {
         </section>
 
         <section className="legalGrid" aria-label="Billing Policy sections">
-          <article className="legalCard legalCardWide legalNotice">
-            <h2>Important Billing Note</h2>
-            <p>
-              This page should match your actual Stripe checkout, pricing, refund,
-              cancellation, and billing portal settings before going live.
-            </p>
-          </article>
-
           <article className="legalCard">
             <h2>1. Subscription Plans</h2>
             <p>
@@ -155,10 +147,10 @@ const pageCss = `
 
 .dcPage {
   min-height: 100vh;
-  padding: 54px 0 64px;
+  padding: 46px 0 72px;
   background:
-    radial-gradient(900px 500px at 0% -10%, rgba(124, 58, 237, 0.08), transparent 64%),
-    radial-gradient(900px 500px at 100% 0%, rgba(34, 211, 238, 0.1), transparent 62%),
+    radial-gradient(1000px 520px at 0% -10%, rgba(124, 58, 237, 0.08), transparent 64%),
+    radial-gradient(1000px 520px at 100% 0%, rgba(34, 211, 238, 0.1), transparent 62%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: #0f172a;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -166,12 +158,13 @@ const pageCss = `
 }
 
 .legalInner {
-  width: min(100% - 40px, 1120px);
+  width: min(100% - 56px, 1440px);
   margin: 0 auto;
 }
 
 .legalHero {
-  padding: 34px 0 22px;
+  max-width: 1120px;
+  padding: 28px 0 26px;
   border-bottom: 1px solid rgba(15, 23, 42, 0.1);
 }
 
@@ -188,7 +181,7 @@ const pageCss = `
 .legalHero h1 {
   margin: 0;
   color: #0f172a;
-  font-size: clamp(34px, 5vw, 54px);
+  font-size: clamp(34px, 4vw, 52px);
   font-weight: 900;
   line-height: 1.02;
   letter-spacing: -0.055em;
@@ -203,7 +196,7 @@ const pageCss = `
 }
 
 .legalIntro {
-  max-width: 850px;
+  max-width: 980px;
   margin: 18px 0 0;
   color: #475569;
   font-size: 17px;
@@ -213,13 +206,14 @@ const pageCss = `
 
 .legalGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  padding: 28px 0 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding: 30px 0 0;
 }
 
 .legalCard {
-  padding: 24px;
+  min-height: 100%;
+  padding: 26px;
   border: 1px solid rgba(15, 23, 42, 0.09);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
@@ -227,21 +221,7 @@ const pageCss = `
 }
 
 .legalCardWide {
-  grid-column: 1 / -1;
-}
-
-.legalNotice {
-  border-color: rgba(245, 158, 11, 0.22);
-  background: rgba(255, 251, 235, 0.92);
-  box-shadow: 0 16px 44px rgba(120, 53, 15, 0.06);
-}
-
-.legalNotice h2 {
-  color: rgba(120, 53, 15, 0.95);
-}
-
-.legalNotice p {
-  color: rgba(120, 53, 15, 0.9);
+  grid-column: span 2;
 }
 
 .legalCard h2 {
@@ -264,6 +244,21 @@ const pageCss = `
 .legalCard strong {
   color: #0f172a;
   font-weight: 850;
+}
+
+@media (max-width: 1180px) {
+  .legalInner {
+    width: min(100% - 44px, 1120px);
+  }
+
+  .legalGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .legalCardWide {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 820px) {

@@ -1,281 +1,320 @@
 export default function TermsOfServicePage() {
   return (
-    <main className="termsPage">
+    <main className="dcPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <section className="termsHero">
-        <div className="termsInner">
-          <div className="eyebrow">Terms of Service</div>
-
-          <h1>Terms for using DropClarity.</h1>
-
-          <p>
-            DropClarity provides job profitability analysis tools for business
-            operators. These terms explain how the platform may be used, what
-            users are responsible for, and the limits of AI-generated insights.
+      <div className="legalInner">
+        <section className="legalHero">
+          <p className="legalEyebrow">Terms of Service</p>
+          <h1>Terms of Service</h1>
+          <p className="legalUpdated">Last updated: May 1, 2026</p>
+          <p className="legalIntro">
+            DropClarity provides job profitability analysis tools for business operators. These terms explain
+            how the platform may be used, what users are responsible for, and the limits of AI-generated insights.
           </p>
-        </div>
-      </section>
+        </section>
 
-      <section className="termsBody">
-        <div className="termsInner">
-          <div className="termsGrid">
-            {sections.map((section) => (
-              <article className="termsCard" key={section.title}>
-                <h2>{section.title}</h2>
+        <section className="legalGrid" aria-label="Terms of Service sections">
+          <article className="legalCard">
+            <h2>1. Use of Platform</h2>
+            <p>
+              DropClarity helps users upload job-related files and review job-level profitability metrics,
+              including revenue, costs, net profit, margin, cost categories, credits, high-risk job indicators,
+              and AI-generated insights.
+            </p>
+            <p>
+              The platform is intended for business use and is designed to help operators better understand
+              job performance from the documents they choose to upload.
+            </p>
+          </article>
 
-                {section.paragraphs?.map((text) => (
-                  <p key={text}>{text}</p>
-                ))}
+          <article className="legalCard">
+            <h2>2. Accounts and Access</h2>
+            <p>
+              You are responsible for maintaining the confidentiality of your account and for all activity under
+              your account.
+            </p>
+            <p>
+              You agree to use DropClarity only for lawful business purposes and to provide accurate account,
+              billing, and contact information when using the service.
+            </p>
+          </article>
 
-                {section.items ? (
-                  <ul>
-                    {section.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+          <article className="legalCard">
+            <h2>3. Uploaded Content</h2>
+            <p>
+              You retain ownership of files and data you upload. You grant DropClarity the rights needed to
+              process uploaded content to provide, maintain, secure, troubleshoot, and improve the service.
+            </p>
+            <p>
+              You are responsible for ensuring that you have the right to upload and process any documents
+              submitted through the platform.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>4. AI-Generated Insights</h2>
+            <p>
+              DropClarity may use AI systems to extract information, organize job-level data, identify trends,
+              and generate summaries, alerts, recommendations, and other analysis results.
+            </p>
+            <p>
+              AI-generated outputs may contain errors or omissions. You are responsible for reviewing results
+              before relying on them for business decisions.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>5. No Professional Advice</h2>
+            <p>
+              DropClarity provides data analysis and AI-generated insights for informational purposes only. We
+              do not provide accounting, financial, legal, tax, pricing, payroll, or professional business advice.
+            </p>
+            <p>
+              Users are solely responsible for reviewing outputs and making their own business decisions.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>6. Acceptable Use</h2>
+            <p>You agree not to misuse DropClarity or interfere with the operation of the platform.</p>
+            <ul>
+              <li>Do not use DropClarity for unlawful or fraudulent activity.</li>
+              <li>Do not upload content you do not have permission to use.</li>
+              <li>Do not attempt to disrupt, scrape, overload, or misuse the service.</li>
+              <li>Do not bypass billing, security, authentication, or access controls.</li>
+            </ul>
+          </article>
+
+          <article className="legalCard">
+            <h2>7. Subscriptions and Billing</h2>
+            <p>
+              Paid plans are billed according to the subscription terms shown at checkout or in your billing
+              portal.
+            </p>
+            <p>
+              Access may be limited, suspended, or canceled if payment fails, your subscription ends, or these
+              terms are violated.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>8. Availability and Changes</h2>
+            <p>
+              We may update, modify, suspend, or discontinue parts of DropClarity at any time.
+            </p>
+            <p>
+              We aim to keep the service reliable, but we do not guarantee uninterrupted, error-free, or always
+              available operation.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>9. Limitation of Liability</h2>
+            <p>
+              To the fullest extent permitted by law, DropClarity is not liable for indirect, incidental, special,
+              consequential, lost-profit, revenue-loss, business-interruption, or data-loss damages arising from
+              use of the service or reliance on analysis results.
+            </p>
+            <p>
+              Your use of the platform is at your own discretion and risk.
+            </p>
+          </article>
+
+          <article className="legalCard legalCardWide">
+            <h2>10. Contact</h2>
+            <p>
+              Questions about these Terms of Service can be sent to <strong>info@dropclarity.com</strong>.
+            </p>
+          </article>
+        </section>
+      </div>
     </main>
   );
 }
 
-const sections = [
-  {
-    title: "Use of Platform",
-    paragraphs: [
-      "DropClarity helps users upload job-related files and review job-level profitability metrics, including revenue, costs, net profit, margin, cost categories, credits, high-risk job indicators, and AI-generated insights.",
-    ],
-  },
-  {
-    title: "Accounts and Access",
-    paragraphs: [
-      "You are responsible for maintaining the confidentiality of your account and for all activity under your account. You agree to use DropClarity only for lawful business purposes.",
-    ],
-  },
-  {
-    title: "Uploaded Content",
-    paragraphs: [
-      "You retain ownership of files and data you upload. You grant DropClarity the rights needed to process uploaded content to provide, maintain, secure, troubleshoot, and improve the service.",
-    ],
-  },
-  {
-    title: "No Professional Advice",
-    paragraphs: [
-      "DropClarity provides data analysis and AI-generated insights for informational purposes only. We do not provide accounting, financial, legal, tax, pricing, payroll, or professional business advice.",
-      "Users are solely responsible for reviewing outputs and making their own business decisions.",
-    ],
-  },
-  {
-    title: "Acceptable Use",
-    items: [
-      "Do not use DropClarity for unlawful or fraudulent activity.",
-      "Do not upload content you do not have permission to use.",
-      "Do not attempt to disrupt, scrape, overload, or misuse the service.",
-      "Do not bypass billing, security, authentication, or access controls.",
-    ],
-  },
-  {
-    title: "Subscriptions and Billing",
-    paragraphs: [
-      "Paid plans are billed according to the subscription terms shown at checkout or in your billing portal. Access may be limited, suspended, or canceled if payment fails or these terms are violated.",
-    ],
-  },
-  {
-    title: "Availability and Changes",
-    paragraphs: [
-      "We may update, modify, suspend, or discontinue parts of DropClarity at any time. We aim to keep the service reliable, but we do not guarantee uninterrupted or error-free operation.",
-    ],
-  },
-  {
-    title: "Limitation of Liability",
-    paragraphs: [
-      "To the fullest extent permitted by law, DropClarity is not liable for indirect, incidental, special, consequential, lost-profit, revenue-loss, business-interruption, or data-loss damages arising from use of the service or reliance on analysis results.",
-    ],
-  },
-  {
-    title: "Contact",
-    paragraphs: ["Questions about these Terms can be sent to info@dropclarity.com."],
-  },
-];
-
 const pageCss = `
-.termsPage,
-.termsPage * {
+.dcPage,
+.dcPage * {
   box-sizing: border-box;
 }
 
-.termsPage {
-  width: 100%;
+.dcPage {
   min-height: 100vh;
-  background: #ffffff;
+  padding: 46px 0 72px;
+  background:
+    radial-gradient(1000px 520px at 0% -10%, rgba(124, 58, 237, 0.08), transparent 64%),
+    radial-gradient(1000px 520px at 100% 0%, rgba(34, 211, 238, 0.1), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   color: #0f172a;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   overflow-x: hidden;
 }
 
-/* Wider, calmer header section */
-.termsHero {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  background:
-    radial-gradient(900px 420px at 12% -20%, rgba(124, 58, 237, 0.06), transparent 58%),
-    radial-gradient(800px 380px at 88% 0%, rgba(34, 211, 238, 0.055), transparent 62%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-}
-
-.termsInner {
-  width: min(1320px, calc(100vw - 48px));
+.legalInner {
+  width: min(100% - 56px, 1440px);
   margin: 0 auto;
 }
 
-.termsHero .termsInner {
-  padding: 56px 0 48px;
+.legalHero {
+  max-width: 1120px;
+  padding: 28px 0 26px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(15, 23, 42, 0.10);
-  background: rgba(255, 255, 255, 0.82);
-  border-radius: 999px;
-  padding: 7px 12px;
-  color: #475569;
+.legalEyebrow {
+  margin: 0 0 12px;
+  color: #4f46e5;
   font-size: 12px;
-  line-height: 1;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
-.termsHero h1 {
-  max-width: 900px;
-  margin: 18px 0 0;
+.legalHero h1 {
+  margin: 0;
   color: #0f172a;
-  font-size: 38px;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
-  font-weight: 950;
+  font-size: clamp(34px, 4vw, 52px);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
 }
 
-.termsHero p {
-  max-width: 900px;
-  margin: 16px 0 0;
+.legalUpdated {
+  margin: 14px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.legalIntro {
+  max-width: 980px;
+  margin: 18px 0 0;
   color: #475569;
-  font-size: 16px;
-  line-height: 1.7;
-  font-weight: 650;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.72;
 }
 
-/* More spacious content area */
-.termsBody {
-  padding: 42px 0 72px;
-  background: #ffffff;
-}
-
-.termsGrid {
+.legalGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  align-items: start;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding: 30px 0 0;
 }
 
-.termsCard {
-  min-height: 180px;
+.legalCard {
+  min-height: 100%;
+  padding: 26px;
   border: 1px solid rgba(15, 23, 42, 0.09);
   border-radius: 22px;
-  background: #ffffff;
-  padding: 26px;
-  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.045);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.055);
 }
 
-.termsCard h2 {
+.legalCardWide {
+  grid-column: span 2;
+}
+
+.legalCard h2 {
   margin: 0;
   color: #0f172a;
   font-size: 19px;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
   font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
 }
 
-.termsCard p {
-  margin: 12px 0 0;
+.legalCard p {
+  margin: 10px 0 0;
   color: #475569;
-  font-size: 15px;
-  line-height: 1.72;
-  font-weight: 620;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.7;
 }
 
-.termsCard ul {
-  margin: 12px 0 0;
-  padding-left: 21px;
+.legalCard ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
   color: #475569;
 }
 
-.termsCard li {
+.legalCard li {
   margin-top: 8px;
   color: #475569;
-  font-size: 15px;
+  font-size: 15.5px;
+  font-weight: 600;
   line-height: 1.65;
-  font-weight: 620;
 }
 
-@media (max-width: 980px) {
-  .termsGrid {
+.legalCard strong {
+  color: #0f172a;
+  font-weight: 850;
+}
+
+@media (max-width: 1180px) {
+  .legalInner {
+    width: min(100% - 44px, 1120px);
+  }
+
+  .legalGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .legalCardWide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 820px) {
+  .dcPage {
+    padding: 40px 0 52px;
+  }
+
+  .legalInner {
+    width: min(100% - 32px, 1120px);
+  }
+
+  .legalHero {
+    padding: 24px 0 20px;
+  }
+
+  .legalIntro {
+    font-size: 16px;
+  }
+
+  .legalGrid {
     grid-template-columns: 1fr;
+    gap: 14px;
+    padding-top: 22px;
   }
 
-  .termsCard {
-    min-height: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .termsInner {
-    width: min(100%, calc(100vw - 32px));
-  }
-
-  .termsHero .termsInner {
-    padding: 44px 0 38px;
-  }
-
-  .termsHero h1 {
-    font-size: 32px;
-  }
-
-  .termsHero p {
-    font-size: 15.5px;
-  }
-
-  .termsBody {
-    padding: 30px 0 56px;
-  }
-
-  .termsCard {
-    padding: 22px;
+  .legalCard {
+    padding: 20px;
     border-radius: 20px;
   }
 }
 
-@media (max-width: 480px) {
-  .termsInner {
-    width: 100%;
-    padding: 0 16px;
+@media (max-width: 520px) {
+  .legalInner {
+    width: min(100% - 28px, 1120px);
   }
 
-  .termsHero h1 {
-    font-size: 29px;
+  .legalHero h1 {
+    font-size: 34px;
+    letter-spacing: -0.045em;
   }
 
-  .termsHero p {
+  .legalCard h2 {
+    font-size: 18px;
+  }
+
+  .legalCard p,
+  .legalCard li {
     font-size: 15px;
-  }
-
-  .termsCard {
-    padding: 20px;
   }
 }
 `;
