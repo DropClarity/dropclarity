@@ -188,7 +188,7 @@ const pageCss = `
   overflow-x: hidden;
 }
 
-/* Wider, calmer header section */
+/* Header format matches the How It Works page */
 .contactHero {
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   background:
@@ -198,12 +198,12 @@ const pageCss = `
 }
 
 .contactInner {
-  width: min(1320px, calc(100vw - 48px));
+  width: min(1220px, calc(100vw - 64px));
   margin: 0 auto;
 }
 
 .contactHero .contactInner {
-  padding: 56px 0 48px;
+  padding: 52px 0 44px;
 }
 
 .eyebrow {
@@ -226,7 +226,7 @@ const pageCss = `
   max-width: 900px;
   margin: 18px 0 0;
   color: #0f172a;
-  font-size: 38px;
+  font-size: clamp(31px, 4vw, 42px);
   line-height: 1.08;
   letter-spacing: -0.04em;
   font-weight: 950;
@@ -252,9 +252,11 @@ const pageCss = `
   grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
   gap: 22px;
   align-items: stretch;
+  min-width: 0;
 }
 
 .contactPanel {
+  min-width: 0;
   border: 1px solid rgba(15, 23, 42, 0.09);
   border-radius: 24px;
   background: #ffffff;
@@ -471,6 +473,12 @@ const pageCss = `
   font-weight: 620;
 }
 
+@media (max-width: 1180px) {
+  .contactInner {
+    width: min(100%, calc(100vw - 44px));
+  }
+}
+
 @media (max-width: 980px) {
   .contactGrid {
     grid-template-columns: 1fr;
@@ -479,19 +487,24 @@ const pageCss = `
 
 @media (max-width: 768px) {
   .contactInner {
-    width: min(100%, calc(100vw - 32px));
+    width: 100%;
+    padding: 0 22px;
   }
 
   .contactHero .contactInner {
-    padding: 44px 0 38px;
+    padding: 42px 22px 36px;
   }
 
   .contactHero h1 {
-    font-size: 32px;
+    max-width: 100%;
+    font-size: 31px;
+    letter-spacing: -0.035em;
   }
 
   .contactHero p {
-    font-size: 15.5px;
+    max-width: 100%;
+    font-size: 15px;
+    line-height: 1.65;
   }
 
   .contactBody {
@@ -511,8 +524,11 @@ const pageCss = `
 
 @media (max-width: 480px) {
   .contactInner {
-    width: 100%;
     padding: 0 16px;
+  }
+
+  .contactHero .contactInner {
+    padding: 38px 18px 34px;
   }
 
   .contactHero h1 {
