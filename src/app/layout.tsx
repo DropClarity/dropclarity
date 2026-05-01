@@ -36,10 +36,14 @@ export default function RootLayout({
 
           <main>{children}</main>
 
-          <footer className="border-t border-slate-100 bg-white">
-            <div className="mx-auto max-w-[1600px] px-5 py-10 sm:px-8 sm:py-12">
-              <div className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-cyan-50/40 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.07)] sm:p-8">
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          {/* FULL WIDTH FOOTER */}
+          <footer className="w-full border-t border-slate-200 bg-gradient-to-br from-slate-50 via-white to-cyan-50/40">
+            <div className="px-5 py-12 sm:px-8">
+              <div className="mx-auto max-w-[1400px]">
+
+                <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
+                  
+                  {/* LEFT SIDE */}
                   <div className="max-w-xl">
                     <img
                       src="/logo.svg"
@@ -69,7 +73,10 @@ export default function RootLayout({
                     </div>
                   </div>
 
-                  <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1fr_auto] lg:gap-12">
+                  {/* RIGHT SIDE */}
+                  <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1fr_auto] lg:gap-16">
+                    
+                    {/* COMPANY */}
                     <div>
                       <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                         Company
@@ -88,6 +95,7 @@ export default function RootLayout({
                       </nav>
                     </div>
 
+                    {/* SOCIAL */}
                     <div>
                       <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                         Social
@@ -105,10 +113,12 @@ export default function RootLayout({
                         </div>
                       </div>
                     </div>
+
                   </div>
                 </div>
 
-                <div className="mt-8 border-t border-slate-200 pt-5">
+                {/* BOTTOM BAR */}
+                <div className="mt-10 border-t border-slate-200 pt-6">
                   <div className="flex flex-col gap-3 text-xs font-semibold text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                     <p>
                       © {new Date().getFullYear()} DropClarity. All rights
@@ -121,6 +131,7 @@ export default function RootLayout({
                     </p>
                   </div>
                 </div>
+
               </div>
             </div>
           </footer>

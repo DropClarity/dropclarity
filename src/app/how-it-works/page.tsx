@@ -4,8 +4,6 @@ export default function HowItWorksPage() {
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
       <div className="wrap">
-
-        {/* HERO */}
         <section className="hero">
           <div className="kicker">
             <span className="kickerDot" /> How It Works
@@ -30,12 +28,11 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* STEPS */}
         <section className="steps">
           {steps.map((step, i) => (
             <div key={i} className="stepCard">
               <div className="stepNumber">{i + 1}</div>
-              <div>
+              <div className="stepContent">
                 <h2>{step.title}</h2>
                 <p>{step.desc}</p>
               </div>
@@ -43,9 +40,9 @@ export default function HowItWorksPage() {
           ))}
         </section>
 
-        {/* VALUE SECTION */}
         <section className="value">
-          <h2>What you actually get</h2>
+          <div className="sectionKicker">What you actually get</div>
+          <h2 className="sectionTitle">A clearer view of every job.</h2>
 
           <div className="valueGrid">
             {valuePoints.map((v, i) => (
@@ -57,15 +54,13 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* FINAL CTA */}
         <section className="cta">
-          <h2>Find your profit leaks in minutes</h2>
+          <h2>Find your profit leaks in minutes.</h2>
           <p>
             Upload your job files and instantly see what’s working, what’s not,
             and where you're losing money.
           </p>
         </section>
-
       </div>
     </main>
   );
@@ -114,78 +109,99 @@ const valuePoints = [
 ];
 
 const pageCss = `
+*{box-sizing:border-box}
+
 .dcPage{
   min-height:100vh;
-  padding:60px 0 50px;
+  padding:72px 0 64px;
   background:
-    radial-gradient(900px 500px at 0% -10%,rgba(124,58,237,.12),transparent),
-    radial-gradient(900px 500px at 100% 0%,rgba(34,211,238,.14),transparent),
-    #ffffff;
-  font-family:system-ui;
+    radial-gradient(900px 500px at 0% -10%,rgba(124,58,237,.12),transparent 65%),
+    radial-gradient(900px 500px at 100% 0%,rgba(34,211,238,.16),transparent 62%),
+    linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#0f172a;
 }
 
-.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+.wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 20px;
+}
 
+/* HERO */
 .hero{
-  padding:40px;
-  border-radius:28px;
-  background:white;
-  border:1px solid rgba(0,0,0,.06);
-  box-shadow:0 20px 60px rgba(0,0,0,.06);
+  padding:44px;
+  border-radius:30px;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow:0 24px 70px rgba(15,23,42,.09);
 }
 
 .kicker{
+  display:flex;
+  align-items:center;
+  gap:8px;
   font-size:12px;
-  font-weight:900;
+  font-weight:950;
   text-transform:uppercase;
+  letter-spacing:.08em;
   color:#0891b2;
 }
 
 .kickerDot{
-  display:inline-block;
-  width:6px;
-  height:6px;
+  width:7px;
+  height:7px;
   background:#22d3ee;
   border-radius:50%;
-  margin-right:6px;
+  box-shadow:0 0 0 4px rgba(34,211,238,.14);
 }
 
 h1{
-  font-size:44px;
-  font-weight:900;
-  margin-top:10px;
+  max-width:900px;
+  font-size:48px;
+  line-height:1.04;
+  font-weight:950;
+  letter-spacing:-.05em;
+  margin:20px 0 0;
+  color:#0f172a;
 }
 
 .gradText{
-  background:linear-gradient(90deg,#22d3ee,#7c3aed);
+  background:linear-gradient(90deg,#06b6d4,#6366f1,#7c3aed);
   -webkit-background-clip:text;
+  background-clip:text;
   color:transparent;
 }
 
 .lede{
-  margin-top:14px;
+  max-width:900px;
+  margin-top:18px;
   color:#475569;
   font-size:18px;
+  line-height:1.65;
+  font-weight:650;
 }
 
 .heroMeta{
-  margin-top:16px;
+  margin-top:22px;
   display:flex;
   flex-wrap:wrap;
   gap:10px;
 }
 
 .metaPill{
-  padding:6px 10px;
+  padding:8px 12px;
   border-radius:999px;
   background:#f1f5f9;
+  border:1px solid rgba(15,23,42,.06);
+  color:#334155;
   font-size:12px;
-  font-weight:700;
+  font-weight:850;
 }
 
-/* Steps */
+/* STEPS */
 .steps{
-  margin-top:30px;
+  margin-top:28px;
   display:flex;
   flex-direction:column;
   gap:16px;
@@ -193,64 +209,176 @@ h1{
 
 .stepCard{
   display:flex;
+  align-items:flex-start;
   gap:16px;
-  padding:20px;
-  border-radius:20px;
-  background:white;
-  border:1px solid rgba(0,0,0,.06);
+  padding:22px;
+  border-radius:22px;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow:0 14px 38px rgba(15,23,42,.055);
 }
 
 .stepNumber{
-  width:40px;
-  height:40px;
-  border-radius:12px;
+  width:42px;
+  height:42px;
+  flex:0 0 auto;
+  border-radius:14px;
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#e0f2fe;
-  font-weight:900;
+  background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(124,58,237,.16));
+  color:#0f172a;
+  font-weight:950;
 }
 
-/* Value */
+.stepContent h2{
+  margin:0;
+  color:#0f172a;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+
+.stepContent p{
+  margin:6px 0 0;
+  color:#64748b;
+  font-size:15px;
+  line-height:1.55;
+  font-weight:650;
+}
+
+/* VALUE */
 .value{
-  margin-top:40px;
+  margin-top:44px;
+}
+
+.sectionKicker{
+  color:#0891b2;
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.sectionTitle{
+  margin:8px 0 0;
+  color:#0f172a;
+  font-size:30px;
+  line-height:1.12;
+  font-weight:950;
+  letter-spacing:-.04em;
 }
 
 .valueGrid{
-  margin-top:16px;
+  margin-top:18px;
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:16px;
 }
 
 .valueCard{
-  padding:18px;
-  border-radius:18px;
-  background:white;
-  border:1px solid rgba(0,0,0,.06);
+  padding:22px;
+  border-radius:22px;
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow:0 14px 38px rgba(15,23,42,.055);
 }
 
 .valueTitle{
-  font-weight:800;
+  color:#0f172a;
+  font-size:16px;
+  font-weight:900;
 }
 
 .valueDesc{
-  margin-top:6px;
-  color:#475569;
+  margin-top:7px;
+  color:#64748b;
+  font-size:14px;
+  line-height:1.55;
+  font-weight:650;
 }
 
 /* CTA */
 .cta{
-  margin-top:50px;
-  padding:30px;
-  border-radius:24px;
+  margin-top:44px;
+  padding:34px;
+  border-radius:26px;
   background:linear-gradient(135deg,#ecfeff,#f5f3ff);
-  border:1px solid rgba(0,0,0,.05);
+  border:1px solid rgba(15,23,42,.08);
   text-align:center;
+  box-shadow:0 18px 50px rgba(15,23,42,.06);
 }
 
+.cta h2{
+  margin:0;
+  color:#0f172a;
+  font-size:30px;
+  line-height:1.15;
+  font-weight:950;
+  letter-spacing:-.04em;
+}
+
+.cta p{
+  max-width:680px;
+  margin:10px auto 0;
+  color:#475569;
+  font-size:16px;
+  line-height:1.6;
+  font-weight:650;
+}
+
+/* RESPONSIVE */
 @media(max-width:768px){
-  h1{font-size:32px}
-  .valueGrid{grid-template-columns:1fr}
+  .dcPage{
+    padding:44px 0 44px;
+  }
+
+  .hero{
+    padding:28px;
+    border-radius:24px;
+  }
+
+  h1{
+    font-size:36px;
+  }
+
+  .lede{
+    font-size:16px;
+  }
+
+  .valueGrid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:480px){
+  .wrap{
+    padding:0 16px;
+  }
+
+  .hero{
+    padding:24px;
+  }
+
+  h1{
+    font-size:32px;
+  }
+
+  .stepCard{
+    padding:18px;
+  }
+
+  .stepNumber{
+    width:38px;
+    height:38px;
+  }
+
+  .cta{
+    padding:26px 20px;
+  }
+
+  .cta h2{
+    font-size:26px;
+  }
 }
 `;
