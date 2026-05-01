@@ -363,6 +363,7 @@ const pageCss = `
     linear-gradient(0deg, transparent 0%, rgba(34, 211, 238, 0.055) 50%, transparent 100%);
   opacity: 0.85;
   pointer-events: none;
+  animation: visualSweep 8s ease-in-out infinite alternate;
 }
 
 .visualCard {
@@ -372,6 +373,11 @@ const pageCss = `
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(16px);
+  will-change: transform, box-shadow;
+}
+
+.fileCard {
+  animation: softFloat 7s ease-in-out infinite;
 }
 
 .fileCard {
@@ -442,6 +448,7 @@ const pageCss = `
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: aiPulse 4.2s ease-in-out infinite;
 }
 
 .aiCore::before,
@@ -454,10 +461,12 @@ const pageCss = `
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  animation: lineGlow 4.8s ease-in-out infinite;
 }
 
 .aiCore::after {
   transform: translate(-50%, -50%) rotate(90deg);
+  animation: lineGlow 4.8s ease-in-out infinite 1.2s;
 }
 
 .aiCore span {
@@ -493,6 +502,7 @@ const pageCss = `
 .metricCard.revenue {
   top: 70px;
   right: 92px;
+  animation: softFloat 6.6s ease-in-out infinite 0.4s;
 }
 
 .metricCard.revenue strong {
@@ -502,11 +512,13 @@ const pageCss = `
 .metricCard.costs {
   top: 162px;
   right: 42px;
+  animation: softFloat 7.2s ease-in-out infinite 0.9s;
 }
 
 .metricCard.margin {
   top: 252px;
   right: 76px;
+  animation: softFloat 6.9s ease-in-out infinite 1.2s;
 }
 
 .metricCard.margin strong {
@@ -519,6 +531,7 @@ const pageCss = `
   bottom: 122px;
   border-radius: 20px;
   padding: 18px;
+  animation: softFloat 7.4s ease-in-out infinite 0.7s;
 }
 
 .profitHeader {
@@ -611,9 +624,12 @@ const pageCss = `
   grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
+  border-color: rgba(124, 58, 237, 0.18);
+  animation: alertLift 3.8s ease-in-out infinite;
 }
 
 .bellIcon {
+  position: relative;
   width: 42px;
   height: 42px;
   border-radius: 999px;
@@ -625,6 +641,15 @@ const pageCss = `
   font-size: 18px;
   font-weight: 950;
   box-shadow: 0 12px 24px rgba(124, 58, 237, 0.22);
+}
+
+.bellIcon::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 58, 237, 0.28);
+  animation: alertPing 2.4s ease-out infinite;
 }
 
 .alertCard strong {
@@ -802,6 +827,89 @@ const pageCss = `
   font-size: 14px;
   font-weight: 850;
   box-shadow: 0 14px 32px rgba(124, 58, 237, 0.18);
+}
+
+
+@keyframes softFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes aiPulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow:
+      0 0 0 16px rgba(124, 58, 237, 0.10),
+      0 0 0 34px rgba(124, 58, 237, 0.045),
+      0 22px 50px rgba(109, 40, 217, 0.24);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.045);
+    box-shadow:
+      0 0 0 20px rgba(124, 58, 237, 0.12),
+      0 0 0 42px rgba(124, 58, 237, 0.055),
+      0 26px 60px rgba(109, 40, 217, 0.30);
+  }
+}
+
+@keyframes lineGlow {
+  0%, 100% {
+    opacity: 0.38;
+  }
+  50% {
+    opacity: 0.82;
+  }
+}
+
+@keyframes alertLift {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow: 0 22px 50px rgba(124, 58, 237, 0.13);
+  }
+}
+
+@keyframes alertPing {
+  0% {
+    opacity: 0.58;
+    transform: scale(0.92);
+  }
+  80%, 100% {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+
+@keyframes visualSweep {
+  0% {
+    transform: translate3d(-10px, -6px, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(10px, 8px, 0) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visualGlow,
+  .fileCard,
+  .metricCard.revenue,
+  .metricCard.costs,
+  .metricCard.margin,
+  .profitCard,
+  .alertCard,
+  .bellIcon::after,
+  .aiCore,
+  .aiCore::before,
+  .aiCore::after {
+    animation: none !important;
+  }
 }
 
 @media (max-width: 1180px) {
