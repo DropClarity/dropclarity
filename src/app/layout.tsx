@@ -35,10 +35,7 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col bg-white">
             <SiteHeader />
 
-            <main className="flex-1 bg-white">{children}</main>
-
-            {/* Soft neutral fade into footer */}
-            <div className="h-16 bg-gradient-to-b from-white via-slate-50/70 to-slate-50" />
+            <main className="flex-1">{children}</main>
 
             <footer className="w-full border-t border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100/70">
               <div className="px-5 py-12 sm:px-8">
