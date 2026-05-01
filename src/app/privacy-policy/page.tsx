@@ -3,92 +3,142 @@ export default function PrivacyPolicy() {
     <main className="dcPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <div className="privacyWrap">
-        <section className="privacyHero">
-          <div className="privacyKicker">
-            <span className="privacyKickerDot" /> Privacy & Data
-          </div>
-
-          <h1 className="privacyTitle">
-            Your data stays{" "}
-            <span className="privacyGradText">
-              secure, private, and controlled.
-            </span>
-          </h1>
-
-          <p className="privacyLede">
-            DropClarity is built for businesses handling real financial data. We
-            treat your job files, cost data, and revenue data with strict
-            security and privacy standards.
+      <div className="legalInner">
+        <section className="legalHero">
+          <p className="legalEyebrow">Privacy Policy</p>
+          <h1>Privacy Policy</h1>
+          <p className="legalUpdated">Last updated: May 1, 2026</p>
+          <p className="legalIntro">
+            DropClarity is built for businesses handling real financial data. This Privacy Policy explains
+            what information we collect, how we use it, and how we protect the job files, cost data,
+            revenue data, and account information you provide when using DropClarity.
           </p>
         </section>
 
-        <section className="privacyContent">
-          <div className="privacyBlock">
-            <h2>Information We Collect</h2>
+        <section className="legalGrid" aria-label="Privacy Policy sections">
+          <article className="legalCard">
+            <h2>1. Information We Collect</h2>
             <p>
-              We collect information necessary to provide our services,
-              including:
+              We collect information necessary to provide, operate, and improve DropClarity. This may include
+              account information such as your name, email address, and subscription details.
             </p>
-            <ul>
-              <li>Account information such as name and email</li>
-              <li>Uploaded job files including invoices, costs, and reports</li>
-              <li>Usage data to improve product performance</li>
-            </ul>
-          </div>
-
-          <div className="privacyBlock">
-            <h2>How Your Data Is Used</h2>
             <p>
-              Your data is used to deliver job profitability insights, including
-              revenue, costs, margin calculations, and AI-driven analysis.
+              We may also collect uploaded business files, including invoices, job reports, cost files,
+              spreadsheets, PDFs, bills, and other documents you choose to submit for analysis.
             </p>
-          </div>
+          </article>
 
-          <div className="privacyBlock">
-            <h2>AI Processing</h2>
+          <article className="legalCard">
+            <h2>2. How Your Data Is Used</h2>
             <p>
-              Uploaded data may be processed by AI systems to extract structured
-              insights. This processing is used to generate results within
-              DropClarity and improve platform accuracy.
+              Your data is used to provide job profitability analysis, including revenue, costs, margins,
+              net profit, cost breakdowns, benchmark comparisons, and related insights inside DropClarity.
             </p>
-          </div>
-
-          <div className="privacyBlock">
-            <h2>Third-Party Services</h2>
-            <p>We use secure third-party providers including:</p>
-            <ul>
-              <li>Stripe for billing</li>
-              <li>Clerk for authentication</li>
-              <li>Uploadcare for file uploads and storage</li>
-              <li>AI processing providers for analysis</li>
-            </ul>
-          </div>
-
-          <div className="privacyBlock">
-            <h2>Data Security</h2>
             <p>
-              We implement safeguards including secure infrastructure, access
-              controls, and reasonable data protection practices to help protect
-              your information.
+              We may also use limited usage information to maintain platform performance, troubleshoot issues,
+              improve accuracy, and enhance the user experience.
             </p>
-          </div>
+          </article>
 
-          <div className="privacyBlock">
-            <h2>Your Control</h2>
+          <article className="legalCard">
+            <h2>3. Uploaded Files</h2>
             <p>
-              You retain ownership of your data. You may request deletion of
-              your data at any time by contacting us.
+              Files you upload are used to generate analysis results within your DropClarity account. You are
+              responsible for ensuring that you have the right to upload and process any documents submitted
+              through the platform.
             </p>
-          </div>
-
-          <div className="privacyBlock">
-            <h2>Contact</h2>
             <p>
-              Questions about privacy can be sent to{" "}
+              DropClarity does not require you to manually input financial data. The platform is designed to
+              analyze the documents you choose to upload.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>4. AI Processing</h2>
+            <p>
+              Uploaded data may be processed by AI systems to extract structured information, identify job-level
+              profitability trends, and produce summaries, alerts, and recommendations.
+            </p>
+            <p>
+              AI processing is used to provide analysis within DropClarity and improve the usefulness of the
+              platform. Results should be reviewed for accuracy before being used for major business decisions.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>5. Third-Party Services</h2>
+            <p>
+              We use trusted third-party providers to operate DropClarity. These may include Stripe for billing,
+              Clerk for authentication, Uploadcare for file uploads and storage, and AI processing providers for
+              document analysis.
+            </p>
+            <p>
+              These providers may process information only as needed to support the services they provide to
+              DropClarity.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>6. Data Security</h2>
+            <p>
+              We use reasonable technical and organizational safeguards designed to protect your information,
+              including secure infrastructure, access controls, and appropriate handling practices.
+            </p>
+            <p>
+              No online service can guarantee complete security, but we take privacy and protection of business
+              financial data seriously.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>7. Data Ownership and Control</h2>
+            <p>
+              You retain ownership of the files and business information you upload to DropClarity. We use your
+              uploaded data to provide the service and generate analysis for your account.
+            </p>
+            <p>
+              You may request deletion of your data by contacting us at the email address listed below.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>8. Billing and Account Information</h2>
+            <p>
+              Payment processing is handled by Stripe. DropClarity does not store full payment card numbers on
+              its own systems.
+            </p>
+            <p>
+              Account access and authentication may be managed through Clerk or another authentication provider.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>9. Data Retention</h2>
+            <p>
+              We retain information for as long as needed to provide the service, comply with legal obligations,
+              resolve disputes, enforce agreements, and maintain business records.
+            </p>
+            <p>
+              Retention periods may vary depending on the type of information and how it is used within the
+              platform.
+            </p>
+          </article>
+
+          <article className="legalCard">
+            <h2>10. Changes to This Policy</h2>
+            <p>
+              We may update this Privacy Policy from time to time. When changes are made, the updated version
+              will be posted on this page with a revised “Last updated” date.
+            </p>
+          </article>
+
+          <article className="legalCard legalCardWide">
+            <h2>11. Contact</h2>
+            <p>
+              Questions about this Privacy Policy or requests related to your data can be sent to{" "}
               <strong>info@dropclarity.com</strong>.
             </p>
-          </div>
+          </article>
         </section>
       </div>
     </main>
@@ -103,160 +153,148 @@ const pageCss = `
 
 .dcPage {
   min-height: 100vh;
-  padding: 72px 0 64px;
+  padding: 54px 0 64px;
   background:
-    radial-gradient(900px 500px at 0% -10%, rgba(124,58,237,.12), transparent 65%),
-    radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,.16), transparent 62%),
+    radial-gradient(900px 500px at 0% -10%, rgba(124, 58, 237, 0.08), transparent 64%),
+    radial-gradient(900px 500px at 100% 0%, rgba(34, 211, 238, 0.1), transparent 62%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0f172a;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   overflow-x: hidden;
 }
 
-.privacyWrap {
-  max-width: 1000px;
+.legalInner {
+  width: min(100% - 40px, 1120px);
   margin: 0 auto;
-  padding: 0 20px;
 }
 
-.privacyHero {
-  padding: 44px;
-  border-radius: 30px;
-  background: rgba(255,255,255,.96);
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 24px 70px rgba(15,23,42,.09);
+.legalHero {
+  padding: 34px 0 22px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
 }
 
-.privacyKicker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.legalEyebrow {
+  margin: 0 0 12px;
+  color: #4f46e5;
   font-size: 12px;
-  font-weight: 950;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #0891b2;
 }
 
-.privacyKickerDot {
-  width: 7px;
-  height: 7px;
-  background: #22d3ee;
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(34,211,238,.14);
-}
-
-.privacyTitle {
-  max-width: 900px;
-  font-size: 48px;
-  line-height: 1.04;
-  font-weight: 950;
-  letter-spacing: -.05em;
-  margin: 20px 0 0;
-  color: #0f172a;
-}
-
-.privacyGradText {
-  background: linear-gradient(90deg, #06b6d4, #6366f1, #7c3aed);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.privacyLede {
-  max-width: 900px;
-  margin: 18px 0 0;
-  color: #475569;
-  font-size: 18px;
-  line-height: 1.65;
-  font-weight: 650;
-}
-
-.privacyContent {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.privacyBlock {
-  background: rgba(255,255,255,.96);
-  border-radius: 22px;
-  padding: 24px;
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 14px 38px rgba(15,23,42,.055);
-}
-
-.privacyBlock h2 {
+.legalHero h1 {
   margin: 0;
   color: #0f172a;
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: clamp(34px, 5vw, 54px);
   font-weight: 900;
-  letter-spacing: -.02em;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
 }
 
-.privacyBlock p {
-  margin: 9px 0 0;
+.legalUpdated {
+  margin: 14px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.legalIntro {
+  max-width: 850px;
+  margin: 18px 0 0;
+  color: #475569;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.72;
+}
+
+.legalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 28px 0 0;
+}
+
+.legalCard {
+  padding: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.055);
+}
+
+.legalCardWide {
+  grid-column: 1 / -1;
+}
+
+.legalCard h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.legalCard p {
+  margin: 10px 0 0;
   color: #475569;
   font-size: 15.5px;
-  line-height: 1.65;
-  font-weight: 650;
+  font-weight: 600;
+  line-height: 1.7;
 }
 
-.privacyBlock ul {
-  margin: 10px 0 0;
-  padding-left: 20px;
-  color: #475569;
-}
-
-.privacyBlock li {
-  margin-top: 6px;
-  color: #475569;
-  font-size: 15px;
-  line-height: 1.55;
-  font-weight: 650;
-}
-
-.privacyBlock strong {
+.legalCard strong {
   color: #0f172a;
   font-weight: 850;
 }
 
-@media(max-width: 768px) {
+@media (max-width: 820px) {
   .dcPage {
-    padding: 44px 0;
+    padding: 40px 0 52px;
   }
 
-  .privacyHero {
-    padding: 28px;
-    border-radius: 24px;
+  .legalInner {
+    width: min(100% - 32px, 1120px);
   }
 
-  .privacyTitle {
-    font-size: 36px;
+  .legalHero {
+    padding: 24px 0 20px;
   }
 
-  .privacyLede {
+  .legalIntro {
     font-size: 16px;
+  }
+
+  .legalGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding-top: 22px;
+  }
+
+  .legalCard {
+    padding: 20px;
+    border-radius: 20px;
   }
 }
 
-@media(max-width: 480px) {
-  .privacyWrap {
-    padding: 0 16px;
+@media (max-width: 520px) {
+  .legalInner {
+    width: min(100% - 28px, 1120px);
   }
 
-  .privacyHero {
-    padding: 24px;
+  .legalHero h1 {
+    font-size: 34px;
+    letter-spacing: -0.045em;
   }
 
-  .privacyTitle {
-    font-size: 32px;
+  .legalCard h2 {
+    font-size: 18px;
   }
 
-  .privacyBlock {
-    padding: 20px;
+  .legalCard p {
+    font-size: 15px;
   }
 }
 `;
