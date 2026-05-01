@@ -4,7 +4,7 @@ export default function HowItWorksPage() {
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
       <section className="howHero">
-        <div className="howInner heroInner">
+        <div className="howInner">
           <div className="eyebrow">How It Works</div>
 
           <h1>From uploaded files to profit clarity.</h1>
@@ -47,21 +47,19 @@ export default function HowItWorksPage() {
                 <span>AI</span>
               </div>
 
-              <div className="metricStack">
-                <div className="metricCard revenue visualCard">
-                  <span>Revenue</span>
-                  <strong>$1.24M</strong>
-                </div>
+              <div className="metricCard revenue visualCard">
+                <span>Revenue</span>
+                <strong>$1.24M</strong>
+              </div>
 
-                <div className="metricCard costs visualCard">
-                  <span>Costs</span>
-                  <strong>$860K</strong>
-                </div>
+              <div className="metricCard costs visualCard">
+                <span>Costs</span>
+                <strong>$860K</strong>
+              </div>
 
-                <div className="metricCard margin visualCard">
-                  <span>Margin</span>
-                  <strong>31%</strong>
-                </div>
+              <div className="metricCard margin visualCard">
+                <span>Margin</span>
+                <strong>31%</strong>
               </div>
 
               <div className="profitCard visualCard">
@@ -91,21 +89,17 @@ export default function HowItWorksPage() {
 
               <div className="alertCard visualCard">
                 <div className="bellIcon">!</div>
-
                 <div>
                   <strong>High-risk job detected</strong>
                   <p>Building C is below target margin</p>
                 </div>
-
                 <span>Just now</span>
               </div>
             </div>
 
             <div className="stepsColumn">
               <div className="sectionEyebrow">The process</div>
-
               <h2>AI turns uploaded job files into clear profit decisions.</h2>
-
               <p className="stepsIntroCopy">
                 Upload the files you already have. DropClarity reads, organizes,
                 and interprets job financial data so you can understand risk faster.
@@ -129,9 +123,7 @@ export default function HowItWorksPage() {
           <section className="valueSection">
             <div className="sectionHeader">
               <div className="sectionEyebrow">What you actually get</div>
-
               <h2>A clearer view of every job.</h2>
-
               <p>
                 DropClarity is designed to help operators turn file uploads into
                 decisions — not another spreadsheet that needs to be decoded.
@@ -249,7 +241,6 @@ const pageCss = `
   overflow-x: hidden;
 }
 
-/* Header */
 .howHero {
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   background:
@@ -263,14 +254,8 @@ const pageCss = `
   margin: 0 auto;
 }
 
-.heroInner {
-  max-width: 980px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .howHero .howInner {
-  padding: 52px 0 44px;
+  padding: 54px 0 46px;
 }
 
 .eyebrow {
@@ -290,12 +275,12 @@ const pageCss = `
 }
 
 .howHero h1 {
-  max-width: 880px;
+  max-width: 900px;
   margin: 18px 0 0;
   color: #0f172a;
-  font-size: clamp(34px, 3vw, 42px);
+  font-size: clamp(30px, 4vw, 38px);
   line-height: 1.08;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
   font-weight: 950;
 }
 
@@ -308,21 +293,20 @@ const pageCss = `
   font-weight: 650;
 }
 
-/* Main section */
 .howBody {
-  padding: 52px 0 72px;
+  padding: 48px 0 72px;
   background: #ffffff;
 }
 
 .stepsWrap {
   display: grid;
-  grid-template-columns: minmax(500px, 1.06fr) minmax(500px, 1fr);
-  gap: clamp(42px, 5vw, 74px);
+  grid-template-columns: minmax(420px, 0.95fr) minmax(520px, 1fr);
+  gap: 64px;
   align-items: start;
 }
 
 .stepsColumn {
-  padding-top: 14px;
+  padding-top: 18px;
 }
 
 .stepsColumn > h2 {
@@ -353,51 +337,49 @@ const pageCss = `
   text-transform: uppercase;
 }
 
-/* Animated visual */
 .processVisual {
   position: sticky;
   top: 92px;
-  min-height: 625px;
+  min-height: 590px;
   border: 1px solid rgba(124, 58, 237, 0.10);
   border-radius: 30px;
   background:
-    radial-gradient(520px 340px at 50% 30%, rgba(124, 58, 237, 0.14), transparent 63%),
-    radial-gradient(430px 310px at 12% 12%, rgba(34, 211, 238, 0.09), transparent 58%),
+    radial-gradient(500px 300px at 50% 30%, rgba(124, 58, 237, 0.16), transparent 62%),
+    radial-gradient(420px 300px at 12% 12%, rgba(34, 211, 238, 0.09), transparent 58%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.07);
   padding: 28px;
   overflow: hidden;
-  isolation: isolate;
 }
 
 .visualGlow {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.055) 48%, transparent 100%),
-    linear-gradient(0deg, transparent 0%, rgba(34, 211, 238, 0.05) 50%, transparent 100%);
-  opacity: 0.86;
+    linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.06) 48%, transparent 100%),
+    linear-gradient(0deg, transparent 0%, rgba(34, 211, 238, 0.055) 50%, transparent 100%);
+  opacity: 0.85;
   pointer-events: none;
-  animation: visualSweep 8.5s ease-in-out infinite alternate;
+  animation: visualSweep 8s ease-in-out infinite alternate;
 }
 
 .visualCard {
   position: absolute;
   z-index: 2;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.075);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(16px);
-  will-change: transform;
+  will-change: transform, box-shadow;
 }
 
 .fileCard {
   top: 34px;
   left: 34px;
-  width: 218px;
+  width: 220px;
   border-radius: 18px;
   padding: 18px;
-  animation: floatOne 7.2s ease-in-out infinite;
+  animation: softFloat 7s ease-in-out infinite;
 }
 
 .visualLabel {
@@ -427,6 +409,7 @@ const pageCss = `
   justify-content: center;
   font-size: 9px;
   font-weight: 950;
+  flex: 0 0 auto;
 }
 
 .fileIcon.sheet {
@@ -437,18 +420,18 @@ const pageCss = `
 
 .fileIcon.pdf {
   color: #dc2626;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.10);
   border: 1px solid rgba(239, 68, 68, 0.16);
 }
 
 .aiCore {
   position: absolute;
   z-index: 1;
-  top: 172px;
+  top: 162px;
   left: 50%;
   transform: translateX(-50%);
-  width: 112px;
-  height: 112px;
+  width: 104px;
+  height: 104px;
   border-radius: 999px;
   background:
     radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.55), transparent 35%),
@@ -460,43 +443,38 @@ const pageCss = `
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: aiPulse 3.6s ease-in-out infinite;
+  animation: aiPulse 4.2s ease-in-out infinite;
 }
 
 .aiCore::before,
 .aiCore::after {
   content: "";
   position: absolute;
-  z-index: -1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.28), transparent);
-  width: 470px;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.26), transparent);
+  width: 440px;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  animation: linePulse 4.8s ease-in-out infinite;
+  animation: lineGlow 4.8s ease-in-out infinite;
 }
 
 .aiCore::after {
   transform: translate(-50%, -50%) rotate(90deg);
-  animation-delay: 0.8s;
+  animation: lineGlow 4.8s ease-in-out infinite 1.2s;
 }
 
 .aiCore span {
   position: relative;
   z-index: 2;
   color: #ffffff;
-  font-size: 33px;
+  font-size: 31px;
   font-weight: 950;
   letter-spacing: -0.05em;
 }
 
-.metricStack {
-  display: contents;
-}
-
 .metricCard {
-  width: 126px;
+  width: 120px;
   border-radius: 16px;
   padding: 14px;
 }
@@ -519,7 +497,7 @@ const pageCss = `
 .metricCard.revenue {
   top: 70px;
   right: 92px;
-  animation: floatTwo 7.7s ease-in-out infinite;
+  animation: softFloat 6.6s ease-in-out infinite 0.4s;
 }
 
 .metricCard.revenue strong {
@@ -527,15 +505,15 @@ const pageCss = `
 }
 
 .metricCard.costs {
-  top: 170px;
+  top: 162px;
   right: 42px;
-  animation: floatThree 7.9s ease-in-out infinite;
+  animation: softFloat 7.2s ease-in-out infinite 0.9s;
 }
 
 .metricCard.margin {
-  top: 270px;
-  right: 86px;
-  animation: floatTwo 8.3s ease-in-out infinite reverse;
+  top: 252px;
+  right: 76px;
+  animation: softFloat 6.9s ease-in-out infinite 1.2s;
 }
 
 .metricCard.margin strong {
@@ -545,10 +523,10 @@ const pageCss = `
 .profitCard {
   left: 34px;
   right: 34px;
-  bottom: 124px;
+  bottom: 122px;
   border-radius: 20px;
   padding: 18px;
-  animation: floatOne 8.8s ease-in-out infinite reverse;
+  animation: softFloat 7.4s ease-in-out infinite 0.7s;
 }
 
 .profitHeader {
@@ -595,17 +573,9 @@ const pageCss = `
   padding-top: 0;
 }
 
-.goodNet {
-  color: #059669;
-}
-
-.warnNet {
-  color: #ca8a04;
-}
-
-.badNet {
-  color: #dc2626;
-}
+.goodNet { color: #059669; }
+.warnNet { color: #ca8a04; }
+.badNet { color: #dc2626; }
 
 .status {
   width: fit-content;
@@ -617,17 +587,17 @@ const pageCss = `
 
 .status.healthy {
   color: #059669;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.10);
 }
 
 .status.watch {
   color: #c2410c;
-  background: rgba(249, 115, 22, 0.1);
+  background: rgba(249, 115, 22, 0.10);
 }
 
 .status.risk {
   color: #dc2626;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.10);
 }
 
 .alertCard {
@@ -641,9 +611,8 @@ const pageCss = `
   grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
-  border-color: rgba(124, 58, 237, 0.16);
-  box-shadow: 0 20px 48px rgba(124, 58, 237, 0.11);
-  animation: alertLift 5.8s ease-in-out infinite;
+  border-color: rgba(124, 58, 237, 0.18);
+  animation: alertLift 3.8s ease-in-out infinite;
 }
 
 .bellIcon {
@@ -664,10 +633,10 @@ const pageCss = `
 .bellIcon::after {
   content: "";
   position: absolute;
-  inset: -7px;
-  border-radius: inherit;
+  inset: -6px;
+  border-radius: 999px;
   border: 1px solid rgba(124, 58, 237, 0.28);
-  animation: ping 2.4s ease-out infinite;
+  animation: alertPing 2.4s ease-out infinite;
 }
 
 .alertCard strong {
@@ -693,7 +662,6 @@ const pageCss = `
   font-weight: 850;
 }
 
-/* Steps */
 .steps {
   display: flex;
   flex-direction: column;
@@ -741,7 +709,7 @@ const pageCss = `
 }
 
 .valueSection {
-  margin-top: 58px;
+  margin-top: 54px;
 }
 
 .sectionHeader {
@@ -847,39 +815,16 @@ const pageCss = `
   box-shadow: 0 14px 32px rgba(124, 58, 237, 0.18);
 }
 
-/* Motion */
-@keyframes floatOne {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -7px, 0);
-  }
-}
-
-@keyframes floatTwo {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(5px, -8px, 0);
-  }
-}
-
-@keyframes floatThree {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(-5px, 6px, 0);
-  }
+@keyframes softFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
 }
 
 @keyframes aiPulse {
   0%, 100% {
     transform: translateX(-50%) scale(1);
     box-shadow:
-      0 0 0 16px rgba(124, 58, 237, 0.1),
+      0 0 0 16px rgba(124, 58, 237, 0.10),
       0 0 0 34px rgba(124, 58, 237, 0.045),
       0 22px 50px rgba(109, 40, 217, 0.24);
   }
@@ -888,68 +833,78 @@ const pageCss = `
     box-shadow:
       0 0 0 20px rgba(124, 58, 237, 0.12),
       0 0 0 42px rgba(124, 58, 237, 0.055),
-      0 26px 58px rgba(109, 40, 217, 0.28);
+      0 26px 60px rgba(109, 40, 217, 0.30);
   }
 }
 
-@keyframes linePulse {
-  0%, 100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-
-@keyframes visualSweep {
-  0% {
-    transform: translate3d(-10px, -6px, 0) scale(1);
-  }
-  100% {
-    transform: translate3d(10px, 8px, 0) scale(1.02);
-  }
+@keyframes lineGlow {
+  0%, 100% { opacity: 0.38; }
+  50% { opacity: 0.82; }
 }
 
 @keyframes alertLift {
   0%, 100% {
-    transform: translate3d(0, 0, 0);
-    box-shadow: 0 20px 48px rgba(124, 58, 237, 0.11);
+    transform: translateY(0);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
   }
   50% {
-    transform: translate3d(0, -5px, 0);
-    box-shadow: 0 26px 58px rgba(124, 58, 237, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 22px 50px rgba(124, 58, 237, 0.13);
   }
 }
 
-@keyframes ping {
+@keyframes alertPing {
   0% {
-    opacity: 0.65;
-    transform: scale(0.9);
+    opacity: 0.58;
+    transform: scale(0.92);
   }
   80%, 100% {
     opacity: 0;
-    transform: scale(1.35);
+    transform: scale(1.32);
   }
 }
 
-/* Tablet */
+@keyframes visualSweep {
+  0% { transform: translate3d(-10px, -6px, 0) scale(1); }
+  100% { transform: translate3d(10px, 8px, 0) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visualGlow,
+  .fileCard,
+  .metricCard.revenue,
+  .metricCard.costs,
+  .metricCard.margin,
+  .profitCard,
+  .alertCard,
+  .bellIcon::after,
+  .aiCore,
+  .aiCore::before,
+  .aiCore::after {
+    animation: none !important;
+  }
+}
+
 @media (max-width: 1180px) {
+  .howInner {
+    width: min(100%, calc(100vw - 44px));
+  }
+
   .stepsWrap {
     grid-template-columns: 1fr;
-    gap: 36px;
+    gap: 34px;
   }
 
   .processVisual {
     position: relative;
     top: auto;
-    width: min(760px, 100%);
-    min-height: 610px;
+    min-height: 560px;
+    max-width: 760px;
+    width: 100%;
     margin: 0 auto;
   }
 
   .stepsColumn {
-    max-width: 840px;
-    margin: 0 auto;
     padding-top: 0;
   }
 
@@ -958,54 +913,47 @@ const pageCss = `
   }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .howInner {
-    width: min(100%, calc(100vw - 40px));
-  }
-
-  .heroInner {
-    width: min(100%, calc(100vw - 48px));
+    width: 100%;
+    padding: 0 22px;
   }
 
   .howHero .howInner {
-    padding: 42px 0 36px;
+    padding: 42px 22px 36px;
   }
 
   .howHero h1 {
-    max-width: 560px;
-    font-size: clamp(30px, 8vw, 36px);
-    line-height: 1.1;
+    max-width: 100%;
+    font-size: 31px;
+    letter-spacing: -0.035em;
   }
 
   .howHero p {
-    max-width: 560px;
-    font-size: 15.5px;
-    line-height: 1.68;
+    max-width: 100%;
+    font-size: 15px;
+    line-height: 1.65;
   }
 
   .howBody {
-    padding: 34px 0 56px;
+    padding: 30px 0 56px;
   }
 
   .stepsWrap {
-    gap: 34px;
+    gap: 30px;
   }
 
   .processVisual {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
     min-height: 0;
     padding: 18px;
     border-radius: 24px;
-    overflow: visible;
   }
 
   .visualGlow {
-    border-radius: inherit;
-    overflow: hidden;
+    animation: none;
   }
 
   .visualCard,
@@ -1014,78 +962,68 @@ const pageCss = `
   .profitCard,
   .alertCard {
     position: relative;
-    top: auto;
-    right: auto;
-    bottom: auto;
+    inset: auto;
     left: auto;
-    width: 100%;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: auto;
+    min-height: 0;
+    animation: none;
+    transform: none;
   }
 
   .fileCard {
-    padding: 18px;
-    animation: mobileFloat 6.5s ease-in-out infinite;
+    grid-column: 1 / -1;
+    padding: 16px;
+    border-radius: 18px;
   }
 
   .fileRow {
-    padding: 8px 0;
+    padding: 7px 0;
   }
 
   .aiCore {
     position: relative;
+    z-index: 2;
+    grid-column: 1 / -1;
     top: auto;
     left: auto;
     transform: none;
-    width: 88px;
-    height: 88px;
-    margin: 6px auto;
-    animation: aiPulseMobile 3.6s ease-in-out infinite;
+    justify-self: center;
+    width: 84px;
+    height: 84px;
+    margin: 4px 0;
+    animation: mobileAiPulse 4.2s ease-in-out infinite;
+  }
+
+  .aiCore::before,
+  .aiCore::after {
+    width: min(330px, 76vw);
   }
 
   .aiCore span {
-    font-size: 27px;
-  }
-
-  .aiCore::before {
-    width: min(330px, calc(100vw - 90px));
-  }
-
-  .aiCore::after {
-    display: none;
-  }
-
-  .metricStack {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    font-size: 26px;
   }
 
   .metricCard {
-    padding: 13px;
-    border-radius: 15px;
-    animation: mobileFloat 7s ease-in-out infinite;
-  }
-
-  .metricCard.costs {
-    animation-delay: 0.2s;
+    padding: 14px;
   }
 
   .metricCard.margin {
-    animation-delay: 0.4s;
-  }
-
-  .metricCard strong {
-    font-size: 15px;
+    display: none;
   }
 
   .profitCard {
-    padding: 17px;
+    grid-column: 1 / -1;
+    padding: 16px;
     border-radius: 18px;
-    animation: mobileFloat 7.5s ease-in-out infinite;
   }
 
   .profitGrid {
-    grid-template-columns: 1fr 0.72fr 0.68fr;
-    font-size: 12px;
+    grid-template-columns: 1fr 0.75fr 0.72fr;
+    gap: 8px;
+    font-size: 11.5px;
   }
 
   .profitGrid span:nth-child(4) {
@@ -1093,10 +1031,16 @@ const pageCss = `
   }
 
   .alertCard {
-    min-height: auto;
-    grid-template-columns: 40px minmax(0, 1fr);
-    padding: 16px;
+    grid-column: 1 / -1;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
     border-radius: 18px;
+  }
+
+  .bellIcon {
+    width: 38px;
+    height: 38px;
   }
 
   .alertCard > span {
@@ -1106,10 +1050,6 @@ const pageCss = `
   .stepsColumn > h2,
   .sectionHeader h2 {
     font-size: 26px;
-  }
-
-  .stepsIntroCopy {
-    font-size: 15px;
   }
 
   .stepRow {
@@ -1128,10 +1068,6 @@ const pageCss = `
     font-size: 18px;
   }
 
-  .stepContent p {
-    font-size: 14.5px;
-  }
-
   .valueGrid {
     grid-template-columns: 1fr;
   }
@@ -1148,108 +1084,73 @@ const pageCss = `
   }
 }
 
+@keyframes mobileAiPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 14px rgba(124, 58, 237, 0.09),
+      0 0 0 28px rgba(124, 58, 237, 0.045),
+      0 18px 42px rgba(109, 40, 217, 0.22);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 0 17px rgba(124, 58, 237, 0.11),
+      0 0 0 34px rgba(124, 58, 237, 0.052),
+      0 22px 48px rgba(109, 40, 217, 0.27);
+  }
+}
+
 @media (max-width: 480px) {
   .howInner {
-    width: min(100%, calc(100vw - 32px));
+    padding: 0 16px;
   }
 
-  .heroInner {
-    width: min(100%, calc(100vw - 40px));
+  .howHero .howInner {
+    padding: 38px 18px 34px;
   }
 
   .howHero h1 {
     font-size: 29px;
-    letter-spacing: -0.038em;
-  }
-
-  .howHero p {
-    font-size: 15px;
   }
 
   .processVisual {
     padding: 14px;
-    gap: 12px;
+    gap: 10px;
     border-radius: 22px;
   }
 
-  .metricStack {
-    grid-template-columns: 1fr;
+  .fileCard,
+  .profitCard,
+  .alertCard,
+  .valueCard,
+  .cta {
+    padding: 16px;
   }
 
   .metricCard {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    padding: 12px;
+    border-radius: 15px;
   }
 
   .metricCard strong {
-    margin-top: 0;
-  }
-
-  .profitCard,
-  .valueCard,
-  .cta {
-    padding: 18px;
-  }
-
-  .profitGrid {
-    grid-template-columns: 1fr 0.65fr;
-    gap: 8px;
-  }
-
-  .profitGrid span:nth-child(2) {
-    display: none;
+    font-size: 14px;
   }
 
   .profitHeader span {
     display: none;
   }
 
-  .alertCard {
-    padding: 15px;
+  .profitGrid {
+    font-size: 11px;
   }
-}
 
-@keyframes mobileFloat {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
+  .alertCard strong {
+    font-size: 13.5px;
   }
-  50% {
-    transform: translate3d(0, -4px, 0);
-  }
-}
 
-@keyframes aiPulseMobile {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 0 14px rgba(124, 58, 237, 0.09),
-      0 0 0 30px rgba(124, 58, 237, 0.04),
-      0 20px 44px rgba(109, 40, 217, 0.22);
-  }
-  50% {
-    transform: scale(1.045);
-    box-shadow:
-      0 0 0 17px rgba(124, 58, 237, 0.12),
-      0 0 0 37px rgba(124, 58, 237, 0.055),
-      0 24px 52px rgba(109, 40, 217, 0.27);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .visualGlow,
-  .fileCard,
-  .metricCard.revenue,
-  .metricCard.costs,
-  .metricCard.margin,
-  .profitCard,
-  .alertCard,
-  .bellIcon::after,
-  .aiCore,
-  .aiCore::before,
-  .aiCore::after {
-    animation: none !important;
+  .alertCard p {
+    font-size: 12.5px;
   }
 }
 `;
