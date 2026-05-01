@@ -22,12 +22,6 @@ export default function TermsOfServicePage() {
         </section>
 
         <section className="termsContent">
-          <div className="termsNotice">
-            This page is a strong launch-ready draft, but it is not legal advice.
-            Have a qualified attorney review it before relying on it for full
-            production use.
-          </div>
-
           {sections.map((section) => (
             <div className="termsBlock" key={section.title}>
               <h2>{section.title}</h2>
@@ -192,17 +186,6 @@ const pageCss = `
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.termsNotice {
-  border: 1px solid rgba(245,158,11,.22);
-  background: rgba(255,251,235,.92);
-  color: rgba(120,53,15,.95);
-  border-radius: 18px;
-  padding: 15px 16px;
-  font-size: 14px;
-  line-height: 1.55;
-  font-weight: 750;
 }
 
 .termsBlock {
