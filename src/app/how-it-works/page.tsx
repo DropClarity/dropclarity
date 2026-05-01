@@ -1,67 +1,71 @@
 export default function HowItWorksPage() {
   return (
-    <main className="dcPage">
+    <main className="howPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <div className="wrap">
-        <section className="hero">
-          <div className="kicker">
-            <span className="kickerDot" /> How It Works
-          </div>
+      <section className="howHero">
+        <div className="howInner">
+          <div className="eyebrow">How It Works</div>
 
-          <h1>
-            From uploaded files to{" "}
-            <span className="gradText">profit clarity.</span>
-          </h1>
+          <h1>From uploaded files to profit clarity.</h1>
 
-          <p className="lede">
+          <p>
             DropClarity turns messy job data into clear, actionable insights —
-            without manual entry. Upload your files and instantly see which jobs
-            are making money and which are quietly draining it.
+            without manual entry. Upload your files and see which jobs are
+            making money, which are underperforming, and where margin is quietly
+            leaking.
           </p>
+        </div>
+      </section>
 
-          <div className="heroMeta">
-            <span className="metaPill">No manual input</span>
-            <span className="metaPill">AI-powered extraction</span>
-            <span className="metaPill">Job-level profitability</span>
-            <span className="metaPill">Instant insights</span>
-          </div>
-        </section>
+      <section className="howBody">
+        <div className="howInner">
+          <div className="steps">
+            {steps.map((step, i) => (
+              <article className="stepCard" key={step.title}>
+                <div className="stepNumber">{i + 1}</div>
 
-        <section className="steps">
-          {steps.map((step, i) => (
-            <div key={i} className="stepCard">
-              <div className="stepNumber">{i + 1}</div>
-              <div className="stepContent">
-                <h2>{step.title}</h2>
-                <p>{step.desc}</p>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        <section className="value">
-          <div className="sectionKicker">What you actually get</div>
-          <h2 className="sectionTitle">A clearer view of every job.</h2>
-
-          <div className="valueGrid">
-            {valuePoints.map((v, i) => (
-              <div key={i} className="valueCard">
-                <div className="valueTitle">{v.title}</div>
-                <div className="valueDesc">{v.desc}</div>
-              </div>
+                <div>
+                  <h2>{step.title}</h2>
+                  <p>{step.desc}</p>
+                </div>
+              </article>
             ))}
           </div>
-        </section>
 
-        <section className="cta">
-          <h2>Find your profit leaks in minutes.</h2>
-          <p>
-            Upload your job files and instantly see what’s working, what’s not,
-            and where you're losing money.
-          </p>
-        </section>
-      </div>
+          <section className="valueSection">
+            <div className="sectionHeader">
+              <div className="sectionEyebrow">What you actually get</div>
+              <h2>A clearer view of every job.</h2>
+              <p>
+                DropClarity is designed to help operators turn file uploads into
+                decisions — not another spreadsheet that needs to be decoded.
+              </p>
+            </div>
+
+            <div className="valueGrid">
+              {valuePoints.map((v) => (
+                <article className="valueCard" key={v.title}>
+                  <h3>{v.title}</h3>
+                  <p>{v.desc}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="cta">
+            <div>
+              <h2>Find your profit leaks in minutes.</h2>
+              <p>
+                Upload your job files and quickly see what’s working, what’s not,
+                and where you may be losing money.
+              </p>
+            </div>
+
+            <a href="/app">Start analyzing</a>
+          </section>
+        </div>
+      </section>
     </main>
   );
 }
@@ -69,316 +73,346 @@ export default function HowItWorksPage() {
 const steps = [
   {
     title: "Upload your job files",
-    desc: "Upload invoices, cost reports, bills, or exports. No formatting required.",
+    desc: "Upload invoices, cost reports, bills, or exports. No manual entry or complicated setup required.",
   },
   {
     title: "We extract revenue and costs",
-    desc: "DropClarity automatically pulls key financial data using AI.",
+    desc: "DropClarity reads your files and pulls the key financial details needed to understand job profitability.",
   },
   {
     title: "See job-level profitability",
-    desc: "View revenue, costs, margin %, and net profit across all jobs.",
+    desc: "View revenue, costs, margin percentage, and net profit across the jobs you upload.",
   },
   {
     title: "Identify high-risk jobs",
-    desc: "Instantly see which jobs are underperforming or losing money.",
+    desc: "Quickly spot jobs that are underperforming, losing money, or sitting below your target margin.",
   },
   {
     title: "Take action",
-    desc: "Adjust pricing, fix cost issues, and improve margins with clarity.",
+    desc: "Use the insights to adjust pricing, review cost issues, and improve margin with more confidence.",
   },
 ];
 
 const valuePoints = [
   {
     title: "Revenue vs Costs",
-    desc: "Understand exactly where money is coming from and where it’s going.",
+    desc: "Understand where money is coming from and where it is being spent on each job.",
   },
   {
     title: "Margin visibility",
-    desc: "See your true profitability across every job.",
+    desc: "See your true profitability instead of relying only on revenue totals.",
   },
   {
     title: "Profit leak detection",
-    desc: "Identify jobs that are silently costing you money.",
+    desc: "Identify jobs that may be silently costing you money before the pattern repeats.",
   },
   {
     title: "AI insights",
-    desc: "Get smart recommendations without manual analysis.",
+    desc: "Get simple explanations and next-step recommendations without manual analysis.",
   },
 ];
 
 const pageCss = `
-*{box-sizing:border-box}
+.howPage,
+.howPage * {
+  box-sizing: border-box;
+}
 
-.dcPage{
-  min-height:100vh;
-  padding:72px 0 64px;
+.howPage {
+  width: 100%;
+  min-height: 100vh;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  overflow-x: hidden;
+}
+
+/* Match Contact page width, typography, and calmer header style */
+.howHero {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   background:
-    radial-gradient(900px 500px at 0% -10%,rgba(124,58,237,.12),transparent 65%),
-    radial-gradient(900px 500px at 100% 0%,rgba(34,211,238,.16),transparent 62%),
-    linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  color:#0f172a;
+    radial-gradient(900px 420px at 12% -20%, rgba(124, 58, 237, 0.07), transparent 58%),
+    radial-gradient(800px 380px at 88% 0%, rgba(34, 211, 238, 0.075), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.wrap{
-  max-width:1100px;
-  margin:0 auto;
-  padding:0 20px;
+.howInner {
+  width: min(1320px, calc(100vw - 48px));
+  margin: 0 auto;
 }
 
-/* HERO */
-.hero{
-  padding:44px;
-  border-radius:30px;
-  background:rgba(255,255,255,.96);
-  border:1px solid rgba(15,23,42,.08);
-  box-shadow:0 24px 70px rgba(15,23,42,.09);
+.howHero .howInner {
+  padding: 56px 0 48px;
 }
 
-.kicker{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:12px;
-  font-weight:950;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  color:#0891b2;
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(34, 211, 238, 0.24);
+  background: rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #0891b2;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 28px rgba(34, 211, 238, 0.08);
 }
 
-.kickerDot{
-  width:7px;
-  height:7px;
-  background:#22d3ee;
-  border-radius:50%;
-  box-shadow:0 0 0 4px rgba(34,211,238,.14);
+.howHero h1 {
+  max-width: 900px;
+  margin: 18px 0 0;
+  color: #0f172a;
+  font-size: 38px;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 950;
 }
 
-h1{
-  max-width:900px;
-  font-size:48px;
-  line-height:1.04;
-  font-weight:950;
-  letter-spacing:-.05em;
-  margin:20px 0 0;
-  color:#0f172a;
+.howHero p {
+  max-width: 900px;
+  margin: 16px 0 0;
+  color: #475569;
+  font-size: 16px;
+  line-height: 1.7;
+  font-weight: 650;
 }
 
-.gradText{
-  background:linear-gradient(90deg,#06b6d4,#6366f1,#7c3aed);
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
+/* Content */
+.howBody {
+  padding: 42px 0 72px;
+  background: #ffffff;
 }
 
-.lede{
-  max-width:900px;
-  margin-top:18px;
-  color:#475569;
-  font-size:18px;
-  line-height:1.65;
-  font-weight:650;
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
 }
 
-.heroMeta{
-  margin-top:22px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
+.stepCard {
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 22px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.045);
 }
 
-.metaPill{
-  padding:8px 12px;
-  border-radius:999px;
-  background:#f1f5f9;
-  border:1px solid rgba(15,23,42,.06);
-  color:#334155;
-  font-size:12px;
-  font-weight:850;
+.stepNumber {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.14));
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 950;
 }
 
-/* STEPS */
-.steps{
-  margin-top:28px;
-  display:flex;
-  flex-direction:column;
-  gap:16px;
+.stepCard h2 {
+  margin: 16px 0 0;
+  color: #0f172a;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 900;
 }
 
-.stepCard{
-  display:flex;
-  align-items:flex-start;
-  gap:16px;
-  padding:22px;
-  border-radius:22px;
-  background:rgba(255,255,255,.96);
-  border:1px solid rgba(15,23,42,.08);
-  box-shadow:0 14px 38px rgba(15,23,42,.055);
+.stepCard p {
+  margin: 9px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.65;
+  font-weight: 620;
 }
 
-.stepNumber{
-  width:42px;
-  height:42px;
-  flex:0 0 auto;
-  border-radius:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(124,58,237,.16));
-  color:#0f172a;
-  font-weight:950;
+.valueSection {
+  margin-top: 42px;
 }
 
-.stepContent h2{
-  margin:0;
-  color:#0f172a;
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:-.02em;
+.sectionHeader {
+  max-width: 780px;
 }
 
-.stepContent p{
-  margin:6px 0 0;
-  color:#64748b;
-  font-size:15px;
-  line-height:1.55;
-  font-weight:650;
+.sectionEyebrow {
+  color: #0891b2;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-/* VALUE */
-.value{
-  margin-top:44px;
+.sectionHeader h2 {
+  margin: 12px 0 0;
+  color: #0f172a;
+  font-size: 30px;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  font-weight: 930;
 }
 
-.sectionKicker{
-  color:#0891b2;
-  font-size:12px;
-  font-weight:950;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+.sectionHeader p {
+  margin: 12px 0 0;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 620;
 }
 
-.sectionTitle{
-  margin:8px 0 0;
-  color:#0f172a;
-  font-size:30px;
-  line-height:1.12;
-  font-weight:950;
-  letter-spacing:-.04em;
+.valueGrid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.valueGrid{
-  margin-top:18px;
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:16px;
+.valueCard {
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 22px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.045);
 }
 
-.valueCard{
-  padding:22px;
-  border-radius:22px;
-  background:rgba(255,255,255,.96);
-  border:1px solid rgba(15,23,42,.08);
-  box-shadow:0 14px 38px rgba(15,23,42,.055);
+.valueCard h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 900;
 }
 
-.valueTitle{
-  color:#0f172a;
-  font-size:16px;
-  font-weight:900;
+.valueCard p {
+  margin: 9px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.65;
+  font-weight: 620;
 }
 
-.valueDesc{
-  margin-top:7px;
-  color:#64748b;
-  font-size:14px;
-  line-height:1.55;
-  font-weight:650;
+.cta {
+  margin-top: 42px;
+  border: 1px solid rgba(34, 211, 238, 0.16);
+  border-radius: 24px;
+  background:
+    radial-gradient(700px 260px at 0% 0%, rgba(34, 211, 238, 0.075), transparent 62%),
+    linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.04);
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
 }
 
-/* CTA */
-.cta{
-  margin-top:44px;
-  padding:34px;
-  border-radius:26px;
-  background:linear-gradient(135deg,#ecfeff,#f5f3ff);
-  border:1px solid rgba(15,23,42,.08);
-  text-align:center;
-  box-shadow:0 18px 50px rgba(15,23,42,.06);
+.cta h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-weight: 920;
 }
 
-.cta h2{
-  margin:0;
-  color:#0f172a;
-  font-size:30px;
-  line-height:1.15;
-  font-weight:950;
-  letter-spacing:-.04em;
+.cta p {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 620;
 }
 
-.cta p{
-  max-width:680px;
-  margin:10px auto 0;
-  color:#475569;
-  font-size:16px;
-  line-height:1.6;
-  font-weight:650;
+.cta a {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 999px;
+  padding: 0 24px;
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  background: #7c3aed;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 850;
+  box-shadow: 0 14px 32px rgba(124, 58, 237, 0.18);
 }
 
-/* RESPONSIVE */
-@media(max-width:768px){
-  .dcPage{
-    padding:44px 0 44px;
+@media (max-width: 1180px) {
+  .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .hero{
-    padding:28px;
-    border-radius:24px;
-  }
-
-  h1{
-    font-size:36px;
-  }
-
-  .lede{
-    font-size:16px;
-  }
-
-  .valueGrid{
-    grid-template-columns:1fr;
+  .valueGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media(max-width:480px){
-  .wrap{
-    padding:0 16px;
+@media (max-width: 768px) {
+  .howInner {
+    width: min(100%, calc(100vw - 32px));
   }
 
-  .hero{
-    padding:24px;
+  .howHero .howInner {
+    padding: 44px 0 38px;
   }
 
-  h1{
-    font-size:32px;
+  .howHero h1 {
+    font-size: 32px;
   }
 
-  .stepCard{
-    padding:18px;
+  .howHero p {
+    font-size: 15.5px;
   }
 
-  .stepNumber{
-    width:38px;
-    height:38px;
+  .howBody {
+    padding: 30px 0 56px;
   }
 
-  .cta{
-    padding:26px 20px;
+  .steps,
+  .valueGrid {
+    grid-template-columns: 1fr;
   }
 
-  .cta h2{
-    font-size:26px;
+  .cta {
+    padding: 22px;
+    border-radius: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cta a {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .howInner {
+    width: 100%;
+    padding: 0 16px;
+  }
+
+  .howHero h1 {
+    font-size: 29px;
+  }
+
+  .howHero p {
+    font-size: 15px;
+  }
+
+  .stepCard,
+  .valueCard,
+  .cta {
+    padding: 20px;
   }
 }
 `;
