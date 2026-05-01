@@ -21,45 +21,67 @@ export default function HowItWorksPage() {
       <section className="howBody">
         <div className="howInner">
           <section className="stepsWrap">
-            <div className="processVisual" aria-label="DropClarity AI file analysis preview">
-              <div className="visualGlow" />
+            <div className="processVisual" aria-label="DropClarity file-to-profit preview">
+              <div className="previewTopline">
+                <div>
+                  <span className="miniEyebrow">Live preview</span>
+                  <h3>Files become job-level profit clarity</h3>
+                </div>
+                <span className="previewBadge">No manual entry</span>
+              </div>
 
-              <div className="fileCard visualCard">
-                <div className="visualLabel">Files uploaded</div>
-
-                <div className="fileRow">
-                  <span className="fileIcon sheet">XLS</span>
-                  <span>Job Costs.xlsx</span>
+              <div className="uploadPreview visualCard">
+                <div className="cardHeader">
+                  <strong>Files uploaded</strong>
+                  <span>3 files</span>
                 </div>
 
-                <div className="fileRow">
-                  <span className="fileIcon pdf">PDF</span>
-                  <span>Invoices.pdf</span>
+                <div className="fileList">
+                  <div className="fileRow">
+                    <span className="fileIcon sheet">XLS</span>
+                    <div>
+                      <strong>Job Costs.xlsx</strong>
+                      <p>Labor + materials</p>
+                    </div>
+                  </div>
+
+                  <div className="fileRow">
+                    <span className="fileIcon pdf">PDF</span>
+                    <div>
+                      <strong>Invoices.pdf</strong>
+                      <p>Revenue documents</p>
+                    </div>
+                  </div>
+
+                  <div className="fileRow">
+                    <span className="fileIcon csv">CSV</span>
+                    <div>
+                      <strong>Labor Report.csv</strong>
+                      <p>Job cost details</p>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <div className="fileRow">
-                  <span className="fileIcon sheet">CSV</span>
-                  <span>Labor Report.csv</span>
+              <div className="aiStrip">
+                <span className="aiDot" />
+                <strong>AI organizes files by job</strong>
+                <span>Revenue, costs, margin, and risk</span>
+              </div>
+
+              <div className="metricGrid">
+                <div className="metricMini visualCard">
+                  <span>Revenue</span>
+                  <strong>$1.24M</strong>
                 </div>
-              </div>
-
-              <div className="aiCore">
-                <span>AI</span>
-              </div>
-
-              <div className="metricCard revenue visualCard">
-                <span>Revenue</span>
-                <strong>$1.24M</strong>
-              </div>
-
-              <div className="metricCard costs visualCard">
-                <span>Costs</span>
-                <strong>$860K</strong>
-              </div>
-
-              <div className="metricCard margin visualCard">
-                <span>Margin</span>
-                <strong>31%</strong>
+                <div className="metricMini visualCard">
+                  <span>Costs</span>
+                  <strong>$860K</strong>
+                </div>
+                <div className="metricMini visualCard">
+                  <span>Margin</span>
+                  <strong>31%</strong>
+                </div>
               </div>
 
               <div className="profitCard visualCard">
@@ -88,7 +110,7 @@ export default function HowItWorksPage() {
               </div>
 
               <div className="alertCard visualCard">
-                <div className="bellIcon">!</div>
+                <div className="alertIcon">!</div>
                 <div>
                   <strong>High-risk job detected</strong>
                   <p>Building C is below target margin</p>
@@ -250,12 +272,12 @@ const pageCss = `
 }
 
 .howInner {
-  width: min(1320px, calc(100vw - 56px));
+  width: min(1220px, calc(100vw - 64px));
   margin: 0 auto;
 }
 
 .howHero .howInner {
-  padding: 54px 0 46px;
+  padding: 52px 0 44px;
 }
 
 .eyebrow {
@@ -278,7 +300,7 @@ const pageCss = `
   max-width: 900px;
   margin: 18px 0 0;
   color: #0f172a;
-  font-size: clamp(30px, 4vw, 38px);
+  font-size: clamp(31px, 4vw, 42px);
   line-height: 1.08;
   letter-spacing: -0.04em;
   font-weight: 950;
@@ -300,13 +322,13 @@ const pageCss = `
 
 .stepsWrap {
   display: grid;
-  grid-template-columns: minmax(420px, 0.95fr) minmax(520px, 1fr);
+  grid-template-columns: minmax(420px, 0.95fr) minmax(500px, 1fr);
   gap: 64px;
   align-items: start;
 }
 
 .stepsColumn {
-  padding-top: 18px;
+  padding-top: 16px;
 }
 
 .stepsColumn > h2 {
@@ -328,7 +350,8 @@ const pageCss = `
   font-weight: 620;
 }
 
-.sectionEyebrow {
+.sectionEyebrow,
+.miniEyebrow {
   color: #0891b2;
   font-size: 12px;
   line-height: 1;
@@ -340,70 +363,119 @@ const pageCss = `
 .processVisual {
   position: sticky;
   top: 92px;
-  min-height: 590px;
   border: 1px solid rgba(124, 58, 237, 0.10);
   border-radius: 30px;
   background:
-    radial-gradient(500px 300px at 50% 30%, rgba(124, 58, 237, 0.16), transparent 62%),
-    radial-gradient(420px 300px at 12% 12%, rgba(34, 211, 238, 0.09), transparent 58%),
+    radial-gradient(520px 300px at 50% 10%, rgba(124, 58, 237, 0.12), transparent 62%),
+    radial-gradient(420px 300px at 6% 15%, rgba(34, 211, 238, 0.09), transparent 58%),
     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.07);
   padding: 28px;
   overflow: hidden;
 }
 
-.visualGlow {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.06) 48%, transparent 100%),
-    linear-gradient(0deg, transparent 0%, rgba(34, 211, 238, 0.055) 50%, transparent 100%);
-  opacity: 0.85;
-  pointer-events: none;
-  animation: visualSweep 8s ease-in-out infinite alternate;
+.previewTopline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.previewTopline h3 {
+  margin: 9px 0 0;
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1.14;
+  letter-spacing: -0.035em;
+  font-weight: 950;
+}
+
+.previewBadge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #6d28d9;
+  padding: 8px 11px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .visualCard {
-  position: absolute;
-  z-index: 2;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(16px);
-  will-change: transform, box-shadow;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.065);
+  backdrop-filter: blur(14px);
 }
 
-.fileCard {
-  top: 34px;
-  left: 34px;
-  width: 220px;
-  border-radius: 18px;
+.uploadPreview,
+.profitCard,
+.alertCard {
+  border-radius: 22px;
   padding: 18px;
-  animation: softFloat 7s ease-in-out infinite;
 }
 
-.visualLabel {
+.cardHeader,
+.profitHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardHeader strong,
+.profitHeader strong {
   color: #0f172a;
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: -0.015em;
-  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.cardHeader span,
+.profitHeader span {
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #6d28d9;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.fileList {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
 }
 
 .fileRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
   color: #475569;
+}
+
+.fileRow strong {
+  display: block;
+  color: #334155;
   font-size: 13px;
-  font-weight: 700;
-  padding: 9px 0;
+  font-weight: 850;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileRow p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .fileIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -412,7 +484,8 @@ const pageCss = `
   flex: 0 0 auto;
 }
 
-.fileIcon.sheet {
+.fileIcon.sheet,
+.fileIcon.csv {
   color: #059669;
   background: rgba(16, 185, 129, 0.11);
   border: 1px solid rgba(16, 185, 129, 0.18);
@@ -424,131 +497,82 @@ const pageCss = `
   border: 1px solid rgba(239, 68, 68, 0.16);
 }
 
-.aiCore {
-  position: absolute;
-  z-index: 1;
-  top: 162px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 104px;
-  height: 104px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.55), transparent 35%),
-    linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  box-shadow:
-    0 0 0 16px rgba(124, 58, 237, 0.10),
-    0 0 0 34px rgba(124, 58, 237, 0.045),
-    0 22px 50px rgba(109, 40, 217, 0.24);
+.aiStrip {
+  position: relative;
+  margin: 18px auto;
+  width: fit-content;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: aiPulse 4.2s ease-in-out infinite;
-}
-
-.aiCore::before,
-.aiCore::after {
-  content: "";
-  position: absolute;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.26), transparent);
-  width: 440px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  animation: lineGlow 4.8s ease-in-out infinite;
-}
-
-.aiCore::after {
-  transform: translate(-50%, -50%) rotate(90deg);
-  animation: lineGlow 4.8s ease-in-out infinite 1.2s;
-}
-
-.aiCore span {
-  position: relative;
-  z-index: 2;
+  gap: 9px;
+  border: 1px solid rgba(124, 58, 237, 0.14);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
   color: #ffffff;
-  font-size: 31px;
+  padding: 11px 16px;
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.18);
+}
+
+.aiStrip strong {
+  font-size: 13px;
   font-weight: 950;
-  letter-spacing: -0.05em;
+  white-space: nowrap;
 }
 
-.metricCard {
-  width: 120px;
-  border-radius: 16px;
-  padding: 14px;
+.aiStrip span:last-child {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
 }
 
-.metricCard span {
+.aiDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.16);
+  animation: dotPulse 1.9s ease-in-out infinite;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metricMini {
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.metricMini span {
   display: block;
   color: #64748b;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 850;
 }
 
-.metricCard strong {
+.metricMini strong {
   display: block;
-  margin-top: 4px;
+  margin-top: 5px;
   color: #0f172a;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 950;
+  letter-spacing: -0.03em;
 }
 
-.metricCard.revenue {
-  top: 70px;
-  right: 92px;
-  animation: softFloat 6.6s ease-in-out infinite 0.4s;
-}
-
-.metricCard.revenue strong {
+.metricMini:first-child strong {
   color: #059669;
 }
 
-.metricCard.costs {
-  top: 162px;
-  right: 42px;
-  animation: softFloat 7.2s ease-in-out infinite 0.9s;
-}
-
-.metricCard.margin {
-  top: 252px;
-  right: 76px;
-  animation: softFloat 6.9s ease-in-out infinite 1.2s;
-}
-
-.metricCard.margin strong {
+.metricMini:last-child strong {
   color: #6d28d9;
 }
 
 .profitCard {
-  left: 34px;
-  right: 34px;
-  bottom: 122px;
-  border-radius: 20px;
-  padding: 18px;
-  animation: softFloat 7.4s ease-in-out infinite 0.7s;
-}
-
-.profitHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.profitHeader strong {
-  color: #0f172a;
-  font-size: 15px;
-  font-weight: 950;
-}
-
-.profitHeader span {
-  border-radius: 999px;
-  background: rgba(124, 58, 237, 0.08);
-  color: #6d28d9;
-  padding: 5px 9px;
-  font-size: 11px;
-  font-weight: 850;
+  margin-top: 14px;
 }
 
 .profitTable {
@@ -557,10 +581,10 @@ const pageCss = `
 
 .profitGrid {
   display: grid;
-  grid-template-columns: 1fr 0.78fr 0.68fr 0.76fr;
+  grid-template-columns: 1fr 0.72fr 0.62fr 0.7fr;
   gap: 10px;
   align-items: center;
-  padding: 8px 0;
+  padding: 9px 0;
   color: #0f172a;
   font-size: 12px;
   font-weight: 780;
@@ -583,6 +607,7 @@ const pageCss = `
   padding: 5px 8px;
   font-size: 11px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .status.healthy {
@@ -601,22 +626,15 @@ const pageCss = `
 }
 
 .alertCard {
-  left: 34px;
-  right: 34px;
-  bottom: 28px;
-  min-height: 72px;
-  border-radius: 18px;
-  padding: 16px;
+  margin-top: 14px;
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
   border-color: rgba(124, 58, 237, 0.18);
-  animation: alertLift 3.8s ease-in-out infinite;
 }
 
-.bellIcon {
-  position: relative;
+.alertIcon {
   width: 42px;
   height: 42px;
   border-radius: 999px;
@@ -628,15 +646,6 @@ const pageCss = `
   font-size: 18px;
   font-weight: 950;
   box-shadow: 0 12px 24px rgba(124, 58, 237, 0.22);
-}
-
-.bellIcon::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 999px;
-  border: 1px solid rgba(124, 58, 237, 0.28);
-  animation: alertPing 2.4s ease-out infinite;
 }
 
 .alertCard strong {
@@ -660,6 +669,7 @@ const pageCss = `
   padding: 6px 9px;
   font-size: 11px;
   font-weight: 850;
+  white-space: nowrap;
 }
 
 .steps {
@@ -815,72 +825,13 @@ const pageCss = `
   box-shadow: 0 14px 32px rgba(124, 58, 237, 0.18);
 }
 
-@keyframes softFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
-}
-
-@keyframes aiPulse {
-  0%, 100% {
-    transform: translateX(-50%) scale(1);
-    box-shadow:
-      0 0 0 16px rgba(124, 58, 237, 0.10),
-      0 0 0 34px rgba(124, 58, 237, 0.045),
-      0 22px 50px rgba(109, 40, 217, 0.24);
-  }
-  50% {
-    transform: translateX(-50%) scale(1.045);
-    box-shadow:
-      0 0 0 20px rgba(124, 58, 237, 0.12),
-      0 0 0 42px rgba(124, 58, 237, 0.055),
-      0 26px 60px rgba(109, 40, 217, 0.30);
-  }
-}
-
-@keyframes lineGlow {
-  0%, 100% { opacity: 0.38; }
-  50% { opacity: 0.82; }
-}
-
-@keyframes alertLift {
-  0%, 100% {
-    transform: translateY(0);
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
-  }
-  50% {
-    transform: translateY(-5px);
-    box-shadow: 0 22px 50px rgba(124, 58, 237, 0.13);
-  }
-}
-
-@keyframes alertPing {
-  0% {
-    opacity: 0.58;
-    transform: scale(0.92);
-  }
-  80%, 100% {
-    opacity: 0;
-    transform: scale(1.32);
-  }
-}
-
-@keyframes visualSweep {
-  0% { transform: translate3d(-10px, -6px, 0) scale(1); }
-  100% { transform: translate3d(10px, 8px, 0) scale(1.02); }
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.72; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.12); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .visualGlow,
-  .fileCard,
-  .metricCard.revenue,
-  .metricCard.costs,
-  .metricCard.margin,
-  .profitCard,
-  .alertCard,
-  .bellIcon::after,
-  .aiCore,
-  .aiCore::before,
-  .aiCore::after {
+  .aiDot {
     animation: none !important;
   }
 }
@@ -898,7 +849,6 @@ const pageCss = `
   .processVisual {
     position: relative;
     top: auto;
-    min-height: 560px;
     max-width: 760px;
     width: 100%;
     margin: 0 auto;
@@ -944,80 +894,38 @@ const pageCss = `
   }
 
   .processVisual {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    min-height: 0;
-    padding: 18px;
+    padding: 20px;
     border-radius: 24px;
   }
 
-  .visualGlow {
-    animation: none;
+  .previewTopline {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
-  .visualCard,
-  .fileCard,
-  .metricCard,
-  .profitCard,
-  .alertCard {
-    position: relative;
-    inset: auto;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
-    width: auto;
-    min-height: 0;
-    animation: none;
-    transform: none;
+  .previewTopline h3 {
+    font-size: 21px;
   }
 
-  .fileCard {
-    grid-column: 1 / -1;
-    padding: 16px;
+  .previewBadge {
+    width: fit-content;
+  }
+
+  .aiStrip {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
     border-radius: 18px;
   }
 
-  .fileRow {
-    padding: 7px 0;
+  .aiStrip strong,
+  .aiStrip span:last-child {
+    white-space: normal;
   }
 
-  .aiCore {
-    position: relative;
-    z-index: 2;
-    grid-column: 1 / -1;
-    top: auto;
-    left: auto;
-    transform: none;
-    justify-self: center;
-    width: 84px;
-    height: 84px;
-    margin: 4px 0;
-    animation: mobileAiPulse 4.2s ease-in-out infinite;
-  }
-
-  .aiCore::before,
-  .aiCore::after {
-    width: min(330px, 76vw);
-  }
-
-  .aiCore span {
-    font-size: 26px;
-  }
-
-  .metricCard {
-    padding: 14px;
-  }
-
-  .metricCard.margin {
-    display: none;
-  }
-
-  .profitCard {
-    grid-column: 1 / -1;
-    padding: 16px;
-    border-radius: 18px;
+  .metricGrid {
+    grid-template-columns: 1fr;
   }
 
   .profitGrid {
@@ -1031,14 +939,12 @@ const pageCss = `
   }
 
   .alertCard {
-    grid-column: 1 / -1;
     grid-template-columns: 38px minmax(0, 1fr);
     gap: 12px;
     padding: 14px;
-    border-radius: 18px;
   }
 
-  .bellIcon {
+  .alertIcon {
     width: 38px;
     height: 38px;
   }
@@ -1084,23 +990,6 @@ const pageCss = `
   }
 }
 
-@keyframes mobileAiPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 0 14px rgba(124, 58, 237, 0.09),
-      0 0 0 28px rgba(124, 58, 237, 0.045),
-      0 18px 42px rgba(109, 40, 217, 0.22);
-  }
-  50% {
-    transform: scale(1.04);
-    box-shadow:
-      0 0 0 17px rgba(124, 58, 237, 0.11),
-      0 0 0 34px rgba(124, 58, 237, 0.052),
-      0 22px 48px rgba(109, 40, 217, 0.27);
-  }
-}
-
 @media (max-width: 480px) {
   .howInner {
     padding: 0 16px;
@@ -1116,11 +1005,10 @@ const pageCss = `
 
   .processVisual {
     padding: 14px;
-    gap: 10px;
     border-radius: 22px;
   }
 
-  .fileCard,
+  .uploadPreview,
   .profitCard,
   .alertCard,
   .valueCard,
@@ -1128,16 +1016,16 @@ const pageCss = `
     padding: 16px;
   }
 
-  .metricCard {
-    padding: 12px;
-    border-radius: 15px;
+  .metricMini {
+    padding: 14px;
   }
 
-  .metricCard strong {
-    font-size: 14px;
+  .metricMini strong {
+    font-size: 16px;
   }
 
-  .profitHeader span {
+  .profitHeader span,
+  .cardHeader span {
     display: none;
   }
 
