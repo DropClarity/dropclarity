@@ -20,18 +20,30 @@ export default function HowItWorksPage() {
 
       <section className="howBody">
         <div className="howInner">
-          <div className="steps">
-            {steps.map((step, i) => (
-              <article className="stepCard" key={step.title}>
-                <div className="stepNumber">{i + 1}</div>
+          <section className="stepsWrap">
+            <div className="stepsIntro">
+              <div className="sectionEyebrow">The process</div>
+              <h2>Simple enough to use today. Powerful enough to catch what spreadsheets miss.</h2>
+              <p>
+                Upload the files you already have. DropClarity uses AI to read,
+                organize, and interpret job financial data so you can understand
+                risk faster.
+              </p>
+            </div>
 
-                <div>
-                  <h2>{step.title}</h2>
-                  <p>{step.desc}</p>
-                </div>
-              </article>
-            ))}
-          </div>
+            <div className="steps">
+              {steps.map((step, i) => (
+                <article className="stepRow" key={step.title}>
+                  <div className="stepNumber">{i + 1}</div>
+
+                  <div className="stepContent">
+                    <h2>{step.title}</h2>
+                    <p>{step.desc}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
 
           <section className="valueSection">
             <div className="sectionHeader">
@@ -73,23 +85,23 @@ export default function HowItWorksPage() {
 const steps = [
   {
     title: "Upload your job files",
-    desc: "Upload invoices, cost reports, bills, or exports. No manual entry or complicated setup required.",
+    desc: "Upload invoices, bills, cost reports, spreadsheets, PDFs, or job exports. No manual entry or complicated setup required.",
   },
   {
-    title: "We extract revenue and costs",
-    desc: "DropClarity reads your files and pulls the key financial details needed to understand job profitability.",
+    title: "AI reads and interprets the files",
+    desc: "DropClarity uses AI to understand messy documents, pull out the important revenue and cost details, and organize them by job.",
   },
   {
     title: "See job-level profitability",
-    desc: "View revenue, costs, margin percentage, and net profit across the jobs you upload.",
+    desc: "View revenue, costs, net profit, margin percentage, and cost breakdowns so you can quickly understand which jobs are performing well.",
   },
   {
-    title: "Identify high-risk jobs",
-    desc: "Quickly spot jobs that are underperforming, losing money, or sitting below your target margin.",
+    title: "Catch high-risk jobs sooner",
+    desc: "Spot jobs that are losing money or falling below your target margin, with real-time alerts when a job needs attention.",
   },
   {
-    title: "Take action",
-    desc: "Use the insights to adjust pricing, review cost issues, and improve margin with more confidence.",
+    title: "Take action with confidence",
+    desc: "Use the insights to adjust pricing, review cost issues, improve job performance, and protect margin before the same problem repeats.",
   },
 ];
 
@@ -103,8 +115,8 @@ const valuePoints = [
     desc: "See your true profitability instead of relying only on revenue totals.",
   },
   {
-    title: "Profit leak detection",
-    desc: "Identify jobs that may be silently costing you money before the pattern repeats.",
+    title: "High-risk job alerts",
+    desc: "Get notified when jobs may be underperforming or quietly leaking profit.",
   },
   {
     title: "AI insights",
@@ -186,57 +198,17 @@ const pageCss = `
   background: #ffffff;
 }
 
-.steps {
+.stepsWrap {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
-  align-items: stretch;
+  grid-template-columns: 0.72fr 1fr;
+  gap: 48px;
+  align-items: start;
 }
 
-.stepCard {
-  border: 1px solid rgba(15, 23, 42, 0.09);
-  border-radius: 22px;
-  background: #ffffff;
-  padding: 22px;
-  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.045);
-}
-
-.stepNumber {
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.14));
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 950;
-}
-
-.stepCard h2 {
-  margin: 16px 0 0;
-  color: #0f172a;
-  font-size: 17px;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-  font-weight: 900;
-}
-
-.stepCard p {
-  margin: 9px 0 0;
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.65;
-  font-weight: 620;
-}
-
-.valueSection {
-  margin-top: 42px;
-}
-
-.sectionHeader {
-  max-width: 780px;
+.stepsIntro {
+  position: sticky;
+  top: 96px;
+  padding-top: 6px;
 }
 
 .sectionEyebrow {
@@ -248,6 +220,7 @@ const pageCss = `
   text-transform: uppercase;
 }
 
+.stepsIntro h2,
 .sectionHeader h2 {
   margin: 12px 0 0;
   color: #0f172a;
@@ -257,12 +230,67 @@ const pageCss = `
   font-weight: 930;
 }
 
+.stepsIntro p,
 .sectionHeader p {
   margin: 12px 0 0;
   color: #475569;
   font-size: 15px;
   line-height: 1.7;
   font-weight: 620;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.stepRow {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 22px;
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.stepNumber {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(124, 58, 237, 0.075);
+  border: 1px solid rgba(124, 58, 237, 0.14);
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.stepContent h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 19px;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  font-weight: 900;
+}
+
+.stepContent p {
+  max-width: 720px;
+  margin: 9px 0 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 620;
+}
+
+.valueSection {
+  margin-top: 54px;
+}
+
+.sectionHeader {
+  max-width: 780px;
 }
 
 .valueGrid {
@@ -348,8 +376,14 @@ const pageCss = `
 }
 
 @media (max-width: 1180px) {
-  .steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .stepsWrap {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .stepsIntro {
+    position: static;
+    max-width: 820px;
   }
 
   .valueGrid {
@@ -378,7 +412,27 @@ const pageCss = `
     padding: 30px 0 56px;
   }
 
-  .steps,
+  .stepsIntro h2,
+  .sectionHeader h2 {
+    font-size: 26px;
+  }
+
+  .stepRow {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 16px;
+    padding: 24px 0;
+  }
+
+  .stepNumber {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .stepContent h2 {
+    font-size: 18px;
+  }
+
   .valueGrid {
     grid-template-columns: 1fr;
   }
@@ -409,7 +463,6 @@ const pageCss = `
     font-size: 15px;
   }
 
-  .stepCard,
   .valueCard,
   .cta {
     padding: 20px;
