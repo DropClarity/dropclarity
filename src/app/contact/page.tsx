@@ -16,47 +16,37 @@ export default function ContactPage() {
   )}`;
 
   return (
-    <main className="dcPage">
+    <main className="contactPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <div className="dcWrap">
-        <section className="dcHero">
-          <div className="dcKicker">
-            <span className="dcKickerDot" /> Contact DropClarity
-          </div>
+      <section className="contactHero">
+        <div className="contactInner">
+          <div className="eyebrow">Contact DropClarity</div>
 
-          <h1 className="dcTitle">
-            Get help finding the jobs{" "}
-            <span className="dcGradText">quietly draining profit.</span>
-          </h1>
+          <h1>Questions about job profitability?</h1>
 
-          <p className="dcLede">
-            Have a question about uploads, dashboard results, pricing, billing,
-            or whether DropClarity fits your business? Send us a note and we’ll
-            help you understand the best next step.
+          <p>
+            Reach out for product questions, demo requests, upload support,
+            billing help, or anything related to using DropClarity to find
+            job-level profit leaks.
           </p>
+        </div>
+      </section>
 
-          <div className="dcHeroMeta">
-            <span className="dcMetaPill">Product questions</span>
-            <span className="dcMetaPill">Demo requests</span>
-            <span className="dcMetaPill">Upload support</span>
-            <span className="dcMetaPill">Billing help</span>
-          </div>
-        </section>
-
-        <section className="dcGrid">
-          <div className="dcPanel">
-            <div className="dcPanelHead">
-              <div className="dcPanelTitle">Send a message</div>
-              <div className="dcPanelSub">
-                This opens your email app with a prepared message to
-                info@dropclarity.com.
+      <section className="contactBody">
+        <div className="contactInner">
+          <div className="contactGrid">
+            <div className="contactPanel formPanel">
+              <div className="panelHeader">
+                <h2>Send a message</h2>
+                <p>
+                  Fill this out and your email app will open with a prepared
+                  message to info@dropclarity.com.
+                </p>
               </div>
-            </div>
 
-            <div className="dcPad">
-              <div className="dcFormGrid">
-                <div className="dcField">
+              <div className="formGrid">
+                <div className="field">
                   <label>Name</label>
                   <input
                     value={name}
@@ -65,7 +55,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <div className="dcField">
+                <div className="field">
                   <label>Email</label>
                   <input
                     value={email}
@@ -74,7 +64,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <div className="dcField">
+                <div className="field">
                   <label>Company</label>
                   <input
                     value={company}
@@ -83,7 +73,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <div className="dcField">
+                <div className="field">
                   <label>Topic</label>
                   <select
                     value={topic}
@@ -97,7 +87,7 @@ export default function ContactPage() {
                   </select>
                 </div>
 
-                <div className="dcField dcFieldFull">
+                <div className="field fieldFull">
                   <label>Message</label>
                   <textarea
                     value={message}
@@ -107,441 +97,444 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="dcBtnRow">
-                <a className="dcBtn dcBtnPrimary" href={mailtoHref}>
+              <div className="buttonRow">
+                <a className="primaryButton" href={mailtoHref}>
                   Send message
                 </a>
-                <a className="dcBtn" href="mailto:info@dropclarity.com">
+
+                <a className="secondaryButton" href="mailto:info@dropclarity.com">
                   Email directly
                 </a>
               </div>
 
-              <div className="dcFooterNote">
+              <p className="smallNote">
                 If the button does not open your email app, email us directly at{" "}
                 <strong>info@dropclarity.com</strong>.
-              </div>
+              </p>
             </div>
+
+            <aside className="contactPanel helpPanel">
+              <div className="panelHeader">
+                <h2>What we can help with</h2>
+                <p>
+                  DropClarity is built for operators who want faster visibility
+                  into margin, costs, and underperforming jobs.
+                </p>
+              </div>
+
+              <div className="helpList">
+                {helpItems.map((item, index) => (
+                  <div className="helpCard" key={item.title}>
+                    <div className="helpNumber">
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
+                    <div>
+                      <h3>{item.title}</h3>
+                      <p>{item.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
 
-          <aside className="dcPanel">
-            <div className="dcPanelHead">
-              <div className="dcPanelTitle">What we can help with</div>
-              <div className="dcPanelSub">
-                DropClarity is built for operators who want fast visibility into
-                job profitability.
-              </div>
+          <div className="preContact">
+            <div>
+              <h2>Before you reach out</h2>
+              <p>
+                The most helpful details are what type of business you run, what
+                files you currently export, and what you want to understand:
+                losing jobs, cost mix, margin targets, pricing issues, or
+                profitability by job.
+              </p>
             </div>
-
-            <div className="dcPad dcCardList">
-              <div className="dcInfoCard">
-                <div className="dcIconBubble">01</div>
-                <div>
-                  <div className="dcInfoCardTitle">Demo requests</div>
-                  <div className="dcInfoCardText">
-                    See how uploaded job files turn into revenue, costs, margin,
-                    profit, and high-risk job visibility.
-                  </div>
-                </div>
-              </div>
-
-              <div className="dcInfoCard">
-                <div className="dcIconBubble">02</div>
-                <div>
-                  <div className="dcInfoCardTitle">Upload support</div>
-                  <div className="dcInfoCardText">
-                    Need help with file formats, dashboard results, or job
-                    mapping? Send the details.
-                  </div>
-                </div>
-              </div>
-
-              <div className="dcInfoCard">
-                <div className="dcIconBubble">03</div>
-                <div>
-                  <div className="dcInfoCardTitle">Billing questions</div>
-                  <div className="dcInfoCardText">
-                    Ask about Core, Scale, subscription status, cancellation, or
-                    whether DropClarity fits your workflow.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </section>
-
-        <section className="dcHighlight">
-          <div className="dcHighlightTitle">Before you reach out</div>
-          <p>
-            The most helpful details are what type of business you run, what
-            files you currently export, and what you want to understand: losing
-            jobs, cost mix, margin targets, pricing issues, or profitability by
-            job.
-          </p>
-        </section>
-      </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
 
+const helpItems = [
+  {
+    title: "Demo requests",
+    text:
+      "See how uploaded job files turn into revenue, costs, margin, profit, and high-risk job visibility.",
+  },
+  {
+    title: "Upload support",
+    text:
+      "Need help with file formats, dashboard results, or job mapping? Send the details and we’ll help you troubleshoot.",
+  },
+  {
+    title: "Billing questions",
+    text:
+      "Ask about Core, Scale, subscription status, cancellation, or whether DropClarity fits your workflow.",
+  },
+];
+
 const pageCss = `
-.dcPage,
-.dcPage * {
+.contactPage,
+.contactPage * {
   box-sizing: border-box;
 }
 
-.dcPage {
+.contactPage {
   width: 100%;
   min-height: 100vh;
-  padding: 58px 0 48px;
-  background:
-    radial-gradient(1100px 520px at 10% -10%, rgba(124,58,237,.13), transparent 58%),
-    radial-gradient(900px 520px at 92% 0%, rgba(34,211,238,.14), transparent 62%),
-    radial-gradient(820px 520px at 50% 110%, rgba(52,211,153,.08), transparent 70%),
-    linear-gradient(180deg, #fff, #fff);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: #ffffff;
   color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   overflow-x: hidden;
 }
 
-.dcWrap {
-  width: min(1180px, calc(100vw - 32px));
+/* Wider, calmer header section */
+.contactHero {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(900px 420px at 12% -20%, rgba(124, 58, 237, 0.07), transparent 58%),
+    radial-gradient(800px 380px at 88% 0%, rgba(34, 211, 238, 0.075), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.contactInner {
+  width: min(1320px, calc(100vw - 48px));
   margin: 0 auto;
 }
 
-.dcHero {
-  border-radius: 30px;
-  border: 1px solid rgba(15,23,42,.065);
-  background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(248,250,252,.84));
-  box-shadow: 0 22px 70px rgba(2,6,23,.09);
-  padding: 36px;
-  overflow: hidden;
+.contactHero .contactInner {
+  padding: 56px 0 48px;
 }
 
-.dcKicker {
-  width: fit-content;
+.eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(34,211,238,.28);
-  background: rgba(255,255,255,.88);
-  box-shadow: 0 10px 28px rgba(34,211,238,.10);
+  border: 1px solid rgba(34, 211, 238, 0.24);
+  background: rgba(255, 255, 255, 0.86);
   border-radius: 999px;
   padding: 7px 12px;
+  color: #0891b2;
   font-size: 12px;
-  font-weight: 950;
-  color: rgba(8,145,178,.95);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-
-.dcKickerDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #22D3EE, #7C3AED);
-  box-shadow: 0 0 0 4px rgba(34,211,238,.12);
-}
-
-.dcTitle {
-  margin: 16px 0 0;
-  max-width: 940px;
-  font-size: 52px;
-  line-height: 1.02;
-  font-weight: 990;
-  letter-spacing: -.055em;
-  color: rgba(2,6,23,.96);
-}
-
-.dcGradText {
-  background: linear-gradient(90deg, #06b6d4, #8b5cf6, #2563eb);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.dcLede {
-  margin: 15px 0 0;
-  max-width: 880px;
-  color: rgba(51,65,85,.82);
-  font-size: 18px;
-  line-height: 1.6;
-  font-weight: 760;
-}
-
-.dcHeroMeta {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-}
-
-.dcMetaPill {
-  border: 1px solid rgba(15,23,42,.065);
-  background: rgba(255,255,255,.84);
-  border-radius: 999px;
-  padding: 8px 11px;
-  color: rgba(15,23,42,.62);
-  font-size: 12.5px;
+  line-height: 1;
   font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 28px rgba(34, 211, 238, 0.08);
 }
 
-.dcGrid {
+.contactHero h1 {
+  max-width: 900px;
+  margin: 18px 0 0;
+  color: #0f172a;
+  font-size: 38px;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 950;
+}
+
+.contactHero p {
+  max-width: 900px;
+  margin: 16px 0 0;
+  color: #475569;
+  font-size: 16px;
+  line-height: 1.7;
+  font-weight: 650;
+}
+
+/* More spacious content area */
+.contactBody {
+  padding: 42px 0 72px;
+  background: #ffffff;
+}
+
+.contactGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(330px, .94fr);
-  gap: 18px;
-  margin-top: 18px;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+  gap: 22px;
   align-items: stretch;
 }
 
-.dcPanel {
-  border-radius: 26px;
-  border: 1px solid rgba(15,23,42,.065);
-  background: rgba(255,255,255,.86);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 18px 54px rgba(2,6,23,.075);
+.contactPanel {
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.045);
   overflow: hidden;
-  min-width: 0;
 }
 
-.dcPanelHead {
-  padding: 20px 22px 16px;
-  border-bottom: 1px solid rgba(15,23,42,.065);
-  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,250,252,.82));
+.formPanel {
+  padding: 28px;
 }
 
-.dcPanelTitle {
-  font-size: 22px;
-  line-height: 1.15;
-  letter-spacing: -.03em;
-  font-weight: 980;
-  color: rgba(15,23,42,.94);
+.helpPanel {
+  padding: 28px;
+  background:
+    radial-gradient(620px 260px at 100% 0%, rgba(34, 211, 238, 0.08), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
 }
 
-.dcPanelSub {
-  margin-top: 7px;
-  color: rgba(15,23,42,.64);
-  font-size: 14.5px;
-  line-height: 1.5;
-  font-weight: 760;
-}
-
-.dcPad {
-  padding: 22px;
-}
-
-.dcFormGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.dcField {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-}
-
-.dcFieldFull {
-  grid-column: 1 / -1;
-}
-
-.dcField label {
-  font-size: 12px;
-  font-weight: 950;
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  color: rgba(15,23,42,.52);
-}
-
-.dcField input,
-.dcField textarea,
-.dcField select {
-  width: 100%;
-  border: 1px solid rgba(15,23,42,.10);
-  background: #fff;
-  border-radius: 15px;
-  padding: 13px 14px;
-  font-size: 14px;
-  font-weight: 780;
+.panelHeader h2 {
+  margin: 0;
   color: #0f172a;
-  outline: none;
-}
-
-.dcField textarea {
-  min-height: 150px;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.dcField input:focus,
-.dcField textarea:focus,
-.dcField select:focus {
-  border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34,211,238,.18);
-}
-
-.dcBtnRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.dcBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 14px;
-  border: 1px solid rgba(15,23,42,.10);
-  background: rgba(255,255,255,.88);
-  color: rgba(15,23,42,.90);
-  padding: 12px 15px;
-  text-decoration: none;
-  font-size: 13.5px;
+  font-size: 23px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   font-weight: 920;
 }
 
-.dcBtnPrimary {
-  background: linear-gradient(90deg, rgba(34,211,238,.20), rgba(124,58,237,.18));
-  border-color: rgba(34,211,238,.25);
+.panelHeader p {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.65;
+  font-weight: 620;
 }
 
-.dcFooterNote {
-  margin-top: 18px;
-  font-size: 13px;
-  line-height: 1.55;
-  color: rgba(15,23,42,.52);
-  font-weight: 760;
+.formGrid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
-.dcCardList {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
 }
 
-.dcInfoCard {
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 16px;
+  padding: 13px 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 650;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(34, 211, 238, 0.70);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.14);
+}
+
+.buttonRow {
+  margin-top: 22px;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  border: 1px solid rgba(15,23,42,.065);
-  background: rgba(255,255,255,.84);
-  border-radius: 18px;
-  padding: 16px;
 }
 
-.dcIconBubble {
-  width: 34px;
-  height: 34px;
-  border-radius: 13px;
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 15px;
+  padding: 0 18px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 850;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.primaryButton {
+  border: 1px solid rgba(34, 211, 238, 0.24);
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.15));
+  color: #0f172a;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.09);
+}
+
+.smallNote {
+  margin: 18px 0 0;
+  color: #64748b;
+  font-size: 13.5px;
+  line-height: 1.6;
+  font-weight: 620;
+}
+
+.smallNote strong {
+  color: #0f172a;
+}
+
+.helpList {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.helpCard {
+  display: flex;
+  gap: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 18px;
+}
+
+.helpNumber {
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(124,58,237,.14));
-  border: 1px solid rgba(34,211,238,.16);
-  font-weight: 990;
-}
-
-.dcInfoCardTitle {
-  font-size: 15.5px;
-  line-height: 1.25;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.14));
+  color: #0f172a;
+  font-size: 13px;
   font-weight: 950;
-  color: rgba(15,23,42,.94);
 }
 
-.dcInfoCardText {
-  margin-top: 6px;
+.helpCard h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.helpCard p {
+  margin: 7px 0 0;
+  color: #64748b;
   font-size: 14px;
-  line-height: 1.58;
-  color: rgba(15,23,42,.64);
-  font-weight: 730;
+  line-height: 1.65;
+  font-weight: 620;
 }
 
-.dcHighlight {
-  margin-top: 18px;
+.preContact {
+  margin-top: 22px;
+  border: 1px solid rgba(34, 211, 238, 0.16);
   border-radius: 24px;
-  border: 1px solid rgba(34,211,238,.16);
-  background: linear-gradient(135deg, rgba(240,253,250,.78), rgba(255,255,255,.90));
-  box-shadow: 0 16px 48px rgba(34,211,238,.06);
-  padding: 22px;
+  background:
+    radial-gradient(700px 260px at 0% 0%, rgba(34, 211, 238, 0.075), transparent 62%),
+    linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.04);
+  padding: 26px;
 }
 
-.dcHighlightTitle {
+.preContact h2 {
+  margin: 0;
+  color: #0f172a;
   font-size: 22px;
-  line-height: 1.15;
-  font-weight: 980;
-  letter-spacing: -.03em;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-weight: 920;
 }
 
-.dcHighlight p {
-  margin: 8px 0 0;
-  max-width: 850px;
+.preContact p {
+  max-width: 950px;
+  margin: 10px 0 0;
+  color: #475569;
   font-size: 15px;
-  line-height: 1.62;
-  color: rgba(15,23,42,.66);
-  font-weight: 740;
+  line-height: 1.7;
+  font-weight: 620;
 }
 
-@media(max-width: 980px) {
-  .dcGrid {
+@media (max-width: 980px) {
+  .contactGrid {
     grid-template-columns: 1fr;
   }
 }
 
-@media(max-width: 900px) {
-  .dcPage {
-    padding: 42px 0 34px;
+@media (max-width: 768px) {
+  .contactInner {
+    width: min(100%, calc(100vw - 32px));
   }
 
-  .dcTitle {
-    font-size: 40px;
+  .contactHero .contactInner {
+    padding: 44px 0 38px;
   }
 
-  .dcHero {
-    padding: 28px;
+  .contactHero h1 {
+    font-size: 32px;
+  }
+
+  .contactHero p {
+    font-size: 15.5px;
+  }
+
+  .contactBody {
+    padding: 30px 0 56px;
+  }
+
+  .formPanel,
+  .helpPanel {
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
   }
 }
 
-@media(max-width: 560px) {
-  .dcWrap {
+@media (max-width: 480px) {
+  .contactInner {
     width: 100%;
     padding: 0 16px;
   }
 
-  .dcHero {
-    padding: 22px;
-    border-radius: 22px;
+  .contactHero h1 {
+    font-size: 29px;
   }
 
-  .dcTitle {
-    font-size: 33px;
+  .contactHero p {
+    font-size: 15px;
   }
 
-  .dcLede {
-    font-size: 16px;
+  .formPanel,
+  .helpPanel,
+  .preContact {
+    padding: 20px;
   }
 
-  .dcFormGrid {
-    grid-template-columns: 1fr;
+  .buttonRow {
+    flex-direction: column;
   }
 
-  .dcPanelTitle {
-    font-size: 20px;
-  }
-
-  .dcPad {
-    padding: 18px;
-  }
-
-  .dcMetaPill {
-    width: 100%;
-    text-align: center;
-    justify-content: center;
-  }
-
-  .dcBtn {
+  .primaryButton,
+  .secondaryButton {
     width: 100%;
   }
 }
