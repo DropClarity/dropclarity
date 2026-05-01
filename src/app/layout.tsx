@@ -37,9 +37,7 @@ export default function RootLayout({
 
             <main className="flex-1 bg-white">{children}</main>
 
-            <div className="border-t border-slate-200 mt-12 sm:mt-16 lg:mt-20" />
-
-            <footer className="w-full bg-[radial-gradient(900px_420px_at_12%_0%,rgba(124,58,237,0.055),transparent_58%),radial-gradient(780px_360px_at_92%_12%,rgba(34,211,238,0.07),transparent_62%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]">
+            <footer className="w-full border-t border-slate-200 bg-[radial-gradient(900px_420px_at_12%_0%,rgba(124,58,237,0.055),transparent_58%),radial-gradient(780px_360px_at_92%_12%,rgba(34,211,238,0.07),transparent_62%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]">
               <div className="w-full px-5 py-12 sm:px-8 sm:py-14">
                 <div className="mx-auto w-full max-w-[1700px]">
                   <div className="grid gap-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-start xl:grid-cols-[1.45fr_0.55fr]">
