@@ -1,44 +1,45 @@
 export default function TermsOfServicePage() {
   return (
-    <main className="dcPage">
+    <main className="termsPage">
       <style dangerouslySetInnerHTML={{ __html: pageCss }} />
 
-      <div className="termsWrap">
-        <section className="termsHero">
-          <div className="termsKicker">
-            <span className="termsKickerDot" /> Terms of Service
-          </div>
+      <section className="termsHero">
+        <div className="termsInner">
+          <div className="eyebrow">Terms of Service</div>
 
-          <h1 className="termsTitle">
-            Terms for using{" "}
-            <span className="termsGradText">DropClarity.</span>
-          </h1>
+          <h1>Terms for using DropClarity.</h1>
 
-          <p className="termsLede">
+          <p>
             DropClarity provides job profitability analysis tools for business
             operators. These terms explain how the platform may be used, what
             users are responsible for, and the limits of AI-generated insights.
           </p>
-        </section>
+        </div>
+      </section>
 
-        <section className="termsContent">
-          {sections.map((section) => (
-            <div className="termsBlock" key={section.title}>
-              <h2>{section.title}</h2>
-              {section.paragraphs?.map((text) => (
-                <p key={text}>{text}</p>
-              ))}
-              {section.items ? (
-                <ul>
-                  {section.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ))}
-        </section>
-      </div>
+      <section className="termsBody">
+        <div className="termsInner">
+          <div className="termsGrid">
+            {sections.map((section) => (
+              <article className="termsCard" key={section.title}>
+                <h2>{section.title}</h2>
+
+                {section.paragraphs?.map((text) => (
+                  <p key={text}>{text}</p>
+                ))}
+
+                {section.items ? (
+                  <ul>
+                    {section.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
@@ -98,168 +99,182 @@ const sections = [
   },
   {
     title: "Contact",
-    paragraphs: [
-      "Questions about these Terms can be sent to info@dropclarity.com.",
-    ],
+    paragraphs: ["Questions about these Terms can be sent to info@dropclarity.com."],
   },
 ];
 
 const pageCss = `
-.dcPage,
-.dcPage * {
+.termsPage,
+.termsPage * {
   box-sizing: border-box;
 }
 
-.dcPage {
+.termsPage {
+  width: 100%;
   min-height: 100vh;
-  padding: 72px 0 64px;
-  background:
-    radial-gradient(900px 500px at 0% -10%, rgba(124,58,237,.12), transparent 65%),
-    radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,.16), transparent 62%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #ffffff;
   color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   overflow-x: hidden;
 }
 
-.termsWrap {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
+/* Wider, calmer header section */
 .termsHero {
-  padding: 44px;
-  border-radius: 30px;
-  background: rgba(255,255,255,.96);
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 24px 70px rgba(15,23,42,.09);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(900px 420px at 12% -20%, rgba(124, 58, 237, 0.06), transparent 58%),
+    radial-gradient(800px 380px at 88% 0%, rgba(34, 211, 238, 0.055), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.termsKicker {
-  display: flex;
+.termsInner {
+  width: min(1320px, calc(100vw - 48px));
+  margin: 0 auto;
+}
+
+.termsHero .termsInner {
+  padding: 56px 0 48px;
+}
+
+.eyebrow {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #475569;
   font-size: 12px;
-  font-weight: 950;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #0891b2;
 }
 
-.termsKickerDot {
-  width: 7px;
-  height: 7px;
-  background: #22d3ee;
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(34,211,238,.14);
-}
-
-.termsTitle {
-  max-width: 900px;
-  font-size: 48px;
-  line-height: 1.04;
-  font-weight: 950;
-  letter-spacing: -.05em;
-  margin: 20px 0 0;
-  color: #0f172a;
-}
-
-.termsGradText {
-  background: linear-gradient(90deg, #06b6d4, #6366f1, #7c3aed);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.termsLede {
+.termsHero h1 {
   max-width: 900px;
   margin: 18px 0 0;
+  color: #0f172a;
+  font-size: 38px;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 950;
+}
+
+.termsHero p {
+  max-width: 900px;
+  margin: 16px 0 0;
   color: #475569;
-  font-size: 18px;
-  line-height: 1.65;
+  font-size: 16px;
+  line-height: 1.7;
   font-weight: 650;
 }
 
-.termsContent {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* More spacious content area */
+.termsBody {
+  padding: 42px 0 72px;
+  background: #ffffff;
 }
 
-.termsBlock {
-  background: rgba(255,255,255,.96);
+.termsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.termsCard {
+  min-height: 180px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
   border-radius: 22px;
-  padding: 24px;
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 14px 38px rgba(15,23,42,.055);
+  background: #ffffff;
+  padding: 26px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.045);
 }
 
-.termsBlock h2 {
+.termsCard h2 {
   margin: 0;
   color: #0f172a;
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: 19px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   font-weight: 900;
-  letter-spacing: -.02em;
 }
 
-.termsBlock p {
-  margin: 9px 0 0;
-  color: #475569;
-  font-size: 15.5px;
-  line-height: 1.65;
-  font-weight: 650;
-}
-
-.termsBlock ul {
-  margin: 10px 0 0;
-  padding-left: 20px;
-  color: #475569;
-}
-
-.termsBlock li {
-  margin-top: 6px;
+.termsCard p {
+  margin: 12px 0 0;
   color: #475569;
   font-size: 15px;
-  line-height: 1.55;
-  font-weight: 650;
+  line-height: 1.72;
+  font-weight: 620;
 }
 
-@media(max-width: 768px) {
-  .dcPage {
-    padding: 44px 0;
+.termsCard ul {
+  margin: 12px 0 0;
+  padding-left: 21px;
+  color: #475569;
+}
+
+.termsCard li {
+  margin-top: 8px;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.65;
+  font-weight: 620;
+}
+
+@media (max-width: 980px) {
+  .termsGrid {
+    grid-template-columns: 1fr;
   }
 
-  .termsHero {
-    padding: 28px;
-    border-radius: 24px;
-  }
-
-  .termsTitle {
-    font-size: 36px;
-  }
-
-  .termsLede {
-    font-size: 16px;
+  .termsCard {
+    min-height: auto;
   }
 }
 
-@media(max-width: 480px) {
-  .termsWrap {
-    padding: 0 16px;
+@media (max-width: 768px) {
+  .termsInner {
+    width: min(100%, calc(100vw - 32px));
   }
 
-  .termsHero {
-    padding: 24px;
+  .termsHero .termsInner {
+    padding: 44px 0 38px;
   }
 
-  .termsTitle {
+  .termsHero h1 {
     font-size: 32px;
   }
 
-  .termsBlock {
+  .termsHero p {
+    font-size: 15.5px;
+  }
+
+  .termsBody {
+    padding: 30px 0 56px;
+  }
+
+  .termsCard {
+    padding: 22px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .termsInner {
+    width: 100%;
+    padding: 0 16px;
+  }
+
+  .termsHero h1 {
+    font-size: 29px;
+  }
+
+  .termsHero p {
+    font-size: 15px;
+  }
+
+  .termsCard {
     padding: 20px;
   }
 }
