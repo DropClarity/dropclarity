@@ -1,5 +1,6 @@
-import PageContainer from "@/components/PageContainer";
 "use client";
+
+import PageContainer from "@/components/PageContainer";
 
 type PlanId = "core" | "scale";
 
