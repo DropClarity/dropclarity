@@ -1,3 +1,4 @@
+"use client";
 export default function Billing() {
   return (
     <main className="pageWrap">
