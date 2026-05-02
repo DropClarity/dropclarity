@@ -1015,7 +1015,7 @@ export default function AppPage() {
               <div className="grid gap-3 px-5 pb-5 xl:grid-cols-2 2xl:grid-cols-3">
                 {items.map((it) => (
                   <div key={it.id} className="rounded-3xl border border-slate-100 bg-white p-4">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div className="min-w-0">
                         <div className="break-words text-sm font-black text-slate-950">{it.file.name}</div>
                         <div className="mt-1 text-xs font-bold text-slate-400">
@@ -1024,7 +1024,7 @@ export default function AppPage() {
                         {it.error && <div className="mt-2 text-xs font-bold text-red-600">{it.error}</div>}
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <span
                           className={`rounded-full px-3 py-1 text-sm font-black ${
                             it.status === "uploaded"
@@ -1242,22 +1242,22 @@ export default function AppPage() {
         {result && (
           <a href="/dashboard" className="floatingDashboardCta" aria-label="View full DropClarity dashboard">
             <span className="floatingDashboardPulse" />
-            <span className="relative z-10 flex min-w-0 items-center gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 via-violet-500 to-blue-600 text-white shadow-lg shadow-violet-200">
+            <span className="relative z-10 flex min-w-0 items-center gap-2.5">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-blue-600 text-xs font-black text-white shadow-sm shadow-violet-100">
                 ✓
               </span>
               <span className="min-w-0">
-                <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-violet-700">Analysis complete</span>
-                <span className="block truncate text-sm font-black text-slate-950 sm:text-base">Open the full dashboard →</span>
+                <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">Analysis complete</span>
+                <span className="block truncate text-sm font-black text-slate-900">View dashboard →</span>
               </span>
             </span>
           </a>
         )}
 
 {jobModalOpen && (
-  <div className="assignModalOverlay fixed inset-0 z-[10000] grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm">
-    <div className="assignModal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-      <div className="relative border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-6">
+  <div className="assignModalOverlay fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/35 p-3 backdrop-blur-sm sm:p-4">
+    <div className="assignModal mx-auto my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+      <div className="shrink-0 border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="mb-3 inline-flex rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-slate-600 shadow-sm">
@@ -1283,7 +1283,7 @@ export default function AppPage() {
         </div>
       </div>
 
-      <div className="max-h-[60vh] overflow-auto bg-slate-50 p-5">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 sm:p-5">
         <div className="mb-5 rounded-3xl border border-cyan-100 bg-white p-4 shadow-sm">
           <div className="mb-3">
             <div className="text-xs font-black uppercase tracking-wider text-slate-400">
@@ -1327,7 +1327,7 @@ export default function AppPage() {
                     : "border-slate-200"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="break-words text-base font-black text-slate-950">
                       {it.uploaded?.filename || it.file.name}
@@ -1412,12 +1412,12 @@ export default function AppPage() {
         </div>
       </div>
 
-      <div className="flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
+      <div className="shrink-0 flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:p-5">
         <div className="text-xs font-bold leading-5 text-slate-500">
           Revenue = money earned. Cost = bills, receipts, expenses. Combined Invoice = one file that includes both revenue and costs.
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
           <button
             type="button"
             onClick={() => setJobModalOpen(false)}
@@ -1473,17 +1473,17 @@ const analyzePageCss = `
 .pageSub{margin-top:9px;max-width:860px;color:rgba(51,65,85,.78);font-size:clamp(14px,1.2vw,17px);line-height:1.5;font-weight:750}
 .analyzeActions{margin-bottom:16px}
 .analyzeActions button,.analyzeActions a{min-height:44px}
-.dashboardCtaBtn{isolation:isolate;animation:dashboardCtaNudge 2.8s ease-in-out infinite}
-.dashboardCtaGlow{position:absolute;inset:-24px;z-index:0;background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(139,92,246,.20),rgba(34,211,238,.0));transform:translateX(-60%);animation:dashboardCtaSweep 2.4s ease-in-out infinite}
-.dashboardCtaDot{height:8px;width:8px;border-radius:999px;background:#10b981;box-shadow:0 0 0 6px rgba(16,185,129,.10);animation:dashboardCtaDot 1.5s ease-in-out infinite}
-.floatingDashboardCta{position:fixed;right:22px;bottom:22px;z-index:80;display:flex;max-width:calc(100vw - 32px);align-items:center;border:1px solid rgba(139,92,246,.22);border-radius:22px;background:rgba(255,255,255,.94);padding:12px 14px;box-shadow:0 22px 65px rgba(15,23,42,.18),0 0 0 1px rgba(255,255,255,.7) inset;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);text-decoration:none;animation:floatingDashboardEnter .42s ease-out both,floatingDashboardBreathe 2.5s ease-in-out .55s infinite}
-.floatingDashboardPulse{position:absolute;inset:-4px;border-radius:26px;background:linear-gradient(135deg,rgba(34,211,238,.26),rgba(139,92,246,.24),rgba(37,99,235,.20));filter:blur(10px);opacity:.72;animation:floatingDashboardGlow 2.1s ease-in-out infinite}
+.dashboardCtaBtn{isolation:isolate;animation:dashboardCtaNudge 3.4s ease-in-out infinite}
+.dashboardCtaGlow{position:absolute;inset:-24px;z-index:0;background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(139,92,246,.16),rgba(34,211,238,.0));transform:translateX(-60%);animation:dashboardCtaSweep 2.9s ease-in-out infinite}
+.dashboardCtaDot{height:7px;width:7px;border-radius:999px;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.09);animation:dashboardCtaDot 1.8s ease-in-out infinite}
+.floatingDashboardCta{position:fixed;right:22px;bottom:22px;z-index:80;display:flex;max-width:calc(100vw - 32px);align-items:center;border:1px solid rgba(139,92,246,.18);border-radius:18px;background:rgba(255,255,255,.92);padding:9px 11px;box-shadow:0 16px 42px rgba(15,23,42,.13),0 0 0 1px rgba(255,255,255,.65) inset;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-decoration:none;animation:floatingDashboardEnter .34s ease-out both,floatingDashboardBreathe 3.4s ease-in-out .65s infinite}
+.floatingDashboardPulse{position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(139,92,246,.15),rgba(37,99,235,.12));filter:blur(8px);opacity:.44;animation:floatingDashboardGlow 2.8s ease-in-out infinite}
 @keyframes dashboardCtaSweep{0%{transform:translateX(-70%)}55%,100%{transform:translateX(70%)}}
-@keyframes dashboardCtaNudge{0%,72%,100%{transform:translateY(0)}80%{transform:translateY(-2px)}88%{transform:translateY(0)}}
-@keyframes dashboardCtaDot{0%,100%{transform:scale(1);box-shadow:0 0 0 5px rgba(16,185,129,.10)}50%{transform:scale(1.25);box-shadow:0 0 0 8px rgba(16,185,129,.15)}}
-@keyframes floatingDashboardEnter{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes floatingDashboardBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes floatingDashboardGlow{0%,100%{opacity:.45}50%{opacity:.82}}
+@keyframes dashboardCtaNudge{0%,78%,100%{transform:translateY(0)}86%{transform:translateY(-1px)}94%{transform:translateY(0)}}
+@keyframes dashboardCtaDot{0%,100%{transform:scale(1);box-shadow:0 0 0 4px rgba(16,185,129,.08)}50%{transform:scale(1.14);box-shadow:0 0 0 7px rgba(16,185,129,.12)}}
+@keyframes floatingDashboardEnter{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes floatingDashboardBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes floatingDashboardGlow{0%,100%{opacity:.28}50%{opacity:.58}}
 .uploadPanel,.resultsPanel{border-color:rgba(15,23,42,.085)!important;box-shadow:0 20px 58px rgba(2,6,23,.09)!important;border-radius:22px!important}
 .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important;border-bottom-color:rgba(15,23,42,.075)!important}
 .uploadPanel h2,.resultsPanel h2{font-size:20px!important;line-height:1.15;letter-spacing:-.025em;color:rgba(15,23,42,.97)!important}
@@ -1503,9 +1503,31 @@ const analyzePageCss = `
 .costMixPanel canvas{width:min(220px,100%)!important;margin:0 auto}
 .assignModal{max-width:min(1120px,calc(100vw - 32px))!important;border-radius:28px!important}
 .assignModal h2{font-size:clamp(22px,2.4vw,28px)!important;line-height:1.08!important;letter-spacing:-.035em!important}
+.assignModalOverlay{-webkit-overflow-scrolling:touch}
 @media(max-width:1280px){.analyzeWrap{width:min(100%,calc(100vw - 32px))}.resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media(max-width:900px){.resultKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.uploadPanel>div:first-child,.resultsPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}}
-@media(max-width:760px){.floatingDashboardCta{left:14px;right:14px;bottom:14px;width:auto;padding:12px 13px;border-radius:20px}.analyzeShell{padding-top:32px!important;padding-bottom:28px!important}.analyzeWrap{width:100%;padding:0 16px!important}.pageTitle{font-size:29px!important;line-height:1.08!important}.pageSub{font-size:14px!important;line-height:1.48!important}.analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}.analyzeActions button{width:100%;justify-content:center}.uploadPanel [role="button"]{margin:14px!important;padding:16px!important}.uploadPanel [role="button"]>div{align-items:flex-start!important}.resultKpiGrid{grid-template-columns:1fr!important}.smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}.costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}.assignModalOverlay{padding:12px!important;place-items:end center!important}.assignModal{max-height:92vh!important;border-radius:24px 24px 0 0!important}}
-@media(max-width:420px){.analyzeWrap{padding:0 12px!important}.pageTitle{font-size:27px!important}}
+@media(max-width:760px){
+  .floatingDashboardCta{left:16px;right:16px;bottom:14px;width:auto;padding:9px 11px;border-radius:18px}
+  .analyzeShell{padding:28px 0 82px!important}
+  .analyzeWrap{width:100%!important;max-width:100%!important;padding:0 18px!important}
+  .pageTitle{font-size:29px!important;line-height:1.08!important}
+  .pageSub{font-size:14px!important;line-height:1.48!important}
+  .analyzeTopbar{padding:0!important}
+  .analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important}
+  .analyzeActions button{display:flex!important;width:100%!important;align-items:center!important;justify-content:center!important;text-align:center!important}
+  .uploadPanel,.resultsPanel{width:100%!important;overflow:hidden!important;border-radius:22px!important}
+  .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important}
+  .uploadPanel [role="button"]{margin:14px!important;padding:16px!important}
+  .uploadPanel [role="button"]>div{align-items:flex-start!important}
+  .uploadPanel .grid{min-width:0!important}
+  .uploadPanel span.rounded-full{max-width:100%;white-space:nowrap}
+  .resultKpiGrid{grid-template-columns:1fr!important}
+  .smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}
+  .costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}
+  .assignModalOverlay{padding:0!important}
+  .assignModal{margin:0!important;max-width:100%!important;width:100%!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border-left:0!important;border-right:0!important}
+  .assignModal h2{font-size:23px!important}
+  .assignModal select,.assignModal input{font-size:16px!important}
+}
+@media(max-width:420px){.analyzeWrap{padding:0 14px!important}.pageTitle{font-size:27px!important}}
 `;
-
