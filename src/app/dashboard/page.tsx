@@ -36,6 +36,11 @@ type JobRow = {
   costs?: number | string;
   profit?: number | string;
   margin_pct?: number | string;
+  credit_total?: number | string;
+  credits_total?: number | string;
+  total_credits?: number | string;
+  cost_credits?: number | string;
+  credits?: number | string | { total?: number | string; cost?: number | string };
   confidence?: number | string;
   cost_breakdown?: CostBreakdown;
 };
@@ -979,26 +984,65 @@ function lineChart(canvas: HTMLCanvasElement, labels: string[], values: number[]
   const { ctx, w, h } = packed;
   ctx.clearRect(0, 0, w, h);
 
-  const pad = 24;
-  const gx0 = pad;
-  const gx1 = w - pad;
-  const gy0 = pad;
-  const gy1 = h - pad;
+  const padLeft = w < 520 ? 46 : 58;
+  const padRight = 18;
+  const padTop = 24;
+  const padBottom = 36;
+  const gx0 = padLeft;
+  const gx1 = w - padRight;
+  const gy0 = padTop;
+  const gy1 = h - padBottom;
 
-  for (let i = 0; i < 5; i++) {
-    const y = gy0 + (i * (gy1 - gy0)) / 4;
+  const cleanValues = values.map((v) => (Number.isFinite(v) ? v : 0));
+  const minV = Math.min(...cleanValues, 0);
+  const maxV = Math.max(...cleanValues, 1);
+  const range = maxV - minV || 1;
+  const axisValues = [maxV, minV + range / 2, minV];
+
+  const axisMoney = (value: number) => {
+    const abs = Math.abs(value);
+    const sign = value < 0 ? "-" : "";
+    if (abs >= 1000000) return `${sign}$${(abs / 1000000).toFixed(1)}M`;
+    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}k`;
+    return `${sign}$${Math.round(abs)}`;
+  };
+
+  ctx.font = "11px ui-sans-serif, system-ui";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(15,23,42,.38)";
+
+  axisValues.forEach((axisValue) => {
+    const y = gy1 - ((axisValue - minV) / range) * (gy1 - gy0);
     ctx.strokeStyle = "rgba(15,23,42,.06)";
+    ctx.beginPath();
+    ctx.moveTo(gx0, y);
+    ctx.lineTo(gx1, y);
+    ctx.stroke();
+    ctx.fillText(axisMoney(axisValue), gx0 - 8, y);
+  });
+
+  // Light extra guides without labels so the chart has structure without clutter.
+  for (let i = 1; i < 4; i++) {
+    const y = gy0 + (i * (gy1 - gy0)) / 4;
+    ctx.strokeStyle = "rgba(15,23,42,.035)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  const minV = Math.min(...values, 0);
-  const maxV = Math.max(...values, 1);
-  const range = maxV - minV || 1;
-  const xs = values.map((_, i) => gx0 + (i * (gx1 - gx0)) / Math.max(1, values.length - 1));
-  const ys = values.map((v) => gy1 - ((v - minV) / range) * (gy1 - gy0));
+  const zeroY = gy1 - ((0 - minV) / range) * (gy1 - gy0);
+  if (zeroY >= gy0 && zeroY <= gy1) {
+    ctx.strokeStyle = "rgba(15,23,42,.13)";
+    ctx.beginPath();
+    ctx.moveTo(gx0, zeroY);
+    ctx.lineTo(gx1, zeroY);
+    ctx.stroke();
+  }
+
+  const xs = cleanValues.map((_, i) => gx0 + (i * (gx1 - gx0)) / Math.max(1, cleanValues.length - 1));
+  const ys = cleanValues.map((v) => gy1 - ((v - minV) / range) * (gy1 - gy0));
 
   ctx.lineWidth = 3;
   ctx.strokeStyle = color;
@@ -1027,17 +1071,17 @@ function lineChart(canvas: HTMLCanvasElement, labels: string[], values: number[]
     ctx.fill();
   });
 
-  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.font = w < 520 ? "10px ui-sans-serif, system-ui" : "12px ui-sans-serif, system-ui";
   ctx.fillStyle = "rgba(15,23,42,.48)";
   ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
 
-  const step = Math.max(1, Math.floor(values.length / 5));
+  const step = Math.max(1, Math.ceil(labels.length / 5));
   labels.forEach((lb, i) => {
     if (i % step !== 0 && i !== labels.length - 1) return;
-    ctx.fillText(String(lb), xs[i], h - 7);
+    ctx.fillText(String(lb), xs[i], h - 10);
   });
 }
-
 function barChart(canvas: HTMLCanvasElement, labels: string[], a: number[], b: number[]) {
   const packed = dprCanvas(canvas);
   if (!packed) return;
@@ -1045,26 +1089,51 @@ function barChart(canvas: HTMLCanvasElement, labels: string[], a: number[], b: n
   const { ctx, w, h } = packed;
   ctx.clearRect(0, 0, w, h);
 
-  const pad = 24;
-  const gx0 = pad;
-  const gx1 = w - pad;
-  const gy0 = pad;
-  const gy1 = h - pad;
+  const padLeft = w < 520 ? 42 : 52;
+  const padRight = 18;
+  const padTop = 24;
+  const padBottom = 36;
+  const gx0 = padLeft;
+  const gx1 = w - padRight;
+  const gy0 = padTop;
+  const gy1 = h - padBottom;
 
-  for (let i = 0; i < 5; i++) {
-    const y = gy0 + (i * (gy1 - gy0)) / 4;
+  const maxV = Math.max(...a, ...b, 1);
+  const axisMoney = (value: number) => {
+    const abs = Math.abs(value);
+    if (abs >= 1000000) return `$${(abs / 1000000).toFixed(1)}M`;
+    if (abs >= 1000) return `$${(abs / 1000).toFixed(1)}k`;
+    return `$${Math.round(abs)}`;
+  };
+
+  ctx.font = "11px ui-sans-serif, system-ui";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(15,23,42,.36)";
+
+  [maxV, maxV / 2, 0].forEach((axisValue) => {
+    const y = gy1 - (axisValue / maxV) * (gy1 - gy0);
     ctx.strokeStyle = "rgba(15,23,42,.06)";
+    ctx.beginPath();
+    ctx.moveTo(gx0, y);
+    ctx.lineTo(gx1, y);
+    ctx.stroke();
+    ctx.fillText(axisMoney(axisValue), gx0 - 8, y);
+  });
+
+  for (let i = 1; i < 4; i++) {
+    const y = gy0 + (i * (gy1 - gy0)) / 4;
+    ctx.strokeStyle = "rgba(15,23,42,.035)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  const maxV = Math.max(...a, ...b, 1);
   const n = labels.length;
   const slot = (gx1 - gx0) / Math.max(1, n);
-  const bw = Math.max(6, Math.min(18, slot * 0.26));
-  const gap = bw * 0.3;
+  const bw = Math.max(7, Math.min(20, slot * 0.24));
+  const gap = bw * 0.34;
   const yFor = (v: number) => gy1 - (v / maxV) * (gy1 - gy0);
 
   for (let i = 0; i < n; i++) {
@@ -1083,17 +1152,17 @@ function barChart(canvas: HTMLCanvasElement, labels: string[], a: number[], b: n
     ctx.shadowBlur = 0;
   }
 
-  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.font = w < 520 ? "10px ui-sans-serif, system-ui" : "12px ui-sans-serif, system-ui";
   ctx.fillStyle = "rgba(15,23,42,.48)";
   ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
 
-  const step = Math.max(1, Math.floor(n / 5));
+  const step = Math.max(1, Math.ceil(n / 5));
   for (let i = 0; i < n; i++) {
     if (i % step !== 0 && i !== n - 1) continue;
-    ctx.fillText(String(labels[i]), gx0 + i * slot + slot / 2, h - 7);
+    ctx.fillText(String(labels[i]), gx0 + i * slot + slot / 2, h - 10);
   }
 }
-
 function buildCostMixParts(state: DashboardState): CostPart[] {
   const mix = state.cost_mix || state.mix || {};
   return [
@@ -1191,7 +1260,31 @@ function getBucketCreditAmount(value: unknown): number {
   return n < 0 ? Math.abs(n) : 0;
 }
 
+function getExplicitCreditAmount(job: JobRow): number {
+  const rawCredits = job?.credits;
+
+  const candidates = [
+    job?.credit_total,
+    job?.credits_total,
+    job?.total_credits,
+    job?.cost_credits,
+    typeof rawCredits === "object" && rawCredits !== null ? rawCredits.total : rawCredits,
+    typeof rawCredits === "object" && rawCredits !== null ? rawCredits.cost : null,
+  ];
+
+  for (const candidate of candidates) {
+    const n = parseNumberLoose(candidate);
+    if (n > 0) return n;
+    if (n < 0) return Math.abs(n);
+  }
+
+  return 0;
+}
+
 function getJobCreditTotal(job: JobRow): number {
+  const explicit = getExplicitCreditAmount(job);
+  if (explicit > 0) return explicit;
+
   const cb = job?.cost_breakdown || {};
   return (
     getBucketCreditAmount(cb.labor) +
@@ -1720,14 +1813,20 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
   useEffect(() => {
     if (view !== "dashboard") return;
 
-    const sorted = jobs.slice().sort((a, b) => parseNumberLoose(a.profit) - parseNumberLoose(b.profit)).slice(0, 12);
-    const labels = sorted.map((j) => String(j.job_id || j.job_name || "Job").slice(0, 10));
-    const profit = sorted.map((j) => parseNumberLoose(j.profit));
-    const revenue = sorted.map((j) => parseNumberLoose(j.revenue));
-    const costs = sorted.map((j) => parseNumberLoose(j.costs));
+    const drawCharts = () => {
+      const sorted = jobs.slice().sort((a, b) => parseNumberLoose(a.profit) - parseNumberLoose(b.profit)).slice(0, 5);
+      const labels = sorted.map((j) => String(j.job_id || j.job_name || "Job").slice(0, 10));
+      const profit = sorted.map((j) => parseNumberLoose(j.profit));
+      const revenue = sorted.map((j) => parseNumberLoose(j.revenue));
+      const costs = sorted.map((j) => parseNumberLoose(j.costs));
 
-    if (profitRef.current && sorted.length) lineChart(profitRef.current, labels, profit, "rgba(16,185,129,.95)");
-    if (revCostRef.current && sorted.length) barChart(revCostRef.current, labels, revenue, costs);
+      if (profitRef.current && sorted.length) lineChart(profitRef.current, labels, profit, "rgba(16,185,129,.95)");
+      if (revCostRef.current && sorted.length) barChart(revCostRef.current, labels, revenue, costs);
+    };
+
+    drawCharts();
+    window.addEventListener("resize", drawCharts);
+    return () => window.removeEventListener("resize", drawCharts);
   }, [jobs, view]);
 
   return (
@@ -1736,7 +1835,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
         <div className="chartHead">
           <div>
             <div className="chartTitle">Lowest-Profit Jobs</div>
-            <div className="chartSub">Net profit by job in the selected range</div>
+            <div className="chartSub">Lowest 5 jobs by net profit in the selected range</div>
           </div>
         </div>
         {jobs.length ? <canvas ref={profitRef} width={520} height={220} /> : <div className="trendEmpty">No jobs in this range yet.</div>}
@@ -1746,7 +1845,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
         <div className="chartHead">
           <div>
             <div className="chartTitle">Revenue vs Costs</div>
-            <div className="chartSub">Top lowest-profit jobs</div>
+            <div className="chartSub">Revenue and costs for the lowest 5 jobs</div>
           </div>
         </div>
         {jobs.length ? <canvas ref={revCostRef} width={520} height={220} /> : <div className="trendEmpty">No job-level totals yet.</div>}
@@ -4451,4 +4550,28 @@ html, .dc-bg{overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-rend
 main.dc-bg{overflow-x:hidden;isolation:isolate;padding-bottom:96px!important;}
 main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:760px){main.dc-bg{padding-bottom:82px;}main.dc-bg .wrap{padding-bottom:40px;}}
+
+
+/* Dashboard chart mobile stability */
+.dc-bg .charts .chartCard canvas{
+  height:220px!important;
+  min-height:220px;
+  max-height:220px;
+}
+@media (max-width:768px){
+  .dc-bg .charts .chartCard canvas{
+    height:210px!important;
+    min-height:210px;
+    max-height:210px;
+  }
+  .dc-bg .charts{gap:14px;}
+  .dc-bg .chartHead{align-items:flex-start;}
+}
+@media (max-width:480px){
+  .dc-bg .charts .chartCard canvas{
+    height:200px!important;
+    min-height:200px;
+    max-height:200px;
+  }
+}
 `;
