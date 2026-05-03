@@ -46,6 +46,17 @@ type CostMix = {
   other: number;
 };
 
+type CostBucketKey = keyof CostMix;
+
+type ClassificationCorrectionRow = {
+  key: string;
+  job_id: string | null;
+  job_name: string;
+  revenue: number;
+  original: CostMix;
+  edited: CostMix;
+};
+
 type CostMixBucket = {
   key: keyof CostMix;
   label: string;
@@ -324,6 +335,112 @@ function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
   };
 }
 
+
+function normalizeCostBreakdown(cb: any): CostMix {
+  return {
+    labor: Number(cb?.labor) || 0,
+    materials: Number(cb?.materials) || 0,
+    subs: Number(cb?.subs) || 0,
+    other: Number(cb?.other) || 0,
+  };
+}
+
+function costMixTotal(cb: CostMix) {
+  return (Number(cb.labor) || 0) + (Number(cb.materials) || 0) + (Number(cb.subs) || 0) + (Number(cb.other) || 0);
+}
+
+function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
+  const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
+
+  return jobs.map((job: any, idx: number) => {
+    const job_id = job?.job_id == null ? null : String(job.job_id).trim() || null;
+    const job_name = String(job?.job_name || job_id || `Job ${idx + 1}`).trim();
+    const revenue = Number(job?.revenue) || 0;
+    const original = normalizeCostBreakdown(job?.cost_breakdown || {});
+
+    return {
+      key: `${job_id || job_name || idx}-${idx}`,
+      job_id,
+      job_name,
+      revenue,
+      original,
+      edited: { ...original },
+    };
+  });
+}
+
+function classificationRowsChanged(rows: ClassificationCorrectionRow[]) {
+  return rows.some((row) =>
+    (Object.keys(row.edited) as CostBucketKey[]).some(
+      (bucket) => Math.abs((Number(row.edited[bucket]) || 0) - (Number(row.original[bucket]) || 0)) > 0.005
+    )
+  );
+}
+
+function correctedResultFromRows(current: any, rows: ClassificationCorrectionRow[]) {
+  if (!current || !Array.isArray(current.jobs)) return current;
+
+  const rowMap = new Map(rows.map((row) => [`${row.job_id || ""}|${row.job_name}`, row]));
+  const jobs = current.jobs.map((job: any) => {
+    const job_id = job?.job_id == null ? null : String(job.job_id).trim() || null;
+    const job_name = String(job?.job_name || job_id || "Job").trim();
+    const row = rowMap.get(`${job_id || ""}|${job_name}`);
+    if (!row) return job;
+
+    const cost_breakdown = normalizeCostBreakdown(row.edited);
+    const costs = costMixTotal(cost_breakdown);
+    const revenue = Number(job?.revenue) || 0;
+    const profit = revenue - costs;
+    const margin_pct = revenue !== 0 ? (profit / revenue) * 100 : 0;
+
+    return {
+      ...job,
+      cost_breakdown,
+      costs,
+      profit,
+      margin_pct,
+    };
+  });
+
+  const revenueTotal = jobs.reduce((sum: number, job: any) => sum + (Number(job?.revenue) || 0), 0);
+  const costsTotal = jobs.reduce((sum: number, job: any) => sum + (Number(job?.costs) || 0), 0);
+  const netProfit = revenueTotal - costsTotal;
+  const marginPct = revenueTotal !== 0 ? (netProfit / revenueTotal) * 100 : 0;
+  const cost_mix = jobs.reduce(
+    (sum: CostMix, job: any) => {
+      const cb = normalizeCostBreakdown(job?.cost_breakdown || {});
+      sum.labor += cb.labor;
+      sum.materials += cb.materials;
+      sum.subs += cb.subs;
+      sum.other += cb.other;
+      return sum;
+    },
+    { labor: 0, materials: 0, subs: 0, other: 0 }
+  );
+
+  const losingJobKeys = new Set(
+    jobs
+      .filter((job: any) => (Number(job?.profit) || 0) < 0)
+      .map((job: any) => String(job?.job_id || job?.job_name || "").trim())
+      .filter(Boolean)
+  );
+
+  return {
+    ...current,
+    jobs,
+    cost_mix,
+    kpis: {
+      ...(current.kpis || {}),
+      revenue: revenueTotal,
+      costs: costsTotal,
+      net_profit: netProfit,
+      profit_margin_pct: marginPct,
+      jobs_count: jobs.length,
+      losing_jobs_count: losingJobKeys.size,
+    },
+  };
+}
+
 function drawProfitChart(canvas: HTMLCanvasElement, labels: string[], values: number[]) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -521,6 +638,9 @@ export default function AppPage() {
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [classificationOpen, setClassificationOpen] = useState(false);
+  const [classificationRows, setClassificationRows] = useState<ClassificationCorrectionRow[]>([]);
+  const [savingCorrections, setSavingCorrections] = useState(false);
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [applyAll, setApplyAll] = useState("");
   const [assignmentErrors, setAssignmentErrors] = useState<Record<string, AssignmentError>>({});
@@ -539,6 +659,21 @@ export default function AppPage() {
   const netProfit = Number.isFinite(Number(kpis.net_profit)) ? Number(kpis.net_profit) : revenue - costs;
   const margin = Number(kpis.profit_margin_pct) || 0;
   const losingJobs = Number(kpis.losing_jobs_count) || chartData.all.filter((j) => j.profit < 0).length || 0;
+
+  const classificationHasChanges = useMemo(() => classificationRowsChanged(classificationRows), [classificationRows]);
+
+  const classificationTotals = useMemo(() => {
+    return classificationRows.reduce(
+      (sum, row) => {
+        sum.labor += Number(row.edited.labor) || 0;
+        sum.materials += Number(row.edited.materials) || 0;
+        sum.subs += Number(row.edited.subs) || 0;
+        sum.other += Number(row.edited.other) || 0;
+        return sum;
+      },
+      { labor: 0, materials: 0, subs: 0, other: 0 } as CostMix
+    );
+  }, [classificationRows]);
 
   const smartSeverity = losingJobs > 0 || netProfit < 0 ? "bad" : margin < 20 ? "warn" : "good";
   const smartHeadline =
@@ -739,37 +874,26 @@ export default function AppPage() {
         period_label: "Latest Period",
         files: uploadedItems.map((it, idx) => {
   const filename = it.uploaded?.filename || it.file.name;
-  const mime = (it.uploaded?.mime || it.file.type || "application/octet-stream").toLowerCase();
+  const mime = it.uploaded?.mime || it.file.type || "application/octet-stream";
   const lower = filename.toLowerCase();
-  const role = it.role === "combined" ? "combined_invoice" : it.role;
 
-  const isCsv =
+  const isStructured =
     lower.endsWith(".csv") ||
-    lower.endsWith(".tsv") ||
-    mime.includes("csv") ||
-    mime.includes("tab-separated");
-
-  const isExcel =
     lower.endsWith(".xlsx") ||
     lower.endsWith(".xls") ||
+    mime.includes("csv") ||
     mime.includes("spreadsheet") ||
-    mime.includes("excel") ||
-    mime.includes("sheet") ||
-    mime.includes("officedocument");
+    mime.includes("excel");
 
   return {
     uuid: it.uploaded?.uuid,
-    // Do not let file order control interpretation. The user's selected File Type is the source of truth.
-    kind: role || "unknown",
+    kind: idx === 0 ? "job_export" : "supporting",
     filename,
     mime,
     job_id: it.job_id.trim(),
-    role,
-    client_order: idx,
-    parse_mode: isCsv ? "code" : "ai",
-    file_category: isCsv || isExcel ? "structured" : "document",
-    is_csv: isCsv,
-    is_excel: isExcel,
+    role: it.role === "combined" ? "combined_invoice" : it.role,
+    parse_mode: isStructured ? "code" : "ai",
+    file_category: isStructured ? "structured" : "document",
   };
 }),
       };
@@ -880,6 +1004,81 @@ export default function AppPage() {
       }
     });
   }, [result, chartData, costMixDisplay]);
+
+  useEffect(() => {
+    if (!result) {
+      setClassificationRows([]);
+      setClassificationOpen(false);
+      return;
+    }
+
+    setClassificationRows(buildClassificationRows(result));
+  }, [result?.report_id]);
+
+  function updateClassificationBucket(rowKey: string, bucket: CostBucketKey, rawValue: string) {
+    const parsed = Number(rawValue);
+    const value = Number.isFinite(parsed) ? parsed : 0;
+
+    setClassificationRows((prev) =>
+      prev.map((row) =>
+        row.key === rowKey
+          ? {
+              ...row,
+              edited: {
+                ...row.edited,
+                [bucket]: value,
+              },
+            }
+          : row
+      )
+    );
+  }
+
+  function resetClassificationRows() {
+    setClassificationRows((prev) => prev.map((row) => ({ ...row, edited: { ...row.original } })));
+  }
+
+  async function saveClassificationCorrections() {
+    if (!result || !classificationRows.length) return;
+
+    const corrected = correctedResultFromRows(result, classificationRows);
+    setSavingCorrections(true);
+
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/correct-classification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          report_id: result.report_id,
+          corrections: classificationRows.map((row) => ({
+            job_id: row.job_id,
+            job_name: row.job_name,
+            cost_breakdown: row.edited,
+          })),
+        }),
+      });
+
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(text);
+      } catch {}
+
+      if (!res.ok) throw new Error(data?.error || text || "Could not save classification changes");
+
+      setResult(data?.report || corrected);
+      showToast("Classification updated.");
+    } catch (err: any) {
+      setResult(corrected);
+      showToast(err?.message ? `Updated on screen, but save failed: ${err.message}` : "Updated on screen, but save failed.", "error");
+    } finally {
+      setSavingCorrections(false);
+    }
+  }
 
   const baseButton = "rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md active:scale-[0.99]";
   const disabledButton = "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:shadow-none";
@@ -1017,7 +1216,7 @@ export default function AppPage() {
 
                 <div>
                   <div className="font-black text-slate-950">Drop files here</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-500">or click Choose files. Assign the file type before analysis.</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-500">or click Choose files. Tip: put the job export first.</div>
                 </div>
               </div>
             </div>
@@ -1026,7 +1225,7 @@ export default function AppPage() {
               <div className="grid gap-3 px-5 pb-5 xl:grid-cols-2 2xl:grid-cols-3">
                 {items.map((it) => (
                   <div key={it.id} className="rounded-3xl border border-slate-100 bg-white p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="break-words text-sm font-black text-slate-950">{it.file.name}</div>
                         <div className="mt-1 text-xs font-bold text-slate-400">
@@ -1035,7 +1234,7 @@ export default function AppPage() {
                         {it.error && <div className="mt-2 text-xs font-bold text-red-600">{it.error}</div>}
                       </div>
 
-                      <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         <span
                           className={`rounded-full px-3 py-1 text-sm font-black ${
                             it.status === "uploaded"
@@ -1093,12 +1292,9 @@ export default function AppPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <a href="/dashboard" className="dashboardCtaBtn relative overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-cyan-50 px-4 py-2 text-xs font-black text-slate-900 shadow-md shadow-violet-100 transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <span className="dashboardCtaGlow" />
-                    <span className="relative z-10 inline-flex items-center gap-2">
-                      <span className="dashboardCtaDot" />
-                      View Dashboard →
-                    </span>
+                  <a href="/dashboard" className="relative rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-cyan-50 px-4 py-2 text-xs font-black text-slate-900 shadow-md shadow-violet-100 transition hover:-translate-y-0.5 hover:shadow-lg">
+                    <span className="absolute -inset-1 -z-10 animate-pulse rounded-2xl bg-violet-200/40 blur-md" />
+                    View Dashboard →
                   </a>
 
                   <button type="button" onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))} className="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs font-black text-slate-700">
@@ -1204,6 +1400,93 @@ export default function AppPage() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="mt-5 rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                      <div>
+                        <h4 className="text-base font-black text-slate-950">Need to fix a classification?</h4>
+                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Move job costs between Labor, Materials, Subs, and Other without re-uploading files.</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setClassificationOpen((v) => !v)}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-cyan-200"
+                      >
+                        {classificationOpen ? "Hide classification editor" : "Fix classification"}
+                      </button>
+                    </div>
+
+                    {classificationOpen && (
+                      <div className="mt-4 space-y-3">
+                        <div className="grid gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-black text-slate-600 sm:grid-cols-4">
+                          <div>Labor: {money(classificationTotals.labor)}</div>
+                          <div>Materials: {money(classificationTotals.materials)}</div>
+                          <div>Subs: {money(classificationTotals.subs)}</div>
+                          <div>Other: {money(classificationTotals.other)}</div>
+                        </div>
+
+                        {classificationRows.map((row) => {
+                          const editedTotal = costMixTotal(row.edited);
+                          const originalTotal = costMixTotal(row.original);
+
+                          return (
+                            <div key={row.key} className="rounded-2xl border border-slate-100 bg-white p-4">
+                              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                                <div>
+                                  <div className="text-sm font-black text-slate-950">{row.job_name}</div>
+                                  <div className="mt-1 text-xs font-bold text-slate-400">
+                                    {row.job_id || "No Job ID"} • Revenue {money(row.revenue)} • Costs {money(editedTotal)}
+                                  </div>
+                                </div>
+
+                                {Math.abs(editedTotal - originalTotal) > 0.005 && (
+                                  <span className="w-fit rounded-full bg-cyan-50 px-3 py-1 text-xs font-black text-cyan-700">Adjusted</span>
+                                )}
+                              </div>
+
+                              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                {(["labor", "materials", "subs", "other"] as CostBucketKey[]).map((bucket) => (
+                                  <label key={bucket} className="block">
+                                    <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                      {bucket === "subs" ? "Subs" : bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+                                    </span>
+                                    <input
+                                      type="number"
+                                      inputMode="decimal"
+                                      step="0.01"
+                                      value={Number(row.edited[bucket] || 0)}
+                                      onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
+                                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
+                                    />
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                          <button
+                            type="button"
+                            onClick={resetClassificationRows}
+                            disabled={!classificationHasChanges || savingCorrections}
+                            className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
+                          >
+                            Reset
+                          </button>
+                          <button
+                            type="button"
+                            onClick={saveClassificationCorrections}
+                            disabled={!classificationHasChanges || savingCorrections}
+                            className="rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 px-5 py-3 text-sm font-black text-slate-900 shadow-sm disabled:cursor-not-allowed disabled:text-slate-400"
+                          >
+                            {savingCorrections ? "Saving…" : "Save classification"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="bottomAnalysisGrid mt-4 grid gap-4 xl:grid-cols-2">
@@ -1250,25 +1533,10 @@ export default function AppPage() {
         </div>
       </section>
 
-        {result && (
-          <a href="/dashboard" className="floatingDashboardCta" aria-label="View full DropClarity dashboard">
-            <span className="floatingDashboardPulse" />
-            <span className="relative z-10 flex min-w-0 items-center gap-2.5">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-blue-600 text-xs font-black text-white shadow-sm shadow-violet-100">
-                ✓
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">Analysis complete</span>
-                <span className="block truncate text-sm font-black text-slate-900">View dashboard →</span>
-              </span>
-            </span>
-          </a>
-        )}
-
 {jobModalOpen && (
-  <div className="assignModalOverlay fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/35 p-3 backdrop-blur-sm sm:p-4">
-    <div className="assignModal mx-auto my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-      <div className="shrink-0 border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-5 sm:p-6">
+  <div className="assignModalOverlay fixed inset-0 z-[10000] grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm">
+    <div className="assignModal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+      <div className="relative border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="mb-3 inline-flex rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-slate-600 shadow-sm">
@@ -1294,7 +1562,7 @@ export default function AppPage() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 sm:p-5">
+      <div className="max-h-[60vh] overflow-auto bg-slate-50 p-5">
         <div className="mb-5 rounded-3xl border border-cyan-100 bg-white p-4 shadow-sm">
           <div className="mb-3">
             <div className="text-xs font-black uppercase tracking-wider text-slate-400">
@@ -1310,7 +1578,7 @@ export default function AppPage() {
               value={applyAll}
               onChange={(e) => setApplyAll(e.target.value)}
               placeholder="e.g. JOB-1042 or Smith Kitchen Reno"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 focus:placeholder:text-slate-200"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
             />
 
             <button
@@ -1338,7 +1606,7 @@ export default function AppPage() {
                     : "border-slate-200"
                 }`}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="break-words text-base font-black text-slate-950">
                       {it.uploaded?.filename || it.file.name}
@@ -1374,7 +1642,7 @@ export default function AppPage() {
                       value={it.job_id}
                       onChange={(e) => updateItem(it.id, { job_id: e.target.value })}
                       placeholder="e.g. JOB-1042"
-                      className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
+                      className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 ${
                         jobMissing
                           ? "border-red-400 focus:border-red-400 focus:ring-red-100"
                           : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
@@ -1423,12 +1691,12 @@ export default function AppPage() {
         </div>
       </div>
 
-      <div className="shrink-0 flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:p-5">
+      <div className="flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
         <div className="text-xs font-bold leading-5 text-slate-500">
           Revenue = money earned. Cost = bills, receipts, expenses. Combined Invoice = one file that includes both revenue and costs.
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
+        <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={() => setJobModalOpen(false)}
@@ -1484,17 +1752,6 @@ const analyzePageCss = `
 .pageSub{margin-top:9px;max-width:860px;color:rgba(51,65,85,.78);font-size:clamp(14px,1.2vw,17px);line-height:1.5;font-weight:750}
 .analyzeActions{margin-bottom:16px}
 .analyzeActions button,.analyzeActions a{min-height:44px}
-.dashboardCtaBtn{isolation:isolate;animation:dashboardCtaNudge 3.4s ease-in-out infinite}
-.dashboardCtaGlow{position:absolute;inset:-24px;z-index:0;background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(139,92,246,.16),rgba(34,211,238,.0));transform:translateX(-60%);animation:dashboardCtaSweep 2.9s ease-in-out infinite}
-.dashboardCtaDot{height:7px;width:7px;border-radius:999px;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.09);animation:dashboardCtaDot 1.8s ease-in-out infinite}
-.floatingDashboardCta{position:fixed;right:22px;bottom:22px;z-index:80;display:flex;max-width:calc(100vw - 32px);align-items:center;border:1px solid rgba(139,92,246,.18);border-radius:18px;background:rgba(255,255,255,.92);padding:9px 11px;box-shadow:0 16px 42px rgba(15,23,42,.13),0 0 0 1px rgba(255,255,255,.65) inset;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-decoration:none;animation:floatingDashboardEnter .34s ease-out both,floatingDashboardBreathe 3.4s ease-in-out .65s infinite}
-.floatingDashboardPulse{position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(139,92,246,.15),rgba(37,99,235,.12));filter:blur(8px);opacity:.44;animation:floatingDashboardGlow 2.8s ease-in-out infinite}
-@keyframes dashboardCtaSweep{0%{transform:translateX(-70%)}55%,100%{transform:translateX(70%)}}
-@keyframes dashboardCtaNudge{0%,78%,100%{transform:translateY(0)}86%{transform:translateY(-1px)}94%{transform:translateY(0)}}
-@keyframes dashboardCtaDot{0%,100%{transform:scale(1);box-shadow:0 0 0 4px rgba(16,185,129,.08)}50%{transform:scale(1.14);box-shadow:0 0 0 7px rgba(16,185,129,.12)}}
-@keyframes floatingDashboardEnter{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes floatingDashboardBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@keyframes floatingDashboardGlow{0%,100%{opacity:.28}50%{opacity:.58}}
 .uploadPanel,.resultsPanel{border-color:rgba(15,23,42,.085)!important;box-shadow:0 20px 58px rgba(2,6,23,.09)!important;border-radius:22px!important}
 .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important;border-bottom-color:rgba(15,23,42,.075)!important}
 .uploadPanel h2,.resultsPanel h2{font-size:20px!important;line-height:1.15;letter-spacing:-.025em;color:rgba(15,23,42,.97)!important}
@@ -1514,31 +1771,9 @@ const analyzePageCss = `
 .costMixPanel canvas{width:min(220px,100%)!important;margin:0 auto}
 .assignModal{max-width:min(1120px,calc(100vw - 32px))!important;border-radius:28px!important}
 .assignModal h2{font-size:clamp(22px,2.4vw,28px)!important;line-height:1.08!important;letter-spacing:-.035em!important}
-.assignModalOverlay{-webkit-overflow-scrolling:touch}
 @media(max-width:1280px){.analyzeWrap{width:min(100%,calc(100vw - 32px))}.resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media(max-width:900px){.resultKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.uploadPanel>div:first-child,.resultsPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}}
-@media(max-width:760px){
-  .floatingDashboardCta{left:16px;right:16px;bottom:14px;width:auto;padding:9px 11px;border-radius:18px}
-  .analyzeShell{padding:28px 0 82px!important}
-  .analyzeWrap{width:100%!important;max-width:100%!important;padding:0 18px!important}
-  .pageTitle{font-size:29px!important;line-height:1.08!important}
-  .pageSub{font-size:14px!important;line-height:1.48!important}
-  .analyzeTopbar{padding:0!important}
-  .analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important}
-  .analyzeActions button{display:flex!important;width:100%!important;align-items:center!important;justify-content:center!important;text-align:center!important}
-  .uploadPanel,.resultsPanel{width:100%!important;overflow:hidden!important;border-radius:22px!important}
-  .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important}
-  .uploadPanel [role="button"]{margin:14px!important;padding:16px!important}
-  .uploadPanel [role="button"]>div{align-items:flex-start!important}
-  .uploadPanel .grid{min-width:0!important}
-  .uploadPanel span.rounded-full{max-width:100%;white-space:nowrap}
-  .resultKpiGrid{grid-template-columns:1fr!important}
-  .smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}
-  .costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}
-  .assignModalOverlay{padding:0!important}
-  .assignModal{margin:0!important;max-width:100%!important;width:100%!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border-left:0!important;border-right:0!important}
-  .assignModal h2{font-size:23px!important}
-  .assignModal select,.assignModal input{font-size:16px!important}
-}
-@media(max-width:420px){.analyzeWrap{padding:0 14px!important}.pageTitle{font-size:27px!important}}
+@media(max-width:760px){.analyzeShell{padding-top:32px!important;padding-bottom:28px!important}.analyzeWrap{width:100%;padding:0 16px!important}.pageTitle{font-size:29px!important;line-height:1.08!important}.pageSub{font-size:14px!important;line-height:1.48!important}.analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}.analyzeActions button{width:100%;justify-content:center}.uploadPanel [role="button"]{margin:14px!important;padding:16px!important}.uploadPanel [role="button"]>div{align-items:flex-start!important}.resultKpiGrid{grid-template-columns:1fr!important}.smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}.costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}.assignModalOverlay{padding:12px!important;place-items:end center!important}.assignModal{max-height:92vh!important;border-radius:24px 24px 0 0!important}}
+@media(max-width:420px){.analyzeWrap{padding:0 12px!important}.pageTitle{font-size:27px!important}}
 `;
+
