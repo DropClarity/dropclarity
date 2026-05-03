@@ -22,6 +22,7 @@ type QueueItem = {
   };
   job_id: string;
   role: FileRole;
+  multi_job_file?: boolean;
   suggestedRole?: "revenue" | "cost" | "combined" | "unknown";
 };
 
@@ -231,6 +232,37 @@ function inferRoleFromName(
   )
     return "cost";
   return "unknown";
+}
+
+function isStructuredFile(filename = "", mime = "") {
+  const lower = filename.toLowerCase();
+  const m = mime.toLowerCase();
+
+  return (
+    lower.endsWith(".csv") ||
+    lower.endsWith(".tsv") ||
+    lower.endsWith(".xlsx") ||
+    lower.endsWith(".xls") ||
+    m.includes("csv") ||
+    m.includes("tab-separated") ||
+    m.includes("spreadsheet") ||
+    m.includes("excel")
+  );
+}
+
+function isGenericMultiJobId(value = "") {
+  const s = value.trim().toLowerCase();
+  return (
+    !s ||
+    s === "multi" ||
+    s === "multiple" ||
+    s === "multiple jobs" ||
+    s === "all" ||
+    s === "all jobs" ||
+    s === "mixed" ||
+    s === "batch" ||
+    s === "export"
+  );
 }
 
 function bestJobIdentifier(job: any) {
@@ -1087,6 +1119,7 @@ export default function AppPage() {
           pct: 0,
           job_id: "",
           role: "",
+          multi_job_file: false,
           suggestedRole,
         });
       });
@@ -1182,7 +1215,7 @@ export default function AppPage() {
 
     uploadedItems.forEach((it) => {
       const error: AssignmentError = {};
-      if (!it.job_id.trim()) error.job_id = true;
+      if (!it.multi_job_file && !it.job_id.trim()) error.job_id = true;
       if (it.role !== "revenue" && it.role !== "cost" && it.role !== "combined")
         error.role = true;
       if (error.job_id || error.role) nextErrors[it.id] = error;
@@ -1229,23 +1262,22 @@ export default function AppPage() {
             it.uploaded?.mime || it.file.type || "application/octet-stream";
           const lower = filename.toLowerCase();
 
-          const isStructured =
-            lower.endsWith(".csv") ||
-            lower.endsWith(".xlsx") ||
-            lower.endsWith(".xls") ||
-            mime.includes("csv") ||
-            mime.includes("spreadsheet") ||
-            mime.includes("excel");
+          const isStructured = isStructuredFile(filename, mime);
+          const hasMultipleJobs = Boolean(it.multi_job_file);
+          const selectedJobId = it.job_id.trim();
 
           return {
             uuid: it.uploaded?.uuid,
             kind: idx === 0 ? "job_export" : "supporting",
             filename,
             mime,
-            job_id: it.job_id.trim(),
+            job_id: hasMultipleJobs ? "" : selectedJobId,
             role: it.role === "combined" ? "combined_invoice" : it.role,
             parse_mode: isStructured ? "code" : "ai",
             file_category: isStructured ? "structured" : "document",
+            multi_job_file: hasMultipleJobs,
+            parse_scope: hasMultipleJobs ? "multi_job_file" : "single_job_file",
+            structured_job_source: hasMultipleJobs ? "internal_columns" : "modal_job_id",
           };
         }),
       };
@@ -1318,7 +1350,10 @@ export default function AppPage() {
         const next = { ...prev };
         const current = { ...(next[id] || {}) };
 
-        if ("job_id" in patch && String(patch.job_id || "").trim())
+        if (
+          ("job_id" in patch && String(patch.job_id || "").trim()) ||
+          ("multi_job_file" in patch && patch.multi_job_file === true)
+        )
           current.job_id = false;
         if (
           "role" in patch &&
@@ -1339,7 +1374,7 @@ export default function AppPage() {
   function applyJobToAll() {
     setItems((prev) =>
       prev.map((it) =>
-        it.status === "uploaded" ? { ...it, job_id: applyAll } : it,
+        it.status === "uploaded" ? { ...it, job_id: applyAll, multi_job_file: false } : it,
       ),
     );
     if (applyAll.trim()) {
@@ -2091,7 +2126,8 @@ export default function AppPage() {
 
                   <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
                     Add a job identifier and choose whether each file is revenue
-                    or cost.
+                    or cost. For CSV/XLSX files that already contain multiple
+                    Job IDs, use the multiple-job option on that file.
                   </p>
                 </div>
 
@@ -2139,6 +2175,9 @@ export default function AppPage() {
                   const errors = assignmentErrors[it.id] || {};
                   const roleMissing = !!errors.role;
                   const jobMissing = !!errors.job_id;
+                  const fileName = it.uploaded?.filename || it.file.name;
+                  const fileMime = it.uploaded?.mime || it.file.type || "";
+                  const structuredFile = isStructuredFile(fileName, fileMime);
 
                   return (
                     <div
@@ -2152,7 +2191,7 @@ export default function AppPage() {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="break-words text-base font-black text-slate-950">
-                            {it.uploaded?.filename || it.file.name}
+                            {fileName}
                           </div>
 
                           <div className="mt-1 text-xs font-bold text-slate-400">
@@ -2188,12 +2227,13 @@ export default function AppPage() {
                           </label>
 
                           <input
-                            value={it.job_id}
+                            value={it.multi_job_file ? "" : it.job_id}
+                            disabled={Boolean(it.multi_job_file)}
                             onChange={(e) =>
                               updateItem(it.id, { job_id: e.target.value })
                             }
-                            placeholder="e.g. JOB-1042"
-                            className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
+                            placeholder={it.multi_job_file ? "Using Job ID column inside file" : "e.g. JOB-1042"}
+                            className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 ${
                               jobMissing
                                 ? "border-red-400 focus:border-red-400 focus:ring-red-100"
                                 : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
@@ -2204,6 +2244,25 @@ export default function AppPage() {
                             <div className="mt-2 text-xs font-black text-red-600">
                               *Required
                             </div>
+                          )}
+
+                          {structuredFile && (
+                            <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(it.multi_job_file)}
+                                onChange={(e) =>
+                                  updateItem(it.id, {
+                                    multi_job_file: e.target.checked,
+                                    job_id: e.target.checked ? "" : it.job_id,
+                                  })
+                                }
+                                className="mt-1 h-4 w-4 rounded border-slate-300"
+                              />
+                              <span className="text-xs font-bold leading-5 text-slate-500">
+                                This file contains multiple Job IDs. Use the Job ID column inside the file.
+                              </span>
+                            </label>
                           )}
                         </div>
 
@@ -2248,7 +2307,7 @@ export default function AppPage() {
               <div className="text-xs font-bold leading-5 text-slate-500">
                 Revenue = money earned. Cost = bills, receipts, expenses.
                 Combined Invoice = one file that includes both revenue and
-                costs.
+                costs. Multi-job CSV/XLSX files should use the Job ID column inside the file.
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
