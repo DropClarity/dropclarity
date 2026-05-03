@@ -802,6 +802,7 @@ export default function AppPage() {
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [originalAnalyzeResult, setOriginalAnalyzeResult] = useState<any>(null);
   const [classificationOpen, setClassificationOpen] = useState(false);
   const [classificationRows, setClassificationRows] = useState<ClassificationCorrectionRow[]>([]);
   const [savingCorrections, setSavingCorrections] = useState(false);
@@ -951,6 +952,7 @@ export default function AppPage() {
     }
 
     setResult(null);
+    setOriginalAnalyzeResult(null);
 
     setItems((prev) => {
       const existing = new Set(
@@ -1160,6 +1162,7 @@ export default function AppPage() {
       if (!res.ok) throw new Error(data?.error || text || "Analyze failed");
 
       setResult(data);
+      setOriginalAnalyzeResult(data);
       showToast("Analysis complete.");
     } catch (err: any) {
       showToast(err.message || "Analyze failed.", "error");
@@ -1278,8 +1281,8 @@ export default function AppPage() {
       return;
     }
 
-    setClassificationRows(buildClassificationRows(result));
-  }, [result?.report_id]);
+    setClassificationRows(buildClassificationRows(originalAnalyzeResult || result));
+  }, [result?.report_id, originalAnalyzeResult?.report_id]);
 
   function updateClassificationBucket(rowKey: string, bucket: CostBucketKey, rawValue: string) {
     const value = rawValue === "" ? "" : Number(rawValue);
@@ -1301,13 +1304,27 @@ export default function AppPage() {
   }
 
   function resetClassificationRows() {
-    setClassificationRows((prev) => prev.map((row) => ({ ...row, edited: { ...row.original } })));
+    const resetRows = classificationRows.map((row) => ({
+      ...row,
+      edited: { ...row.original },
+    }));
+
+    setClassificationRows(resetRows);
+
+    const resetBase = originalAnalyzeResult || result;
+    if (resetBase) {
+      setResult(correctedResultFromRows(resetBase, resetRows));
+    }
   }
 
   async function saveClassificationCorrections() {
     if (!result || !classificationRows.length) return;
 
-    const corrected = correctedResultFromRows(result, classificationRows);
+    const rowsForSave = classificationRows.map((row) => ({
+      ...row,
+      edited: normalizeCostBreakdown(row.edited),
+    }));
+    const corrected = correctedResultFromRows(result, rowsForSave);
     setSavingCorrections(true);
 
     try {
@@ -1320,7 +1337,7 @@ export default function AppPage() {
         },
         body: JSON.stringify({
           report_id: result.report_id,
-          corrections: classificationRows.map((row) => ({
+          corrections: rowsForSave.map((row) => ({
             job_id: row.job_id,
             job_name: row.job_name,
             cost_breakdown: row.edited,
@@ -1466,6 +1483,7 @@ export default function AppPage() {
                   e.stopPropagation();
                   setItems([]);
                   setResult(null);
+                  setOriginalAnalyzeResult(null);
                   setAssignmentErrors({});
                 }}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
