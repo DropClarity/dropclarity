@@ -916,6 +916,17 @@ export default function AppPage() {
       : "Track subcontractor exposure separately from materials.",
   ];
 
+  const hasPossibleMappingIssue =
+    Boolean(result) &&
+    chartData.all.length > 0 &&
+    revenue === 0 &&
+    costs === 0 &&
+    costMixDisplay.totalActivity > 0;
+
+  function markFileAsMultiJob(id: string) {
+    updateItem(id, { job_id: "Multiple Jobs" });
+  }
+
   function openFilePicker() {
     requestAnimationFrame(() => {
       fileRef.current?.click();
@@ -1765,6 +1776,12 @@ export default function AppPage() {
               </div>
 
               <div className="resultsBody p-5">
+                {hasPossibleMappingIssue && (
+                  <div className="mb-4 rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-800">
+                    DropClarity found some cost activity, but job-level revenue/cost totals look incomplete. If this upload was a spreadsheet with multiple Job IDs, re-run it and mark the file as “Multiple Jobs” in the job mapping step.
+                  </div>
+                )}
+
                 <div className="resultKpiGrid grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
                   {[
                     ["Revenue", money(revenue), ""],
@@ -2129,7 +2146,7 @@ export default function AppPage() {
                     Quick apply
                   </div>
                   <div className="mt-1 text-sm font-bold text-slate-600">
-                    Use this when every uploaded file belongs to the same job.
+                    Use this when every uploaded file belongs to the same job. For one export with many Job IDs, use “Multiple Jobs” instead.
                   </div>
                 </div>
 
@@ -2147,6 +2164,33 @@ export default function AppPage() {
                     className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-cyan-200"
                   >
                     Apply
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApplyAll("Multiple Jobs");
+                      setItems((prev) =>
+                        prev.map((it) =>
+                          it.status === "uploaded"
+                            ? { ...it, job_id: "Multiple Jobs" }
+                            : it,
+                        ),
+                      );
+                      setAssignmentErrors((prev) => {
+                        const next = { ...prev };
+                        uploadedItems.forEach((it) => {
+                          if (next[it.id]) {
+                            next[it.id] = { ...next[it.id], job_id: false };
+                            if (!next[it.id].role) delete next[it.id];
+                          }
+                        });
+                        return next;
+                      });
+                    }}
+                    className="rounded-2xl border border-cyan-200 bg-cyan-50 px-6 py-3 text-sm font-black text-cyan-800 shadow-sm hover:border-cyan-300"
+                  >
+                    Multi-job export
                   </button>
                 </div>
               </div>
@@ -2204,18 +2248,32 @@ export default function AppPage() {
                             <span className="text-red-500">*</span>
                           </label>
 
-                          <input
-                            value={it.job_id}
-                            onChange={(e) =>
-                              updateItem(it.id, { job_id: e.target.value })
-                            }
-                            placeholder="e.g. JOB-1042"
-                            className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
-                              jobMissing
-                                ? "border-red-400 focus:border-red-400 focus:ring-red-100"
-                                : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
-                            }`}
-                          />
+                          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                            <input
+                              value={it.job_id}
+                              onChange={(e) =>
+                                updateItem(it.id, { job_id: e.target.value })
+                              }
+                              placeholder="e.g. JOB-1042 or Multiple Jobs"
+                              className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
+                                jobMissing
+                                  ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+                                  : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
+                              }`}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => markFileAsMultiJob(it.id)}
+                              className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-xs font-black text-cyan-800 hover:border-cyan-300 sm:shrink-0"
+                            >
+                              Multi-job
+                            </button>
+                          </div>
+
+                          <div className="mt-2 text-xs font-bold leading-5 text-slate-400">
+                            If one spreadsheet/export contains many Job IDs, use “Multiple Jobs” so DropClarity keeps each job separate.
+                          </div>
 
                           {jobMissing && (
                             <div className="mt-2 text-xs font-black text-red-600">
