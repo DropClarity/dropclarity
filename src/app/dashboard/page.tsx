@@ -38,8 +38,6 @@ type JobRow = {
   margin_pct?: number | string;
   confidence?: number | string;
   cost_breakdown?: CostBreakdown;
-  gross_costs?: CostBreakdown;
-  credits?: CostBreakdown;
 };
 
 type ReportRow = {
@@ -94,8 +92,6 @@ type DashboardState = {
   insights?: Insight[];
   cost_mix?: CostBreakdown;
   mix?: CostBreakdown;
-  gross_costs?: CostBreakdown;
-  credits?: CostBreakdown;
   job_history?: Record<string, JobHistoryRow[]>;
   jobs_history?: Record<string, JobHistoryRow[]>;
 };
@@ -439,10 +435,10 @@ function exportAllJobsCsv(state: DashboardState) {
       parseNumberLoose(job.cost_breakdown?.subs),
       parseNumberLoose(job.cost_breakdown?.other),
       getJobCreditTotal(job),
-      getJobCreditsByBucket(job).labor,
-      getJobCreditsByBucket(job).materials,
-      getJobCreditsByBucket(job).subs,
-      getJobCreditsByBucket(job).other,
+      getBucketCreditAmount(job.cost_breakdown?.labor),
+      getBucketCreditAmount(job.cost_breakdown?.materials),
+      getBucketCreditAmount(job.cost_breakdown?.subs),
+      getBucketCreditAmount(job.cost_breakdown?.other),
       status.label,
     ]);
   });
@@ -1195,49 +1191,14 @@ function getBucketCreditAmount(value: unknown): number {
   return n < 0 ? Math.abs(n) : 0;
 }
 
-function cleanCostBreakdown(value: unknown): Required<CostBreakdown> {
-  const v = (value && typeof value === "object" ? value : {}) as CostBreakdown;
-  return {
-    labor: Math.max(0, parseNumberLoose(v.labor)),
-    materials: Math.max(0, parseNumberLoose(v.materials)),
-    subs: Math.max(0, parseNumberLoose(v.subs)),
-    other: Math.max(0, parseNumberLoose(v.other)),
-  };
-}
-
-function hasAnyCostBreakdownValue(value: CostBreakdown): boolean {
-  return (
-    parseNumberLoose(value.labor) > 0 ||
-    parseNumberLoose(value.materials) > 0 ||
-    parseNumberLoose(value.subs) > 0 ||
-    parseNumberLoose(value.other) > 0
-  );
-}
-
-function getJobCreditsByBucket(job: JobRow): Required<CostBreakdown> {
-  const directCredits = cleanCostBreakdown(job?.credits);
-
-  // New worker shape: credits are stored separately as positive values.
-  if (hasAnyCostBreakdownValue(directCredits)) return directCredits;
-
-  // Defensive fallback if the Worker packed credits inside breakdown_json.
-  const nestedCredits = cleanCostBreakdown((job?.cost_breakdown as CostBreakdown & { credits?: CostBreakdown })?.credits);
-  if (hasAnyCostBreakdownValue(nestedCredits)) return nestedCredits;
-
-  // Legacy fallback for old reports created before credits were tracked separately.
-  // Those reports only showed negative cost bucket values, so infer credits from negatives.
-  const cb = job?.cost_breakdown || {};
-  return {
-    labor: getBucketCreditAmount(cb.labor),
-    materials: getBucketCreditAmount(cb.materials),
-    subs: getBucketCreditAmount(cb.subs),
-    other: getBucketCreditAmount(cb.other),
-  };
-}
-
 function getJobCreditTotal(job: JobRow): number {
-  const credits = getJobCreditsByBucket(job);
-  return credits.labor + credits.materials + credits.subs + credits.other;
+  const cb = job?.cost_breakdown || {};
+  return (
+    getBucketCreditAmount(cb.labor) +
+    getBucketCreditAmount(cb.materials) +
+    getBucketCreditAmount(cb.subs) +
+    getBucketCreditAmount(cb.other)
+  );
 }
 
 function getPositiveBucketAmount(value: unknown): number {
@@ -1247,10 +1208,10 @@ function getPositiveBucketAmount(value: unknown): number {
 function getCreditMetrics(state: DashboardState): CreditMetrics {
   const jobs = getAllJobs(state);
   const creditsByBucket = {
-    labor: jobs.reduce((sum, j) => sum + getJobCreditsByBucket(j).labor, 0),
-    materials: jobs.reduce((sum, j) => sum + getJobCreditsByBucket(j).materials, 0),
-    subs: jobs.reduce((sum, j) => sum + getJobCreditsByBucket(j).subs, 0),
-    other: jobs.reduce((sum, j) => sum + getJobCreditsByBucket(j).other, 0),
+    labor: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.labor), 0),
+    materials: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.materials), 0),
+    subs: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.subs), 0),
+    other: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.other), 0),
   };
 
   const jobCreditRows = jobs
@@ -1261,11 +1222,6 @@ function getCreditMetrics(state: DashboardState): CreditMetrics {
   const totalCredits = creditsByBucket.labor + creditsByBucket.materials + creditsByBucket.subs + creditsByBucket.other;
 
   const positiveCostActivity = jobs.reduce((sum, j) => {
-    const gross = cleanCostBreakdown(j.gross_costs);
-    if (hasAnyCostBreakdownValue(gross)) {
-      return sum + gross.labor + gross.materials + gross.subs + gross.other;
-    }
-
     const cb = j.cost_breakdown || {};
     return (
       sum +
@@ -3037,20 +2993,6 @@ function JobEditor({
               <div className="panel miniPanel">
                 <div className="panelHead"><div><div className="panelTitle">Job notes</div><div className="panelSub">Add context for this job.</div></div></div>
                 <div className="pad"><textarea className="cellEdit noteBox" value={job.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Example: Added 8% sales commission manually because it was not shown on the source export." /></div>
-              </div>
-
-              <div className="panel miniPanel">
-                <div className="panelHead"><div><div className="panelTitle">Credits / adjustments</div><div className="panelSub">Credits are tracked separately from net costs.</div></div></div>
-                <div className="pad">
-                  <div className="list">
-                    {Object.entries(getJobCreditsByBucket(base)).map(([bucket, amount]) => (
-                      <div className="item" key={bucket}>
-                        <div className="itemName">{bucket === "subs" ? "Subcontractor" : bucket.charAt(0).toUpperCase() + bucket.slice(1)} credits</div>
-                        <div className="itemMeta"><b className={amount > 0 ? "creditText" : ""}>{amount > 0 ? fmtMoney(amount) : "—"}</b></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               <div className="panel miniPanel">
