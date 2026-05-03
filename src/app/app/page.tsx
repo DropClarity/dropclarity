@@ -91,13 +91,9 @@ type PlanAccess = {
 const FREE_FILES_PER_ANALYSIS = 3;
 
 function normalizePlan(rawPlan: unknown, rawStatus?: unknown): PlanAccess {
-  const status = String(rawStatus || "inactive")
-    .trim()
-    .toLowerCase();
+  const status = String(rawStatus || "inactive").trim().toLowerCase();
   const hasActiveSubscription = ["active", "trialing"].includes(status);
-  const raw = String(rawPlan || "free")
-    .trim()
-    .toLowerCase();
+  const raw = String(rawPlan || "free").trim().toLowerCase();
 
   const legacyCorePlan = ["p", "r", "o"].join("");
   let normalizedPlan: PlanKey = "free";
@@ -119,9 +115,7 @@ function normalizePlan(rawPlan: unknown, rawStatus?: unknown): PlanAccess {
     isCore,
     isScale,
     hasPaidAccess,
-    fileLimitPerAnalysis: hasPaidAccess
-      ? Number.POSITIVE_INFINITY
-      : FREE_FILES_PER_ANALYSIS,
+    fileLimitPerAnalysis: hasPaidAccess ? Number.POSITIVE_INFINITY : FREE_FILES_PER_ANALYSIS,
   };
 }
 
@@ -131,9 +125,7 @@ function planLimitText(access: PlanAccess) {
 }
 
 function TinySpinner() {
-  return (
-    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-violet-700" />
-  );
+  return <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-violet-700" />;
 }
 
 function UploadGradientIcon() {
@@ -141,19 +133,8 @@ function UploadGradientIcon() {
     <div className="rounded-2xl bg-gradient-to-br from-cyan-300 via-violet-400 to-blue-500 p-[1.5px] shadow-md shadow-violet-100">
       <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 19V5"
-            stroke="url(#uploadGradient)"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M6.5 10.5L12 5L17.5 10.5"
-            stroke="url(#uploadGradient)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M12 19V5" stroke="url(#uploadGradient)" strokeWidth="3" strokeLinecap="round" />
+          <path d="M6.5 10.5L12 5L17.5 10.5" stroke="url(#uploadGradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           <defs>
             <linearGradient id="uploadGradient" x1="6" y1="5" x2="18" y2="19">
               <stop stopColor="#06B6D4" />
@@ -208,28 +189,11 @@ function shortLabel(s: string) {
   return s.length <= 10 ? s : `${s.slice(0, 10)}…`;
 }
 
-function inferRoleFromName(
-  name: string,
-): "revenue" | "cost" | "combined" | "unknown" {
+function inferRoleFromName(name: string): "revenue" | "cost" | "combined" | "unknown" {
   const s = name.toLowerCase();
-  if (
-    s.includes("combined") ||
-    s.includes("job summary") ||
-    s.includes("job_summary") ||
-    s.includes("job-cost") ||
-    s.includes("job cost")
-  )
-    return "combined";
-  if (s.includes("invoice") || s.includes("revenue") || s.includes("sales"))
-    return "revenue";
-  if (
-    s.includes("bill") ||
-    s.includes("vendor") ||
-    s.includes("expense") ||
-    s.includes("cost") ||
-    s.includes("receipt")
-  )
-    return "cost";
+  if (s.includes("combined") || s.includes("job summary") || s.includes("job_summary") || s.includes("job-cost") || s.includes("job cost")) return "combined";
+  if (s.includes("invoice") || s.includes("revenue") || s.includes("sales")) return "revenue";
+  if (s.includes("bill") || s.includes("vendor") || s.includes("expense") || s.includes("cost") || s.includes("receipt")) return "cost";
   return "unknown";
 }
 
@@ -245,18 +209,13 @@ function buildJobChartData(out: any) {
   const jobs: JobRow[] = jobsRaw.map((j: any) => {
     const revenue = Number(j?.revenue) || 0;
     const costs = Number(j?.costs) || 0;
-    const profit = Number.isFinite(Number(j?.profit))
-      ? Number(j.profit)
-      : revenue - costs;
+    const profit = Number.isFinite(Number(j?.profit)) ? Number(j.profit) : revenue - costs;
     const ident = bestJobIdentifier(j);
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     return { ident, short: shortLabel(ident), revenue, costs, profit, margin };
   });
 
-  const top = jobs
-    .slice()
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 8);
+  const top = jobs.slice().sort((a, b) => b.revenue - a.revenue).slice(0, 8);
   const sorted = top.slice().sort((a, b) => b.profit - a.profit);
 
   return {
@@ -278,60 +237,15 @@ function buildJobChartData(out: any) {
 function categorizeCostLine(description = "") {
   const d = description.toLowerCase();
 
-  if (
-    [
-      "subcontractor",
-      "subcontractors",
-      "subcontract",
-      "subbed",
-      "subs",
-      "sub contractor",
-      "vendor labor",
-      "outside labor",
-      "contract labor",
-      "third party",
-    ].some((k) => d.includes(k))
-  ) {
+  if (["subcontractor", "subcontractors", "subcontract", "subbed", "subs", "sub contractor", "vendor labor", "outside labor", "contract labor", "third party"].some((k) => d.includes(k))) {
     return "subs";
   }
 
-  if (
-    [
-      "labor",
-      "labour",
-      "hours",
-      "technician",
-      "crew",
-      "man hours",
-      "payroll",
-      "wages",
-      "installer",
-    ].some((k) => d.includes(k))
-  ) {
+  if (["labor", "labour", "hours", "technician", "crew", "man hours", "payroll", "wages", "installer"].some((k) => d.includes(k))) {
     return "labor";
   }
 
-  if (
-    [
-      "material",
-      "materials",
-      "parts",
-      "supplies",
-      "supply",
-      "equipment",
-      "unit",
-      "hardware",
-      "pipe",
-      "wire",
-      "hvac",
-      "furnace",
-      "condenser",
-      "coil",
-      "compressor",
-      "duct",
-      "thermostat",
-    ].some((k) => d.includes(k))
-  ) {
+  if (["material", "materials", "parts", "supplies", "supply", "equipment", "unit", "hardware", "pipe", "wire", "hvac", "furnace", "condenser", "coil", "compressor", "duct", "thermostat"].some((k) => d.includes(k))) {
     return "materials";
   }
 
@@ -339,8 +253,7 @@ function categorizeCostLine(description = "") {
 }
 
 function buildCostMix(out: any): CostMix {
-  const mix =
-    out?.cost_mix && typeof out.cost_mix === "object" ? out.cost_mix : null;
+  const mix = out?.cost_mix && typeof out.cost_mix === "object" ? out.cost_mix : null;
 
   if (mix) {
     return {
@@ -359,22 +272,14 @@ function buildCostMix(out: any): CostMix {
   const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
 
   for (const job of jobs) {
-    const lines = Array.isArray(job?.line_items)
-      ? job.line_items
-      : Array.isArray(job?.cost_lines)
-        ? job.cost_lines
-        : [];
+    const lines = Array.isArray(job?.line_items) ? job.line_items : Array.isArray(job?.cost_lines) ? job.cost_lines : [];
 
     if (lines.length) {
       for (const line of lines) {
-        const amount = Number(
-          line?.line_total || line?.amount || line?.total || line?.value || 0,
-        );
+        const amount = Number(line?.line_total || line?.amount || line?.total || line?.value || 0);
         const cat = String(line?.category || "").toLowerCase();
         const desc = String(line?.description || line?.name || "");
-        const finalCat = ["labor", "materials", "subs", "other"].includes(cat)
-          ? cat
-          : categorizeCostLine(cat + " " + desc);
+        const finalCat = ["labor", "materials", "subs", "other"].includes(cat) ? cat : categorizeCostLine(cat + " " + desc);
 
         if (finalCat === "labor") labor += amount;
         else if (finalCat === "subs") subs += amount;
@@ -394,33 +299,11 @@ function buildCostMix(out: any): CostMix {
 }
 
 function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
-  const bucketMeta: Array<
-    Omit<CostMixBucket, "value" | "chartValue" | "note" | "isCredit">
-  > = [
-    {
-      key: "labor",
-      label: "Labor",
-      color: "rgba(34,211,238,.95)",
-      colorClass: "bg-cyan-400",
-    },
-    {
-      key: "materials",
-      label: "Materials",
-      color: "rgba(124,58,237,.90)",
-      colorClass: "bg-violet-500",
-    },
-    {
-      key: "subs",
-      label: "Subs",
-      color: "rgba(251,146,60,.92)",
-      colorClass: "bg-orange-400",
-    },
-    {
-      key: "other",
-      label: "Other",
-      color: "rgba(52,211,153,.90)",
-      colorClass: "bg-emerald-400",
-    },
+  const bucketMeta: Array<Omit<CostMixBucket, "value" | "chartValue" | "note" | "isCredit">> = [
+    { key: "labor", label: "Labor", color: "rgba(34,211,238,.95)", colorClass: "bg-cyan-400" },
+    { key: "materials", label: "Materials", color: "rgba(124,58,237,.90)", colorClass: "bg-violet-500" },
+    { key: "subs", label: "Subs", color: "rgba(251,146,60,.92)", colorClass: "bg-orange-400" },
+    { key: "other", label: "Other", color: "rgba(52,211,153,.90)", colorClass: "bg-emerald-400" },
   ];
 
   const buckets = bucketMeta.map((meta) => {
@@ -432,22 +315,12 @@ function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
       value,
       chartValue: Math.abs(value),
       isCredit,
-      note: isCredit
-        ? "Credit / adjustment"
-        : value > 0
-          ? "Cost"
-          : "No activity",
+      note: isCredit ? "Credit / adjustment" : value > 0 ? "Cost" : "No activity",
     };
   });
 
-  const totalActivity = buckets.reduce(
-    (sum, bucket) => sum + bucket.chartValue,
-    0,
-  );
-  const totalCredits = buckets.reduce(
-    (sum, bucket) => sum + Math.min(0, bucket.value),
-    0,
-  );
+  const totalActivity = buckets.reduce((sum, bucket) => sum + bucket.chartValue, 0);
+  const totalCredits = buckets.reduce((sum, bucket) => sum + Math.min(0, bucket.value), 0);
 
   return {
     buckets,
@@ -461,6 +334,7 @@ function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
     hasCredits: totalCredits < 0,
   };
 }
+
 
 function normalizeCostBreakdown(cb: any): CostMix {
   return {
@@ -567,19 +441,14 @@ function correctedResultFromRows(current: any, rows: ClassificationCorrectionRow
   };
 }
 
-
-function drawProfitChart(
-  canvas: HTMLCanvasElement,
-  labels: string[],
-  values: number[],
-) {
+function drawProfitChart(canvas: HTMLCanvasElement, labels: string[], values: number[]) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const h = 270;
+  const h = 240;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -588,24 +457,23 @@ function drawProfitChart(
   ctx.clearRect(0, 0, w, h);
 
   const gx0 = 28;
-  const gx1 = w - 18;
-  const gy0 = 22;
-  const gy1 = h - 66;
-  const labelY = h - 22;
+  const gx1 = w - 12;
+  const gy0 = 18;
+  const gy1 = h - 28;
   const zeroY = gy0 + (gy1 - gy0) / 2;
   const maxAbs = Math.max(...values.map((v) => Math.abs(v || 0)), 1);
-  const scale = (gy1 - gy0) / 2 / maxAbs;
+  const scale = ((gy1 - gy0) / 2) / maxAbs;
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.055)";
+    ctx.strokeStyle = "rgba(15,23,42,.06)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "rgba(15,23,42,.16)";
+  ctx.strokeStyle = "rgba(15,23,42,.10)";
   ctx.beginPath();
   ctx.moveTo(gx0, zeroY);
   ctx.lineTo(gx1, zeroY);
@@ -613,7 +481,7 @@ function drawProfitChart(
 
   const n = labels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(12, Math.min(28, slot * 0.34));
+  const bw = Math.max(10, Math.min(26, slot * 0.36));
 
   values.forEach((value, i) => {
     const x = gx0 + i * slot + slot / 2 - bw / 2;
@@ -622,66 +490,32 @@ function drawProfitChart(
     const height = Math.max(1, Math.abs(zeroY - y));
     const isNeg = value < 0;
 
-    ctx.fillStyle = isNeg ? "rgba(239,68,68,.90)" : "rgba(34,197,94,.90)";
-    roundRect(ctx, x, top, bw, height, 7);
-    ctx.fill();
+    ctx.fillStyle = isNeg ? "rgba(239,68,68,.88)" : "rgba(34,197,94,.88)";
+    ctx.fillRect(x, top, bw, height);
 
     ctx.font = "900 12px ui-sans-serif, system-ui";
-    ctx.fillStyle = isNeg ? "rgba(185,28,28,.96)" : "rgba(22,101,52,.96)";
+    ctx.fillStyle = isNeg ? "rgba(185,28,28,.95)" : "rgba(22,101,52,.95)";
     ctx.textAlign = "center";
-
-    const valueLabelY = isNeg
-      ? Math.min(top + height + 17, h - 46)
-      : Math.max(top - 8, gy0 + 12);
-
-    ctx.fillText(shortMoney(value), x + bw / 2, valueLabelY);
+    ctx.fillText(shortMoney(value), x + bw / 2, value >= 0 ? top - 6 : top + height + 14);
   });
 
-  ctx.font = "900 13px ui-sans-serif, system-ui";
-  ctx.fillStyle = "rgba(15,23,42,.76)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillStyle = "rgba(15,23,42,.48)";
   ctx.textAlign = "center";
   labels.forEach((label, i) => {
     const x = gx0 + i * slot + slot / 2;
-    const width = Math.min(ctx.measureText(label).width + 18, Math.max(44, slot - 10));
-    ctx.fillStyle = "rgba(248,250,252,.96)";
-    ctx.strokeStyle = "rgba(15,23,42,.08)";
-    ctx.lineWidth = 1;
-    roundRect(ctx, x - width / 2, labelY - 17, width, 28, 14);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "rgba(15,23,42,.78)";
-    ctx.fillText(label, x, labelY + 2);
+    ctx.fillText(label, x, h - 7);
   });
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  const r = Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + width - r, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-  ctx.lineTo(x + width, y + height - r);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-  ctx.lineTo(x + r, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function drawRevCostChart(
-  canvas: HTMLCanvasElement,
-  labels: string[],
-  rev: number[],
-  cost: number[],
-) {
+function drawRevCostChart(canvas: HTMLCanvasElement, labels: string[], rev: number[], cost: number[]) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const h = 270;
+  const h = 240;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -690,15 +524,14 @@ function drawRevCostChart(
   ctx.clearRect(0, 0, w, h);
 
   const gx0 = 28;
-  const gx1 = w - 18;
-  const gy0 = 22;
-  const gy1 = h - 66;
-  const labelY = h - 22;
+  const gx1 = w - 12;
+  const gy0 = 18;
+  const gy1 = h - 28;
   const maxV = Math.max(...rev, ...cost, 1);
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.055)";
+    ctx.strokeStyle = "rgba(15,23,42,.06)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
@@ -707,8 +540,8 @@ function drawRevCostChart(
 
   const n = labels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(9, Math.min(22, slot * 0.24));
-  const gap = bw * 0.38;
+  const bw = Math.max(8, Math.min(20, slot * 0.26));
+  const gap = bw * 0.34;
 
   function yFor(v: number) {
     return gy1 - (v / maxV) * (gy1 - gy0);
@@ -720,33 +553,21 @@ function drawRevCostChart(
     const xCost = xBase + gap / 2;
 
     const yR = yFor(rev[i] || 0);
-    ctx.fillStyle = "rgba(34,211,238,.82)";
-    roundRect(ctx, xRev, yR, bw, gy1 - yR, 6);
-    ctx.fill();
+    ctx.fillStyle = "rgba(34,211,238,.78)";
+    ctx.fillRect(xRev, yR, bw, gy1 - yR);
 
     const yC = yFor(cost[i] || 0);
-    ctx.fillStyle = "rgba(124,58,237,.72)";
-    roundRect(ctx, xCost, yC, bw, gy1 - yC, 6);
-    ctx.fill();
+    ctx.fillStyle = "rgba(124,58,237,.68)";
+    ctx.fillRect(xCost, yC, bw, gy1 - yC);
 
-    ctx.font = "900 13px ui-sans-serif, system-ui";
+    ctx.font = "12px ui-sans-serif, system-ui";
+    ctx.fillStyle = "rgba(15,23,42,.48)";
     ctx.textAlign = "center";
-    const width = Math.min(ctx.measureText(label).width + 18, Math.max(44, slot - 10));
-    ctx.fillStyle = "rgba(248,250,252,.96)";
-    ctx.strokeStyle = "rgba(15,23,42,.08)";
-    ctx.lineWidth = 1;
-    roundRect(ctx, xBase - width / 2, labelY - 17, width, 28, 14);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "rgba(15,23,42,.78)";
-    ctx.fillText(label, xBase, labelY + 2);
+    ctx.fillText(label, xBase, h - 7);
   });
 }
 
-function drawDonut(
-  canvas: HTMLCanvasElement,
-  parts: { label: string; value: number; color: string }[],
-) {
+function drawDonut(canvas: HTMLCanvasElement, parts: { label: string; value: number; color: string }[]) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
@@ -822,16 +643,10 @@ export default function AppPage() {
   const [savingCorrections, setSavingCorrections] = useState(false);
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [applyAll, setApplyAll] = useState("");
-  const [assignmentErrors, setAssignmentErrors] = useState<
-    Record<string, AssignmentError>
-  >({});
+  const [assignmentErrors, setAssignmentErrors] = useState<Record<string, AssignmentError>>({});
 
-  const uploadedItems = items.filter(
-    (it) => it.status === "uploaded" && it.uploaded?.uuid,
-  );
-  const hasQueuedOrError = items.some(
-    (it) => it.status === "queued" || it.status === "error",
-  );
+  const uploadedItems = items.filter((it) => it.status === "uploaded" && it.uploaded?.uuid);
+  const hasQueuedOrError = items.some((it) => it.status === "queued" || it.status === "error");
   const hasUploading = items.some((it) => it.status === "uploading");
 
   const chartData = useMemo(() => buildJobChartData(result || {}), [result]);
@@ -841,19 +656,11 @@ export default function AppPage() {
   const kpis = result?.kpis || {};
   const revenue = Number(kpis.revenue) || 0;
   const costs = Number(kpis.costs) || 0;
-  const netProfit = Number.isFinite(Number(kpis.net_profit))
-    ? Number(kpis.net_profit)
-    : revenue - costs;
+  const netProfit = Number.isFinite(Number(kpis.net_profit)) ? Number(kpis.net_profit) : revenue - costs;
   const margin = Number(kpis.profit_margin_pct) || 0;
-  const losingJobs =
-    Number(kpis.losing_jobs_count) ||
-    chartData.all.filter((j) => j.profit < 0).length ||
-    0;
+  const losingJobs = Number(kpis.losing_jobs_count) || chartData.all.filter((j) => j.profit < 0).length || 0;
 
-  const classificationHasChanges = useMemo(
-    () => classificationRowsChanged(classificationRows),
-    [classificationRows],
-  );
+  const classificationHasChanges = useMemo(() => classificationRowsChanged(classificationRows), [classificationRows]);
 
   const classificationTotals = useMemo(() => {
     return classificationRows.reduce(
@@ -864,18 +671,17 @@ export default function AppPage() {
         sum.other += Number(row.edited.other) || 0;
         return sum;
       },
-      { labor: 0, materials: 0, subs: 0, other: 0 } as CostMix,
+      { labor: 0, materials: 0, subs: 0, other: 0 } as CostMix
     );
   }, [classificationRows]);
 
-  const smartSeverity =
-    losingJobs > 0 || netProfit < 0 ? "bad" : margin < 20 ? "warn" : "good";
+  const smartSeverity = losingJobs > 0 || netProfit < 0 ? "bad" : margin < 20 ? "warn" : "good";
   const smartHeadline =
     smartSeverity === "bad"
       ? "Margin risk detected in this upload"
       : smartSeverity === "warn"
-        ? "Profitability is positive but needs monitoring"
-        : "Strong profitability across uploaded jobs";
+      ? "Profitability is positive but needs monitoring"
+      : "Strong profitability across uploaded jobs";
 
   const smartCopy =
     smartSeverity === "bad"
@@ -890,10 +696,7 @@ export default function AppPage() {
   const insights = [
     {
       title: "Margin Health",
-      detail:
-        losingJobs > 0
-          ? `${losingJobs} uploaded job${losingJobs === 1 ? "" : "s"} are losing money or underperforming.`
-          : `Uploaded jobs are profitable with a blended margin of ${pct(margin)}.`,
+      detail: losingJobs > 0 ? `${losingJobs} uploaded job${losingJobs === 1 ? "" : "s"} are losing money or underperforming.` : `Uploaded jobs are profitable with a blended margin of ${pct(margin)}.`,
       tag: losingJobs > 0 ? "High impact" : "Healthy",
       color: losingJobs > 0 ? "bad" : "good",
     },
@@ -905,28 +708,17 @@ export default function AppPage() {
     },
     {
       title: "Recommended Focus",
-      detail:
-        losingJobs > 0
-          ? "Start with the weakest job and compare quoted labor, actual labor, and material purchasing."
-          : "Use this upload as a benchmark for healthy job structure and quoting discipline.",
+      detail: losingJobs > 0 ? "Start with the weakest job and compare quoted labor, actual labor, and material purchasing." : "Use this upload as a benchmark for healthy job structure and quoting discipline.",
       tag: "Next step",
       color: "good",
     },
   ];
 
   const actions = [
-    losingJobs > 0
-      ? "Review the losing job before quoting similar work again."
-      : "Use this upload as a pricing benchmark for similar jobs.",
-    laborShare > 35
-      ? "Review labor allocation and field hours."
-      : "Monitor labor and supplier trends weekly.",
-    materialShare > 70
-      ? "Engage suppliers for better material pricing."
-      : "Keep tracking cost mix as more jobs are uploaded.",
-    subsShare > 35
-      ? "Review subcontractor scope, pricing, and markup assumptions."
-      : "Track subcontractor exposure separately from materials.",
+    losingJobs > 0 ? "Review the losing job before quoting similar work again." : "Use this upload as a pricing benchmark for similar jobs.",
+    laborShare > 35 ? "Review labor allocation and field hours." : "Monitor labor and supplier trends weekly.",
+    materialShare > 70 ? "Engage suppliers for better material pricing." : "Keep tracking cost mix as more jobs are uploaded.",
+    subsShare > 35 ? "Review subcontractor scope, pricing, and markup assumptions." : "Track subcontractor exposure separately from materials.",
   ];
 
   function openFilePicker() {
@@ -954,25 +746,15 @@ export default function AppPage() {
       return;
     }
 
-    if (
-      access.isFree &&
-      items.length + selectedFiles.length > FREE_FILES_PER_ANALYSIS
-    ) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`,
-        "error",
-      );
+    if (access.isFree && items.length + selectedFiles.length > FREE_FILES_PER_ANALYSIS) {
+      showToast(`Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`, "error");
       return;
     }
 
     setResult(null);
 
     setItems((prev) => {
-      const existing = new Set(
-        prev.map(
-          (it) => `${it.file.name}-${it.file.size}-${it.file.lastModified}`,
-        ),
-      );
+      const existing = new Set(prev.map((it) => `${it.file.name}-${it.file.size}-${it.file.lastModified}`));
       const next = [...prev];
 
       selectedFiles.forEach((file) => {
@@ -982,10 +764,7 @@ export default function AppPage() {
         const suggestedRole = inferRoleFromName(file.name);
 
         next.push({
-          id:
-            typeof crypto !== "undefined" && crypto.randomUUID
-              ? crypto.randomUUID()
-              : `${Date.now()}-${Math.random()}`,
+          id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
           file,
           status: "queued",
           pct: 0,
@@ -998,19 +777,11 @@ export default function AppPage() {
       return next;
     });
 
-    showToast(
-      `${selectedFiles.length} file${selectedFiles.length === 1 ? "" : "s"} added.`,
-    );
+    showToast(`${selectedFiles.length} file${selectedFiles.length === 1 ? "" : "s"} added.`);
   }
 
   async function uploadOne(item: QueueItem) {
-    setItems((prev) =>
-      prev.map((it) =>
-        it.id === item.id
-          ? { ...it, status: "uploading", pct: 20, error: "" }
-          : it,
-      ),
-    );
+    setItems((prev) => prev.map((it) => (it.id === item.id ? { ...it, status: "uploading", pct: 20, error: "" } : it)));
 
     const form = new FormData();
     form.append("file", item.file, item.file.name);
@@ -1036,26 +807,9 @@ export default function AppPage() {
 
       if (!res.ok) throw new Error(data?.error || text || "Upload failed");
 
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === item.id
-            ? { ...it, status: "uploaded", pct: 100, uploaded: data }
-            : it,
-        ),
-      );
+      setItems((prev) => prev.map((it) => (it.id === item.id ? { ...it, status: "uploaded", pct: 100, uploaded: data } : it)));
     } catch (err: any) {
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === item.id
-            ? {
-                ...it,
-                status: "error",
-                pct: 0,
-                error: err.message || "Upload failed",
-              }
-            : it,
-        ),
-      );
+      setItems((prev) => prev.map((it) => (it.id === item.id ? { ...it, status: "error", pct: 0, error: err.message || "Upload failed" } : it)));
     }
   }
 
@@ -1066,16 +820,11 @@ export default function AppPage() {
     }
 
     if (access.isFree && items.length > FREE_FILES_PER_ANALYSIS) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to upload more.`,
-        "error",
-      );
+      showToast(`Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to upload more.`, "error");
       return;
     }
 
-    const targets = items.filter(
-      (it) => it.status === "queued" || it.status === "error",
-    );
+    const targets = items.filter((it) => it.status === "queued" || it.status === "error");
     for (const item of targets) {
       await uploadOne(item);
     }
@@ -1087,8 +836,7 @@ export default function AppPage() {
     uploadedItems.forEach((it) => {
       const error: AssignmentError = {};
       if (!it.job_id.trim()) error.job_id = true;
-      if (it.role !== "revenue" && it.role !== "cost" && it.role !== "combined")
-        error.role = true;
+      if (it.role !== "revenue" && it.role !== "cost" && it.role !== "combined") error.role = true;
       if (error.job_id || error.role) nextErrors[it.id] = error;
     });
 
@@ -1114,10 +862,7 @@ export default function AppPage() {
     }
 
     if (access.isFree && uploadedItems.length > FREE_FILES_PER_ANALYSIS) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`,
-        "error",
-      );
+      showToast(`Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`, "error");
       return;
     }
 
@@ -1128,30 +873,29 @@ export default function AppPage() {
         user_id: USER_ID,
         period_label: "Latest Period",
         files: uploadedItems.map((it, idx) => {
-          const filename = it.uploaded?.filename || it.file.name;
-          const mime =
-            it.uploaded?.mime || it.file.type || "application/octet-stream";
-          const lower = filename.toLowerCase();
+  const filename = it.uploaded?.filename || it.file.name;
+  const mime = it.uploaded?.mime || it.file.type || "application/octet-stream";
+  const lower = filename.toLowerCase();
 
-          const isStructured =
-            lower.endsWith(".csv") ||
-            lower.endsWith(".xlsx") ||
-            lower.endsWith(".xls") ||
-            mime.includes("csv") ||
-            mime.includes("spreadsheet") ||
-            mime.includes("excel");
+  const isStructured =
+    lower.endsWith(".csv") ||
+    lower.endsWith(".xlsx") ||
+    lower.endsWith(".xls") ||
+    mime.includes("csv") ||
+    mime.includes("spreadsheet") ||
+    mime.includes("excel");
 
-          return {
-            uuid: it.uploaded?.uuid,
-            kind: idx === 0 ? "job_export" : "supporting",
-            filename,
-            mime,
-            job_id: it.job_id.trim(),
-            role: it.role === "combined" ? "combined_invoice" : it.role,
-            parse_mode: isStructured ? "code" : "ai",
-            file_category: isStructured ? "structured" : "document",
-          };
-        }),
+  return {
+    uuid: it.uploaded?.uuid,
+    kind: idx === 0 ? "job_export" : "supporting",
+    filename,
+    mime,
+    job_id: it.job_id.trim(),
+    role: it.role === "combined" ? "combined_invoice" : it.role,
+    parse_mode: isStructured ? "code" : "ai",
+    file_category: isStructured ? "structured" : "document",
+  };
+}),
       };
 
       const token = await getToken();
@@ -1195,10 +939,7 @@ export default function AppPage() {
     }
 
     if (access.isFree && uploadedItems.length > FREE_FILES_PER_ANALYSIS) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`,
-        "error",
-      );
+      showToast(`Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`, "error");
       return;
     }
 
@@ -1212,24 +953,15 @@ export default function AppPage() {
   }
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
-    setItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, ...patch } : it)),
-    );
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
 
     if ("job_id" in patch || "role" in patch) {
       setAssignmentErrors((prev) => {
         const next = { ...prev };
         const current = { ...(next[id] || {}) };
 
-        if ("job_id" in patch && String(patch.job_id || "").trim())
-          current.job_id = false;
-        if (
-          "role" in patch &&
-          (patch.role === "revenue" ||
-            patch.role === "cost" ||
-            patch.role === "combined")
-        )
-          current.role = false;
+        if ("job_id" in patch && String(patch.job_id || "").trim()) current.job_id = false;
+        if ("role" in patch && (patch.role === "revenue" || patch.role === "cost" || patch.role === "combined")) current.role = false;
 
         if (!current.job_id && !current.role) delete next[id];
         else next[id] = current;
@@ -1240,11 +972,7 @@ export default function AppPage() {
   }
 
   function applyJobToAll() {
-    setItems((prev) =>
-      prev.map((it) =>
-        it.status === "uploaded" ? { ...it, job_id: applyAll } : it,
-      ),
-    );
+    setItems((prev) => prev.map((it) => (it.status === "uploaded" ? { ...it, job_id: applyAll } : it)));
     if (applyAll.trim()) {
       setAssignmentErrors((prev) => {
         const next = { ...prev };
@@ -1264,20 +992,11 @@ export default function AppPage() {
 
     requestAnimationFrame(() => {
       if (profitCanvasRef.current) {
-        drawProfitChart(
-          profitCanvasRef.current,
-          chartData.profit.labels,
-          chartData.profit.values,
-        );
+        drawProfitChart(profitCanvasRef.current, chartData.profit.labels, chartData.profit.values);
       }
 
       if (revCostCanvasRef.current) {
-        drawRevCostChart(
-          revCostCanvasRef.current,
-          chartData.revcost.labels,
-          chartData.revcost.rev,
-          chartData.revcost.cost,
-        );
+        drawRevCostChart(revCostCanvasRef.current, chartData.revcost.labels, chartData.revcost.rev, chartData.revcost.cost);
       }
 
       if (donutCanvasRef.current) {
@@ -1361,10 +1080,8 @@ export default function AppPage() {
     }
   }
 
-  const baseButton =
-    "rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md active:scale-[0.99]";
-  const disabledButton =
-    "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:shadow-none";
+  const baseButton = "rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md active:scale-[0.99]";
+  const disabledButton = "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:shadow-none";
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-white">
@@ -1393,25 +1110,15 @@ export default function AppPage() {
               <div className="pageKicker">Profitability Workspace</div>
 
               <h1 className="pageTitle">
-                Turn job files into{" "}
-                <span className="gradText">profit clarity</span>
+                Turn job files into <span className="gradText">profit clarity</span>
               </h1>
 
-              <p className="pageSub">
-                Upload invoices, bills, and exports to instantly see revenue,
-                costs, margin risk, losing jobs, and next-step actions.
-              </p>
+              <p className="pageSub">Upload invoices, bills, and exports to instantly see revenue, costs, margin risk, losing jobs, and next-step actions.</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm">
-                {analyzing
-                  ? "Analyzing…"
-                  : hasUploading
-                    ? "Uploading"
-                    : result
-                      ? "Completed"
-                      : "Ready"}
+                {analyzing ? "Analyzing…" : hasUploading ? "Uploading" : result ? "Completed" : "Ready"}
               </div>
             </div>
           </div>
@@ -1451,12 +1158,10 @@ export default function AppPage() {
                 analyzeFiles();
               }}
               className={`rounded-2xl border px-5 py-3 text-sm font-black shadow-sm hover:shadow-md active:scale-[0.99] ${
-                analyzing
-                  ? "border-violet-200 bg-gradient-to-r from-violet-50 via-cyan-50 to-violet-50 text-slate-900"
-                  : "border-cyan-200 bg-gradient-to-r from-cyan-50 to-violet-50 text-slate-900"
+                analyzing ? "border-violet-200 bg-gradient-to-r from-violet-50 via-cyan-50 to-violet-50 text-slate-900" : "border-cyan-200 bg-gradient-to-r from-cyan-50 to-violet-50 text-slate-900"
               } ${disabledButton} disabled:bg-none`}
             >
-              <span className="flex w-full items-center justify-center gap-2 text-center">
+              <span className="flex items-center gap-2">
                 {analyzing && <TinySpinner />}
                 {analyzing ? "Analyzing" : "Analyze"}
               </span>
@@ -1466,12 +1171,8 @@ export default function AppPage() {
           <div className="uploadPanel relative z-10 overflow-hidden rounded-[22px] border border-slate-100 bg-white/90 shadow-xl shadow-slate-200/70 backdrop-blur">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-white/90 p-5">
               <div>
-                <h2 className="font-black tracking-tight text-slate-950">
-                  Upload Queue
-                </h2>
-                <p className="mt-1 text-sm font-semibold text-slate-500">
-                  Add multiple files — each uploads separately.
-                </p>
+                <h2 className="font-black tracking-tight text-slate-950">Upload Queue</h2>
+                <p className="mt-1 text-sm font-semibold text-slate-500">Add multiple files — each uploads separately.</p>
               </div>
 
               <button
@@ -1514,12 +1215,8 @@ export default function AppPage() {
                 <UploadGradientIcon />
 
                 <div>
-                  <div className="font-black text-slate-950">
-                    Drop files here
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-500">
-                    or click Choose files. Tip: put the job export first.
-                  </div>
+                  <div className="font-black text-slate-950">Drop files here</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-500">or click Choose files. Tip: put the job export first.</div>
                 </div>
               </div>
             </div>
@@ -1527,36 +1224,26 @@ export default function AppPage() {
             {items.length > 0 && (
               <div className="grid gap-3 px-5 pb-5 xl:grid-cols-2 2xl:grid-cols-3">
                 {items.map((it) => (
-                  <div
-                    key={it.id}
-                    className="rounded-3xl border border-slate-100 bg-white p-4"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div key={it.id} className="rounded-3xl border border-slate-100 bg-white p-4">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <div className="break-words text-sm font-black text-slate-950">
-                          {it.file.name}
-                        </div>
+                        <div className="break-words text-sm font-black text-slate-950">{it.file.name}</div>
                         <div className="mt-1 text-xs font-bold text-slate-400">
-                          {fmtBytes(it.file.size)} •{" "}
-                          {it.file.type || "unknown type"}
+                          {fmtBytes(it.file.size)} • {it.file.type || "unknown type"}
                         </div>
-                        {it.error && (
-                          <div className="mt-2 text-xs font-bold text-red-600">
-                            {it.error}
-                          </div>
-                        )}
+                        {it.error && <div className="mt-2 text-xs font-bold text-red-600">{it.error}</div>}
                       </div>
 
-                      <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         <span
                           className={`rounded-full px-3 py-1 text-sm font-black ${
                             it.status === "uploaded"
                               ? "bg-emerald-50 text-emerald-700"
                               : it.status === "error"
-                                ? "bg-red-50 text-red-700"
-                                : it.status === "uploading"
-                                  ? "bg-cyan-50 text-cyan-700"
-                                  : "bg-slate-100 text-slate-700"
+                              ? "bg-red-50 text-red-700"
+                              : it.status === "uploading"
+                              ? "bg-cyan-50 text-cyan-700"
+                              : "bg-slate-100 text-slate-700"
                           }`}
                         >
                           {it.status}
@@ -1567,9 +1254,7 @@ export default function AppPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            setItems((prev) =>
-                              prev.filter((x) => x.id !== it.id),
-                            );
+                            setItems((prev) => prev.filter((x) => x.id !== it.id));
                             setAssignmentErrors((prev) => {
                               const next = { ...prev };
                               delete next[it.id];
@@ -1590,9 +1275,7 @@ export default function AppPage() {
             {toast && (
               <div
                 className={`mx-5 mb-5 rounded-2xl p-4 text-sm font-bold ${
-                  toastTone === "error"
-                    ? "border border-red-100 bg-red-50 text-red-700"
-                    : "border border-emerald-100 bg-emerald-50 text-emerald-800"
+                  toastTone === "error" ? "border border-red-100 bg-red-50 text-red-700" : "border border-emerald-100 bg-emerald-50 text-emerald-800"
                 }`}
               >
                 {toast}
@@ -1604,35 +1287,17 @@ export default function AppPage() {
             <div className="resultsPanel mt-5 overflow-hidden rounded-[22px] border border-slate-100 bg-white/80 text-[15px] leading-6 shadow-xl shadow-slate-200/70 backdrop-blur lg:text-base">
               <div className="flex flex-col justify-between gap-4 border-b border-slate-100 bg-white/90 p-5 sm:flex-row sm:items-start">
                 <div>
-                  <h2 className="text-xl font-black tracking-tight text-slate-950 lg:text-2xl">
-                    Results
-                  </h2>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500 lg:text-base">
-                    KPIs + smart insights + job-level charts + actions.
-                  </p>
+                  <h2 className="text-xl font-black tracking-tight text-slate-950 lg:text-2xl">Results</h2>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-500 lg:text-base">KPIs + smart insights + job-level charts + actions.</p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <a
-                    href="/dashboard"
-                    className="dashboardCtaBtn relative overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-cyan-50 px-4 py-2 text-xs font-black text-slate-900 shadow-md shadow-violet-100 transition hover:-translate-y-0.5 hover:shadow-lg"
-                  >
-                    <span className="dashboardCtaGlow" />
-                    <span className="relative z-10 inline-flex items-center gap-2">
-                      <span className="dashboardCtaDot" />
-                      View Dashboard →
-                    </span>
+                  <a href="/dashboard" className="relative rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-cyan-50 px-4 py-2 text-xs font-black text-slate-900 shadow-md shadow-violet-100 transition hover:-translate-y-0.5 hover:shadow-lg">
+                    <span className="absolute -inset-1 -z-10 animate-pulse rounded-2xl bg-violet-200/40 blur-md" />
+                    View Dashboard →
                   </a>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        JSON.stringify(result, null, 2),
-                      )
-                    }
-                    className="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs font-black text-slate-700"
-                  >
+                  <button type="button" onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))} className="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs font-black text-slate-700">
                     Copy report
                   </button>
                 </div>
@@ -1643,35 +1308,14 @@ export default function AppPage() {
                   {[
                     ["Revenue", money(revenue), ""],
                     ["Costs", money(costs), ""],
-                    [
-                      "Net Profit",
-                      money(netProfit),
-                      netProfit < 0 ? "text-red-600" : "text-emerald-700",
-                    ],
+                    ["Net Profit", money(netProfit), netProfit < 0 ? "text-red-600" : "text-emerald-700"],
                     ["Margin", pct(margin), ""],
-                    [
-                      "Jobs",
-                      String(kpis.jobs_count ?? chartData.all.length ?? "—"),
-                      "",
-                    ],
-                    [
-                      "Losing Jobs",
-                      String(losingJobs ?? "—"),
-                      losingJobs > 0 ? "text-red-600" : "",
-                    ],
+                    ["Jobs", String(kpis.jobs_count ?? chartData.all.length ?? "—"), ""],
+                    ["Losing Jobs", String(losingJobs ?? "—"), losingJobs > 0 ? "text-red-600" : ""],
                   ].map(([label, value, color]) => (
-                    <div
-                      key={label}
-                      className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
-                    >
-                      <div className="text-xs font-black uppercase tracking-wider text-slate-400">
-                        {label}
-                      </div>
-                      <div
-                        className={`mt-2 text-xl font-black lg:text-2xl ${color || "text-slate-900"}`}
-                      >
-                        {value}
-                      </div>
+                    <div key={label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                      <div className="text-xs font-black uppercase tracking-wider text-slate-400">{label}</div>
+                      <div className={`mt-2 text-xl font-black lg:text-2xl ${color || "text-slate-900"}`}>{value}</div>
                     </div>
                   ))}
                 </div>
@@ -1679,31 +1323,17 @@ export default function AppPage() {
                 <div className="smartSummaryPanel mt-4 rounded-3xl border border-slate-100 bg-white p-5">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
-                      <div className="text-sm font-black uppercase tracking-wider text-slate-400">
-                        Smart Summary
-                      </div>
-                      <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950 lg:text-3xl">
-                        {smartHeadline}
-                      </h3>
-                      <p className="mt-2 max-w-5xl text-sm font-semibold leading-7 text-slate-500 lg:text-base">
-                        {smartCopy}
-                      </p>
+                      <div className="text-sm font-black uppercase tracking-wider text-slate-400">Smart Summary</div>
+                      <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950 lg:text-3xl">{smartHeadline}</h3>
+                      <p className="mt-2 max-w-5xl text-sm font-semibold leading-7 text-slate-500 lg:text-base">{smartCopy}</p>
                     </div>
 
                     <span
                       className={`w-fit rounded-full px-4 py-2 text-sm font-black ${
-                        smartSeverity === "bad"
-                          ? "bg-red-50 text-red-700"
-                          : smartSeverity === "warn"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-emerald-50 text-emerald-700"
+                        smartSeverity === "bad" ? "bg-red-50 text-red-700" : smartSeverity === "warn" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
                       }`}
                     >
-                      {smartSeverity === "bad"
-                        ? "High impact"
-                        : smartSeverity === "warn"
-                          ? "Needs attention"
-                          : "Healthy"}
+                      {smartSeverity === "bad" ? "High impact" : smartSeverity === "warn" ? "Needs attention" : "Healthy"}
                     </span>
                   </div>
                 </div>
@@ -1711,12 +1341,8 @@ export default function AppPage() {
                 <div className="analysisGrid mt-4 grid gap-4 xl:grid-cols-2">
                   <div className="rounded-3xl border border-slate-100 bg-white p-5">
                     <div className="mb-3">
-                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">
-                        Profit by Job
-                      </h3>
-                      <p className="text-sm font-semibold leading-6 text-slate-500">
-                        Green = profitable, red = negative.
-                      </p>
+                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">Profit by Job</h3>
+                      <p className="text-sm font-semibold leading-6 text-slate-500">Green = profitable, red = negative.</p>
                     </div>
                     <canvas ref={profitCanvasRef} className="w-full" />
                     <JobList rows={chartData.profit.rows} mode="profit" />
@@ -1724,12 +1350,8 @@ export default function AppPage() {
 
                   <div className="rounded-3xl border border-slate-100 bg-white p-5">
                     <div className="mb-3">
-                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">
-                        Revenue vs Costs by Job
-                      </h3>
-                      <p className="text-sm font-semibold leading-6 text-slate-500">
-                        Exact job identifier + totals shown below.
-                      </p>
+                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">Revenue vs Costs by Job</h3>
+                      <p className="text-sm font-semibold leading-6 text-slate-500">Exact job identifier + totals shown below.</p>
                     </div>
                     <canvas ref={revCostCanvasRef} className="w-full" />
                     <JobList rows={chartData.revcost.rows} mode="revcost" />
@@ -1739,14 +1361,9 @@ export default function AppPage() {
                 <div className="costMixPanel mt-4 rounded-3xl border border-slate-100 bg-white p-5">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                     <div>
-                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">
-                        Cost Mix
-                      </h3>
+                      <h3 className="text-lg font-black text-slate-950 lg:text-xl">Cost Mix</h3>
                       <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                        All jobs combined — donut uses absolute cost activity so
-                        negative credits do not distort the chart. The cards
-                        still show the true signed bucket totals used for
-                        profit.
+                        All jobs combined — donut uses absolute cost activity so negative credits do not distort the chart. The cards still show the true signed bucket totals used for profit.
                       </p>
                     </div>
 
@@ -1770,12 +1387,9 @@ export default function AppPage() {
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span
-                              className={`h-3 w-3 rounded ${bucket.colorClass}`}
-                            />
+                            <span className={`h-3 w-3 rounded ${bucket.colorClass}`} />
                             <span>
-                              <b className="text-slate-900">{bucket.label}</b> —{" "}
-                              {money(bucket.value)}
+                              <b className="text-slate-900">{bucket.label}</b> — {money(bucket.value)}
                             </span>
                           </div>
 
@@ -1875,65 +1489,39 @@ export default function AppPage() {
                   </div>
                 </div>
 
-                </div>
-
                 <div className="bottomAnalysisGrid mt-4 grid gap-4 xl:grid-cols-2">
                   <div className="rounded-3xl border border-slate-100 bg-white p-5">
-                    <h3 className="text-lg font-black text-slate-950 lg:text-xl">
-                      Smart Insights
-                    </h3>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                      What matters most from this upload right now.
-                    </p>
+                    <h3 className="text-lg font-black text-slate-950 lg:text-xl">Smart Insights</h3>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">What matters most from this upload right now.</p>
 
                     <div className="mt-4 grid gap-3 xl:grid-cols-3">
                       {insights.map((insight) => (
-                        <div
-                          key={insight.title}
-                          className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
-                        >
+                        <div key={insight.title} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                           <div className="flex items-start justify-between gap-3">
-                            <div className="text-base font-black text-slate-950">
-                              {insight.title}
-                            </div>
+                            <div className="text-base font-black text-slate-950">{insight.title}</div>
                             <span
                               className={`rounded-full px-3 py-1 text-xs font-black ${
-                                insight.color === "bad"
-                                  ? "bg-red-50 text-red-700"
-                                  : insight.color === "warn"
-                                    ? "bg-amber-50 text-amber-700"
-                                    : "bg-emerald-50 text-emerald-700"
+                                insight.color === "bad" ? "bg-red-50 text-red-700" : insight.color === "warn" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
                               }`}
                             >
                               {insight.tag}
                             </span>
                           </div>
-                          <p className="mt-2 text-sm font-semibold leading-7 text-slate-500 lg:text-base">
-                            {insight.detail}
-                          </p>
+                          <p className="mt-2 text-sm font-semibold leading-7 text-slate-500 lg:text-base">{insight.detail}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div className="rounded-3xl border border-slate-100 bg-white p-5">
-                    <h3 className="text-lg font-black text-slate-950 lg:text-xl">
-                      Recommended Actions
-                    </h3>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                      Next 7 days — operator-ready.
-                    </p>
+                    <h3 className="text-lg font-black text-slate-950 lg:text-xl">Recommended Actions</h3>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Next 7 days — operator-ready.</p>
 
                     <div className="mt-4 grid gap-3 xl:grid-cols-3">
                       {actions.map((action) => (
-                        <label
-                          key={action}
-                          className="flex cursor-pointer gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
-                        >
+                        <label key={action} className="flex cursor-pointer gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                           <input type="checkbox" className="mt-1" />
-                          <span className="text-sm font-bold leading-7 text-slate-700 lg:text-base">
-                            {action}
-                          </span>
+                          <span className="text-sm font-bold leading-7 text-slate-700 lg:text-base">{action}</span>
                         </label>
                       ))}
                     </div>
@@ -1945,263 +1533,208 @@ export default function AppPage() {
         </div>
       </section>
 
-      {result && (
-        <a
-          href="/dashboard"
-          className="floatingDashboardCta"
-          aria-label="View full DropClarity dashboard"
-        >
-          <span className="floatingDashboardPulse" />
-          <span className="relative z-10 flex min-w-0 items-center gap-2.5">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-blue-600 text-xs font-black text-white shadow-sm shadow-violet-100">
-              ✓
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">
-                Analysis complete
-              </span>
-              <span className="block truncate text-sm font-black text-slate-900">
-                View dashboard →
-              </span>
-            </span>
-          </span>
-        </a>
-      )}
-
-      {jobModalOpen && (
-        <div className="assignModalOverlay fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/35 p-3 backdrop-blur-sm sm:p-4">
-          <div className="assignModal mx-auto my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-            <div className="shrink-0 border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="mb-3 inline-flex rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-slate-600 shadow-sm">
-                    Required before analysis
-                  </div>
-
-                  <h2 className="text-2xl font-black tracking-tight text-slate-950">
-                    Assign Job IDs & File Types
-                  </h2>
-
-                  <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
-                    Add a job identifier and choose whether each file is revenue
-                    or cost.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setJobModalOpen(false)}
-                  className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
-                >
-                  ✕
-                </button>
-              </div>
+{jobModalOpen && (
+  <div className="assignModalOverlay fixed inset-0 z-[10000] grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm">
+    <div className="assignModal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+      <div className="relative border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="mb-3 inline-flex rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-slate-600 shadow-sm">
+              Required before analysis
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 sm:p-5">
-              <div className="mb-5 rounded-3xl border border-cyan-100 bg-white p-4 shadow-sm">
-                <div className="mb-3">
-                  <div className="text-xs font-black uppercase tracking-wider text-slate-400">
-                    Quick apply
-                  </div>
-                  <div className="mt-1 text-sm font-bold text-slate-600">
-                    Use this when every uploaded file belongs to the same job.
-                  </div>
-                </div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-950">
+              Assign Job IDs & File Types
+            </h2>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <input
-                    value={applyAll}
-                    onChange={(e) => setApplyAll(e.target.value)}
-                    placeholder="e.g. JOB-1042 or Smith Kitchen Reno"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 focus:placeholder:text-slate-200"
-                  />
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
+              Add a job identifier and choose whether each file is revenue or cost.
+            </p>
+          </div>
 
-                  <button
-                    type="button"
-                    onClick={applyJobToAll}
-                    className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-cyan-200"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
+          <button
+            type="button"
+            onClick={() => setJobModalOpen(false)}
+            className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
 
-              <div className="grid gap-4 xl:grid-cols-2">
-                {uploadedItems.map((it) => {
-                  const errors = assignmentErrors[it.id] || {};
-                  const roleMissing = !!errors.role;
-                  const jobMissing = !!errors.job_id;
-
-                  return (
-                    <div
-                      key={it.id}
-                      className={`rounded-3xl border bg-white p-5 shadow-sm ${
-                        roleMissing || jobMissing
-                          ? "border-red-200 ring-4 ring-red-50"
-                          : "border-slate-200"
-                      }`}
-                    >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="break-words text-base font-black text-slate-950">
-                            {it.uploaded?.filename || it.file.name}
-                          </div>
-
-                          <div className="mt-1 text-xs font-bold text-slate-400">
-                            {fmtBytes(it.file.size)} •{" "}
-                            {it.file.type || "unknown type"}
-                          </div>
-                        </div>
-
-                        <span
-                          className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
-                            it.role === "revenue"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : it.role === "cost"
-                                ? "bg-violet-50 text-violet-700"
-                                : it.role === "combined"
-                                  ? "bg-cyan-50 text-cyan-700"
-                                  : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {it.role === "combined"
-                            ? "Combined Invoice"
-                            : it.role
-                              ? it.role
-                              : "type needed"}
-                        </span>
-                      </div>
-
-                      <div className="mt-5 grid gap-4 sm:grid-cols-[1.35fr_.85fr]">
-                        <div>
-                          <label className="text-xs font-black uppercase tracking-wider text-slate-500">
-                            Job ID / Job Name{" "}
-                            <span className="text-red-500">*</span>
-                          </label>
-
-                          <input
-                            value={it.job_id}
-                            onChange={(e) =>
-                              updateItem(it.id, { job_id: e.target.value })
-                            }
-                            placeholder="e.g. JOB-1042"
-                            className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
-                              jobMissing
-                                ? "border-red-400 focus:border-red-400 focus:ring-red-100"
-                                : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
-                            }`}
-                          />
-
-                          {jobMissing && (
-                            <div className="mt-2 text-xs font-black text-red-600">
-                              *Required
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-black uppercase tracking-wider text-slate-500">
-                            File Type <span className="text-red-500">*</span>
-                          </label>
-
-                          <select
-                            value={it.role}
-                            onChange={(e) =>
-                              updateItem(it.id, {
-                                role: e.target.value as FileRole,
-                              })
-                            }
-                            className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-black outline-none focus:ring-4 ${
-                              roleMissing
-                                ? "border-red-500 bg-red-50 text-red-700 focus:border-red-500 focus:ring-red-100"
-                                : "border-slate-200 text-slate-900 focus:border-cyan-300 focus:ring-cyan-100"
-                            }`}
-                          >
-                            <option value="">Select type</option>
-                            <option value="revenue">Revenue</option>
-                            <option value="cost">Cost</option>
-                            <option value="combined">Combined Invoice</option>
-                          </select>
-
-                          {roleMissing && (
-                            <div className="mt-2 text-xs font-black text-red-600">
-                              *Required
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      <div className="max-h-[60vh] overflow-auto bg-slate-50 p-5">
+        <div className="mb-5 rounded-3xl border border-cyan-100 bg-white p-4 shadow-sm">
+          <div className="mb-3">
+            <div className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Quick apply
             </div>
-
-            <div className="shrink-0 flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:p-5">
-              <div className="text-xs font-bold leading-5 text-slate-500">
-                Revenue = money earned. Cost = bills, receipts, expenses.
-                Combined Invoice = one file that includes both revenue and
-                costs.
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => setJobModalOpen(false)}
-                  className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={continueFromAssignments}
-                  className="rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 px-6 py-3 text-sm font-black text-slate-900 shadow-md shadow-cyan-100 hover:border-cyan-300"
-                >
-                  Continue
-                </button>
-              </div>
+            <div className="mt-1 text-sm font-bold text-slate-600">
+              Use this when every uploaded file belongs to the same job.
             </div>
           </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              value={applyAll}
+              onChange={(e) => setApplyAll(e.target.value)}
+              placeholder="e.g. JOB-1042 or Smith Kitchen Reno"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
+            />
+
+            <button
+              type="button"
+              onClick={applyJobToAll}
+              className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-cyan-200"
+            >
+              Apply
+            </button>
+          </div>
         </div>
-      )}
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          {uploadedItems.map((it) => {
+            const errors = assignmentErrors[it.id] || {};
+            const roleMissing = !!errors.role;
+            const jobMissing = !!errors.job_id;
+
+            return (
+              <div
+                key={it.id}
+                className={`rounded-3xl border bg-white p-5 shadow-sm ${
+                  roleMissing || jobMissing
+                    ? "border-red-200 ring-4 ring-red-50"
+                    : "border-slate-200"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="break-words text-base font-black text-slate-950">
+                      {it.uploaded?.filename || it.file.name}
+                    </div>
+
+                    <div className="mt-1 text-xs font-bold text-slate-400">
+                      {fmtBytes(it.file.size)} • {it.file.type || "unknown type"}
+                    </div>
+                  </div>
+
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
+                      it.role === "revenue"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : it.role === "cost"
+                        ? "bg-violet-50 text-violet-700"
+                        : it.role === "combined"
+                        ? "bg-cyan-50 text-cyan-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {it.role === "combined" ? "Combined Invoice" : it.role ? it.role : "type needed"}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-[1.35fr_.85fr]">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      Job ID / Job Name <span className="text-red-500">*</span>
+                    </label>
+
+                    <input
+                      value={it.job_id}
+                      onChange={(e) => updateItem(it.id, { job_id: e.target.value })}
+                      placeholder="e.g. JOB-1042"
+                      className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-4 ${
+                        jobMissing
+                          ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+                          : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
+                      }`}
+                    />
+
+                    {jobMissing && (
+                      <div className="mt-2 text-xs font-black text-red-600">
+                        *Required
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-500">
+                      File Type <span className="text-red-500">*</span>
+                    </label>
+
+                    <select
+                      value={it.role}
+                      onChange={(e) =>
+                        updateItem(it.id, { role: e.target.value as FileRole })
+                      }
+                      className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-black outline-none focus:ring-4 ${
+                        roleMissing
+                          ? "border-red-500 bg-red-50 text-red-700 focus:border-red-500 focus:ring-red-100"
+                          : "border-slate-200 text-slate-900 focus:border-cyan-300 focus:ring-cyan-100"
+                      }`}
+                    >
+                      <option value="">Select type</option>
+                      <option value="revenue">Revenue</option>
+                      <option value="cost">Cost</option>
+                      <option value="combined">Combined Invoice</option>
+                    </select>
+
+                    {roleMissing && (
+                      <div className="mt-2 text-xs font-black text-red-600">
+                        *Required
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
+        <div className="text-xs font-bold leading-5 text-slate-500">
+          Revenue = money earned. Cost = bills, receipts, expenses. Combined Invoice = one file that includes both revenue and costs.
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setJobModalOpen(false)}
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={continueFromAssignments}
+            className="rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 px-6 py-3 text-sm font-black text-slate-900 shadow-md shadow-cyan-100 hover:border-cyan-300"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </main>
   );
 }
 
-function JobList({
-  rows,
-  mode,
-}: {
-  rows: JobRow[];
-  mode: "profit" | "revcost";
-}) {
+function JobList({ rows, mode }: { rows: JobRow[]; mode: "profit" | "revcost" }) {
   return (
     <div className="mt-4 grid gap-2 border-t border-slate-100 pt-4 2xl:grid-cols-2">
       {rows.map((row) => (
-        <div
-          key={row.ident}
-          className="flex flex-col justify-between gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 p-3 sm:flex-row sm:items-center"
-        >
+        <div key={row.ident} className="flex flex-col justify-between gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 p-3 sm:flex-row sm:items-center">
           <div className="min-w-0">
-            <div className="truncate text-base font-black text-slate-950">
-              {row.ident}
-            </div>
+            <div className="truncate text-base font-black text-slate-950">{row.ident}</div>
             <div className="mt-1 text-sm font-bold leading-6 text-slate-500">
               Revenue {money(row.revenue)} • Costs {money(row.costs)}
             </div>
           </div>
 
           <div className="shrink-0 text-base font-black">
-            {mode === "profit" ? (
-              <span
-                className={row.profit < 0 ? "text-red-600" : "text-emerald-700"}
-              >
-                {money(row.profit)}
-              </span>
-            ) : (
-              <span className="text-slate-900">Net {money(row.profit)}</span>
-            )}
+            {mode === "profit" ? <span className={row.profit < 0 ? "text-red-600" : "text-emerald-700"}>{money(row.profit)}</span> : <span className="text-slate-900">Net {money(row.profit)}</span>}
           </div>
         </div>
       ))}
@@ -2219,17 +1752,6 @@ const analyzePageCss = `
 .pageSub{margin-top:9px;max-width:860px;color:rgba(51,65,85,.78);font-size:clamp(14px,1.2vw,17px);line-height:1.5;font-weight:750}
 .analyzeActions{margin-bottom:16px}
 .analyzeActions button,.analyzeActions a{min-height:44px}
-.dashboardCtaBtn{isolation:isolate;animation:dashboardCtaNudge 3.4s ease-in-out infinite}
-.dashboardCtaGlow{position:absolute;inset:-24px;z-index:0;background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(139,92,246,.16),rgba(34,211,238,.0));transform:translateX(-60%);animation:dashboardCtaSweep 2.9s ease-in-out infinite}
-.dashboardCtaDot{height:7px;width:7px;border-radius:999px;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.09);animation:dashboardCtaDot 1.8s ease-in-out infinite}
-.floatingDashboardCta{position:fixed;right:22px;bottom:22px;z-index:80;display:flex;max-width:calc(100vw - 32px);align-items:center;border:1px solid rgba(139,92,246,.18);border-radius:18px;background:rgba(255,255,255,.92);padding:9px 11px;box-shadow:0 16px 42px rgba(15,23,42,.13),0 0 0 1px rgba(255,255,255,.65) inset;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-decoration:none;animation:floatingDashboardEnter .34s ease-out both,floatingDashboardBreathe 3.4s ease-in-out .65s infinite}
-.floatingDashboardPulse{position:absolute;inset:-2px;border-radius:20px;background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(139,92,246,.15),rgba(37,99,235,.12));filter:blur(8px);opacity:.44;animation:floatingDashboardGlow 2.8s ease-in-out infinite}
-@keyframes dashboardCtaSweep{0%{transform:translateX(-70%)}55%,100%{transform:translateX(70%)}}
-@keyframes dashboardCtaNudge{0%,78%,100%{transform:translateY(0)}86%{transform:translateY(-1px)}94%{transform:translateY(0)}}
-@keyframes dashboardCtaDot{0%,100%{transform:scale(1);box-shadow:0 0 0 4px rgba(16,185,129,.08)}50%{transform:scale(1.14);box-shadow:0 0 0 7px rgba(16,185,129,.12)}}
-@keyframes floatingDashboardEnter{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes floatingDashboardBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@keyframes floatingDashboardGlow{0%,100%{opacity:.28}50%{opacity:.58}}
 .uploadPanel,.resultsPanel{border-color:rgba(15,23,42,.085)!important;box-shadow:0 20px 58px rgba(2,6,23,.09)!important;border-radius:22px!important}
 .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important;border-bottom-color:rgba(15,23,42,.075)!important}
 .uploadPanel h2,.resultsPanel h2{font-size:20px!important;line-height:1.15;letter-spacing:-.025em;color:rgba(15,23,42,.97)!important}
@@ -2249,31 +1771,9 @@ const analyzePageCss = `
 .costMixPanel canvas{width:min(220px,100%)!important;margin:0 auto}
 .assignModal{max-width:min(1120px,calc(100vw - 32px))!important;border-radius:28px!important}
 .assignModal h2{font-size:clamp(22px,2.4vw,28px)!important;line-height:1.08!important;letter-spacing:-.035em!important}
-.assignModalOverlay{-webkit-overflow-scrolling:touch}
 @media(max-width:1280px){.analyzeWrap{width:min(100%,calc(100vw - 32px))}.resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media(max-width:900px){.resultKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.uploadPanel>div:first-child,.resultsPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}}
-@media(max-width:760px){
-  .floatingDashboardCta{left:16px;right:16px;bottom:14px;width:auto;padding:9px 11px;border-radius:18px}
-  .analyzeShell{padding:28px 0 82px!important}
-  .analyzeWrap{width:100%!important;max-width:100%!important;padding:0 18px!important}
-  .pageTitle{font-size:29px!important;line-height:1.08!important}
-  .pageSub{font-size:14px!important;line-height:1.48!important}
-  .analyzeTopbar{padding:0!important}
-  .analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important}
-  .analyzeActions button{display:flex!important;width:100%!important;align-items:center!important;justify-content:center!important;text-align:center!important}
-  .uploadPanel,.resultsPanel{width:100%!important;overflow:hidden!important;border-radius:22px!important}
-  .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important}
-  .uploadPanel [role="button"]{margin:14px!important;padding:16px!important}
-  .uploadPanel [role="button"]>div{align-items:flex-start!important}
-  .uploadPanel .grid{min-width:0!important}
-  .uploadPanel span.rounded-full{max-width:100%;white-space:nowrap}
-  .resultKpiGrid{grid-template-columns:1fr!important}
-  .smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}
-  .costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}
-  .assignModalOverlay{padding:0!important}
-  .assignModal{margin:0!important;max-width:100%!important;width:100%!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border-left:0!important;border-right:0!important}
-  .assignModal h2{font-size:23px!important}
-  .assignModal select,.assignModal input{font-size:16px!important}
-}
-@media(max-width:420px){.analyzeWrap{padding:0 14px!important}.pageTitle{font-size:27px!important}}
+@media(max-width:760px){.analyzeShell{padding-top:32px!important;padding-bottom:28px!important}.analyzeWrap{width:100%;padding:0 16px!important}.pageTitle{font-size:29px!important;line-height:1.08!important}.pageSub{font-size:14px!important;line-height:1.48!important}.analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}.analyzeActions button{width:100%;justify-content:center}.uploadPanel [role="button"]{margin:14px!important;padding:16px!important}.uploadPanel [role="button"]>div{align-items:flex-start!important}.resultKpiGrid{grid-template-columns:1fr!important}.smartSummaryPanel,.costMixPanel,.analysisGrid>div,.bottomAnalysisGrid>div{padding:16px!important}.costMixPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}.assignModalOverlay{padding:12px!important;place-items:end center!important}.assignModal{max-height:92vh!important;border-radius:24px 24px 0 0!important}}
+@media(max-width:420px){.analyzeWrap{padding:0 12px!important}.pageTitle{font-size:27px!important}}
 `;
+
