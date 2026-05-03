@@ -2155,13 +2155,13 @@ export default function AppPage() {
                     value={applyAll}
                     onChange={(e) => setApplyAll(e.target.value)}
                     placeholder="e.g. JOB-1042 or Smith Kitchen Reno"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 focus:placeholder:text-slate-200"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-950 caret-cyan-600 placeholder:font-semibold placeholder:text-slate-300 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 focus:placeholder:text-slate-200"
                   />
 
                   <button
                     type="button"
                     onClick={applyJobToAll}
-                    className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-cyan-200"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-black text-slate-700 shadow-sm transition hover:border-cyan-200 hover:bg-white sm:px-5 sm:py-3 sm:text-sm"
                   >
                     Apply
                   </button>
@@ -2188,7 +2188,7 @@ export default function AppPage() {
                         return next;
                       });
                     }}
-                    className="rounded-2xl border border-cyan-200 bg-cyan-50 px-6 py-3 text-sm font-black text-cyan-800 shadow-sm hover:border-cyan-300"
+                    className="rounded-xl border border-cyan-200 bg-white px-4 py-2.5 text-xs font-black text-cyan-700 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 sm:px-5 sm:py-3 sm:text-sm"
                   >
                     Multi-job export
                   </button>
@@ -2255,7 +2255,7 @@ export default function AppPage() {
                                 updateItem(it.id, { job_id: e.target.value })
                               }
                               placeholder="e.g. JOB-1042 or Multiple Jobs"
-                              className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
+                              className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm font-black text-slate-950 caret-cyan-600 placeholder:font-semibold placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
                                 jobMissing
                                   ? "border-red-400 focus:border-red-400 focus:ring-red-100"
                                   : "border-slate-200 focus:border-cyan-300 focus:ring-cyan-100"
@@ -2265,7 +2265,7 @@ export default function AppPage() {
                             <button
                               type="button"
                               onClick={() => markFileAsMultiJob(it.id)}
-                              className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-xs font-black text-cyan-800 hover:border-cyan-300 sm:shrink-0"
+                              className="rounded-xl border border-cyan-200 bg-white px-3.5 py-2.5 text-xs font-black text-cyan-700 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 sm:shrink-0"
                             >
                               Multi-job
                             </button>
@@ -2330,7 +2330,7 @@ export default function AppPage() {
                 <button
                   type="button"
                   onClick={() => setJobModalOpen(false)}
-                  className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50 sm:px-5 sm:py-3"
                 >
                   Cancel
                 </button>
@@ -2338,7 +2338,7 @@ export default function AppPage() {
                 <button
                   type="button"
                   onClick={continueFromAssignments}
-                  className="rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 px-6 py-3 text-sm font-black text-slate-900 shadow-md shadow-cyan-100 hover:border-cyan-300"
+                  className="rounded-xl border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 px-5 py-2.5 text-sm font-black text-slate-900 shadow-sm shadow-cyan-100 transition hover:border-cyan-300 hover:shadow-md sm:px-6 sm:py-3"
                 >
                   Continue
                 </button>
