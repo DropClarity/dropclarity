@@ -928,6 +928,18 @@ export default function AppPage() {
     setTimeout(() => setToast(""), 5200);
   }
 
+  function uploadHelpMessage(fileName?: string) {
+    const isExcel = String(fileName || "")
+      .toLowerCase()
+      .match(/\.(xlsx|xls)$/);
+
+    if (isExcel) {
+      return "Upload failed. If this Excel file is open or stored in OneDrive, close it in Excel, make sure it is fully synced, then try again.";
+    }
+
+    return "Upload failed. If this file is stored in OneDrive, Google Drive, Dropbox, or iCloud, make sure it is fully synced and not open in another app, then try again.";
+  }
+
   function buildCopyReportText() {
     const jobs = Array.isArray(result?.jobs) ? result.jobs : [];
     const reportTitle = "DropClarity Profitability Report";
@@ -1147,7 +1159,9 @@ export default function AppPage() {
                 ...it,
                 status: "error",
                 pct: 0,
-                error: err.message || "Upload failed",
+                error: err?.message
+                  ? `${err.message}${String(err.message).toLowerCase().includes("onedrive") ? "" : ` ${uploadHelpMessage(item.file.name)}`}`
+                  : uploadHelpMessage(item.file.name),
               }
             : it,
         ),
@@ -1632,6 +1646,9 @@ export default function AppPage() {
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">
                     or click Choose files. Tip: put the job export first.
+                  </div>
+                  <div className="mt-1 text-xs font-bold leading-5 text-slate-400">
+                    Excel/OneDrive tip: close the file in Excel and make sure it is fully synced before uploading.
                   </div>
                 </div>
               </div>
