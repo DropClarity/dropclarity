@@ -46,6 +46,17 @@ type CostMix = {
   other: number;
 };
 
+type CostBucketKey = keyof CostMix;
+
+type ClassificationCorrectionRow = {
+  key: string;
+  job_id: string | null;
+  job_name: string;
+  revenue: number;
+  original: CostMix;
+  edited: CostMix;
+};
+
 type CostMixBucket = {
   key: keyof CostMix;
   label: string;
@@ -451,6 +462,112 @@ function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
   };
 }
 
+function normalizeCostBreakdown(cb: any): CostMix {
+  return {
+    labor: Number(cb?.labor) || 0,
+    materials: Number(cb?.materials) || 0,
+    subs: Number(cb?.subs) || 0,
+    other: Number(cb?.other) || 0,
+  };
+}
+
+function costMixTotal(cb: CostMix) {
+  return (Number(cb.labor) || 0) + (Number(cb.materials) || 0) + (Number(cb.subs) || 0) + (Number(cb.other) || 0);
+}
+
+function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
+  const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
+
+  return jobs.map((job: any, idx: number) => {
+    const job_id = job?.job_id == null ? null : String(job.job_id).trim() || null;
+    const job_name = String(job?.job_name || job_id || `Job ${idx + 1}`).trim();
+    const revenue = Number(job?.revenue) || 0;
+    const original = normalizeCostBreakdown(job?.cost_breakdown || {});
+
+    return {
+      key: `${job_id || job_name || idx}-${idx}`,
+      job_id,
+      job_name,
+      revenue,
+      original,
+      edited: { ...original },
+    };
+  });
+}
+
+function classificationRowsChanged(rows: ClassificationCorrectionRow[]) {
+  return rows.some((row) =>
+    (Object.keys(row.edited) as CostBucketKey[]).some(
+      (bucket) => Math.abs((Number(row.edited[bucket]) || 0) - (Number(row.original[bucket]) || 0)) > 0.005
+    )
+  );
+}
+
+function correctedResultFromRows(current: any, rows: ClassificationCorrectionRow[]) {
+  if (!current || !Array.isArray(current.jobs)) return current;
+
+  const rowMap = new Map(rows.map((row) => [`${row.job_id || ""}|${row.job_name}`, row]));
+  const jobs = current.jobs.map((job: any) => {
+    const job_id = job?.job_id == null ? null : String(job.job_id).trim() || null;
+    const job_name = String(job?.job_name || job_id || "Job").trim();
+    const row = rowMap.get(`${job_id || ""}|${job_name}`);
+    if (!row) return job;
+
+    const cost_breakdown = normalizeCostBreakdown(row.edited);
+    const costs = costMixTotal(cost_breakdown);
+    const revenue = Number(job?.revenue) || 0;
+    const profit = revenue - costs;
+    const margin_pct = revenue !== 0 ? (profit / revenue) * 100 : 0;
+
+    return {
+      ...job,
+      cost_breakdown,
+      costs,
+      profit,
+      margin_pct,
+    };
+  });
+
+  const revenueTotal = jobs.reduce((sum: number, job: any) => sum + (Number(job?.revenue) || 0), 0);
+  const costsTotal = jobs.reduce((sum: number, job: any) => sum + (Number(job?.costs) || 0), 0);
+  const netProfit = revenueTotal - costsTotal;
+  const marginPct = revenueTotal !== 0 ? (netProfit / revenueTotal) * 100 : 0;
+  const cost_mix = jobs.reduce(
+    (sum: CostMix, job: any) => {
+      const cb = normalizeCostBreakdown(job?.cost_breakdown || {});
+      sum.labor += cb.labor;
+      sum.materials += cb.materials;
+      sum.subs += cb.subs;
+      sum.other += cb.other;
+      return sum;
+    },
+    { labor: 0, materials: 0, subs: 0, other: 0 }
+  );
+
+  const losingJobKeys = new Set(
+    jobs
+      .filter((job: any) => (Number(job?.profit) || 0) < 0)
+      .map((job: any) => String(job?.job_id || job?.job_name || "").trim())
+      .filter(Boolean)
+  );
+
+  return {
+    ...current,
+    jobs,
+    cost_mix,
+    kpis: {
+      ...(current.kpis || {}),
+      revenue: revenueTotal,
+      costs: costsTotal,
+      net_profit: netProfit,
+      profit_margin_pct: marginPct,
+      jobs_count: jobs.length,
+      losing_jobs_count: losingJobKeys.size,
+    },
+  };
+}
+
+
 function drawProfitChart(
   canvas: HTMLCanvasElement,
   labels: string[],
@@ -462,7 +579,7 @@ function drawProfitChart(
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const h = 240;
+  const h = 270;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -471,23 +588,24 @@ function drawProfitChart(
   ctx.clearRect(0, 0, w, h);
 
   const gx0 = 28;
-  const gx1 = w - 12;
-  const gy0 = 18;
-  const gy1 = h - 28;
+  const gx1 = w - 18;
+  const gy0 = 22;
+  const gy1 = h - 66;
+  const labelY = h - 22;
   const zeroY = gy0 + (gy1 - gy0) / 2;
   const maxAbs = Math.max(...values.map((v) => Math.abs(v || 0)), 1);
   const scale = (gy1 - gy0) / 2 / maxAbs;
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.06)";
+    ctx.strokeStyle = "rgba(15,23,42,.055)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "rgba(15,23,42,.10)";
+  ctx.strokeStyle = "rgba(15,23,42,.16)";
   ctx.beginPath();
   ctx.moveTo(gx0, zeroY);
   ctx.lineTo(gx1, zeroY);
@@ -495,7 +613,7 @@ function drawProfitChart(
 
   const n = labels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(10, Math.min(26, slot * 0.36));
+  const bw = Math.max(12, Math.min(28, slot * 0.34));
 
   values.forEach((value, i) => {
     const x = gx0 + i * slot + slot / 2 - bw / 2;
@@ -504,26 +622,51 @@ function drawProfitChart(
     const height = Math.max(1, Math.abs(zeroY - y));
     const isNeg = value < 0;
 
-    ctx.fillStyle = isNeg ? "rgba(239,68,68,.88)" : "rgba(34,197,94,.88)";
-    ctx.fillRect(x, top, bw, height);
+    ctx.fillStyle = isNeg ? "rgba(239,68,68,.90)" : "rgba(34,197,94,.90)";
+    roundRect(ctx, x, top, bw, height, 7);
+    ctx.fill();
 
     ctx.font = "900 12px ui-sans-serif, system-ui";
-    ctx.fillStyle = isNeg ? "rgba(185,28,28,.95)" : "rgba(22,101,52,.95)";
+    ctx.fillStyle = isNeg ? "rgba(185,28,28,.96)" : "rgba(22,101,52,.96)";
     ctx.textAlign = "center";
-    ctx.fillText(
-      shortMoney(value),
-      x + bw / 2,
-      value >= 0 ? top - 6 : top + height + 14,
-    );
+
+    const valueLabelY = isNeg
+      ? Math.min(top + height + 17, h - 46)
+      : Math.max(top - 8, gy0 + 12);
+
+    ctx.fillText(shortMoney(value), x + bw / 2, valueLabelY);
   });
 
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillStyle = "rgba(15,23,42,.48)";
+  ctx.font = "900 13px ui-sans-serif, system-ui";
+  ctx.fillStyle = "rgba(15,23,42,.76)";
   ctx.textAlign = "center";
   labels.forEach((label, i) => {
     const x = gx0 + i * slot + slot / 2;
-    ctx.fillText(label, x, h - 7);
+    const width = Math.min(ctx.measureText(label).width + 18, Math.max(44, slot - 10));
+    ctx.fillStyle = "rgba(248,250,252,.96)";
+    ctx.strokeStyle = "rgba(15,23,42,.08)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, x - width / 2, labelY - 17, width, 28, 14);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "rgba(15,23,42,.78)";
+    ctx.fillText(label, x, labelY + 2);
   });
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  const r = Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 function drawRevCostChart(
@@ -538,7 +681,7 @@ function drawRevCostChart(
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const h = 240;
+  const h = 270;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -547,14 +690,15 @@ function drawRevCostChart(
   ctx.clearRect(0, 0, w, h);
 
   const gx0 = 28;
-  const gx1 = w - 12;
-  const gy0 = 18;
-  const gy1 = h - 28;
+  const gx1 = w - 18;
+  const gy0 = 22;
+  const gy1 = h - 66;
+  const labelY = h - 22;
   const maxV = Math.max(...rev, ...cost, 1);
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.06)";
+    ctx.strokeStyle = "rgba(15,23,42,.055)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
@@ -563,8 +707,8 @@ function drawRevCostChart(
 
   const n = labels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(8, Math.min(20, slot * 0.26));
-  const gap = bw * 0.34;
+  const bw = Math.max(9, Math.min(22, slot * 0.24));
+  const gap = bw * 0.38;
 
   function yFor(v: number) {
     return gy1 - (v / maxV) * (gy1 - gy0);
@@ -576,17 +720,26 @@ function drawRevCostChart(
     const xCost = xBase + gap / 2;
 
     const yR = yFor(rev[i] || 0);
-    ctx.fillStyle = "rgba(34,211,238,.78)";
-    ctx.fillRect(xRev, yR, bw, gy1 - yR);
+    ctx.fillStyle = "rgba(34,211,238,.82)";
+    roundRect(ctx, xRev, yR, bw, gy1 - yR, 6);
+    ctx.fill();
 
     const yC = yFor(cost[i] || 0);
-    ctx.fillStyle = "rgba(124,58,237,.68)";
-    ctx.fillRect(xCost, yC, bw, gy1 - yC);
+    ctx.fillStyle = "rgba(124,58,237,.72)";
+    roundRect(ctx, xCost, yC, bw, gy1 - yC, 6);
+    ctx.fill();
 
-    ctx.font = "12px ui-sans-serif, system-ui";
-    ctx.fillStyle = "rgba(15,23,42,.48)";
+    ctx.font = "900 13px ui-sans-serif, system-ui";
     ctx.textAlign = "center";
-    ctx.fillText(label, xBase, h - 7);
+    const width = Math.min(ctx.measureText(label).width + 18, Math.max(44, slot - 10));
+    ctx.fillStyle = "rgba(248,250,252,.96)";
+    ctx.strokeStyle = "rgba(15,23,42,.08)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, xBase - width / 2, labelY - 17, width, 28, 14);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "rgba(15,23,42,.78)";
+    ctx.fillText(label, xBase, labelY + 2);
   });
 }
 
@@ -664,6 +817,9 @@ export default function AppPage() {
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [classificationOpen, setClassificationOpen] = useState(false);
+  const [classificationRows, setClassificationRows] = useState<ClassificationCorrectionRow[]>([]);
+  const [savingCorrections, setSavingCorrections] = useState(false);
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [applyAll, setApplyAll] = useState("");
   const [assignmentErrors, setAssignmentErrors] = useState<
@@ -693,6 +849,24 @@ export default function AppPage() {
     Number(kpis.losing_jobs_count) ||
     chartData.all.filter((j) => j.profit < 0).length ||
     0;
+
+  const classificationHasChanges = useMemo(
+    () => classificationRowsChanged(classificationRows),
+    [classificationRows],
+  );
+
+  const classificationTotals = useMemo(() => {
+    return classificationRows.reduce(
+      (sum, row) => {
+        sum.labor += Number(row.edited.labor) || 0;
+        sum.materials += Number(row.edited.materials) || 0;
+        sum.subs += Number(row.edited.subs) || 0;
+        sum.other += Number(row.edited.other) || 0;
+        return sum;
+      },
+      { labor: 0, materials: 0, subs: 0, other: 0 } as CostMix,
+    );
+  }, [classificationRows]);
 
   const smartSeverity =
     losingJobs > 0 || netProfit < 0 ? "bad" : margin < 20 ? "warn" : "good";
@@ -1111,6 +1285,81 @@ export default function AppPage() {
       }
     });
   }, [result, chartData, costMixDisplay]);
+
+  useEffect(() => {
+    if (!result) {
+      setClassificationRows([]);
+      setClassificationOpen(false);
+      return;
+    }
+
+    setClassificationRows(buildClassificationRows(result));
+  }, [result?.report_id]);
+
+  function updateClassificationBucket(rowKey: string, bucket: CostBucketKey, rawValue: string) {
+    const parsed = Number(rawValue);
+    const value = Number.isFinite(parsed) ? parsed : 0;
+
+    setClassificationRows((prev) =>
+      prev.map((row) =>
+        row.key === rowKey
+          ? {
+              ...row,
+              edited: {
+                ...row.edited,
+                [bucket]: value,
+              },
+            }
+          : row
+      )
+    );
+  }
+
+  function resetClassificationRows() {
+    setClassificationRows((prev) => prev.map((row) => ({ ...row, edited: { ...row.original } })));
+  }
+
+  async function saveClassificationCorrections() {
+    if (!result || !classificationRows.length) return;
+
+    const corrected = correctedResultFromRows(result, classificationRows);
+    setSavingCorrections(true);
+
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/correct-classification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          report_id: result.report_id,
+          corrections: classificationRows.map((row) => ({
+            job_id: row.job_id,
+            job_name: row.job_name,
+            cost_breakdown: row.edited,
+          })),
+        }),
+      });
+
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(text);
+      } catch {}
+
+      if (!res.ok) throw new Error(data?.error || text || "Could not save classification changes");
+
+      setResult(data?.report || corrected);
+      showToast("Classification updated.");
+    } catch (err: any) {
+      setResult(corrected);
+      showToast(err?.message ? `Updated on screen, but save failed: ${err.message}` : "Updated on screen, but save failed.", "error");
+    } finally {
+      setSavingCorrections(false);
+    }
+  }
 
   const baseButton =
     "rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md active:scale-[0.99]";
@@ -1537,6 +1786,95 @@ export default function AppPage() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="mt-5 rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                      <div>
+                        <h4 className="text-base font-black text-slate-950">Need to fix a classification?</h4>
+                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Move job costs between Labor, Materials, Subs, and Other without re-uploading files.</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setClassificationOpen((v) => !v)}
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm hover:border-cyan-200"
+                      >
+                        {classificationOpen ? "Hide classification editor" : "Fix classification"}
+                      </button>
+                    </div>
+
+                    {classificationOpen && (
+                      <div className="mt-4 space-y-3">
+                        <div className="grid gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-black text-slate-600 sm:grid-cols-4">
+                          <div>Labor: {money(classificationTotals.labor)}</div>
+                          <div>Materials: {money(classificationTotals.materials)}</div>
+                          <div>Subs: {money(classificationTotals.subs)}</div>
+                          <div>Other: {money(classificationTotals.other)}</div>
+                        </div>
+
+                        {classificationRows.map((row) => {
+                          const editedTotal = costMixTotal(row.edited);
+                          const originalTotal = costMixTotal(row.original);
+
+                          return (
+                            <div key={row.key} className="rounded-2xl border border-slate-100 bg-white p-4">
+                              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                                <div>
+                                  <div className="text-sm font-black text-slate-950">{row.job_name}</div>
+                                  <div className="mt-1 text-xs font-bold text-slate-400">
+                                    {row.job_id || "No Job ID"} • Revenue {money(row.revenue)} • Costs {money(editedTotal)}
+                                  </div>
+                                </div>
+
+                                {Math.abs(editedTotal - originalTotal) > 0.005 && (
+                                  <span className="w-fit rounded-full bg-cyan-50 px-3 py-1 text-xs font-black text-cyan-700">Adjusted</span>
+                                )}
+                              </div>
+
+                              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                {(["labor", "materials", "subs", "other"] as CostBucketKey[]).map((bucket) => (
+                                  <label key={bucket} className="block">
+                                    <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                      {bucket === "subs" ? "Subs" : bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+                                    </span>
+                                    <input
+                                      type="number"
+                                      inputMode="decimal"
+                                      step="0.01"
+                                      value={Number(row.edited[bucket] || 0)}
+                                      onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
+                                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
+                                    />
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <div className="flex flex-col justify-end gap-3 sm:flex-row">
+                          <button
+                            type="button"
+                            onClick={resetClassificationRows}
+                            disabled={!classificationHasChanges || savingCorrections}
+                            className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
+                          >
+                            Reset
+                          </button>
+                          <button
+                            type="button"
+                            onClick={saveClassificationCorrections}
+                            disabled={!classificationHasChanges || savingCorrections}
+                            className="rounded-2xl border border-cyan-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 px-5 py-3 text-sm font-black text-slate-900 shadow-sm disabled:cursor-not-allowed disabled:text-slate-400"
+                          >
+                            {savingCorrections ? "Saving…" : "Save classification"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 </div>
 
                 <div className="bottomAnalysisGrid mt-4 grid gap-4 xl:grid-cols-2">
