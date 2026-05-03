@@ -590,8 +590,8 @@ function drawProfitChart(
   const gx0 = 28;
   const gx1 = w - 18;
   const gy0 = 22;
-  const gy1 = h - 66;
-  const labelY = h - 22;
+  const gy1 = h - 58;
+  const labelY = h - 20;
   const zeroY = gy0 + (gy1 - gy0) / 2;
   const maxAbs = Math.max(...values.map((v) => Math.abs(v || 0)), 1);
   const scale = (gy1 - gy0) / 2 / maxAbs;
@@ -631,25 +631,17 @@ function drawProfitChart(
     ctx.textAlign = "center";
 
     const valueLabelY = isNeg
-      ? Math.min(top + height + 17, h - 46)
+      ? Math.min(top + height + 17, gy1 + 18)
       : Math.max(top - 8, gy0 + 12);
 
     ctx.fillText(shortMoney(value), x + bw / 2, valueLabelY);
   });
 
-  ctx.font = "900 13px ui-sans-serif, system-ui";
-  ctx.fillStyle = "rgba(15,23,42,.76)";
+  ctx.font = "950 14px ui-sans-serif, system-ui";
+  ctx.fillStyle = "rgba(15,23,42,.82)";
   ctx.textAlign = "center";
   labels.forEach((label, i) => {
     const x = gx0 + i * slot + slot / 2;
-    const width = Math.min(ctx.measureText(label).width + 18, Math.max(44, slot - 10));
-    ctx.fillStyle = "rgba(248,250,252,.96)";
-    ctx.strokeStyle = "rgba(15,23,42,.08)";
-    ctx.lineWidth = 1;
-    roundRect(ctx, x - width / 2, labelY - 17, width, 28, 14);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "rgba(15,23,42,.78)";
     ctx.fillText(label, x, labelY + 2);
   });
 }
@@ -692,8 +684,8 @@ function drawRevCostChart(
   const gx0 = 28;
   const gx1 = w - 18;
   const gy0 = 22;
-  const gy1 = h - 66;
-  const labelY = h - 22;
+  const gy1 = h - 58;
+  const labelY = h - 20;
   const maxV = Math.max(...rev, ...cost, 1);
 
   for (let i = 0; i < 5; i++) {
@@ -729,16 +721,9 @@ function drawRevCostChart(
     roundRect(ctx, xCost, yC, bw, gy1 - yC, 6);
     ctx.fill();
 
-    ctx.font = "900 13px ui-sans-serif, system-ui";
+    ctx.font = "950 14px ui-sans-serif, system-ui";
     ctx.textAlign = "center";
-    const width = Math.min(ctx.measureText(label).width + 18, Math.max(44, slot - 10));
-    ctx.fillStyle = "rgba(248,250,252,.96)";
-    ctx.strokeStyle = "rgba(15,23,42,.08)";
-    ctx.lineWidth = 1;
-    roundRect(ctx, xBase - width / 2, labelY - 17, width, 28, 14);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "rgba(15,23,42,.78)";
+    ctx.fillStyle = "rgba(15,23,42,.82)";
     ctx.fillText(label, xBase, labelY + 2);
   });
 }
@@ -1297,8 +1282,8 @@ export default function AppPage() {
   }, [result?.report_id]);
 
   function updateClassificationBucket(rowKey: string, bucket: CostBucketKey, rawValue: string) {
-    const parsed = Number(rawValue);
-    const value = Number.isFinite(parsed) ? parsed : 0;
+    const value = rawValue === "" ? "" : Number(rawValue);
+    const safeValue = rawValue === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : 0;
 
     setClassificationRows((prev) =>
       prev.map((row) =>
@@ -1307,8 +1292,8 @@ export default function AppPage() {
               ...row,
               edited: {
                 ...row.edited,
-                [bucket]: value,
-              },
+                [bucket]: safeValue,
+              } as CostMix,
             }
           : row
       )
@@ -1841,9 +1826,9 @@ export default function AppPage() {
                                       type="number"
                                       inputMode="decimal"
                                       step="0.01"
-                                      value={Number(row.edited[bucket] || 0)}
+                                      value={row.edited[bucket] === ("" as any) ? "" : String(row.edited[bucket] ?? 0)}
                                       onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
-                                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
+                                      className="classificationNumberInput mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
                                     />
                                   </label>
                                 ))}
@@ -2248,6 +2233,9 @@ const analyzePageCss = `
 .assignModal{max-width:min(1120px,calc(100vw - 32px))!important;border-radius:28px!important}
 .assignModal h2{font-size:clamp(22px,2.4vw,28px)!important;line-height:1.08!important;letter-spacing:-.035em!important}
 .assignModalOverlay{-webkit-overflow-scrolling:touch}
+.classificationNumberInput::-webkit-outer-spin-button,.classificationNumberInput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.classificationNumberInput{appearance:textfield;-moz-appearance:textfield}
+
 @media(max-width:1280px){.analyzeWrap{width:min(100%,calc(100vw - 32px))}.resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media(max-width:900px){.resultKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.uploadPanel>div:first-child,.resultsPanel>div:first-child{align-items:flex-start!important;flex-direction:column!important}}
 @media(max-width:760px){
