@@ -23,6 +23,8 @@ type CostBreakdown = {
   materials?: number;
   subs?: number;
   other?: number;
+  credits_total?: number | string;
+  credits?: number | string;
 };
 
 type JobRow = {
@@ -139,7 +141,7 @@ type CreditMetrics = {
   avgCreditPerJob: number;
   avgCreditPerCreditJob: number;
   creditRatePct: number;
-  creditsByBucket: Required<CostBreakdown>;
+  creditsByBucket: { labor: number; materials: number; subs: number; other: number; };
   biggestCreditJob: JobRow | null;
   biggestCreditAmount: number;
   positiveCostActivity: number;
@@ -462,8 +464,9 @@ function exportSingleJobCsv(
   const materials = parseNumberLoose(job.material_cost);
   const subs = parseNumberLoose(job.subs_cost);
   const other = parseNumberLoose(job.other_cost);
+  const creditsApplied = getJobCreditTotal(base);
   const customTotal = sumCustomCategories(job.custom_categories || []);
-  const totalCosts = labor + materials + subs + other + customTotal;
+  const totalCosts = labor + materials + subs + other + customTotal - creditsApplied;
   const profit = revenue - totalCosts;
   const margin = revenue !== 0 ? (profit / revenue) * 100 : 0;
 
@@ -484,9 +487,10 @@ function exportSingleJobCsv(
     ["Labor", labor],
     ["Materials", materials],
     ["Subs", subs],
-    ["Other", other],
+    ["Other Costs", other],
+    ["Credits / Adjustments", -creditsApplied],
     ["Custom Categories", customTotal],
-    ["Total Costs", totalCosts],
+    ["Total Costs After Credits", totalCosts],
     ["Gross Profit", profit],
     ["Gross Margin %", margin],
     [],
@@ -860,7 +864,7 @@ function seedJobFromBase(base: JobRow): EditableJob {
   const labor = parseNumberLoose(cb.labor);
   const materials = parseNumberLoose(cb.materials);
   const subs = parseNumberLoose(cb.subs);
-  const other = parseNumberLoose(cb.other);
+  const other = getTrueOtherCostFromBreakdown(cb);
   const known = labor + materials + subs + other;
 
   return {
@@ -1163,15 +1167,53 @@ function barChart(canvas: HTMLCanvasElement, labels: string[], a: number[], b: n
     ctx.fillText(String(labels[i]), gx0 + i * slot + slot / 2, h - 10);
   }
 }
-function buildCostMixParts(state: DashboardState): CostPart[] {
+function getTrueOtherCostFromBreakdown(cb?: CostBreakdown): number {
+  const other = parseNumberLoose(cb?.other);
+  const credits = Math.max(0, parseNumberLoose(cb?.credits_total ?? cb?.credits));
+
+  // Worker policy: credits/refunds are routed into Other as negative values for reconciliation,
+  // while credits_total tracks the absolute credit amount. For display, separate them so
+  // true Other fees are not shown as a negative Other bucket.
+  if (credits > 0) return Math.max(0, other + credits);
+
+  return Math.max(0, other);
+}
+
+function getDisplayCostMix(state: DashboardState) {
+  const jobs = getAllJobs(state);
+
+  if (jobs.length) {
+    const credits = getCreditMetrics(state).totalCredits;
+    const labor = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.labor)), 0);
+    const materials = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.materials)), 0);
+    const subs = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.subs)), 0);
+    const other = jobs.reduce((sum, job) => sum + getTrueOtherCostFromBreakdown(job.cost_breakdown), 0);
+
+    return { labor, materials, subs, other, credits };
+  }
+
   const mix = state.cost_mix || state.mix || {};
+  const credits = getCreditMetrics(state).totalCredits;
+  const labor = Math.max(0, parseNumberLoose(mix.labor));
+  const materials = Math.max(0, parseNumberLoose(mix.materials));
+  const subs = Math.max(0, parseNumberLoose(mix.subs));
+  const other = Math.max(0, parseNumberLoose(mix.other) + credits);
+
+  return { labor, materials, subs, other, credits };
+}
+
+function buildCostMixParts(state: DashboardState): CostPart[] {
+  const displayMix = getDisplayCostMix(state);
+
   return [
-    { label: "Labor", value: parseNumberLoose(mix.labor), color: "rgba(34,211,238,.95)", shadow: "rgba(34,211,238,.25)" },
-    { label: "Materials", value: parseNumberLoose(mix.materials), color: "rgba(124,58,237,.90)", shadow: "rgba(124,58,237,.20)" },
-    { label: "Subs", value: parseNumberLoose(mix.subs), color: "rgba(37,99,235,.90)", shadow: "rgba(37,99,235,.18)" },
-    { label: "Other", value: parseNumberLoose(mix.other), color: "rgba(52,211,153,.90)", shadow: "rgba(52,211,153,.20)" },
+    { label: "Labor", value: displayMix.labor, color: "rgba(34,211,238,.95)", shadow: "rgba(34,211,238,.25)" },
+    { label: "Materials", value: displayMix.materials, color: "rgba(124,58,237,.90)", shadow: "rgba(124,58,237,.20)" },
+    { label: "Subs", value: displayMix.subs, color: "rgba(37,99,235,.90)", shadow: "rgba(37,99,235,.18)" },
+    { label: "Other Costs", value: displayMix.other, color: "rgba(52,211,153,.90)", shadow: "rgba(52,211,153,.20)" },
+    { label: "Credits / Adjustments", value: displayMix.credits > 0 ? -displayMix.credits : 0, color: "rgba(16,185,129,.90)", shadow: "rgba(16,185,129,.20)" },
   ];
 }
+
 
 function marginTargetKey(userId: string): string {
   return `dc_margin_target_${userId}`;
@@ -1262,12 +1304,15 @@ function getBucketCreditAmount(value: unknown): number {
 
 function getExplicitCreditAmount(job: JobRow): number {
   const rawCredits = job?.credits;
+  const cb = job?.cost_breakdown || {};
 
   const candidates = [
     job?.credit_total,
     job?.credits_total,
     job?.total_credits,
     job?.cost_credits,
+    cb?.credits_total,
+    cb?.credits,
     typeof rawCredits === "object" && rawCredits !== null ? rawCredits.total : rawCredits,
     typeof rawCredits === "object" && rawCredits !== null ? rawCredits.cost : null,
   ];
@@ -1280,6 +1325,7 @@ function getExplicitCreditAmount(job: JobRow): number {
 
   return 0;
 }
+
 
 function getJobCreditTotal(job: JobRow): number {
   const explicit = getExplicitCreditAmount(job);
@@ -1300,28 +1346,32 @@ function getPositiveBucketAmount(value: unknown): number {
 
 function getCreditMetrics(state: DashboardState): CreditMetrics {
   const jobs = getAllJobs(state);
-  const creditsByBucket = {
-    labor: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.labor), 0),
-    materials: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.materials), 0),
-    subs: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.subs), 0),
-    other: jobs.reduce((sum, j) => sum + getBucketCreditAmount(j.cost_breakdown?.other), 0),
-  };
 
   const jobCreditRows = jobs
     .map((job) => ({ job, credit: getJobCreditTotal(job) }))
     .filter((row) => row.credit > 0)
     .sort((a, b) => b.credit - a.credit);
 
-  const totalCredits = creditsByBucket.labor + creditsByBucket.materials + creditsByBucket.subs + creditsByBucket.other;
+  const totalCredits = jobCreditRows.reduce((sum, row) => sum + row.credit, 0);
+
+  // UI policy: credits are tracked as their own adjustment line. Even when the Worker
+  // reconciles them through Other internally, dashboard visuals separate credits from
+  // true Other costs so users do not confuse refunds with permits/fees/misc costs.
+  const creditsByBucket = {
+    labor: 0,
+    materials: 0,
+    subs: 0,
+    other: totalCredits,
+  };
 
   const positiveCostActivity = jobs.reduce((sum, j) => {
     const cb = j.cost_breakdown || {};
     return (
       sum +
-      getPositiveBucketAmount(cb.labor) +
-      getPositiveBucketAmount(cb.materials) +
-      getPositiveBucketAmount(cb.subs) +
-      getPositiveBucketAmount(cb.other)
+      Math.max(0, parseNumberLoose(cb.labor)) +
+      Math.max(0, parseNumberLoose(cb.materials)) +
+      Math.max(0, parseNumberLoose(cb.subs)) +
+      getTrueOtherCostFromBreakdown(cb)
     );
   }, 0);
 
@@ -1342,6 +1392,7 @@ function getCreditMetrics(state: DashboardState): CreditMetrics {
     netCostAfterCredits,
   };
 }
+
 
 function getCreditRows(state: DashboardState) {
   return getAllJobs(state)
@@ -1413,7 +1464,8 @@ function jobComparisonStats(base: JobRow, allJobs: JobRow[]) {
     { label: "Labor", current: parseNumberLoose(baseMix.labor), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.labor))) },
     { label: "Materials", current: parseNumberLoose(baseMix.materials), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.materials))) },
     { label: "Subs", current: parseNumberLoose(baseMix.subs), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.subs))) },
-    { label: "Other", current: parseNumberLoose(baseMix.other), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.other))) },
+    { label: "Other Costs", current: getTrueOtherCostFromBreakdown(baseMix), average: avgOf(pool.map((j) => getTrueOtherCostFromBreakdown(j.cost_breakdown))) },
+    { label: "Credits", current: -getJobCreditTotal(base), average: avgOf(pool.map((j) => -getJobCreditTotal(j))) },
   ].map((x) => ({ ...x, gap: x.current - x.average })).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
   return { count: pool.length, baseRevenue, baseCosts, baseProfit, baseMargin, avgRevenue, avgCosts, avgProfit, avgMargin, drivers };
 }
@@ -1758,26 +1810,27 @@ function CreditRefundKpis({ state }: { state: DashboardState }) {
     return null;
   }
 
+  const displayMix = getDisplayCostMix(state);
   const cards = [
     {
-      label: "Profit Recovered",
-      value: fmtMoney(metrics.profitRecoveredFromCredits),
-      sub: "Credits/refunds reducing job cost",
+      label: "Credits / Adjustments",
+      value: fmtMoney(metrics.totalCredits),
+      sub: "Tracked separately from Other costs",
     },
     {
-      label: "Total Credits",
-      value: fmtMoney(metrics.totalCredits),
-      sub: "Negative invoice lines detected",
+      label: "True Other Costs",
+      value: fmtMoney(displayMix.other),
+      sub: "Permits, fees, delivery, misc — before credits",
     },
     {
       label: "Jobs w/ Credits",
       value: String(metrics.jobsWithCredits),
-      sub: "Jobs with refunds or credits",
+      sub: "Jobs with refunds or credit memos",
     },
     {
-      label: "Avg Credit / Job",
-      value: fmtMoney(metrics.avgCreditPerCreditJob),
-      sub: "Across credit jobs only",
+      label: "Net Costs After Credits",
+      value: fmtMoney(metrics.netCostAfterCredits),
+      sub: "Used for profit and margin",
     },
   ];
 
@@ -1786,7 +1839,7 @@ function CreditRefundKpis({ state }: { state: DashboardState }) {
       <div className="creditKpiHead">
         <div>
           <div className="creditKpiTitle">Credit / Refund Tracking</div>
-          <div className="creditKpiSub">A quiet check for supplier credits, warranty refunds, and credit memos. These are included in profit but kept from distorting cost mix visuals.</div>
+          <div className="creditKpiSub">Supplier credits, refunds, and credit memos are included in profit, but shown separately from true Other costs so the dashboard reconciles cleanly.</div>
         </div>
       </div>
 
@@ -1856,12 +1909,12 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
           <div>
             <div className="chartTitle">Cost Mix</div>
             <div className="chartSub">
-              Donut/list visuals use absolute cost activity, while each card still shows the true signed bucket total.
+              Shows true cost buckets separately from credits/adjustments. Net costs still include credits for profit and margin.
             </div>
           </div>
 
           {creditMetrics.totalCredits > 0 ? (
-            <span className="creditAppliedPill">Credits applied: -{fmtMoney(creditMetrics.totalCredits).replace("$", "$")}</span>
+            <span className="creditAppliedPill">Credits / adjustments: -{fmtMoney(creditMetrics.totalCredits).replace("$", "$")}</span>
           ) : null}
         </div>
 
@@ -1885,7 +1938,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
                   />
                 </div>
                 <div className="mixSub">
-                  {fmtPct(share)} of cost activity{isCredit ? " • credit/refund bucket" : ""}
+                  {isCredit ? `Reduces total costs by ${fmtMoney(Math.abs(p.value))}` : `${fmtPct(share)} of gross cost activity`}
                 </div>
               </div>
             );
@@ -2175,10 +2228,11 @@ function ScaleOversightPanel({
     return sum + Math.max(0, targetProfit - profit);
   }, 0);
 
-  const materialTotal = parseNumberLoose((state.cost_mix || state.mix || {}).materials);
-  const laborTotal = parseNumberLoose((state.cost_mix || state.mix || {}).labor);
-  const subsTotal = parseNumberLoose((state.cost_mix || state.mix || {}).subs);
-  const otherTotal = parseNumberLoose((state.cost_mix || state.mix || {}).other);
+  const displayMixForScale = getDisplayCostMix(state);
+  const materialTotal = displayMixForScale.materials;
+  const laborTotal = displayMixForScale.labor;
+  const subsTotal = displayMixForScale.subs;
+  const otherTotal = displayMixForScale.other;
   const knownCosts = materialTotal + laborTotal + subsTotal + otherTotal;
   const materialShare = knownCosts ? (materialTotal / knownCosts) * 100 : 0;
   const laborShare = knownCosts ? (laborTotal / knownCosts) * 100 : 0;
@@ -2814,7 +2868,8 @@ function JobEditor({
   }, [jobKey, base, userId]);
 
   const customTotal = sumCustomCategories(job.custom_categories || []);
-  const knownCosts = parseNumberLoose(job.material_cost) + parseNumberLoose(job.labor_cost) + parseNumberLoose(job.subs_cost) + parseNumberLoose(job.other_cost) + customTotal;
+  const creditsApplied = getJobCreditTotal(base);
+  const knownCosts = parseNumberLoose(job.material_cost) + parseNumberLoose(job.labor_cost) + parseNumberLoose(job.subs_cost) + parseNumberLoose(job.other_cost) + customTotal - creditsApplied;
   const gp = parseNumberLoose(job.revenue) - knownCosts;
   const gm = parseNumberLoose(job.revenue) !== 0 ? (gp / parseNumberLoose(job.revenue)) * 100 : 0;
 
@@ -3022,7 +3077,7 @@ function JobEditor({
             <table className="jobTable">
               <thead>
                 <tr>
-                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Other</th><th>Gross Profit</th><th>Margin</th>
+                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Other Costs</th><th>Gross Profit</th><th>Margin</th>
                 </tr>
               </thead>
               <tbody>
@@ -4574,4 +4629,21 @@ main.dc-bg .wrap{padding-bottom:56px;}
     max-height:200px;
   }
 }
+
+
+.dc-bg .creditKpiPanel{margin-top:12px;border-radius:22px;border:1px solid rgba(16,185,129,.16);background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(236,253,245,.72));box-shadow:0 18px 52px rgba(16,185,129,.075);overflow:hidden}
+.dc-bg .creditKpiHead{padding:16px 18px;border-bottom:1px solid rgba(16,185,129,.12);display:flex;justify-content:space-between;gap:14px}
+.dc-bg .creditKpiTitle{font-size:20px;line-height:1.15;font-weight:980;letter-spacing:-.025em;color:rgba(6,95,70,.98)}
+.dc-bg .creditKpiSub{margin-top:5px;font-size:14px;line-height:1.45;font-weight:800;color:rgba(15,23,42,.62);max-width:920px}
+.dc-bg .creditKpiGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px}
+.dc-bg .creditKpiCard{border-radius:18px;border:1px solid rgba(16,185,129,.14);background:rgba(255,255,255,.86);box-shadow:0 12px 32px rgba(2,6,23,.045);padding:14px}
+.dc-bg .creditKpiLabel{font-size:11.5px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(6,95,70,.72)}
+.dc-bg .creditKpiValue{margin-top:7px;font-size:23px;line-height:1.05;font-weight:990;letter-spacing:-.025em;color:rgba(6,95,70,.98)}
+.dc-bg .creditKpiNote{margin-top:7px;font-size:13px;line-height:1.35;font-weight:780;color:rgba(15,23,42,.58)}
+.dc-bg .creditAppliedPill{display:inline-flex;align-items:center;width:fit-content;border-radius:999px;border:1px solid rgba(16,185,129,.18);background:rgba(236,253,245,.92);padding:8px 11px;font-size:12.5px;font-weight:950;color:rgba(6,95,70,.98);white-space:nowrap}
+.dc-bg .creditMixRow{border-color:rgba(16,185,129,.16)!important;background:rgba(236,253,245,.60)!important}
+.dc-bg .creditText{color:rgba(6,95,70,.98)!important}
+.dc-bg .reportCreditText{margin-top:4px;font-size:11.5px;font-weight:900;color:rgba(6,95,70,.92)}
+@media(max-width:1100px){.dc-bg .creditKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.dc-bg .creditKpiGrid{grid-template-columns:1fr}.dc-bg .creditKpiHead{padding:15px}.dc-bg .creditKpiTitle{font-size:19px}}
 `;
