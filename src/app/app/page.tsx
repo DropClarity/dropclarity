@@ -58,7 +58,7 @@ type ClassificationCorrectionRow = {
 };
 
 type CostMixBucket = {
-  key: keyof CostMix;
+  key: keyof CostMix | "credits";
   label: string;
   value: number;
   chartValue: number;
@@ -393,7 +393,48 @@ function buildCostMix(out: any): CostMix {
   return { labor, materials, subs, other };
 }
 
-function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
+function getCreditsAppliedFromResult(out: any, costMix: CostMix) {
+  const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
+  const fileSummaries = Array.isArray(out?.file_summaries) ? out.file_summaries : [];
+
+  const jobCredits = jobs.reduce((sum: number, job: any) => {
+    const cb = job?.cost_breakdown || {};
+    const credit = Number(cb?.credits_total ?? cb?.credits ?? job?.credits_total ?? job?.credits ?? 0);
+    return sum + (Number.isFinite(credit) ? Math.abs(credit) : 0);
+  }, 0);
+
+  const fileCredits = fileSummaries.reduce((sum: number, file: any) => {
+    const cb = file?.cost_breakdown || {};
+    const credit = Number(cb?.credits_total ?? cb?.credits ?? file?.credits_total ?? file?.credits ?? 0);
+    return sum + (Number.isFinite(credit) ? Math.abs(credit) : 0);
+  }, 0);
+
+  const explicitCredits = jobCredits > 0.005 ? jobCredits : fileCredits;
+
+  if (explicitCredits > 0.005) return -explicitCredits;
+
+  // Legacy fallback: older reports may only show credits as a negative Other bucket.
+  if ((Number(costMix.other) || 0) < -0.005) return Number(costMix.other) || 0;
+
+  return 0;
+}
+
+function buildCostMixDisplay(costMix: CostMix, creditsApplied = 0): CostMixDisplay {
+  const creditsValue = Math.min(0, Number(creditsApplied) || 0);
+  const creditAbs = Math.abs(creditsValue);
+
+  // Backend stores credits as signed negative adjustments so job profit reconciles to invoice totals.
+  // For display, separate those credits from true Other costs so users do not read credits as a bad cost bucket.
+  const otherSigned = Number(costMix.other) || 0;
+  const displayedOther = creditAbs > 0.005 ? otherSigned + creditAbs : otherSigned;
+
+  const displayMix: CostMix = {
+    labor: Number(costMix.labor) || 0,
+    materials: Number(costMix.materials) || 0,
+    subs: Number(costMix.subs) || 0,
+    other: Math.abs(displayedOther) < 0.005 ? 0 : displayedOther,
+  };
+
   const bucketMeta: Array<
     Omit<CostMixBucket, "value" | "chartValue" | "note" | "isCredit">
   > = [
@@ -423,42 +464,56 @@ function buildCostMixDisplay(costMix: CostMix): CostMixDisplay {
     },
   ];
 
-  const buckets = bucketMeta.map((meta) => {
-    const value = Number(costMix?.[meta.key]) || 0;
+  const costBuckets = bucketMeta.map((meta) => {
+    const value = Number(displayMix?.[meta.key as keyof CostMix]) || 0;
     const isCredit = value < 0;
 
     return {
       ...meta,
       value,
-      chartValue: Math.abs(value),
+      chartValue: Math.max(0, value),
       isCredit,
       note: isCredit
-        ? "Credit / adjustment"
+        ? "Adjustment"
         : value > 0
           ? "Cost"
           : "No activity",
     };
   });
 
-  const totalActivity = buckets.reduce(
-    (sum, bucket) => sum + bucket.chartValue,
-    0,
-  );
-  const totalCredits = buckets.reduce(
-    (sum, bucket) => sum + Math.min(0, bucket.value),
+  const buckets: CostMixBucket[] = [
+    ...costBuckets,
+    ...(creditAbs > 0.005
+      ? [
+          {
+            key: "credits" as const,
+            label: "Credits / Adjustments",
+            value: creditsValue,
+            chartValue: 0,
+            color: "rgba(16,185,129,.90)",
+            colorClass: "bg-emerald-500",
+            note: "Tracked separately",
+            isCredit: true,
+          },
+        ]
+      : []),
+  ];
+
+  const totalActivity = costBuckets.reduce(
+    (sum, bucket) => sum + Math.max(0, bucket.chartValue),
     0,
   );
 
   return {
     buckets,
-    donutParts: buckets.map((bucket) => ({
+    donutParts: costBuckets.map((bucket) => ({
       label: bucket.label,
-      value: bucket.chartValue,
+      value: Math.max(0, bucket.chartValue),
       color: bucket.color,
     })),
     totalActivity,
-    totalCredits,
-    hasCredits: totalCredits < 0,
+    totalCredits: creditsValue,
+    hasCredits: creditAbs > 0.005,
   };
 }
 
@@ -823,7 +878,8 @@ export default function AppPage() {
 
   const chartData = useMemo(() => buildJobChartData(result || {}), [result]);
   const costMix = useMemo(() => buildCostMix(result || {}), [result]);
-  const costMixDisplay = useMemo(() => buildCostMixDisplay(costMix), [costMix]);
+  const creditsApplied = useMemo(() => getCreditsAppliedFromResult(result || {}, costMix), [result, costMix]);
+  const costMixDisplay = useMemo(() => buildCostMixDisplay(costMix, creditsApplied), [costMix, creditsApplied]);
 
   const kpis = result?.kpis || {};
   const revenue = Number(kpis.revenue) || 0;
@@ -973,15 +1029,8 @@ export default function AppPage() {
       smartCopy,
       "",
       "COST MIX",
-      `Labor: ${money(costMix.labor)}`,
-      `Materials: ${money(costMix.materials)}`,
-      `Subs: ${money(costMix.subs)}`,
-      `Other: ${money(costMix.other)}`,
+      ...costMixDisplay.buckets.map((bucket) => `${bucket.label}: ${money(bucket.value)}`),
     ];
-
-    if (costMixDisplay.hasCredits) {
-      lines.push(`Credits applied: ${money(costMixDisplay.totalCredits)}`);
-    }
 
     if (jobs.length) {
       lines.push("", "JOB BREAKDOWN");
@@ -1886,10 +1935,10 @@ export default function AppPage() {
                         Cost Mix
                       </h3>
                       <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                        All jobs combined — donut uses absolute cost activity so
-                        negative credits do not distort the chart. The cards
-                        still show the true signed bucket totals used for
-                        profit.
+                        All jobs combined — donut shows gross cost activity.
+                        Credits and refunds are separated so Other only reflects
+                        true miscellaneous costs, while profit still uses the
+                        signed invoice totals.
                       </p>
                     </div>
 
@@ -1902,7 +1951,7 @@ export default function AppPage() {
 
                   <div className="mt-4 grid gap-6 md:grid-cols-[240px_1fr] md:items-center">
                     <canvas ref={donutCanvasRef} width={220} height={220} />
-                    <div className="grid gap-3 xl:grid-cols-4">
+                    <div className="grid gap-3 xl:grid-cols-5">
                       {costMixDisplay.buckets.map((bucket) => (
                         <div
                           key={bucket.key}
