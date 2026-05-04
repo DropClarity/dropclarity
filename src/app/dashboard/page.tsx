@@ -523,6 +523,77 @@ function exportSingleJobCsv(
   downloadCsv(`dropclarity-job-${fileSafeName(String(name))}.csv`, rows);
 }
 
+function exportAllEditedJobsDetailCsv(
+  rows: { job: JobRow; key: string }[],
+  state: DashboardState,
+  userId: string
+) {
+  const range = rangeLabel((state.range as RangeKey) || "all");
+  const csvRows: unknown[][] = [
+    ["DropClarity All Jobs Detail Export"],
+    ["Range", range],
+    ["Generated", new Date().toLocaleString()],
+    [],
+    [
+      "Job ID",
+      "Job Name",
+      "Type",
+      "Address",
+      "Date",
+      "Revenue",
+      "Labor",
+      "Materials",
+      "Subs",
+      "Other Costs",
+      "Credits / Adjustments",
+      "Custom Categories Total",
+      "Known Costs After Credits",
+      "Gross Profit",
+      "Gross Margin %",
+      "Custom Categories",
+    ],
+  ];
+
+  rows.forEach(({ job: base, key }) => {
+    const job = mergeJobWithEdits(seedJobFromBase(base || {}), key, userId);
+    const revenue = parseNumberLoose(job.revenue);
+    const labor = parseNumberLoose(job.labor_cost);
+    const materials = parseNumberLoose(job.material_cost);
+    const subs = parseNumberLoose(job.subs_cost);
+    const other = parseNumberLoose(job.other_cost);
+    const creditsApplied = getJobCreditTotal(base);
+    const customTotal = sumCustomCategories(job.custom_categories || []);
+    const knownCosts = labor + materials + subs + other + customTotal - creditsApplied;
+    const grossProfit = revenue - knownCosts;
+    const marginPct = revenue !== 0 ? (grossProfit / revenue) * 100 : 0;
+    const customText = (job.custom_categories || [])
+      .filter((c) => String(c.name || "").trim() || parseNumberLoose(c.amount) !== 0)
+      .map((c) => `${String(c.name || "Custom Category").trim()}: ${parseNumberLoose(c.amount)}`)
+      .join("; ");
+
+    csvRows.push([
+      job.job_id || base.job_id || "",
+      job.job_name || base.job_name || "",
+      job.job_type || "",
+      job.job_address || "",
+      job.job_date || dateLabel(base.created_at),
+      revenue,
+      labor,
+      materials,
+      subs,
+      other,
+      -creditsApplied,
+      customTotal,
+      knownCosts,
+      grossProfit,
+      marginPct,
+      customText,
+    ]);
+  });
+
+  downloadCsv(`dropclarity-all-jobs-detail-${fileSafeName(range)}.csv`, csvRows);
+}
+
 async function apiGetDashboard(token: string | null, range: RangeKey, customFrom: string, customTo: string): Promise<DashboardState> {
   const params = new URLSearchParams();
   params.set("range", range);
@@ -2814,6 +2885,7 @@ function JobEditor({
   access,
   onLocked,
   marginTarget = 30,
+  compactOnly = false,
 }: {
   jobKey: string;
   base: JobRow;
@@ -2826,6 +2898,7 @@ function JobEditor({
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget?: number;
+  compactOnly?: boolean;
 }) {
   const [job, setJob] = useState<EditableJob>(() => mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
   const history = extractJobHistory(state, base || {});
@@ -2987,6 +3060,115 @@ function JobEditor({
       </td>
     );
   };
+
+  if (compactOnly) {
+    return (
+      <div className="allJobsEditableCard">
+        <div className="panel jobDetailFocus allJobsCompactPanel">
+          <div className="panelHead allJobsCompactHead">
+            <div>
+              <div className="panelTitle">{job.job_name || job.job_id || "Job detail"}</div>
+              <div className="panelSub">
+                {job.job_id || "No Job ID"} • Edit job info, costs, and manual categories.
+              </div>
+            </div>
+            <div className="buttonRow allJobsCompactActions">
+              <button className="btn btn-primary" type="button" onClick={save}>
+                {saved ? "Saved ✓" : access.canSaveJobEdits ? "Save changes" : "Save changes 🔒"}
+              </button>
+
+              <button
+                className="btn"
+                type="button"
+                onClick={() => access.canExport ? exportSingleJobCsv(job, base, history, state) : handleLocked("CSV exports", "Core")}
+              >
+                {access.canExport ? "Export Job CSV" : "Export Job CSV 🔒"}
+              </button>
+
+              <button className="btn" type="button" onClick={reset}>
+                Reset
+              </button>
+
+              <button className="btn" type="button" onClick={addCustom}>
+                {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
+              </button>
+            </div>
+          </div>
+
+          <div className="pad jobDetailPad allJobsCompactPad">
+            <table className="jobTable allJobsStackTable">
+              <thead>
+                <tr>
+                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Other Costs</th><th>Gross Profit</th><th>Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input className="cellEdit" value={job.job_id} onChange={(e) => setField("job_id", e.target.value)} placeholder="JOB-1021" /><div className="cellHint">Identifier</div></td>
+                  <td><input className="cellEdit" value={job.job_name} onChange={(e) => setField("job_name", e.target.value)} placeholder="Customer / project" /><div className="cellHint">Name</div></td>
+                  <td><input className="cellEdit" value={job.job_type} onChange={(e) => setField("job_type", e.target.value)} placeholder="Install" /><div className="cellHint">Optional</div></td>
+                  <td><input className="cellEdit" value={job.job_address} onChange={(e) => setField("job_address", e.target.value)} placeholder="Address" /><div className="cellHint">Optional</div></td>
+                  <td><input className="cellEdit" value={job.job_date} onChange={(e) => setField("job_date", e.target.value)} placeholder="YYYY-MM-DD" /><div className="cellHint">Optional</div></td>
+                  {renderMoneyCell("Revenue", "revenue")}
+                  {renderMoneyCell("Labor", "labor_cost")}
+                  {renderMoneyCell("Materials", "material_cost")}
+                  {renderMoneyCell("Subs", "subs_cost")}
+                  {renderMoneyCell("Other", "other_cost")}
+                  <td><div className={`calcCell ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div></td>
+                  <td><div className={`calcCell ${gm < 0 ? "neg" : ""}`}>{fmtPct(gm)}</div></td>
+                </tr>
+
+                {job.custom_categories.map((row, idx) => (
+                  <tr key={`${uid}-compact-${idx}`}>
+                    <td colSpan={6}><input className="cellEdit customInlineInput" value={row.name} disabled={!access.canUseCustomCategories} onChange={(e) => updateCustom(idx, { name: e.target.value })} placeholder="e.g. Sales Commission" /><div className="cellHint">Manual cost category</div></td>
+                    <td colSpan={4}><input
+                      className="cellEdit customAmountInput moneyEditInput"
+                      inputMode="decimal"
+                      type="text"
+                      disabled={!access.canUseCustomCategories}
+                      value={editingCustomAmountIndex === idx ? customAmountDrafts[idx] ?? "" : fmtMoney(row.amount)}
+                      onFocus={(e) => {
+                        const rawValue = String(parseNumberLoose(row.amount));
+                        setEditingCustomAmountIndex(idx);
+                        setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: rawValue }));
+
+                        window.setTimeout(() => {
+                          e.currentTarget.focus();
+                          e.currentTarget.select();
+                        }, 0);
+                      }}
+                      onChange={(e) => {
+                        const raw = e.currentTarget.value;
+                        setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: raw }));
+                        updateCustom(idx, { amount: parseMoneyInput(raw) });
+                      }}
+                      onBlur={() => {
+                        const finalValue = parseMoneyInput(customAmountDrafts[idx]);
+                        updateCustom(idx, { amount: finalValue });
+                        setCustomAmountDrafts((drafts) => {
+                          const next = { ...drafts };
+                          delete next[idx];
+                          return next;
+                        });
+                        setEditingCustomAmountIndex(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      placeholder="$0.00"
+                    /><div className="cellHint">Additional cost amount</div></td>
+                    <td colSpan={2}><div className="customRemoveWrap"><button className="btn-mini btn-danger" type="button" onClick={() => removeCustom(idx)}>× Remove</button></div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -3249,24 +3431,92 @@ function AllJobsView({
       .filter(({ job }) => !q || `${job.job_name || ""} ${job.job_id || ""}`.toLowerCase().includes(q));
   }, [jobs, search]);
 
+  const allJobsSummary = useMemo(() => {
+    return filtered.reduce(
+      (sum, row) => {
+        const edited = mergeJobWithEdits(seedJobFromBase(row.job || {}), row.key, userId);
+        const revenue = parseNumberLoose(edited.revenue);
+        const labor = parseNumberLoose(edited.labor_cost);
+        const materials = parseNumberLoose(edited.material_cost);
+        const subs = parseNumberLoose(edited.subs_cost);
+        const other = parseNumberLoose(edited.other_cost);
+        const credits = getJobCreditTotal(row.job);
+        const customTotal = sumCustomCategories(edited.custom_categories || []);
+        const costs = labor + materials + subs + other + customTotal - credits;
+        const profit = revenue - costs;
+
+        sum.revenue += revenue;
+        sum.costs += costs;
+        sum.profit += profit;
+        sum.credits += credits;
+        sum.customCategories += (edited.custom_categories || []).length;
+        return sum;
+      },
+      { revenue: 0, costs: 0, profit: 0, credits: 0, customCategories: 0 }
+    );
+  }, [filtered, userId]);
+
+  const allJobsMargin = allJobsSummary.revenue !== 0 ? (allJobsSummary.profit / allJobsSummary.revenue) * 100 : 0;
+
   return (
-    <div className="panel" style={{ marginTop: 12 }}>
-      <div className="crumbs">
-        <div className="crumb">View: <strong>All Jobs Detail</strong></div>
-        <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
-        <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
-      </div>
-      <div className="pad"><input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs before expanding details..." /></div>
-      <div className="pad">
-        {filtered.length ? (
-          filtered.map(({ job, key }) => (
-            <div key={key} style={{ marginBottom: 14 }}>
-              <JobEditor jobKey={key} base={job} state={state} showBack={false} userId={userId} access={access} onLocked={onLocked} onBack={() => {}} onAllJobs={() => {}} refreshLocal={refreshLocal} />
-            </div>
-          ))
-        ) : (
-          <div className="empty">No jobs match this search.</div>
-        )}
+    <div className="allJobsDetailPage">
+      <div className="panel allJobsDetailShell">
+        <div className="crumbs allJobsCrumbs">
+          <div className="crumb">View: <strong>All Jobs Detail</strong></div>
+          <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
+          <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+        </div>
+
+        <div className="allJobsTopTools">
+          <input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs before editing details..." />
+          <button
+            className={access.canExport ? "btn btn-primary" : "btn lockedBtn"}
+            type="button"
+            onClick={() => access.canExport ? exportAllEditedJobsDetailCsv(filtered.map(({ job, key }) => ({ job, key })), state, userId) : onLocked("All jobs detail CSV", "Core")}
+          >
+            {access.canExport ? "Download All Jobs Detail CSV" : "Download All Jobs Detail CSV 🔒"}
+          </button>
+        </div>
+
+        <div className="jobStats allJobsSummaryStats">
+          <div className="stat"><div className="statLabel">Gross Profit</div><div className={`statValue ${allJobsSummary.profit < 0 ? "neg" : "pos"}`}>{fmtMoney(allJobsSummary.profit)}</div><div className="statSub">Filtered jobs total.</div></div>
+          <div className="stat"><div className="statLabel">Gross Margin</div><div className={`statValue ${allJobsMargin < 0 ? "neg" : "pos"}`}>{fmtPct(allJobsMargin)}</div><div className="statSub">Based on edited values.</div></div>
+          <div className="stat"><div className="statLabel">Revenue</div><div className="statValue">{fmtMoney(allJobsSummary.revenue)}</div><div className="statSub">Filtered jobs total.</div></div>
+          <div className="stat"><div className="statLabel">Known Costs</div><div className="statValue">{fmtMoney(allJobsSummary.costs)}</div><div className="statSub">Cost buckets + custom.</div></div>
+          <div className="stat"><div className="statLabel">Credits Applied</div><div className="statValue creditText">{fmtMoney(allJobsSummary.credits)}</div><div className="statSub">Tracked separately.</div></div>
+          <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{allJobsSummary.customCategories}</div><div className="statSub">Across shown jobs.</div></div>
+        </div>
+
+        <div className="allJobsStackHeader">
+          <div>
+            <div className="sectionEyebrow">Editable Job Details</div>
+            <div className="sectionTitle">All jobs in one clean editing stack</div>
+          </div>
+          <div className="sectionSubtle">Edit job IDs, names, dates, costs, and custom categories without opening each job separately.</div>
+        </div>
+
+        <div className="allJobsStack">
+          {filtered.length ? (
+            filtered.map(({ job, key }) => (
+              <JobEditor
+                key={key}
+                jobKey={key}
+                base={job}
+                state={state}
+                showBack={false}
+                userId={userId}
+                access={access}
+                onLocked={onLocked}
+                onBack={() => {}}
+                onAllJobs={() => {}}
+                refreshLocal={refreshLocal}
+                compactOnly
+              />
+            ))
+          ) : (
+            <div className="empty">No jobs match this search.</div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -4746,4 +4996,35 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:1100px){.dc-bg .creditKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:760px){.dc-bg .creditKpiGrid{grid-template-columns:1fr!important}.dc-bg .creditAppliedPill{white-space:normal;line-height:1.25}.dc-bg .dashboardBackBtn{width:fit-content;max-width:100%}}
 @media (hover:none) and (pointer:coarse){.dc-bg .dashboardBackBtn{animation:none}.dc-bg .dashboardBackBtn:hover{transform:none!important}}
+
+
+.dc-bg /* All Jobs Detail stacked editor */
+.allJobsDetailPage{margin-top:12px}
+.dc-bg .allJobsDetailShell{overflow:hidden}
+.dc-bg .allJobsTopTools{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid rgba(15,23,42,.065);background:rgba(255,255,255,.72)}
+.dc-bg .allJobsTopTools .wideSearch{flex:1;min-width:260px}
+.dc-bg .allJobsSummaryStats{padding:16px;border-bottom:1px solid rgba(15,23,42,.065)}
+.dc-bg .allJobsStackHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:0 14px 14px;padding:16px 18px;border-radius:20px;border:1px solid rgba(34,211,238,.14);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(240,253,250,.62));box-shadow:0 10px 28px rgba(2,6,23,.045)}
+.dc-bg .allJobsStack{display:flex;flex-direction:column;gap:16px;padding:0 14px 16px}
+.dc-bg .allJobsEditableCard{width:100%}
+.dc-bg .allJobsCompactPanel{box-shadow:0 12px 34px rgba(2,6,23,.055);border-color:rgba(15,23,42,.08)}
+.dc-bg .allJobsCompactHead{align-items:flex-start}
+.dc-bg .allJobsCompactActions{max-width:780px}
+.dc-bg .allJobsCompactPad{padding:16px;overflow-x:auto}
+.dc-bg .allJobsStackTable{min-width:1320px}
+
+@media(max-width:900px){
+  .dc-bg .allJobsTopTools{flex-direction:column;align-items:stretch}
+  .dc-bg .allJobsTopTools .btn{justify-content:center}
+  .dc-bg .allJobsStackHeader{align-items:flex-start;flex-direction:column}
+  .dc-bg .allJobsCompactHead{flex-direction:column}
+  .dc-bg .allJobsCompactActions{width:100%;justify-content:flex-start}
+}
+@media(max-width:560px){
+  .dc-bg .allJobsTopTools{padding:12px}
+  .dc-bg .allJobsSummaryStats{padding:12px}
+  .dc-bg .allJobsStack{padding:0 10px 12px;gap:12px}
+  .dc-bg .allJobsStackHeader{margin:0 10px 12px;padding:14px}
+  .dc-bg .allJobsCompactPad{padding:12px}
+}
 `;
