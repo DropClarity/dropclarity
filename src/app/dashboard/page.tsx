@@ -237,6 +237,33 @@ type ScaleSummary = {
 };
 
 
+
+
+type AlertSettings = {
+  ok?: boolean;
+  plan?: string;
+  emailAlertsEnabled?: boolean;
+  scaleAlertEmails?: string[];
+  alertEmails?: string[];
+  primaryEmail?: string | null;
+  providerConfigured?: boolean;
+};
+
+function parseEmailListInput(value: string): string[] {
+  return String(value || "")
+    .split(/[\n,;]+/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((email, idx, arr) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && arr.indexOf(email) === idx)
+    .slice(0, 10);
+}
+
+function formatEmailList(emails: string[], fallback?: string | null): string {
+  const clean = Array.isArray(emails) ? emails.filter(Boolean) : [];
+  if (clean.length) return clean.join(", ");
+  return fallback || "Account email";
+}
+
 type PlanAccess = {
   normalizedPlan: "free" | "core" | "scale";
   label: string;
@@ -647,6 +674,57 @@ async function apiGetScaleSummary(token: string | null): Promise<ScaleSummary> {
   }
 
   return (data as ScaleSummary) || {};
+}
+
+
+async function apiGetAlertSettings(token: string | null): Promise<AlertSettings> {
+  const res = await fetch(`${API_BASE}/alert-settings`, {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  let data: { error?: string } | AlertSettings | null = null;
+
+  try {
+    data = JSON.parse(text) as AlertSettings;
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error((data as { error?: string } | null)?.error || text || `Alert settings failed (${res.status})`);
+  }
+
+  return (data as AlertSettings) || {};
+}
+
+async function apiSaveAlertSettings(
+  token: string | null,
+  payload: { emailAlertsEnabled: boolean; scaleAlertEmails: string[]; marginTargetPct?: number }
+): Promise<AlertSettings> {
+  const res = await fetch(`${API_BASE}/alert-settings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await res.text();
+  let data: { error?: string } | AlertSettings | null = null;
+
+  try {
+    data = JSON.parse(text) as AlertSettings;
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error((data as { error?: string } | null)?.error || text || `Save alert settings failed (${res.status})`);
+  }
+
+  return (data as AlertSettings) || {};
 }
 
 function getAllJobs(state: DashboardState): JobRow[] {
@@ -2262,6 +2340,14 @@ function ScaleOversightPanel({
   onSaveMarginTarget,
   emailAlertsEnabled,
   setEmailAlertsEnabled,
+  alertEmails,
+  alertEmailDraft,
+  setAlertEmailDraft,
+  alertEmailEditing,
+  setAlertEmailEditing,
+  savingAlertSettings,
+  alertSettingsMessage,
+  onSaveAlertSettings,
   userEmail,
   onOpenJob,
   onOpenHighRisk,
@@ -2275,6 +2361,14 @@ function ScaleOversightPanel({
   onSaveMarginTarget: () => void;
   emailAlertsEnabled: boolean;
   setEmailAlertsEnabled: (v: boolean) => void;
+  alertEmails: string[];
+  alertEmailDraft: string;
+  setAlertEmailDraft: (v: string) => void;
+  alertEmailEditing: boolean;
+  setAlertEmailEditing: (v: boolean) => void;
+  savingAlertSettings: boolean;
+  alertSettingsMessage: string;
+  onSaveAlertSettings: () => void;
   userEmail?: string | null;
   onOpenJob: (jobKey: string) => void;
   onOpenHighRisk: () => void;
@@ -2598,10 +2692,46 @@ function ScaleOversightPanel({
           <div className="scaleText">
             Send an email when a job loses money, falls below your margin target, or needs immediate review.
           </div>
-          <div className="emailDestination">
-            <span>Alert destination</span>
-            <strong>{userEmail || "Account email"}</strong>
+          <div className="emailDestination emailDestinationEditable">
+            <div>
+              <span>Alert destination</span>
+              <strong>{formatEmailList(alertEmails, userEmail)}</strong>
+            </div>
+            <button
+              className="miniBtn emailEditBtn"
+              type="button"
+              onClick={() => {
+                setAlertEmailDraft(formatEmailList(alertEmails, userEmail));
+                setAlertEmailEditing(!alertEmailEditing);
+              }}
+            >
+              {alertEmailEditing ? "Close" : "Edit"}
+            </button>
           </div>
+
+          {alertEmailEditing ? (
+            <div className="emailEditPanel">
+              <label className="emailEditLabel" htmlFor="scale-alert-emails">Alert recipients</label>
+              <textarea
+                id="scale-alert-emails"
+                className="emailEditInput"
+                value={alertEmailDraft}
+                onChange={(e) => setAlertEmailDraft(e.target.value)}
+                placeholder="owner@company.com, manager@company.com"
+                rows={3}
+              />
+              <div className="emailEditHint">Add up to 10 emails. Separate each email with a comma, semicolon, or new line.</div>
+              <div className="emailEditActions">
+                <button className="btn subtlePrimaryBtn" type="button" onClick={onSaveAlertSettings} disabled={savingAlertSettings}>
+                  {savingAlertSettings ? "Saving..." : "Save recipients"}
+                </button>
+                <button className="btn" type="button" onClick={() => { setAlertEmailEditing(false); setAlertEmailDraft(formatEmailList(alertEmails, userEmail)); }}>
+                  Cancel
+                </button>
+              </div>
+              {alertSettingsMessage ? <div className="emailSettingsMessage">{alertSettingsMessage}</div> : null}
+            </div>
+          ) : null}
           <div className="emailLiveGrid">
             <div><span>Last alert sent</span><strong>{lastAlertSentLabel}</strong></div>
             <div><span>Next summary</span><strong>{nextSummaryLabel}</strong></div>
@@ -2779,6 +2909,14 @@ function DashboardBody({
   onSaveMarginTarget,
   emailAlertsEnabled,
   setEmailAlertsEnabled,
+  alertEmails,
+  alertEmailDraft,
+  setAlertEmailDraft,
+  alertEmailEditing,
+  setAlertEmailEditing,
+  savingAlertSettings,
+  alertSettingsMessage,
+  onSaveAlertSettings,
   userEmail,
 }: {
   state: DashboardState;
@@ -2799,6 +2937,14 @@ function DashboardBody({
   onSaveMarginTarget: () => void;
   emailAlertsEnabled: boolean;
   setEmailAlertsEnabled: (v: boolean) => void;
+  alertEmails: string[];
+  alertEmailDraft: string;
+  setAlertEmailDraft: (v: string) => void;
+  alertEmailEditing: boolean;
+  setAlertEmailEditing: (v: boolean) => void;
+  savingAlertSettings: boolean;
+  alertSettingsMessage: string;
+  onSaveAlertSettings: () => void;
   userEmail?: string | null;
 }) {
   const jobs = getAllJobs(state);
@@ -2820,6 +2966,14 @@ function DashboardBody({
         onSaveMarginTarget={onSaveMarginTarget}
         emailAlertsEnabled={emailAlertsEnabled}
         setEmailAlertsEnabled={setEmailAlertsEnabled}
+        alertEmails={alertEmails}
+        alertEmailDraft={alertEmailDraft}
+        setAlertEmailDraft={setAlertEmailDraft}
+        alertEmailEditing={alertEmailEditing}
+        setAlertEmailEditing={setAlertEmailEditing}
+        savingAlertSettings={savingAlertSettings}
+        alertSettingsMessage={alertSettingsMessage}
+        onSaveAlertSettings={onSaveAlertSettings}
         userEmail={userEmail}
         onOpenJob={(key: string) => {
           setJobKey(key);
@@ -3860,6 +4014,11 @@ export default function DashboardPage() {
   const [marginTarget, setMarginTarget] = useState<number>(30);
   const [marginTargetDraft, setMarginTargetDraft] = useState<string>("30");
   const [emailAlertsEnabled, setEmailAlertsEnabledState] = useState<boolean>(true);
+  const [alertEmails, setAlertEmails] = useState<string[]>([]);
+  const [alertEmailDraft, setAlertEmailDraft] = useState<string>("");
+  const [alertEmailEditing, setAlertEmailEditing] = useState<boolean>(false);
+  const [savingAlertSettings, setSavingAlertSettings] = useState<boolean>(false);
+  const [alertSettingsMessage, setAlertSettingsMessage] = useState<string>("");
 
   const loadAndRender = useCallback(async () => {
     if (!isLoaded) return;
@@ -3884,6 +4043,26 @@ export default function DashboardPage() {
         console.error("Failed to load Scale summary", scaleError);
       }
 
+      try {
+        const alertSettings = await apiGetAlertSettings(token);
+        const nextEmails = Array.isArray(alertSettings.scaleAlertEmails)
+          ? alertSettings.scaleAlertEmails
+          : Array.isArray(alertSettings.alertEmails)
+          ? alertSettings.alertEmails
+          : [];
+        setAlertEmails(nextEmails);
+        setAlertEmailDraft(formatEmailList(nextEmails, alertSettings.primaryEmail || user?.primaryEmailAddress?.emailAddress || null));
+        if (typeof alertSettings.emailAlertsEnabled === "boolean") {
+          setEmailAlertsEnabledState(alertSettings.emailAlertsEnabled);
+          writeEmailAlertsEnabled(USER_ID, alertSettings.emailAlertsEnabled);
+        }
+      } catch (alertError) {
+        // Free/Core users do not have server-side Scale alert settings yet.
+        setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
+        setAlertEmailDraft(user?.primaryEmailAddress?.emailAddress || "");
+        console.error("Failed to load alert settings", alertError);
+      }
+
       setState({ ...(data || {}), range });
       setScaleSummary(scaleData);
       setMode("ready");
@@ -3892,7 +4071,7 @@ export default function DashboardPage() {
       setError(e instanceof Error ? e.message : String(e));
       console.error(e);
     }
-  }, [isLoaded, isSignedIn, getToken, range, customFrom, customTo]);
+  }, [isLoaded, isSignedIn, getToken, range, customFrom, customTo, USER_ID, user?.primaryEmailAddress?.emailAddress]);
 
 useEffect(() => {
   if (!isLoaded) return;
@@ -3901,6 +4080,8 @@ useEffect(() => {
   setMarginTarget(savedTarget);
   setMarginTargetDraft(String(savedTarget));
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
+  setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
+  setAlertEmailDraft(user?.primaryEmailAddress?.emailAddress || "");
   setDeletedReportKeys(readDeletedReports(USER_ID));
   loadAndRender();
 }, [USER_ID, isLoaded, loadAndRender]);
@@ -3912,9 +4093,61 @@ useEffect(() => {
     writeMarginTarget(USER_ID, next);
   };
 
-  const setEmailAlertsEnabled = (enabled: boolean) => {
+  const saveAlertSettings = useCallback(async () => {
+    const cleanEmails = parseEmailListInput(alertEmailDraft || formatEmailList(alertEmails, user?.primaryEmailAddress?.emailAddress || null));
+
+    if (!cleanEmails.length) {
+      setAlertSettingsMessage("Enter at least one valid email address.");
+      return;
+    }
+
+    try {
+      setSavingAlertSettings(true);
+      setAlertSettingsMessage("");
+      const token = await getToken();
+      const saved = await apiSaveAlertSettings(token, {
+        emailAlertsEnabled,
+        scaleAlertEmails: cleanEmails,
+        marginTargetPct: marginTarget,
+      });
+
+      const nextEmails = Array.isArray(saved.scaleAlertEmails) && saved.scaleAlertEmails.length ? saved.scaleAlertEmails : cleanEmails;
+      setAlertEmails(nextEmails);
+      setAlertEmailDraft(nextEmails.join(", "));
+      if (typeof saved.emailAlertsEnabled === "boolean") {
+        setEmailAlertsEnabledState(saved.emailAlertsEnabled);
+        writeEmailAlertsEnabled(USER_ID, saved.emailAlertsEnabled);
+      }
+      setAlertEmailEditing(false);
+      setAlertSettingsMessage("Alert recipients saved.");
+    } catch (e) {
+      setAlertSettingsMessage(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingAlertSettings(false);
+    }
+  }, [USER_ID, alertEmailDraft, alertEmails, emailAlertsEnabled, getToken, marginTarget, user?.primaryEmailAddress?.emailAddress]);
+
+  const setEmailAlertsEnabled = async (enabled: boolean) => {
     setEmailAlertsEnabledState(enabled);
     writeEmailAlertsEnabled(USER_ID, enabled);
+
+    if (!access.canUseScale) return;
+
+    try {
+      const cleanEmails = parseEmailListInput(alertEmailDraft || formatEmailList(alertEmails, user?.primaryEmailAddress?.emailAddress || null));
+      const token = await getToken();
+      const saved = await apiSaveAlertSettings(token, {
+        emailAlertsEnabled: enabled,
+        scaleAlertEmails: cleanEmails.length ? cleanEmails : alertEmails,
+        marginTargetPct: marginTarget,
+      });
+      if (Array.isArray(saved.scaleAlertEmails)) {
+        setAlertEmails(saved.scaleAlertEmails);
+        setAlertEmailDraft(formatEmailList(saved.scaleAlertEmails, user?.primaryEmailAddress?.emailAddress || null));
+      }
+    } catch (e) {
+      setAlertSettingsMessage(e instanceof Error ? e.message : String(e));
+    }
   };
 
 
@@ -4088,6 +4321,14 @@ useEffect(() => {
   onSaveMarginTarget={saveMarginTarget}
   emailAlertsEnabled={emailAlertsEnabled}
   setEmailAlertsEnabled={setEmailAlertsEnabled}
+  alertEmails={alertEmails}
+  alertEmailDraft={alertEmailDraft}
+  setAlertEmailDraft={setAlertEmailDraft}
+  alertEmailEditing={alertEmailEditing}
+  setAlertEmailEditing={setAlertEmailEditing}
+  savingAlertSettings={savingAlertSettings}
+  alertSettingsMessage={alertSettingsMessage}
+  onSaveAlertSettings={saveAlertSettings}
   userEmail={user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null}
 />
             )}
@@ -4512,7 +4753,17 @@ const dashboardCss = `
 .dc-bg .emailAlertTitle{margin-top:9px;font-size:18px;line-height:1.1;font-weight:980;color:rgba(15,23,42,.94);letter-spacing:-.025em}
 .dc-bg .emailDestination{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:13px 0;border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(248,250,252,.9);padding:10px}
 .dc-bg .emailDestination span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.48)}
-.dc-bg .emailDestination strong{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.82);text-align:right;word-break:break-all}
+.dc-bg .emailDestination strong{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.82);text-align:left;word-break:break-all;display:block;margin-top:4px}
+.dc-bg .emailDestinationEditable{align-items:center}
+.dc-bg .emailEditBtn{flex:0 0 auto;background:rgba(255,255,255,.86)}
+.dc-bg .emailEditPanel{margin:10px 0 12px;border:1px solid rgba(15,23,42,.075);border-radius:16px;background:rgba(255,255,255,.86);padding:11px;box-shadow:0 10px 28px rgba(2,6,23,.045)}
+.dc-bg .emailEditLabel{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.52);margin-bottom:7px}
+.dc-bg .emailEditInput{width:100%;border:1px solid rgba(15,23,42,.12);border-radius:13px;background:#fff;padding:10px 11px;font-size:13px;line-height:1.4;font-weight:800;color:#0f172a;outline:none;resize:vertical;min-height:74px}
+.dc-bg .emailEditInput:focus{border-color:rgba(34,211,238,.55);box-shadow:0 0 0 3px rgba(34,211,238,.16)}
+.dc-bg .emailEditHint{margin-top:7px;font-size:12px;font-weight:750;color:rgba(15,23,42,.54);line-height:1.35}
+.dc-bg .emailEditActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dc-bg .emailSettingsMessage{margin-top:8px;font-size:12.5px;font-weight:850;color:rgba(15,23,42,.66)}
+.dc-bg .subtlePrimaryBtn{border-color:rgba(34,211,238,.28);background:linear-gradient(135deg,rgba(236,254,255,.96),rgba(245,243,255,.94));box-shadow:0 8px 20px rgba(2,6,23,.045)}
 .dc-bg .emailNote{margin-top:10px;font-size:11.5px;line-height:1.35;font-weight:800;color:rgba(15,23,42,.46)}
 .dc-bg .btn-danger-soft{border-color:rgba(239,68,68,.18);background:rgba(254,242,242,.86);color:rgba(185,28,28,.96)}
 .dc-bg .scaleGridPremiumV2{grid-template-columns:1.15fr 1fr 1fr;align-items:start}
