@@ -1210,7 +1210,7 @@ function buildCostMixParts(state: DashboardState): CostPart[] {
     { label: "Materials", value: displayMix.materials, color: "rgba(124,58,237,.90)", shadow: "rgba(124,58,237,.20)" },
     { label: "Subs", value: displayMix.subs, color: "rgba(37,99,235,.90)", shadow: "rgba(37,99,235,.18)" },
     { label: "Other Costs", value: displayMix.other, color: "rgba(52,211,153,.90)", shadow: "rgba(52,211,153,.20)" },
-    { label: "Credits / Adjustments", value: displayMix.credits > 0 ? -displayMix.credits : 0, color: "rgba(16,185,129,.90)", shadow: "rgba(16,185,129,.20)" },
+    { label: "Credits / Adjustments", value: displayMix.credits > 0 ? -displayMix.credits : 0, color: "rgba(100,116,139,.82)", shadow: "rgba(100,116,139,.14)" },
   ];
 }
 
@@ -2995,7 +2995,7 @@ function JobEditor({
           <div className="crumbs">
             <div className="crumb">View: <strong>Job Detail</strong></div>
             <div className="crumb">Job: <strong>{job.job_id || job.job_name || "—"}</strong></div>
-            <button className="crumbBtn" type="button" onClick={onBack}>← Back to dashboard</button>
+            <button className="crumbBtn dashboardBackBtn" type="button" onClick={onBack}>← Back to dashboard</button>
             <button className="crumbBtn secondary" type="button" onClick={onAllJobs}>View all jobs</button>
           </div>
 
@@ -3199,7 +3199,7 @@ function JobView({
   if (!base) {
     return (
       <div className="panel" style={{ marginTop: 12 }}>
-        <div className="crumbs"><div className="crumb">View: <strong>Job Detail</strong></div><button className="crumbBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); }}>← Back to dashboard</button></div>
+        <div className="crumbs"><div className="crumb">View: <strong>Job Detail</strong></div><button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); }}>← Back to dashboard</button></div>
         <div className="pad"><div className="empty">This job could not be found in the current dashboard state.</div></div>
       </div>
     );
@@ -3254,7 +3254,7 @@ function AllJobsView({
       <div className="crumbs">
         <div className="crumb">View: <strong>All Jobs Detail</strong></div>
         <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
-        <button className="crumbBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+        <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
       </div>
       <div className="pad"><input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs before expanding details..." /></div>
       <div className="pad">
@@ -3315,7 +3315,7 @@ function HighRiskJobsView({
         <div className="crumbs">
           <div className="crumb">View: <strong>High-Risk Jobs</strong></div>
           <div className="crumb"><strong>{String(filtered.length)}</strong> jobs below target</div>
-          <button className="crumbBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+          <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
         </div>
         <div className="highRiskHeroBody">
           <div>
@@ -3433,7 +3433,7 @@ function ReportsManagerView({
           <div className="crumb">View: <strong>Manage Reports</strong></div>
           <div className="crumb"><strong>{activeCount}</strong> active</div>
           <div className="crumb"><strong>{hiddenCount}</strong> hidden</div>
-          <button className="crumbBtn" type="button" onClick={onBack}>← Back to dashboard</button>
+          <button className="crumbBtn dashboardBackBtn" type="button" onClick={onBack}>← Back to dashboard</button>
         </div>
 
         <div className="reportsManagerBody">
@@ -4646,4 +4646,104 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .reportCreditText{margin-top:4px;font-size:11.5px;font-weight:900;color:rgba(6,95,70,.92)}
 @media(max-width:1100px){.dc-bg .creditKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.dc-bg .creditKpiGrid{grid-template-columns:1fr}.dc-bg .creditKpiHead{padding:15px}.dc-bg .creditKpiTitle{font-size:19px}}
+
+
+/* Credit/adjustment visual de-emphasis + stronger dashboard return CTA */
+.dc-bg .creditAppliedPill{
+  border-color:rgba(15,23,42,.10)!important;
+  background:rgba(248,250,252,.92)!important;
+  color:rgba(51,65,85,.88)!important;
+  box-shadow:none!important;
+}
+.dc-bg .creditMixRow{
+  border-color:rgba(15,23,42,.075)!important;
+  background:rgba(255,255,255,.82)!important;
+  box-shadow:none!important;
+}
+.dc-bg .creditBarFill{opacity:.46!important}
+.dc-bg .creditText{color:rgba(51,65,85,.86)!important}
+.dc-bg .reportCreditText{color:rgba(71,85,105,.72)!important}
+.dc-bg .creditKpiPanel{
+  margin-top:12px!important;
+  border-radius:22px!important;
+  border:1px solid rgba(15,23,42,.085)!important;
+  background:rgba(255,255,255,.86)!important;
+  box-shadow:0 16px 44px rgba(2,6,23,.055)!important;
+  overflow:hidden!important;
+}
+.dc-bg .creditKpiHead{
+  padding:16px 18px!important;
+  border-bottom:1px solid rgba(15,23,42,.065)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(248,250,252,.72))!important;
+}
+.dc-bg .creditKpiTitle{
+  font-size:18px!important;
+  line-height:1.15!important;
+  font-weight:950!important;
+  letter-spacing:-.02em!important;
+  color:rgba(15,23,42,.92)!important;
+}
+.dc-bg .creditKpiSub{
+  margin-top:5px!important;
+  font-size:13.5px!important;
+  line-height:1.45!important;
+  font-weight:780!important;
+  color:rgba(15,23,42,.58)!important;
+  max-width:920px!important;
+}
+.dc-bg .creditKpiGrid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+  padding:16px!important;
+}
+.dc-bg .creditKpiCard{
+  border-radius:18px!important;
+  border:1px solid rgba(15,23,42,.075)!important;
+  background:rgba(248,250,252,.70)!important;
+  box-shadow:none!important;
+  padding:14px!important;
+}
+.dc-bg .creditKpiLabel{
+  font-size:11px!important;
+  text-transform:uppercase!important;
+  letter-spacing:.075em!important;
+  font-weight:950!important;
+  color:rgba(71,85,105,.66)!important;
+}
+.dc-bg .creditKpiValue{
+  margin-top:7px!important;
+  font-size:21px!important;
+  line-height:1.05!important;
+  font-weight:980!important;
+  letter-spacing:-.02em!important;
+  color:rgba(15,23,42,.92)!important;
+}
+.dc-bg .creditKpiNote{
+  margin-top:7px!important;
+  font-size:12.5px!important;
+  line-height:1.35!important;
+  font-weight:760!important;
+  color:rgba(15,23,42,.52)!important;
+}
+.dc-bg .dashboardBackBtn{
+  border-color:rgba(124,58,237,.26)!important;
+  background:linear-gradient(90deg,rgba(124,58,237,.12),rgba(34,211,238,.10))!important;
+  color:rgba(15,23,42,.96)!important;
+  box-shadow:0 12px 30px rgba(124,58,237,.10)!important;
+  animation:dashboardBackBtnNudge 3.8s ease-in-out infinite;
+}
+.dc-bg .dashboardBackBtn:hover{
+  transform:translateY(-1px)!important;
+  border-color:rgba(124,58,237,.36)!important;
+  box-shadow:0 16px 38px rgba(124,58,237,.16)!important;
+}
+@keyframes dashboardBackBtnNudge{
+  0%,72%,100%{transform:translateY(0)}
+  80%{transform:translateY(-1px)}
+  88%{transform:translateY(0)}
+}
+@media(max-width:1100px){.dc-bg .creditKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:760px){.dc-bg .creditKpiGrid{grid-template-columns:1fr!important}.dc-bg .creditAppliedPill{white-space:normal;line-height:1.25}.dc-bg .dashboardBackBtn{width:fit-content;max-width:100%}}
+@media (hover:none) and (pointer:coarse){.dc-bg .dashboardBackBtn{animation:none}.dc-bg .dashboardBackBtn:hover{transform:none!important}}
 `;
