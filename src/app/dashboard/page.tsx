@@ -1785,7 +1785,8 @@ function TopBar({
   Refresh
 </button>
 
-<a className="btn btn-primary" href="/app">
+<a className="btn uploadCtaBtn" href="/app" aria-label="Go to Upload">
+  <span className="uploadCtaIcon" aria-hidden="true">↗</span>
   Go to Upload
 </a>
       </div>
@@ -2020,7 +2021,15 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
   );
 }
 
-function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: string) => void }) {
+function JobsLog({
+  jobs,
+  onOpenJob,
+  onOpenAllJobs,
+}: {
+  jobs: JobRow[];
+  onOpenJob: (jobKey: string) => void;
+  onOpenAllJobs: () => void;
+}) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<JobsSortKey>("date");
 
@@ -2049,10 +2058,13 @@ function JobsLog({ jobs, onOpenJob }: { jobs: JobRow[]; onOpenJob: (jobKey: stri
       <div className="panelHead responsiveHead">
         <div>
           <div className="panelTitle">All Jobs Log</div>
-          <div className="panelSub">Search, sort, and open any job.</div>
+          <div className="panelSub">Search, sort, open one job, or review every editable job detail together.</div>
         </div>
 
-        <div className="tableTools">
+        <div className="tableTools jobsLogTools">
+          <button className="btn viewAllDetailsBtn" type="button" onClick={onOpenAllJobs}>
+            View All Job Details
+          </button>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search job..." className="searchInput" />
           <select value={sort} onChange={(e) => setSort(e.target.value as JobsSortKey)} className="selectInput">
             <option value="date">Newest</option>
@@ -2821,6 +2833,11 @@ function DashboardBody({
         <div className="mainCol">
           <JobsLog
             jobs={jobs}
+            onOpenAllJobs={() => {
+              setView("alljobs");
+              setJobKey("");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onOpenJob={(key: string) => {
               setJobKey(key);
               setView("job");
@@ -3073,7 +3090,7 @@ function JobEditor({
               </div>
             </div>
             <div className="buttonRow allJobsCompactActions">
-              <button className="btn btn-primary" type="button" onClick={save}>
+              <button className="btn saveChangesBtn" type="button" onClick={save}>
                 {saved ? "Saved ✓" : access.canSaveJobEdits ? "Save changes" : "Save changes 🔒"}
               </button>
 
@@ -3230,7 +3247,7 @@ function JobEditor({
             <div><div className="panelTitle">Job detail</div><div className="panelSub">Edit job info, cost buckets, notes, and manual categories.</div></div>
             <div className="buttonRow">
               <button
-  className="btn btn-primary"
+  className="btn saveChangesBtn"
   type="button"
   onClick={save}
 >
@@ -5027,4 +5044,71 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .allJobsStackHeader{margin:0 10px 12px;padding:14px}
   .dc-bg .allJobsCompactPad{padding:12px}
 }
+
+.dc-bg /* enterprise button polish */
+.uploadCtaBtn{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.92));
+  border-color:rgba(124,58,237,.22);
+  box-shadow:0 10px 26px rgba(124,58,237,.08), inset 0 1px 0 rgba(255,255,255,.9);
+  color:rgba(15,23,42,.92);
+}
+.uploadCtaBtn::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  z-index:-1;
+  background:linear-gradient(90deg,rgba(34,211,238,.18),rgba(124,58,237,.18),rgba(34,211,238,.18));
+  opacity:.42;
+  transform:translateX(-65%);
+  animation:uploadCtaSweep 5.5s ease-in-out infinite;
+}
+.uploadCtaBtn:hover{
+  border-color:rgba(124,58,237,.34);
+  box-shadow:0 16px 38px rgba(124,58,237,.12),0 8px 18px rgba(34,211,238,.07);
+}
+.uploadCtaIcon{
+  width:18px;
+  height:18px;
+  display:inline-grid;
+  place-items:center;
+  border-radius:999px;
+  background:rgba(124,58,237,.08);
+  color:rgba(88,28,135,.9);
+  font-size:12px;
+  line-height:1;
+}
+@keyframes uploadCtaSweep{
+  0%,72%{transform:translateX(-70%);opacity:.18}
+  84%{transform:translateX(0%);opacity:.46}
+  100%{transform:translateX(72%);opacity:.18}
+}
+.saveChangesBtn{
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.95));
+  border-color:rgba(15,23,42,.13);
+  color:rgba(15,23,42,.86);
+  box-shadow:0 8px 18px rgba(2,6,23,.045);
+}
+.saveChangesBtn:hover{
+  border-color:rgba(34,211,238,.26);
+  box-shadow:0 12px 28px rgba(2,6,23,.075),0 0 0 3px rgba(34,211,238,.055);
+}
+.viewAllDetailsBtn{
+  background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(30,41,59,.94));
+  border-color:rgba(15,23,42,.18);
+  color:#fff;
+  box-shadow:0 14px 32px rgba(15,23,42,.16);
+}
+.viewAllDetailsBtn:hover{
+  border-color:rgba(34,211,238,.28);
+  box-shadow:0 18px 42px rgba(15,23,42,.20),0 0 0 4px rgba(34,211,238,.06);
+}
+.jobsLogTools{align-items:center}
+@media(max-width:760px){
+  .dc-bg .uploadCtaBtn,.dc-bg .viewAllDetailsBtn{width:100%;justify-content:center}
+  .dc-bg .jobsLogTools{width:100%}
+}
+
 `;
