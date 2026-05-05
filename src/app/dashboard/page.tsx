@@ -1580,6 +1580,73 @@ function readDashboardHistoryState(): { view: ViewMode; jobKey: string } {
 }
 
 
+type DashboardCachePayload = {
+  cached_at: string;
+  range: RangeKey;
+  customFrom: string;
+  customTo: string;
+  state: DashboardState;
+  scaleSummary: ScaleSummary | null;
+};
+
+function dashboardCacheKey(userId: string, range: RangeKey, customFrom = "", customTo = ""): string {
+  const from = String(customFrom || "").trim();
+  const to = String(customTo || "").trim();
+  return `dc_dashboard_cache_${userId}_${range}_${from}_${to}`;
+}
+
+function readDashboardCache(
+  userId: string,
+  range: RangeKey,
+  customFrom = "",
+  customTo = ""
+): DashboardCachePayload | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = localStorage.getItem(dashboardCacheKey(userId, range, customFrom, customTo));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as DashboardCachePayload | null;
+    if (!parsed || typeof parsed !== "object") return null;
+    if (!parsed.state || typeof parsed.state !== "object") return null;
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeDashboardCache(
+  userId: string,
+  range: RangeKey,
+  customFrom: string,
+  customTo: string,
+  state: DashboardState,
+  scaleSummary: ScaleSummary | null
+) {
+  if (typeof window === "undefined") return;
+
+  try {
+    const payload: DashboardCachePayload = {
+      cached_at: new Date().toISOString(),
+      range,
+      customFrom: String(customFrom || ""),
+      customTo: String(customTo || ""),
+      state,
+      scaleSummary,
+    };
+
+    localStorage.setItem(
+      dashboardCacheKey(userId, range, customFrom, customTo),
+      JSON.stringify(payload)
+    );
+  } catch {
+    // Ignore localStorage quota/private-mode failures. The dashboard still loads from the API.
+  }
+}
+
+
 function StatusPill({ mode }: { mode: DashboardMode }) {
   const label = mode === "loading" ? "Loading" : mode === "error" ? "Needs attention" : "Ready";
   const dot = mode === "loading" ? "rgba(34,211,238,.95)" : mode === "error" ? "rgba(239,68,68,.95)" : "rgba(52,211,153,.95)";
@@ -4186,8 +4253,10 @@ export default function DashboardPage() {
     lastDashboardHistoryKeyRef.current = nextKey;
   }, [view, jobKey]);
 
-  const loadAndRender = useCallback(async () => {
+  const loadAndRender = useCallback(async (options?: { background?: boolean }) => {
     if (!isLoaded) return;
+
+    const background = options?.background === true;
 
     if (!isSignedIn) {
       setMode("error");
@@ -4196,7 +4265,9 @@ export default function DashboardPage() {
     }
 
     try {
-      setMode("loading");
+      if (!background) {
+        setMode("loading");
+      }
       setError("");
 
       const token = await getToken();
@@ -4209,15 +4280,23 @@ export default function DashboardPage() {
         console.error("Failed to load Scale summary", scaleError);
       }
 
-      setState({ ...(data || {}), range });
+      const nextState = { ...(data || {}), range };
+
+      setState(nextState);
       setScaleSummary(scaleData);
+      writeDashboardCache(USER_ID, range, customFrom, customTo, nextState, scaleData);
       setMode("ready");
     } catch (e: unknown) {
+      if (background) {
+        console.error("Background dashboard refresh failed", e);
+        return;
+      }
+
       setMode("error");
       setError(e instanceof Error ? e.message : String(e));
       console.error(e);
     }
-  }, [isLoaded, isSignedIn, getToken, range, customFrom, customTo]);
+  }, [USER_ID, isLoaded, isSignedIn, getToken, range, customFrom, customTo]);
 
 useEffect(() => {
   if (!isLoaded) return;
@@ -4228,8 +4307,18 @@ useEffect(() => {
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
   setAlertEmailsState(readAlertEmails(USER_ID, user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null));
   setDeletedReportKeys(readDeletedReports(USER_ID));
-  loadAndRender();
-}, [USER_ID, isLoaded, loadAndRender, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
+
+  const cached = readDashboardCache(USER_ID, range, customFrom, customTo);
+  if (cached?.state) {
+    setState({ ...(cached.state || {}), range });
+    setScaleSummary(cached.scaleSummary || null);
+    setMode("ready");
+    setError("");
+    loadAndRender({ background: true });
+  } else {
+    loadAndRender();
+  }
+}, [USER_ID, isLoaded, loadAndRender, range, customFrom, customTo, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
 
   const saveMarginTarget = async () => {
     const next = Math.max(1, Math.min(95, parseNumberLoose(marginTargetDraft)));
@@ -4377,14 +4466,14 @@ useEffect(() => {
         {mode === "error" ? (
           <div className="panel">
             <div className="panelHead"><div><div className="panelTitle">Dashboard</div><div className="panelSub">Could not load data.</div></div></div>
-            <div className="pad"><div className="error">{error}</div><div style={{ marginTop: 12 }}><button className="btn" type="button" onClick={loadAndRender}>Retry</button></div></div>
+            <div className="pad"><div className="error">{error}</div><div style={{ marginTop: 12 }}><button className="btn" type="button" onClick={() => loadAndRender()}>Retry</button></div></div>
           </div>
         ) : (
           <>
             <TopBar
   state={visibleState}
   mode={mode}
-  onRefresh={loadAndRender}
+  onRefresh={() => loadAndRender()}
   plan={plan}
   marginTarget={marginTarget}
   marginTargetDraft={marginTargetDraft}
@@ -4422,7 +4511,7 @@ useEffect(() => {
                 onRestoreReport={handleRestoreReport}
                 onDeleteAllReports={handleDeleteAllReports}
                 onRestoreAllReports={handleRestoreAllReports}
-                onRefresh={loadAndRender}
+                onRefresh={() => loadAndRender()}
               />
             ) : (
               <DashboardBody
