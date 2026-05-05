@@ -2037,21 +2037,30 @@ function ProfitLeakSnapshot({
   const hasRisk = losingRows.length > 0 || belowTargetRows.length > 0 || recoverableProfit > 0;
 
   const headline = hasRisk
-    ? `${losingRows.length} job${losingRows.length === 1 ? "" : "s"} are losing money.`
-    : `Jobs are above breakeven in this ${range.toLowerCase()} view.`;
+    ? `${losingRows.length} job${losingRows.length === 1 ? "" : "s"} losing money`
+    : `Jobs above breakeven`;
 
   const sub = hasRisk
-    ? `DropClarity found ${fmtMoney(recoverableProfit)} in recoverable profit gap against your ${fmtPct(marginTarget)} target. Start with the highest-impact job below.`
+    ? `${fmtMoney(recoverableProfit)} recoverable gap vs. your ${fmtPct(marginTarget)} target. Start with the highest-impact job below.`
     : `Keep monitoring new uploads against your ${fmtPct(marginTarget)} target margin so margin drift is caught early.`;
 
   return (
     <section className={hasRisk ? "profitSnapshot risk" : "profitSnapshot healthy"}>
       <div className="profitSnapshotMain">
         <div className="profitSnapshotKicker">What needs attention first</div>
-        <h2 className="profitSnapshotTitle">{headline}</h2>
-        <p className="profitSnapshotSub">{sub}</p>
+        <h2 className="profitSnapshotTitle refinedSnapshotTitle">
+          {hasRisk ? (
+            <>
+              <span className="profitSnapshotNumber">{losingRows.length}</span>
+              <span> job{losingRows.length === 1 ? "" : "s"} losing money</span>
+            </>
+          ) : (
+            headline
+          )}
+        </h2>
+        <p className="profitSnapshotSub refinedSnapshotSub">{sub}</p>
 
-        <div className="profitSnapshotActions">
+        <div className="profitSnapshotActions refinedSnapshotActions">
           <button className="btn profitSnapshotPrimary" type="button" onClick={onOpenHighRisk}>
             Review high-risk jobs
           </button>
@@ -6185,5 +6194,21 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .decisionJobTitle{font-size:30px;line-height:1.08}
 @media(max-width:768px){.dc-bg.internal-view-bg{padding-top:18px}.dc-bg.internal-view-bg .internalQuickControls{margin-bottom:8px}.dc-bg .jobIdentityTitle{font-size:33px;line-height:1.08}.dc-bg .decisionJobTitle{font-size:26px}.dc-bg .decisionDivider{margin:14px 0 12px}}
 @media(max-width:480px){.dc-bg.internal-view-bg{padding-top:14px}.dc-bg .jobIdentityTitle{font-size:29px}.dc-bg .jobIdentityMeta{font-size:12.5px}.dc-bg .decisionJobTitle{font-size:24px}}
+
+
+/* Refined what-needs-attention card */
+.dc-bg .profitSnapshot{padding:20px 22px!important}
+.dc-bg .profitSnapshotKicker{margin-bottom:9px!important}
+.dc-bg .refinedSnapshotTitle{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px!important;font-size:28px!important;line-height:1.08!important;letter-spacing:-.035em!important}
+.dc-bg .profitSnapshotNumber{font-size:34px;line-height:.95;font-weight:990;color:rgba(2,6,23,.96);letter-spacing:-.05em}
+.dc-bg .refinedSnapshotSub{max-width:680px!important;font-size:14.5px!important;line-height:1.48!important;margin-top:0!important}
+.dc-bg .refinedSnapshotActions{margin-top:15px!important}
+.dc-bg .profitSnapshotMetrics{gap:10px!important}
+.dc-bg .profitSnapshotMetric{padding:14px 15px!important}
+.dc-bg .profitSnapshotMetric strong{font-size:22px!important;line-height:1.08!important}
+.dc-bg .profitSnapshotMetric.primary{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(255,247,237,.70))!important}
+.dc-bg .profitSnapshotOpportunity{margin-top:16px!important}
+@media(max-width:900px){.dc-bg .profitSnapshot{padding:18px!important}.dc-bg .refinedSnapshotTitle{font-size:25px!important}.dc-bg .profitSnapshotNumber{font-size:30px}.dc-bg .refinedSnapshotSub{font-size:14px!important}.dc-bg .profitSnapshotMetric strong{font-size:20px!important}}
+@media(max-width:560px){.dc-bg .profitSnapshot{padding:16px!important}.dc-bg .refinedSnapshotTitle{font-size:23px!important;gap:6px}.dc-bg .profitSnapshotNumber{font-size:28px}.dc-bg .refinedSnapshotActions{display:grid;grid-template-columns:1fr;width:100%}.dc-bg .refinedSnapshotActions .btn{justify-content:center;width:100%}}
 
 `;
