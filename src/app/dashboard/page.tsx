@@ -3416,34 +3416,65 @@ function JobEditor({
         ) : null}
 
         <div className="panel jobDetailFocus">
-          <div className="panelHead">
-            <div><div className="panelTitle">Job detail</div><div className="panelSub">Edit job info, cost buckets, notes, and manual categories.</div></div>
-            <div className="buttonRow">
-              <button
-  className="btn subtleSaveBtn"
-  type="button"
-  onClick={save}
->
-  {saved ? "Saved ✓" : access.canSaveJobEdits ? "Save changes" : "Save changes 🔒"}
-</button>
+          {showBack ? (
+            <div className="panelHead">
+              <div><div className="panelTitle">Job detail</div><div className="panelSub">Edit job info, cost buckets, notes, and manual categories.</div></div>
+              <div className="buttonRow">
+                <button
+    className="btn subtleSaveBtn"
+    type="button"
+    onClick={save}
+  >
+    {saved ? "Saved ✓" : access.canSaveJobEdits ? "Save changes" : "Save changes 🔒"}
+  </button>
 
-<button
-  className="btn"
-  type="button"
-  onClick={() => access.canExport ? exportSingleJobCsv(job, base, history, state) : handleLocked("CSV exports", "Core")}
->
-  {access.canExport ? "Export Job CSV" : "Export Job CSV 🔒"}
-</button>
+  <button
+    className="btn"
+    type="button"
+    onClick={() => access.canExport ? exportSingleJobCsv(job, base, history, state) : handleLocked("CSV exports", "Core")}
+  >
+    {access.canExport ? "Export Job CSV" : "Export Job CSV 🔒"}
+  </button>
 
-<button className="btn" type="button" onClick={reset}>
-  Reset
-</button>
+  <button className="btn" type="button" onClick={reset}>
+    Reset
+  </button>
 
-<button className="btn" type="button" onClick={addCustom}>
-  {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
-</button>
+  <button className="btn" type="button" onClick={addCustom}>
+    {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
+  </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="stackedJobActions">
+              <div className="stackedJobActionHint">Editable row</div>
+              <div className="buttonRow">
+                <button
+                  className="btn subtleSaveBtn"
+                  type="button"
+                  onClick={save}
+                >
+                  {saved ? "Saved ✓" : access.canSaveJobEdits ? "Save changes" : "Save changes 🔒"}
+                </button>
+
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => access.canExport ? exportSingleJobCsv(job, base, history, state) : handleLocked("CSV exports", "Core")}
+                >
+                  {access.canExport ? "Export Job CSV" : "Export Job CSV 🔒"}
+                </button>
+
+                <button className="btn" type="button" onClick={reset}>
+                  Reset
+                </button>
+
+                <button className="btn" type="button" onClick={addCustom}>
+                  {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="pad jobDetailPad">
             <table className="jobTable">
@@ -3727,30 +3758,22 @@ function AllJobsView({
         </div>
       </div>
 
-      <div className="allJobsStackIntro">
-        <div>
-          <div className="sectionEyebrow">Editable Job Stack</div>
-          <div className="sectionTitle">Review every job detail in one place</div>
-          <div className="panelSub">Only editable job detail rows are shown here — no benchmark cards, notes panels, or comparison charts.</div>
-        </div>
-      </div>
-
       <div className="pad allJobsStackPad">
         {filtered.length ? (
           <div className="allJobsStack">
             {filtered.map(({ job, key }, index) => (
               <div key={key} className="allJobsStackItem">
-                <div className="allJobsStackItemHead">
+                <div className="allJobsStackItemHead compactJobStackHeader">
                   <div>
                     <div className="allJobsStackJobName">{job.job_name || job.job_id || `Job ${index + 1}`}</div>
-                    <div className="allJobsStackJobMeta">{job.job_id || "No Job ID"} • {job.period_label || "Saved report"} • {dateLabel(job.created_at)}</div>
+                    <div className="allJobsStackJobMeta">Job ID: {job.job_id || "No Job ID"} • {job.period_label || "Saved report"} • {dateLabel(job.created_at)}</div>
                   </div>
                   <button
-                    className="miniBtn"
+                    className="miniBtn compactFullViewBtn"
                     type="button"
                     onClick={() => { setJobKey(key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                   >
-                    Open full view
+                    Full view
                   </button>
                 </div>
                 <JobEditor
@@ -4575,17 +4598,21 @@ const dashboardCss = `
 .dc-bg .allJobsToolbarPad .wideSearch{flex:1;min-width:260px}
 .dc-bg .allJobsSubtotalPad{padding-top:6px}
 .dc-bg .allJobsSubtotalGrid{margin:0;grid-template-columns:repeat(6,minmax(0,1fr))}
-.dc-bg .allJobsStackIntro{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin:4px 14px 0;padding:14px 16px;border-radius:20px;border:1px solid rgba(34,211,238,.14);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.84));box-shadow:0 12px 32px rgba(2,6,23,.045)}
 .dc-bg .allJobsStackPad{padding-top:12px}
 .dc-bg .allJobsStack{display:flex;flex-direction:column;gap:14px}
 .dc-bg .allJobsStackItem{border:1px solid rgba(15,23,42,.08);border-radius:20px;background:rgba(255,255,255,.84);box-shadow:0 12px 34px rgba(2,6,23,.055);overflow:hidden}
 .dc-bg .allJobsStackItemHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.06);background:rgba(248,250,252,.72)}
+.dc-bg .compactJobStackHeader{background:linear-gradient(180deg,rgba(248,250,252,.86),rgba(255,255,255,.78))}
 .dc-bg .allJobsStackJobName{font-size:15px;font-weight:980;letter-spacing:-.015em;color:rgba(15,23,42,.94)}
 .dc-bg .allJobsStackJobMeta{margin-top:4px;font-size:12px;font-weight:760;color:rgba(15,23,42,.52)}
+.dc-bg .compactFullViewBtn{padding:7px 10px;font-size:11.5px}
 .dc-bg .stackedJobPage{margin-top:0;gap:0}
 .dc-bg .stackedJobPage .jobDetailFocus{border:0;border-radius:0;box-shadow:none;background:transparent}
-.dc-bg .stackedJobPage .jobDetailFocus>.panelHead{background:rgba(255,255,255,.72);padding:12px 14px}
-.dc-bg .stackedJobPage .jobDetailPad{padding:12px 14px 14px}
+.dc-bg .stackedJobActions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px 0;background:rgba(255,255,255,.72)}
+.dc-bg .stackedJobActionHint{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(15,23,42,.42);white-space:nowrap}
+.dc-bg .stackedJobPage .buttonRow{gap:8px}
+.dc-bg .stackedJobPage .btn{padding:9px 11px;border-radius:12px;font-size:12px}
+.dc-bg .stackedJobPage .jobDetailPad{padding:10px 14px 14px}
 .dc-bg .stackedJobPage .jobTable{min-width:1320px;background:rgba(255,255,255,.92)}
 
 .dc-bg .scalePanel{
@@ -5672,7 +5699,7 @@ main.dc-bg .wrap{padding-bottom:56px;}
 }
 
 @media(max-width:1100px){.dc-bg .allJobsSubtotalGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){.dc-bg .allJobsToolbarPad{flex-direction:column;align-items:stretch}.dc-bg .allJobsToolbarPad .wideSearch{min-width:0;width:100%}.dc-bg .allJobsSubtotalGrid{grid-template-columns:1fr 1fr}.dc-bg .allJobsStackItemHead{align-items:flex-start;flex-direction:column}.dc-bg .allJobsStackIntro{margin-left:10px;margin-right:10px}}
+@media(max-width:720px){.dc-bg .allJobsToolbarPad{flex-direction:column;align-items:stretch}.dc-bg .allJobsToolbarPad .wideSearch{min-width:0;width:100%}.dc-bg .allJobsSubtotalGrid{grid-template-columns:1fr 1fr}.dc-bg .allJobsStackItemHead{align-items:flex-start;flex-direction:column}.dc-bg .stackedJobActions{align-items:flex-start;flex-direction:column}.dc-bg .stackedJobActions .buttonRow{justify-content:flex-start}}
 
 @media(max-width:640px){
   .dc-bg .profitCommandHeader{flex-direction:column}
