@@ -3327,6 +3327,22 @@ function JobEditor({
   const knownCosts = parseNumberLoose(job.material_cost) + parseNumberLoose(job.labor_cost) + parseNumberLoose(job.subs_cost) + parseNumberLoose(job.other_cost) + customTotal - creditsApplied;
   const gp = parseNumberLoose(job.revenue) - knownCosts;
   const gm = parseNumberLoose(job.revenue) !== 0 ? (gp / parseNumberLoose(job.revenue)) * 100 : 0;
+  const comparison = jobComparisonStats(base || {}, getAllJobs(state));
+  const topDriver = comparison.drivers[0];
+  const targetProfit = parseNumberLoose(job.revenue) * (marginTarget / 100);
+  const recoverableGap = Math.max(0, targetProfit - gp);
+  const decisionTitle =
+    gp < 0
+      ? `This job is losing ${fmtMoney(Math.abs(gp))}`
+      : gm < marginTarget
+      ? `This job is ${fmtPct(marginTarget - gm)} below target`
+      : `This job is performing above target`;
+  const decisionSub =
+    gp < 0
+      ? `${topDriver?.label || "Costs"} appears to be the biggest pressure point. Review the editable cost buckets below before quoting similar work.`
+      : gm < marginTarget
+      ? `Current margin is ${fmtPct(gm)} against your ${fmtPct(marginTarget)} target, leaving ${fmtMoney(recoverableGap)} of recoverable profit gap.`
+      : `Current margin is ${fmtPct(gm)} against your ${fmtPct(marginTarget)} target. Keep this job as a reference for similar work.`;
 
   useEffect(() => {
     if (!hasHistory) return;
@@ -3461,29 +3477,33 @@ function JobEditor({
   return (
     <>
       {showBack ? (
-        <div className="jobHero">
+        <div className="jobHero decisionJobHero">
           <div className="crumbs">
-            <div className="crumb">View: <strong>Job Detail</strong></div>
-            <div className="crumb">Job: <strong>{job.job_id || job.job_name || "—"}</strong></div>
+            <div className="crumb">Profitability Dashboard</div>
+            <div className="crumb">Job Detail</div>
+            <div className="crumb">{job.job_id || job.job_name || "—"}</div>
             <button className="crumbBtn dashboardBackBtn" type="button" onClick={onBack}>← Back to dashboard</button>
             <button className="crumbBtn secondary" type="button" onClick={onAllJobs}>View all jobs</button>
           </div>
 
-          <div className="jobHeroBody">
-            <div>
-              <div className="jobHeroTitle">{job.job_name || job.job_id || "Job Detail"}</div>
-              <div className="jobHeroSub">Edit costs, add categories, and review margin history for this job.</div>
+          <div className="jobHeroBody decisionJobHeroBody">
+            <div className="decisionJobMain">
+              <div className="sectionEyebrow">Single Job Review</div>
+              <div className="jobHeroTitle decisionJobTitle">{decisionTitle}</div>
+              <div className="jobHeroSub decisionJobSub">{decisionSub}</div>
               <div className="heroBadges">
                 <span className={`tag ${health.status}`}>{health.label}</span>
                 <span className="tag ok">{health.confidence}</span>
                 <span className="tag">{hasHistory ? `${history.length} periods` : "Single period"}</span>
+                {topDriver ? <span className="tag">Top driver: {topDriver.label}</span> : null}
                 {job.job_type ? <span className="tag">{job.job_type}</span> : null}
               </div>
             </div>
 
-            <div className="jobSummaryCard">
-              <div className="kv"><span>Edited Gross Profit</span><strong className={gp < 0 ? "neg" : "pos"}>{fmtMoney(gp)}</strong></div>
-              <div className="kv"><span>Edited Gross Margin</span><strong className={gm < 0 ? "neg" : "pos"}>{fmtPct(gm)}</strong></div>
+            <div className="jobSummaryCard decisionSummaryCard">
+              <div className="kv"><span>Profit Impact</span><strong className={gp < 0 ? "neg" : "pos"}>{fmtMoney(gp)}</strong></div>
+              <div className="kv"><span>Margin vs Target</span><strong className={gm < marginTarget ? "neg" : "pos"}>{fmtPct(gm)} / {fmtPct(marginTarget)}</strong></div>
+              <div className="kv"><span>Recoverable Gap</span><strong className={recoverableGap > 0 ? "warnText" : "pos"}>{fmtMoney(recoverableGap)}</strong></div>
               <div className="divider" />
               <div className="kv"><span>Revenue</span><strong>{fmtMoney(job.revenue)}</strong></div>
               <div className="kv"><span>Known Costs</span><strong>{fmtMoney(knownCosts)}</strong></div>
@@ -3796,20 +3816,26 @@ function AllJobsView({
   }), [state, filtered]);
 
   return (
-    <div className="panel allJobsDetailShell" style={{ marginTop: 12 }}>
-      <div className="crumbs allJobsCrumbs">
-        <div className="crumb">View: <strong>All Jobs Detail</strong></div>
-        <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
-        <button
-          className="crumbBtn dashboardBackBtn"
-          type="button"
-          onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-        >
-          ← Back to dashboard
-        </button>
+    <div className="panel allJobsDetailShell cleanModeShell" style={{ marginTop: 12 }}>
+      <div className="modeContextHeader allJobsModeHeader">
+        <div>
+          <div className="modeEyebrow">Profitability Dashboard</div>
+          <div className="modeTitle">All Jobs</div>
+          <div className="modeSub">Bulk editing view — adjust job IDs, names, costs, notes, and categories without opening every job one by one.</div>
+        </div>
+        <div className="modeHeaderActions">
+          <div className="modeCount"><strong>{String(filtered.length)}</strong><span>jobs shown</span></div>
+          <button
+            className="crumbBtn dashboardBackBtn"
+            type="button"
+            onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          >
+            ← Back to dashboard
+          </button>
+        </div>
       </div>
 
-      <div className="pad allJobsToolbarPad">
+      <div className="pad allJobsToolbarPad cleanModeToolbar">
         <input
           className="searchInput wideSearch"
           value={search}
@@ -3962,19 +3988,25 @@ function HighRiskJobsView({
 
   return (
     <div className="highRiskPage enterpriseRiskPage">
-      <div className="highRiskHero panel">
-        <div className="crumbs">
-          <div className="crumb">View: <strong>High-Risk Jobs</strong></div>
-          <div className="crumb"><strong>{String(riskRows.length)}</strong> jobs below target</div>
-          <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+      <div className="highRiskHero panel cleanModeShell">
+        <div className="modeContextHeader riskModeHeader">
+          <div>
+            <div className="modeEyebrow">Profitability Dashboard</div>
+            <div className="modeTitle">High-Risk Jobs</div>
+            <div className="modeSub">Jobs below your {fmtPct(marginTarget)} margin target ranked by recoverable profit, with the reason each job was flagged.</div>
+          </div>
+          <div className="modeHeaderActions">
+            <div className="modeCount"><strong>{String(riskRows.length)}</strong><span>below target</span></div>
+            <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+          </div>
         </div>
 
         <div className="riskCommandHero">
           <div>
             <div className="sectionEyebrow">High-Risk Job Review</div>
-            <div className="riskCommandTitle">Prioritized jobs that need attention.</div>
+            <div className="riskCommandTitle">These jobs are costing you the most.</div>
             <div className="riskCommandSub">
-              This view removes the repeated benchmark panels and gives users a clean triage list: what is wrong, how much profit is recoverable, and which job to open.
+              Use this triage list to see what is wrong, how much profit is recoverable, and which job to open first.
             </div>
           </div>
           <div className="riskSearchControls">
@@ -5972,4 +6004,18 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:1180px){.dc-bg .profitSnapshot{grid-template-columns:1fr}.dc-bg .profitSnapshotMain{min-height:0}.dc-bg .profitSnapshotTitle{font-size:34px}.dc-bg .profitSnapshotMetrics{grid-template-columns:repeat(4,minmax(0,1fr))}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr auto}.dc-bg .profitSnapshotOpportunity span{grid-column:1/-1}.dc-bg .profitSnapshotOpportunity strong{white-space:normal}}
 @media(max-width:760px){.dc-bg .profitSnapshot{padding:14px;border-radius:22px}.dc-bg .profitSnapshotTitle{font-size:28px;line-height:1.08}.dc-bg .profitSnapshotSub{font-size:14px}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr 1fr}.dc-bg .profitSnapshotMetric strong{font-size:21px}.dc-bg .profitSnapshotActions .btn{width:100%;justify-content:center}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr}.dc-bg .profitSnapshotOpportunity em{justify-self:start}}
 @media(max-width:520px){.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr}.dc-bg .profitSnapshotTitle{font-size:25px}.dc-bg .profitSnapshotMetric{padding:12px}.dc-bg .profitSnapshotMain{padding:2px}.dc-bg .kpis{grid-template-columns:1fr!important}}
+
+
+/* Clean mode headers for internal dashboard views */
+.dc-bg .cleanModeShell{margin-top:14px}
+.dc-bg .modeContextHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:18px 18px 16px;border-bottom:1px solid rgba(15,23,42,.06);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,253,250,.58) 48%,rgba(245,243,255,.50));}
+.dc-bg .modeEyebrow{width:fit-content;margin-bottom:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(34,211,238,.24);background:rgba(255,255,255,.78);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;color:rgba(8,145,178,.95)}
+.dc-bg .modeTitle{font-size:30px;line-height:1.08;font-weight:990;letter-spacing:-.04em;color:rgba(2,6,23,.96)}
+.dc-bg .modeSub{margin-top:7px;max-width:760px;font-size:14.5px;line-height:1.5;font-weight:760;color:rgba(51,65,85,.72)}
+.dc-bg .modeHeaderActions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.dc-bg .modeCount{display:flex;align-items:baseline;gap:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.74);box-shadow:0 10px 28px rgba(2,6,23,.055);font-weight:850;color:rgba(15,23,42,.62)}
+.dc-bg .modeCount strong{font-size:18px;line-height:1;color:rgba(15,23,42,.94)}
+.dc-bg .modeCount span{font-size:12px}.dc-bg .cleanModeToolbar{align-items:center;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}.dc-bg .decisionJobHero{border-color:rgba(239,68,68,.11);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,247,237,.70) 48%,rgba(245,243,255,.58));}.dc-bg .decisionJobHeroBody{grid-template-columns:minmax(0,1fr) minmax(320px,.45fr);align-items:stretch}.dc-bg .decisionJobMain{display:flex;flex-direction:column;justify-content:center;min-height:190px}.dc-bg .decisionJobTitle{font-size:34px;line-height:1.05}.dc-bg .decisionJobSub{max-width:860px}.dc-bg .decisionSummaryCard{background:rgba(255,255,255,.82);box-shadow:0 14px 44px rgba(2,6,23,.06)}.dc-bg .warnText{color:rgba(194,65,12,.96)!important}.dc-bg .jobAnalysisHeader{background:linear-gradient(135deg,rgba(240,253,250,.86),rgba(245,243,255,.64));border-color:rgba(34,211,238,.18)}
+@media(max-width:980px){.dc-bg .modeContextHeader{flex-direction:column}.dc-bg .modeHeaderActions{justify-content:flex-start}.dc-bg .decisionJobHeroBody{grid-template-columns:1fr}.dc-bg .decisionJobMain{min-height:0}.dc-bg .cleanModeToolbar{grid-template-columns:1fr}.dc-bg .cleanModeToolbar .btn{width:fit-content}}
+@media(max-width:640px){.dc-bg .modeContextHeader{padding:14px}.dc-bg .modeTitle{font-size:25px}.dc-bg .modeSub{font-size:13.5px}.dc-bg .modeHeaderActions,.dc-bg .modeHeaderActions .crumbBtn{width:100%}.dc-bg .modeCount{width:100%;justify-content:center}.dc-bg .decisionJobTitle{font-size:28px}.dc-bg .cleanModeToolbar .btn{width:100%;justify-content:center}}
 `;
