@@ -5805,4 +5805,12 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:900px){.dc-bg .topbar{align-items:flex-start!important}.dc-bg .topbarRight{width:100%;align-items:flex-start}.dc-bg .topbarRight .statusRow{justify-content:flex-start}.dc-bg .topbarRight .marginTargetTopWrap{justify-content:flex-start!important}}
 @media(max-width:560px){.dc-bg .topbarRight .statusRow{width:100%;display:grid!important;grid-template-columns:1fr 1fr;gap:8px}.dc-bg .topbarRight .statusRow .pill,.dc-bg .topbarRight .statusRow .btn,.dc-bg .topbarRight .statusRow .uploadPulseBtn{width:100%;justify-content:center}.dc-bg .topbarRight .marginTargetTopWrap{width:100%;border-radius:18px!important;align-items:flex-start!important;flex-direction:column!important}.dc-bg .topbarRight .marginTargetTopText{width:100%;justify-content:space-between}.dc-bg .topbarRight .marginTargetTopControls{width:100%;display:grid!important;grid-template-columns:minmax(0,1fr) auto}.dc-bg .topbarRight .compactTargetInputGroup{justify-content:center}.dc-bg .topbarRight .compactTargetSave{justify-content:center}.dc-bg .topbarRight .compactTargetInput{width:100%!important;max-width:80px}}
 
+
+
+/* Dashboard title clipping fix: keeps the hero title visually the same while giving descenders like y/g/p room to render. */
+.dc-bg .dashboardIntro,
+.dc-bg .pageTitle,
+.dc-bg .gradText{overflow:visible!important}
+.dc-bg .pageTitle{line-height:1.12!important;padding-bottom:.06em!important;margin-bottom:-.06em!important}
+.dc-bg .gradText{display:inline-block;padding-bottom:.06em;margin-bottom:-.06em}
 `;
