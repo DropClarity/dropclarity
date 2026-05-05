@@ -1259,6 +1259,35 @@ function writeEmailAlertsEnabled(userId: string, enabled: boolean) {
   } catch {}
 }
 
+function alertEmailsKey(userId: string): string {
+  return `dc_alert_email_addresses_${userId}`;
+}
+
+function normalizeEmailList(list: string[], fallbackEmail?: string | null): string[] {
+  const seeded = [fallbackEmail || "", ...(Array.isArray(list) ? list : [])];
+  const clean = seeded
+    .map((email) => String(email || "").trim().toLowerCase())
+    .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  return Array.from(new Set(clean));
+}
+
+function readAlertEmails(userId: string, fallbackEmail?: string | null): string[] {
+  if (typeof window === "undefined") return normalizeEmailList([], fallbackEmail);
+  try {
+    const arr = JSON.parse(localStorage.getItem(alertEmailsKey(userId)) || "[]");
+    return normalizeEmailList(Array.isArray(arr) ? arr.map(String) : [], fallbackEmail);
+  } catch {
+    return normalizeEmailList([], fallbackEmail);
+  }
+}
+
+function writeAlertEmails(userId: string, emails: string[], fallbackEmail?: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(alertEmailsKey(userId), JSON.stringify(normalizeEmailList(emails, fallbackEmail)));
+  } catch {}
+}
+
 function getScaleMetrics(state: DashboardState, targetMarginPct = 30) {
   const jobs = getAllJobs(state);
   const losingJobs = jobs.filter((j) => parseNumberLoose(j.profit) < 0);
@@ -2292,7 +2321,7 @@ function ProfitCommandCenter({
       <div className="wowTop">
         <div>
           <div className="sectionEyebrow">Profit Command Center</div>
-          <div className="wowTitle">Know what profit is recoverable — and what to fix first.</div>
+          <div className="wowTitle">Know what profit is recoverable and what to fix first.</div>
           <div className="wowSub">{commandSummary}</div>
         </div>
         <div className="wowActions">
@@ -2391,6 +2420,8 @@ function ScaleOversightPanel({
   emailAlertsEnabled,
   setEmailAlertsEnabled,
   userEmail,
+  alertEmails,
+  setAlertEmails,
   onOpenJob,
   onOpenHighRisk,
 }: {
@@ -2404,6 +2435,8 @@ function ScaleOversightPanel({
   emailAlertsEnabled: boolean;
   setEmailAlertsEnabled: (v: boolean) => void;
   userEmail?: string | null;
+  alertEmails: string[];
+  setAlertEmails: (emails: string[]) => void;
   onOpenJob: (jobKey: string) => void;
   onOpenHighRisk: () => void;
 }) {
@@ -2415,6 +2448,20 @@ function ScaleOversightPanel({
   const isScale = access.canUseScale;
   const canPreviewScale = access.canPreviewScale;
   const updatedAtLabel = latestDashboardUpdate(state);
+  const normalizedAlertEmails = useMemo(() => normalizeEmailList(alertEmails, userEmail), [alertEmails, userEmail]);
+  const [isEditingAlertEmails, setIsEditingAlertEmails] = useState(false);
+  const [alertEmailDraft, setAlertEmailDraft] = useState(normalizedAlertEmails.join(", "));
+
+  useEffect(() => {
+    if (!isEditingAlertEmails) setAlertEmailDraft(normalizedAlertEmails.join(", "));
+  }, [isEditingAlertEmails, normalizedAlertEmails]);
+
+  const saveAlertEmailDraft = () => {
+    const next = normalizeEmailList(alertEmailDraft.split(/[\n,;]/), userEmail);
+    setAlertEmails(next);
+    setAlertEmailDraft(next.join(", "));
+    setIsEditingAlertEmails(false);
+  };
 
   const riskJobsFromData = jobs
     .filter((job) => parseNumberLoose(job.profit) < 0 || parseNumberLoose(job.margin_pct) < marginTarget)
@@ -2720,16 +2767,44 @@ function ScaleOversightPanel({
           </div>
         </div>
 
-        <div className="scaleEmailCard">
-          <div className="scaleKicker">Real-Time Email Alerts</div>
-          <div className="emailAlertTitle">{emailAlertsEnabled ? "Email alerts are enabled" : "Email alerts are paused"}</div>
+        <div className="scaleEmailCard enterpriseEmailCard">
+          <div className="emailCardTop">
+            <div>
+              <div className="scaleKicker">Real-Time Email Alerts</div>
+              <div className="emailAlertTitle">{emailAlertsEnabled ? "Email alerts are enabled" : "Email alerts are paused"}</div>
+            </div>
+            <button className="miniBtn" type="button" onClick={() => setIsEditingAlertEmails(!isEditingAlertEmails)}>
+              {isEditingAlertEmails ? "Cancel" : "Edit emails"}
+            </button>
+          </div>
           <div className="scaleText">
-            Send an email when a job loses money, falls below your margin target, or needs immediate review.
+            Send alerts to one person or a small team when a job loses money, falls below your margin target, or needs immediate review.
           </div>
-          <div className="emailDestination">
-            <span>Alert destination</span>
-            <strong>{userEmail || "Account email"}</strong>
-          </div>
+
+          {isEditingAlertEmails ? (
+            <div className="emailEditBox">
+              <label className="emailEditLabel">Alert recipients</label>
+              <textarea
+                className="emailEditTextarea"
+                value={alertEmailDraft}
+                onChange={(e) => setAlertEmailDraft(e.target.value)}
+                placeholder="owner@company.com, ops@company.com"
+              />
+              <div className="emailEditHelp">Separate multiple emails with commas, semicolons, or new lines.</div>
+              <div className="emailEditActions">
+                <button className="btn subtleSaveBtn" type="button" onClick={saveAlertEmailDraft}>Save email list</button>
+                <button className="btn" type="button" onClick={() => { setAlertEmailDraft(normalizedAlertEmails.join(", ")); setIsEditingAlertEmails(false); }}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div className="emailRecipientList">
+              <div className="emailRecipientLabel">Alert recipients</div>
+              {normalizedAlertEmails.length ? normalizedAlertEmails.map((email) => (
+                <span className="emailRecipientPill" key={email}>{email}</span>
+              )) : <span className="emailRecipientPill muted">No recipients set</span>}
+            </div>
+          )}
+
           <div className="emailLiveGrid">
             <div><span>Last alert sent</span><strong>{lastAlertSentLabel}</strong></div>
             <div><span>Next summary</span><strong>{nextSummaryLabel}</strong></div>
@@ -2740,7 +2815,7 @@ function ScaleOversightPanel({
             <span>✓ Cost spike needs review</span>
           </div>
           <button
-            className={emailAlertsEnabled ? "emailPauseLink" : "btn btn-primary"}
+            className={emailAlertsEnabled ? "emailPauseLink" : "btn subtleSaveBtn"}
             type="button"
             onClick={() => setEmailAlertsEnabled(!emailAlertsEnabled)}
           >
@@ -2908,6 +2983,8 @@ function DashboardBody({
   emailAlertsEnabled,
   setEmailAlertsEnabled,
   userEmail,
+  alertEmails,
+  setAlertEmails,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
@@ -2928,6 +3005,8 @@ function DashboardBody({
   emailAlertsEnabled: boolean;
   setEmailAlertsEnabled: (v: boolean) => void;
   userEmail?: string | null;
+  alertEmails: string[];
+  setAlertEmails: (emails: string[]) => void;
 }) {
   const jobs = getAllJobs(state);
   const insights = Array.isArray(state.insights) ? state.insights : [];
@@ -2936,16 +3015,6 @@ function DashboardBody({
     <>
       <Kpis state={state} />
       <DashboardHero state={state} />
-      <ProfitCommandCenter
-        state={state}
-        marginTarget={marginTarget}
-        onOpenHighRisk={onOpenHighRisk}
-        onOpenJob={(key: string) => {
-          setJobKey(key);
-          setView("job");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-      />
       <ChartsPanel state={state} view={view} />
       <CreditRefundKpis state={state} />
       <ScaleOversightPanel
@@ -2959,6 +3028,8 @@ function DashboardBody({
         emailAlertsEnabled={emailAlertsEnabled}
         setEmailAlertsEnabled={setEmailAlertsEnabled}
         userEmail={userEmail}
+        alertEmails={alertEmails}
+        setAlertEmails={setAlertEmails}
         onOpenJob={(key: string) => {
           setJobKey(key);
           setView("job");
@@ -3520,63 +3591,138 @@ function HighRiskJobsView({
 }) {
   const jobs = getAllJobs(state);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"impact" | "loss" | "margin" | "revenue">("impact");
 
-  const filtered = useMemo(() => {
+  const riskRows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return jobs
-      .map((job, idx) => ({ job, idx, key: buildJobKey(job, idx) }))
-      .filter(({ job }) => parseNumberLoose(job.profit) < 0 || parseNumberLoose(job.margin_pct) < marginTarget)
-      .sort((a, b) => {
-        const ap = parseNumberLoose(a.job.profit);
-        const bp = parseNumberLoose(b.job.profit);
-        if (ap < 0 || bp < 0) return ap - bp;
-        return parseNumberLoose(a.job.margin_pct) - parseNumberLoose(b.job.margin_pct);
+    const rows = jobs
+      .map((job, idx) => {
+        const revenue = parseNumberLoose(job.revenue);
+        const costs = parseNumberLoose(job.costs);
+        const profit = parseNumberLoose(job.profit);
+        const margin = parseNumberLoose(job.margin_pct);
+        const targetProfit = revenue * (marginTarget / 100);
+        const recoverable = Math.max(0, targetProfit - profit);
+        const comparison = jobComparisonStats(job, jobs);
+        const driver = comparison.drivers[0];
+        const status = profit < 0 ? "Critical loss" : "Below target";
+        const key = buildJobKey(job, idx);
+        return { job, idx, key, revenue, costs, profit, margin, targetProfit, recoverable, comparison, driver, status };
       })
-      .filter(({ job }) => !q || `${job.job_name || ""} ${job.job_id || ""}`.toLowerCase().includes(q));
-  }, [jobs, marginTarget, search]);
+      .filter((row) => row.profit < 0 || row.margin < marginTarget)
+      .filter((row) => !q || `${row.job.job_name || ""} ${row.job.job_id || ""} ${row.status}`.toLowerCase().includes(q));
+
+    rows.sort((a, b) => {
+      if (sort === "loss") return a.profit - b.profit;
+      if (sort === "margin") return a.margin - b.margin;
+      if (sort === "revenue") return b.revenue - a.revenue;
+      return b.recoverable - a.recoverable || a.profit - b.profit;
+    });
+
+    return rows;
+  }, [jobs, marginTarget, search, sort]);
+
+  const totalRecoverable = riskRows.reduce((sum, row) => sum + row.recoverable, 0);
+  const losingCount = riskRows.filter((row) => row.profit < 0).length;
+  const thinCount = Math.max(0, riskRows.length - losingCount);
+  const totalAtRiskRevenue = riskRows.reduce((sum, row) => sum + row.revenue, 0);
 
   return (
-    <div className="highRiskPage">
+    <div className="highRiskPage enterpriseRiskPage">
       <div className="highRiskHero panel">
         <div className="crumbs">
           <div className="crumb">View: <strong>High-Risk Jobs</strong></div>
-          <div className="crumb"><strong>{String(filtered.length)}</strong> jobs below target</div>
+          <div className="crumb"><strong>{String(riskRows.length)}</strong> jobs below target</div>
           <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
         </div>
-        <div className="highRiskHeroBody">
+
+        <div className="riskCommandHero">
           <div>
-            <div className="sectionEyebrow">High-Risk Job Detail View</div>
-            <div className="highRiskTitle">Review every job that needs attention.</div>
-            <div className="highRiskSub">This view opens the full job detail editor for every job losing money or sitting below your {fmtPct(marginTarget)} margin target.</div>
+            <div className="sectionEyebrow">High-Risk Job Review</div>
+            <div className="riskCommandTitle">Prioritized jobs that need attention.</div>
+            <div className="riskCommandSub">
+              This view removes the repeated benchmark panels and gives users a clean triage list: what is wrong, how much profit is recoverable, and which job to open.
+            </div>
           </div>
-          <div className="highRiskSearchWrap">
-            <input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search high-risk jobs..." />
+          <div className="riskSearchControls">
+            <input className="searchInput" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search high-risk jobs..." />
+            <select className="selectInput" value={sort} onChange={(e) => setSort(e.target.value as "impact" | "loss" | "margin" | "revenue")}>
+              <option value="impact">Highest recoverable</option>
+              <option value="loss">Worst loss</option>
+              <option value="margin">Lowest margin</option>
+              <option value="revenue">Highest revenue</option>
+            </select>
           </div>
+        </div>
+
+        <div className="riskSummaryGrid">
+          <div className="riskSummaryCard"><span>Recoverable Profit</span><strong>{fmtMoney(totalRecoverable)}</strong><em>Gap to {fmtPct(marginTarget)} target</em></div>
+          <div className="riskSummaryCard"><span>Losing Jobs</span><strong className={losingCount ? "neg" : "pos"}>{losingCount}</strong><em>Below breakeven</em></div>
+          <div className="riskSummaryCard"><span>Thin-Margin Jobs</span><strong>{thinCount}</strong><em>Positive but below target</em></div>
+          <div className="riskSummaryCard"><span>At-Risk Revenue</span><strong>{fmtMoney(totalAtRiskRevenue)}</strong><em>Revenue tied to flagged jobs</em></div>
         </div>
       </div>
 
-      <div className="highRiskJobStack">
-        {filtered.length ? (
-          filtered.map(({ job, key }) => (
-            <div key={key} className="highRiskJobCard">
-              <JobEditor
-                jobKey={key}
-                base={job}
-                state={state}
-                showBack={false}
-                userId={userId}
-                access={access}
-                onLocked={onLocked}
-                onBack={() => {}}
-                onAllJobs={() => {}}
-                refreshLocal={refreshLocal}
-                marginTarget={marginTarget}
-              />
-            </div>
-          ))
-        ) : (
-          <div className="panel"><div className="pad"><div className="empty">No high-risk jobs match this view.</div></div></div>
-        )}
+      <div className="riskTablePanel panel">
+        <div className="panelHead responsiveHead">
+          <div>
+            <div className="panelTitle">High-Risk Job Queue</div>
+            <div className="panelSub">One row per job. Open the full editor only when the user needs to investigate or adjust the job.</div>
+          </div>
+          <button className="btn" type="button" onClick={() => downloadCsv("dropclarity-high-risk-jobs.csv", [["Job", "Job ID", "Revenue", "Costs", "Profit", "Margin %", "Recoverable Profit", "Top Driver", "Status"], ...riskRows.map((row) => [row.job.job_name || "", row.job.job_id || "", row.revenue, row.costs, row.profit, row.margin, row.recoverable, row.driver?.label || "", row.status])])}>
+            Export High-Risk CSV
+          </button>
+        </div>
+
+        <div className="riskQueueList">
+          {riskRows.length ? riskRows.map((row, index) => {
+            const isLoss = row.profit < 0;
+            const driverLabel = row.driver?.label || "Margin";
+            const driverGap = row.driver ? row.driver.gap : 0;
+            const marginGap = Math.max(0, marginTarget - row.margin);
+            const issue = isLoss
+              ? `${driverLabel} appears to be the main pressure point and this job is below breakeven.`
+              : `${driverLabel} is pressuring margin; this job is ${marginGap.toFixed(1)} pts below target.`;
+
+            return (
+              <div className={isLoss ? "riskQueueCard critical" : "riskQueueCard warning"} key={row.key}>
+                <div className="riskRank">#{index + 1}</div>
+                <div className="riskMain">
+                  <div className="riskTitleRow">
+                    <div>
+                      <div className="riskJobName">{row.job.job_name || row.job.job_id || "Unnamed job"}</div>
+                      <div className="riskJobMeta">{row.job.job_id || "No Job ID"} • {dateLabel(row.job.created_at)} • {row.job.period_label || "Saved report"}</div>
+                    </div>
+                    <span className={isLoss ? "tag bad" : "tag warn"}>{row.status}</span>
+                  </div>
+
+                  <div className="riskMetricGrid">
+                    <div><span>Profit</span><strong className={row.profit < 0 ? "neg" : "pos"}>{fmtMoney(row.profit)}</strong></div>
+                    <div><span>Margin</span><strong className={row.margin < marginTarget ? "neg" : "pos"}>{fmtPct(row.margin)}</strong></div>
+                    <div><span>Recoverable</span><strong>{fmtMoney(row.recoverable)}</strong></div>
+                    <div><span>Top Driver</span><strong>{driverLabel}</strong></div>
+                  </div>
+
+                  <div className="riskInsightBox">
+                    <strong>Why it is flagged:</strong> {issue}
+                    {row.driver ? <span> Current {driverLabel.toLowerCase()}: {fmtMoney(row.driver.current)} vs benchmark {fmtMoney(row.driver.average)}.</span> : null}
+                  </div>
+                </div>
+
+                <div className="riskActions">
+                  <button className="btn subtleSaveBtn" type="button" onClick={() => { setJobKey(row.key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                    Open Job Detail
+                  </button>
+                  <button className="btn" type="button" onClick={() => { setJobKey(row.key); setView("alljobs"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                    View All Jobs
+                  </button>
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="empty">No high-risk jobs match this view.</div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -3819,6 +3965,7 @@ export default function DashboardPage() {
   const [marginTarget, setMarginTarget] = useState<number>(30);
   const [marginTargetDraft, setMarginTargetDraft] = useState<string>("30");
   const [emailAlertsEnabled, setEmailAlertsEnabledState] = useState<boolean>(true);
+  const [alertEmails, setAlertEmailsState] = useState<string[]>([]);
 
   const loadAndRender = useCallback(async () => {
     if (!isLoaded) return;
@@ -3860,9 +4007,10 @@ useEffect(() => {
   setMarginTarget(savedTarget);
   setMarginTargetDraft(String(savedTarget));
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
+  setAlertEmailsState(readAlertEmails(USER_ID, user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null));
   setDeletedReportKeys(readDeletedReports(USER_ID));
   loadAndRender();
-}, [USER_ID, isLoaded, loadAndRender]);
+}, [USER_ID, isLoaded, loadAndRender, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
 
   const saveMarginTarget = () => {
     const next = Math.max(1, Math.min(95, parseNumberLoose(marginTargetDraft)));
@@ -3874,6 +4022,13 @@ useEffect(() => {
   const setEmailAlertsEnabled = (enabled: boolean) => {
     setEmailAlertsEnabledState(enabled);
     writeEmailAlertsEnabled(USER_ID, enabled);
+  };
+
+  const setAlertEmails = (emails: string[]) => {
+    const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
+    const next = normalizeEmailList(emails, fallbackEmail);
+    setAlertEmailsState(next);
+    writeAlertEmails(USER_ID, next, fallbackEmail);
   };
 
 
@@ -4048,6 +4203,8 @@ useEffect(() => {
   emailAlertsEnabled={emailAlertsEnabled}
   setEmailAlertsEnabled={setEmailAlertsEnabled}
   userEmail={user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null}
+  alertEmails={alertEmails}
+  setAlertEmails={setAlertEmails}
 />
             )}
           </>
@@ -5172,4 +5329,30 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .profitCommandTitle{font-size:21px}
 }
 
+
+
+/* Enterprise risk queue redesign */
+.dc-bg .enterpriseRiskPage{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.dc-bg .riskCommandHero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.52fr);gap:16px;align-items:end;padding:18px;border-bottom:1px solid rgba(15,23,42,.06)}
+.dc-bg .riskCommandTitle{margin-top:6px;font-size:28px;line-height:1.05;font-weight:990;letter-spacing:-.035em;color:rgba(15,23,42,.96)}
+.dc-bg .riskCommandSub{margin-top:8px;max-width:860px;font-size:15px;line-height:1.5;font-weight:780;color:rgba(15,23,42,.62)}
+.dc-bg .riskSearchControls{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.dc-bg .riskSearchControls .searchInput{min-width:260px;flex:1}
+.dc-bg .riskSummaryGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px 18px 18px}
+.dc-bg .riskSummaryCard{border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.86);border-radius:18px;padding:14px;box-shadow:0 10px 28px rgba(2,6,23,.045)}
+.dc-bg .riskSummaryCard span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.52)}
+.dc-bg .riskSummaryCard strong{display:block;margin-top:7px;font-size:23px;line-height:1;font-weight:990;color:rgba(15,23,42,.94)}
+.dc-bg .riskSummaryCard em{display:block;margin-top:8px;font-style:normal;font-size:12.5px;font-weight:800;color:rgba(15,23,42,.56)}
+.dc-bg .riskTablePanel{overflow:hidden}.dc-bg .riskQueueList{display:flex;flex-direction:column;gap:10px;padding:14px}
+.dc-bg .riskQueueCard{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:start;border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.90);border-radius:20px;padding:14px;box-shadow:0 12px 30px rgba(2,6,23,.045)}
+.dc-bg .riskQueueCard.critical{border-left:4px solid rgba(239,68,68,.70)}.dc-bg .riskQueueCard.warning{border-left:4px solid rgba(245,158,11,.70)}
+.dc-bg .riskRank{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;background:rgba(124,58,237,.10);color:rgba(91,33,182,.95);font-weight:990;font-size:13px}
+.dc-bg .riskTitleRow{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.dc-bg .riskJobName{font-size:17px;line-height:1.15;font-weight:990;color:rgba(15,23,42,.96)}.dc-bg .riskJobMeta{margin-top:5px;font-size:12.5px;font-weight:800;color:rgba(15,23,42,.56)}
+.dc-bg .riskMetricGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.dc-bg .riskMetricGrid div{border:1px solid rgba(15,23,42,.06);background:rgba(248,250,252,.82);border-radius:14px;padding:10px}.dc-bg .riskMetricGrid span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.48)}.dc-bg .riskMetricGrid strong{display:block;margin-top:4px;font-size:14.5px;font-weight:990;color:rgba(15,23,42,.90)}
+.dc-bg .riskInsightBox{margin-top:10px;border-radius:14px;border:1px solid rgba(34,211,238,.14);background:linear-gradient(135deg,rgba(240,253,250,.70),rgba(255,255,255,.88));padding:10px 12px;font-size:13px;line-height:1.45;font-weight:780;color:rgba(15,23,42,.66)}.dc-bg .riskInsightBox strong{color:rgba(15,23,42,.92)}
+.dc-bg .riskActions{display:flex;flex-direction:column;gap:8px;min-width:150px}.dc-bg .riskActions .btn{justify-content:center;white-space:nowrap}
+.dc-bg .emailCardTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.dc-bg .emailRecipientList{margin-top:12px;border-radius:16px;border:1px solid rgba(15,23,42,.075);background:rgba(248,250,252,.78);padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.dc-bg .emailRecipientLabel{width:100%;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.48)}.dc-bg .emailRecipientPill{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(15,23,42,.09);background:#fff;padding:7px 10px;font-size:12px;font-weight:900;color:rgba(15,23,42,.78)}.dc-bg .emailRecipientPill.muted{color:rgba(15,23,42,.45)}
+.dc-bg .emailEditBox{margin-top:12px;border-radius:16px;border:1px solid rgba(34,211,238,.16);background:rgba(255,255,255,.88);padding:10px}.dc-bg .emailEditLabel{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.50);margin-bottom:7px}.dc-bg .emailEditTextarea{width:100%;min-height:86px;resize:vertical;border:1px solid rgba(15,23,42,.12);border-radius:14px;padding:10px;font-weight:850;color:#0f172a;outline:none}.dc-bg .emailEditTextarea:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.16)}.dc-bg .emailEditHelp{margin-top:7px;font-size:12px;font-weight:750;color:rgba(15,23,42,.52)}.dc-bg .emailEditActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:1100px){.dc-bg .riskCommandHero{grid-template-columns:1fr}.dc-bg .riskSearchControls{justify-content:flex-start}.dc-bg .riskSummaryGrid{grid-template-columns:1fr 1fr}.dc-bg .riskQueueCard{grid-template-columns:42px minmax(0,1fr)}}
+@media(max-width:760px){.dc-bg .riskSummaryGrid,.dc-bg .riskMetricGrid{grid-template-columns:1fr}.dc-bg .riskQueueCard{grid-template-columns:1fr}.dc-bg .riskRank{width:fit-content;padding:0 12px}.dc-bg .riskActions{min-width:0;width:100%}.dc-bg .riskTitleRow{flex-direction:column}.dc-bg .riskSearchControls .searchInput{min-width:0;width:100%}}
 `;
