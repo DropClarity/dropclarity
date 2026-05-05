@@ -2006,6 +2006,7 @@ function ProfitLeakSnapshot({
 }) {
   const s = state.summary || {};
   const jobs = getAllJobs(state);
+  const range = rangeLabel((state.range as RangeKey) || "all");
   const totalProfit = parseNumberLoose(s.net_profit);
   const totalRevenue = parseNumberLoose(s.revenue);
   const totalMargin = parseNumberLoose(s.margin_pct);
@@ -2030,49 +2031,62 @@ function ProfitLeakSnapshot({
 
   const losingRows = rows.filter((row) => row.profit < 0);
   const belowTargetRows = rows.filter((row) => row.profit >= 0 && row.margin < marginTarget);
+  const belowTargetCount = losingRows.length + belowTargetRows.length;
   const recoverableProfit = rows.reduce((sum, row) => sum + row.recoverable, 0);
   const lossAmount = losingRows.reduce((sum, row) => sum + Math.abs(Math.min(0, row.profit)), 0);
   const topOpportunity = rows.find((row) => row.recoverable > 0) || rows[0] || null;
   const hasRisk = losingRows.length > 0 || belowTargetRows.length > 0 || recoverableProfit > 0;
-  const totalFlaggedJobs = losingRows.length + belowTargetRows.length;
+
+  const headline = hasRisk
+    ? `${losingRows.length} job${losingRows.length === 1 ? "" : "s"} losing money`
+    : `Jobs above breakeven`;
 
   const sub = hasRisk
-    ? `Fixing flagged jobs could add ${fmtMoney(recoverableProfit)} in profit against your ${fmtPct(marginTarget)} target. Start with the highest-impact job below.`
-    : `Jobs in this view are above breakeven. Keep monitoring new uploads against your ${fmtPct(marginTarget)} target margin.`;
+    ? `${fmtMoney(recoverableProfit)} recoverable gap vs. your ${fmtPct(marginTarget)} target. Start with the highest-impact job below.`
+    : `Keep monitoring new uploads against your ${fmtPct(marginTarget)} target margin so margin drift is caught early.`;
 
   return (
-    <section className={hasRisk ? "profitSnapshot risk premiumSnapshot" : "profitSnapshot healthy premiumSnapshot"}>
-      <div className="profitSnapshotMain premiumSnapshotMain">
+    <section className={hasRisk ? "profitSnapshot risk" : "profitSnapshot healthy"}>
+      <div className="profitSnapshotMain">
         <div className="profitSnapshotKicker">What needs attention first</div>
-        <h2 className="profitSnapshotTitle refinedSnapshotTitle premiumSnapshotTitle">
+        <h2 className="profitSnapshotTitle refinedSnapshotTitle">
           {hasRisk ? (
             <>
-              <span className="snapshotMoneyLead">{fmtMoney(recoverableProfit)}</span>
-              <span> profit opportunity</span>
+              <span className="profitSnapshotNumber">{losingRows.length}</span>
+              <span> job{losingRows.length === 1 ? "" : "s"} losing money</span>
             </>
           ) : (
-            "Profit is holding above breakeven"
+            headline
           )}
         </h2>
         <p className="profitSnapshotSub refinedSnapshotSub">{sub}</p>
 
-        <div className="snapshotProofLine">
-          <span><b>{totalFlaggedJobs}</b> job{totalFlaggedJobs === 1 ? "" : "s"} below target</span>
-          <span><b>{losingRows.length}</b> losing job{losingRows.length === 1 ? "" : "s"}</span>
-          <span><b>{fmtPct(marginTarget)}</b> target margin</span>
+        <div className="profitSnapshotMiniKpis" aria-label="Profit attention summary">
+          <div className="profitSnapshotMiniKpi">
+            <strong>{belowTargetCount}</strong>
+            <span>jobs below target</span>
+          </div>
+          <div className="profitSnapshotMiniKpi">
+            <strong>{losingRows.length}</strong>
+            <span>losing jobs</span>
+          </div>
+          <div className="profitSnapshotMiniKpi">
+            <strong>{fmtPct(marginTarget)}</strong>
+            <span>target margin</span>
+          </div>
         </div>
 
         <div className="profitSnapshotActions refinedSnapshotActions">
           <button className="btn profitSnapshotPrimary" type="button" onClick={onOpenHighRisk}>
-            Fix high-risk jobs
+            Review high-risk jobs
           </button>
           <a className="btn profitSnapshotSecondary" href="#jobsPanel">
-            View all jobs
+            View job log
           </a>
         </div>
       </div>
 
-      <div className="profitSnapshotMetrics premiumSnapshotMetrics">
+      <div className="profitSnapshotMetrics">
         <div className="profitSnapshotMetric primary">
           <span>Recoverable Profit</span>
           <strong>{fmtMoney(recoverableProfit)}</strong>
@@ -2096,10 +2110,10 @@ function ProfitLeakSnapshot({
       </div>
 
       {topOpportunity ? (
-        <button className="profitSnapshotOpportunity premiumSnapshotOpportunity" type="button" onClick={onOpenHighRisk}>
-          <span>Fix this first</span>
+        <button className="profitSnapshotOpportunity" type="button" onClick={onOpenHighRisk}>
+          <span>Top opportunity</span>
           <strong>{topOpportunity.job.job_name || topOpportunity.job.job_id || "Review job"}</strong>
-          <em>{topOpportunity.recoverable > 0 ? `+${fmtMoney(topOpportunity.recoverable)} potential` : "Monitor margin"}</em>
+          <em>{topOpportunity.recoverable > 0 ? `${fmtMoney(topOpportunity.recoverable)} gap` : "Monitor margin"}</em>
         </button>
       ) : null}
     </section>
@@ -2694,13 +2708,13 @@ function ProfitCommandCenter({
           <div className="wowRecoveryStats">
             <div><span>At-risk jobs</span><strong>{highRiskRows.length}</strong></div>
             <div><span>Losing jobs</span><strong className={losingRows.length ? "neg" : "pos"}>{losingRows.length}</strong></div>
-            <div><span>Credits found</span><strong>{fmtMoney(creditMetrics.totalCredits)}</strong></div>
+            <div><span>Credits tracked</span><strong>{fmtMoney(creditMetrics.totalCredits)}</strong></div>
           </div>
           {topRecoverableJob ? (
             <button className="wowPrimaryJob" type="button" onClick={() => onOpenJob(topRecoverableJob.key)}>
-              <span>Fix this first</span>
+              <span>Top opportunity</span>
               <strong>{topRecoverableJob.job.job_name || topRecoverableJob.job.job_id || "Review job"}</strong>
-              <em>+{fmtMoney(topRecoverableJob.gap)} potential</em>
+              <em>{fmtMoney(topRecoverableJob.gap)} gap</em>
             </button>
           ) : null}
         </div>
@@ -3019,7 +3033,7 @@ function ScaleOversightPanel({
         <div>
           <div className="panelTitle">Scale Profit Control Center</div>
           <div className="panelSub">
-            Automated oversight for recoverable profit, high-risk jobs, benchmarks, and real-time email alerts.
+            Premium oversight for recoverable profit, high-risk jobs, benchmarks, and real-time email alerts.
           </div>
         </div>
 
@@ -3034,24 +3048,24 @@ function ScaleOversightPanel({
       </div>
 
       <div className="scaleExecutiveGrid">
-        <div className="scaleRecoveryCommand premiumScaleRecoveryCommand">
+        <div className="scaleRecoveryCommand">
           <div className="scaleCommandAura" />
-          <div className="scaleKicker">Profit Opportunity</div>
+          <div className="scaleKicker">Recoverable Profit</div>
           <div className={recoverableOpportunity > 0 ? "scaleRecoveryValue warnText" : "scaleRecoveryValue pos"}>{fmtMoney(recoverableOpportunity)}</div>
-          <div className="scaleRecoverySub">Fixing flagged jobs could add this much profit against your {fmtPct(marginTarget)} target margin.</div>
+          <div className="scaleRecoverySub">Estimated gap between current job profit and your {fmtPct(marginTarget)} target margin.</div>
 
           <div className="scaleRecoveryStats">
-            <div><span>High-risk jobs</span><strong>{fallbackMetrics.highRiskCount}</strong></div>
+            <div><span>At-risk jobs</span><strong>{fallbackMetrics.highRiskCount}</strong></div>
             <div><span>Losing jobs</span><strong className={losingRows.length ? "neg" : "pos"}>{losingRows.length}</strong></div>
-            <div><span>Avg monthly lift</span><strong>{fmtMoney(monthlyLift)}</strong></div>
-            <div><span>Credits found</span><strong>{fmtMoney(creditMetrics.totalCredits)}</strong></div>
+            <div><span>Monthly lift</span><strong>{fmtMoney(monthlyLift)}</strong></div>
+            <div><span>Credits tracked</span><strong>{fmtMoney(creditMetrics.totalCredits)}</strong></div>
           </div>
 
           {topRecoverableJob ? (
             <button className="scaleTopOpportunity" type="button" onClick={() => openJobFromRow(topRecoverableJob.key)}>
-              <span>Fix this first</span>
+              <span>Top opportunity</span>
               <strong>{topRecoverableJob.job.job_name || topRecoverableJob.job.job_id || "Review job"}</strong>
-              <em>+{fmtMoney(topRecoverableJob.gap)} potential</em>
+              <em>{fmtMoney(topRecoverableJob.gap)} gap</em>
             </button>
           ) : null}
         </div>
@@ -3060,7 +3074,7 @@ function ScaleOversightPanel({
           <div className="scaleCardHeadSplit">
             <div>
               <div className="scaleKicker">Action Queue</div>
-              <div className="scaleQueueTitle">Highest-impact fixes</div>
+              <div className="scaleQueueTitle">What to fix first</div>
             </div>
             <span className="tag">Ranked by impact</span>
           </div>
@@ -3087,8 +3101,8 @@ function ScaleOversightPanel({
         <div className="scaleBenchmarkCard">
           <div className="scaleCardHeadSplit">
             <div>
-              <div className="scaleKicker">Business Health</div>
-              <div className="scaleQueueTitle">Trend signals to watch</div>
+              <div className="scaleKicker">Basic Benchmarking</div>
+              <div className="scaleQueueTitle">How this business is trending</div>
             </div>
           </div>
 
@@ -3109,11 +3123,11 @@ function ScaleOversightPanel({
       <div className="scaleIntelligenceStrip">
         <div className="scaleInsightNarrative">
           <div className="scaleKicker">Profit Intelligence</div>
-          <div className="scaleInsightTitle">{recoverableOpportunity > 0 ? `${fmtMoney(recoverableOpportunity)} profit gap is being tracked.` : summaryTitle}</div>
+          <div className="scaleInsightTitle">{summaryTitle}</div>
           <div className="scaleInsightText">{summaryCopy}</div>
           <div className="scaleInsightProgress">
             <div className="scaleInsightProgressTop">
-              <span>Current progress vs. target margin</span>
+              <span>Recovered vs. target gap</span>
               <strong>{recoverableOpportunity > 0 ? fmtPct(Math.max(0, 100 - (recoverableOpportunity / Math.max(1, totalRevenue * (marginTarget / 100))) * 100)) : "100.0%"}</strong>
             </div>
             <div className="scaleProgressTrack"><div className="scaleProgressFill" style={{ width: `${Math.max(6, Math.min(100, recoverableOpportunity > 0 ? 100 - (recoverableOpportunity / Math.max(1, totalRevenue * (marginTarget / 100))) * 100 : 100))}%` }} /></div>
@@ -6137,12 +6151,12 @@ main.dc-bg .wrap{padding-bottom:56px;}
 
 
 /* Launch-focused dashboard hierarchy */
-.dc-bg .profitSnapshot{position:relative;margin:18px 0 14px;border-radius:28px;border:1px solid rgba(15,23,42,.08);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,253,250,.86) 44%,rgba(245,243,255,.82));box-shadow:0 24px 80px rgba(2,6,23,.10);padding:18px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(420px,.9fr);gap:16px;overflow:hidden}.dc-bg .profitSnapshot:before{content:"";position:absolute;inset:-120px auto auto -120px;width:340px;height:340px;border-radius:999px;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 66%);pointer-events:none}.dc-bg .profitSnapshot.risk{border-color:rgba(239,68,68,.16);background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,247,237,.88) 44%,rgba(245,243,255,.82))}.dc-bg .profitSnapshot.healthy{border-color:rgba(16,185,129,.18)}.dc-bg .profitSnapshotMain{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;min-height:210px;padding:8px}.dc-bg .profitSnapshotKicker{width:fit-content;margin-bottom:10px;padding:7px 10px;border-radius:999px;border:1px solid rgba(34,211,238,.24);background:rgba(255,255,255,.78);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;color:rgba(8,145,178,.95)}.dc-bg .profitSnapshotTitle{margin:0;font-size:38px;line-height:1.03;letter-spacing:-.045em;color:rgba(2,6,23,.96);font-weight:990;max-width:760px}.dc-bg .profitSnapshotSub{margin:12px 0 0;max-width:760px;font-size:15.5px;line-height:1.55;font-weight:780;color:rgba(51,65,85,.78)}.dc-bg .profitSnapshotActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.dc-bg .profitSnapshotPrimary{background:linear-gradient(90deg,rgba(239,68,68,.13),rgba(124,58,237,.14));border-color:rgba(239,68,68,.22)}.dc-bg .profitSnapshotSecondary{background:rgba(255,255,255,.70)}.dc-bg .profitSnapshotMetrics{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.dc-bg .profitSnapshotMetric{border-radius:20px;border:1px solid rgba(15,23,42,.07);background:rgba(255,255,255,.82);padding:14px;box-shadow:0 12px 34px rgba(2,6,23,.055)}.dc-bg .profitSnapshotMetric.primary{border-color:rgba(245,158,11,.22);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,247,237,.82))}.dc-bg .profitSnapshotMetric span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(15,23,42,.50)}.dc-bg .profitSnapshotMetric strong{display:block;margin-top:8px;font-size:25px;line-height:1;font-weight:990;letter-spacing:-.03em;color:rgba(15,23,42,.94)}.dc-bg .profitSnapshotMetric em{display:block;margin-top:8px;font-style:normal;font-size:12px;line-height:1.35;font-weight:760;color:rgba(15,23,42,.55)}.dc-bg .profitSnapshotOpportunity{grid-column:1/-1;border:1px solid rgba(124,58,237,.16);background:rgba(255,255,255,.76);border-radius:18px;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;cursor:pointer;transition:transform .1s ease,box-shadow .14s ease,border-color .14s ease}.dc-bg .profitSnapshotOpportunity:hover{transform:translateY(-1px);box-shadow:0 14px 40px rgba(2,6,23,.10);border-color:rgba(124,58,237,.28)}.dc-bg .profitSnapshotOpportunity span{font-size:11px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(124,58,237,.86)}.dc-bg .profitSnapshotOpportunity strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:950;color:rgba(15,23,42,.92)}.dc-bg .profitSnapshotOpportunity em{font-style:normal;font-size:13px;font-weight:950;color:rgba(194,65,12,.94)}
+.dc-bg .profitSnapshot{position:relative;margin:18px 0 14px;border-radius:28px;border:1px solid rgba(15,23,42,.08);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,253,250,.86) 44%,rgba(245,243,255,.82));box-shadow:0 24px 80px rgba(2,6,23,.10);padding:18px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(420px,.9fr);gap:16px;overflow:hidden}.dc-bg .profitSnapshot:before{content:"";position:absolute;inset:-120px auto auto -120px;width:340px;height:340px;border-radius:999px;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 66%);pointer-events:none}.dc-bg .profitSnapshot.risk{border-color:rgba(239,68,68,.16);background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,247,237,.88) 44%,rgba(245,243,255,.82))}.dc-bg .profitSnapshot.healthy{border-color:rgba(16,185,129,.18)}.dc-bg .profitSnapshotMain{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;min-height:210px;padding:8px}.dc-bg .profitSnapshotKicker{width:fit-content;margin-bottom:10px;padding:7px 10px;border-radius:999px;border:1px solid rgba(34,211,238,.24);background:rgba(255,255,255,.78);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;color:rgba(8,145,178,.95)}.dc-bg .profitSnapshotTitle{margin:0;font-size:38px;line-height:1.03;letter-spacing:-.045em;color:rgba(2,6,23,.96);font-weight:990;max-width:760px}.dc-bg .profitSnapshotSub{margin:12px 0 0;max-width:760px;font-size:15.5px;line-height:1.55;font-weight:780;color:rgba(51,65,85,.78)}.dc-bg .profitSnapshotMiniKpis{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.dc-bg .profitSnapshotMiniKpi{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:999px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.76);box-shadow:0 10px 26px rgba(2,6,23,.045);font-size:12.5px;font-weight:850;color:rgba(15,23,42,.62);white-space:nowrap}.dc-bg .profitSnapshotMiniKpi strong{font-size:13.5px;line-height:1;font-weight:990;color:rgba(15,23,42,.92)}.dc-bg .profitSnapshotMiniKpi span{line-height:1}.dc-bg .profitSnapshotActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.dc-bg .profitSnapshotPrimary{background:linear-gradient(90deg,rgba(239,68,68,.13),rgba(124,58,237,.14));border-color:rgba(239,68,68,.22)}.dc-bg .profitSnapshotSecondary{background:rgba(255,255,255,.70)}.dc-bg .profitSnapshotMetrics{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.dc-bg .profitSnapshotMetric{border-radius:20px;border:1px solid rgba(15,23,42,.07);background:rgba(255,255,255,.82);padding:14px;box-shadow:0 12px 34px rgba(2,6,23,.055)}.dc-bg .profitSnapshotMetric.primary{border-color:rgba(245,158,11,.22);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,247,237,.82))}.dc-bg .profitSnapshotMetric span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(15,23,42,.50)}.dc-bg .profitSnapshotMetric strong{display:block;margin-top:8px;font-size:25px;line-height:1;font-weight:990;letter-spacing:-.03em;color:rgba(15,23,42,.94)}.dc-bg .profitSnapshotMetric em{display:block;margin-top:8px;font-style:normal;font-size:12px;line-height:1.35;font-weight:760;color:rgba(15,23,42,.55)}.dc-bg .profitSnapshotOpportunity{grid-column:1/-1;border:1px solid rgba(124,58,237,.16);background:rgba(255,255,255,.76);border-radius:18px;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;cursor:pointer;transition:transform .1s ease,box-shadow .14s ease,border-color .14s ease}.dc-bg .profitSnapshotOpportunity:hover{transform:translateY(-1px);box-shadow:0 14px 40px rgba(2,6,23,.10);border-color:rgba(124,58,237,.28)}.dc-bg .profitSnapshotOpportunity span{font-size:11px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(124,58,237,.86)}.dc-bg .profitSnapshotOpportunity strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:950;color:rgba(15,23,42,.92)}.dc-bg .profitSnapshotOpportunity em{font-style:normal;font-size:13px;font-weight:950;color:rgba(194,65,12,.94)}
 .dc-bg .scaleInsanePanel{margin-top:14px}.dc-bg .scaleExecutiveGrid{align-items:stretch}.dc-bg .scaleRecoveryCommand,.dc-bg .scaleActionQueueCard,.dc-bg .scaleBenchmarkCard,.dc-bg .scaleCard{box-shadow:0 14px 42px rgba(2,6,23,.055)}.dc-bg .scaleQueueTitle,.dc-bg .scaleInsightTitle,.dc-bg .emailAlertTitle{letter-spacing:-.025em}.dc-bg .charts{margin-top:14px}.dc-bg .creditKpiPanel{margin-top:14px}
 
 @media(max-width:1180px){.dc-bg .profitSnapshot{grid-template-columns:1fr}.dc-bg .profitSnapshotMain{min-height:0}.dc-bg .profitSnapshotTitle{font-size:34px}.dc-bg .profitSnapshotMetrics{grid-template-columns:repeat(4,minmax(0,1fr))}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr auto}.dc-bg .profitSnapshotOpportunity span{grid-column:1/-1}.dc-bg .profitSnapshotOpportunity strong{white-space:normal}}
-@media(max-width:760px){.dc-bg .profitSnapshot{padding:14px;border-radius:22px}.dc-bg .profitSnapshotTitle{font-size:28px;line-height:1.08}.dc-bg .profitSnapshotSub{font-size:14px}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr 1fr}.dc-bg .profitSnapshotMetric strong{font-size:21px}.dc-bg .profitSnapshotActions .btn{width:100%;justify-content:center}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr}.dc-bg .profitSnapshotOpportunity em{justify-self:start}}
-@media(max-width:520px){.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr}.dc-bg .profitSnapshotTitle{font-size:25px}.dc-bg .profitSnapshotMetric{padding:12px}.dc-bg .profitSnapshotMain{padding:2px}.dc-bg .kpis{grid-template-columns:1fr!important}}
+@media(max-width:760px){.dc-bg .profitSnapshot{padding:14px;border-radius:22px}.dc-bg .profitSnapshotTitle{font-size:28px;line-height:1.08}.dc-bg .profitSnapshotSub{font-size:14px}.dc-bg .profitSnapshotMiniKpis{gap:7px;margin-top:12px}.dc-bg .profitSnapshotMiniKpi{padding:8px 10px;font-size:12px}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr 1fr}.dc-bg .profitSnapshotMetric strong{font-size:21px}.dc-bg .profitSnapshotActions .btn{width:100%;justify-content:center}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr}.dc-bg .profitSnapshotOpportunity em{justify-self:start}}
+@media(max-width:520px){.dc-bg .profitSnapshotMiniKpis{display:grid;grid-template-columns:1fr;gap:7px}.dc-bg .profitSnapshotMiniKpi{justify-content:center}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr}.dc-bg .profitSnapshotTitle{font-size:25px}.dc-bg .profitSnapshotMetric{padding:12px}.dc-bg .profitSnapshotMain{padding:2px}.dc-bg .kpis{grid-template-columns:1fr!important}}
 
 
 
@@ -6213,22 +6227,4 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:900px){.dc-bg .profitSnapshot{padding:18px!important}.dc-bg .refinedSnapshotTitle{font-size:25px!important}.dc-bg .profitSnapshotNumber{font-size:30px}.dc-bg .refinedSnapshotSub{font-size:14px!important}.dc-bg .profitSnapshotMetric strong{font-size:20px!important}}
 @media(max-width:560px){.dc-bg .profitSnapshot{padding:16px!important}.dc-bg .refinedSnapshotTitle{font-size:23px!important;gap:6px}.dc-bg .profitSnapshotNumber{font-size:28px}.dc-bg .refinedSnapshotActions{display:grid;grid-template-columns:1fr;width:100%}.dc-bg .refinedSnapshotActions .btn{justify-content:center;width:100%}}
 
-
-
-/* Profit snapshot premium polish */
-.dc-bg .premiumSnapshot{grid-template-columns:minmax(0,1.12fr) minmax(420px,.88fr)!important;align-items:stretch}
-.dc-bg .premiumSnapshotMain{min-height:220px!important;justify-content:center!important}
-.dc-bg .premiumSnapshotTitle{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;font-size:31px!important;line-height:1.08!important;letter-spacing:-.04em!important;max-width:820px!important}
-.dc-bg .snapshotMoneyLead{font-size:34px;line-height:1;font-weight:990;letter-spacing:-.055em;color:rgba(194,65,12,.98)}
-.dc-bg .snapshotProofLine{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;color:rgba(51,65,85,.68);font-size:12.5px;font-weight:850}
-.dc-bg .snapshotProofLine span{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:999px;border:1px solid rgba(15,23,42,.07);background:rgba(255,255,255,.68)}
-.dc-bg .snapshotProofLine b{color:rgba(15,23,42,.94);font-weight:990}
-.dc-bg .premiumSnapshotOpportunity{background:linear-gradient(90deg,rgba(255,255,255,.86),rgba(245,243,255,.78))!important}
-.dc-bg .premiumSnapshotOpportunity em{color:rgba(194,65,12,.98)!important}
-.dc-bg .premiumScaleRecoveryCommand{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,247,237,.74) 44%,rgba(240,249,255,.86))!important;border-left-color:rgba(245,158,11,.78)!important}
-.dc-bg .premiumScaleRecoveryCommand .scaleKicker{color:rgba(194,65,12,.78)!important}
-.dc-bg .premiumScaleRecoveryCommand .scaleTopOpportunity{background:rgba(255,255,255,.82)!important;border-color:rgba(245,158,11,.22)!important}
-@media(max-width:1180px){.dc-bg .premiumSnapshot{grid-template-columns:1fr!important}.dc-bg .premiumSnapshotMetrics{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
-@media(max-width:760px){.dc-bg .premiumSnapshotTitle{font-size:26px!important}.dc-bg .snapshotMoneyLead{font-size:29px}.dc-bg .premiumSnapshotMetrics{grid-template-columns:1fr 1fr!important}.dc-bg .snapshotProofLine{font-size:12px}.dc-bg .snapshotProofLine span{width:100%;justify-content:space-between}}
-@media(max-width:520px){.dc-bg .premiumSnapshotMetrics{grid-template-columns:1fr!important}.dc-bg .premiumSnapshotTitle{font-size:23px!important}.dc-bg .snapshotMoneyLead{font-size:27px}}
 `;
