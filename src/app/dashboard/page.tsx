@@ -3437,6 +3437,14 @@ function JobEditor({
       : gm < marginTarget
       ? `Current margin is ${fmtPct(gm)} against your ${fmtPct(marginTarget)} target, leaving ${fmtMoney(recoverableGap)} of recoverable profit gap.`
       : `Current margin is ${fmtPct(gm)} against your ${fmtPct(marginTarget)} target. Keep this job as a reference for similar work.`;
+  const primaryJobIdentity = String(job.job_name || job.job_id || "Unnamed job").trim();
+  const secondaryJobIdentity = String(job.job_id || "").trim();
+  const showSecondaryJobIdentity = Boolean(secondaryJobIdentity && secondaryJobIdentity !== primaryJobIdentity);
+  const jobIdentityMeta = [
+    showSecondaryJobIdentity ? `Job ID: ${secondaryJobIdentity}` : secondaryJobIdentity ? "Job detail" : "No Job ID detected",
+    job.job_date || dateLabel(base?.created_at),
+    base?.period_label || "Saved report",
+  ].filter(Boolean).join(" • ");
 
   useEffect(() => {
     if (!hasHistory) return;
@@ -3582,6 +3590,12 @@ function JobEditor({
 
           <div className="jobHeroBody decisionJobHeroBody">
             <div className="decisionJobMain">
+              <div className="jobIdentityEyebrow">Job Detail</div>
+              <h1 className="jobIdentityTitle">{primaryJobIdentity}</h1>
+              <div className="jobIdentityMeta">{jobIdentityMeta}</div>
+
+              <div className="decisionDivider" />
+
               <div className="sectionEyebrow">Single Job Review</div>
               <div className="jobHeroTitle decisionJobTitle">{decisionTitle}</div>
               <div className="jobHeroSub decisionJobSub">{decisionSub}</div>
@@ -4719,7 +4733,7 @@ useEffect(() => {
   };
 
   return (
-    <main className="dc-bg">
+    <main className={view === "dashboard" ? "dc-bg" : "dc-bg internal-view-bg"}>
       <style dangerouslySetInnerHTML={{ __html: dashboardCss }} />
 
       <div className="wrap">
@@ -6159,4 +6173,17 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .reportsManagerPage,.dc-bg .highRiskPage,.dc-bg .allJobsDetailShell,.dc-bg .jobHero{margin-top:0!important}
 @media(max-width:900px){.dc-bg .internalQuickControls{justify-content:flex-start}.dc-bg .internalQuickActions{justify-content:flex-start;width:100%}.dc-bg .internalQuickActions .marginTargetTopWrap{justify-content:flex-start!important}}
 @media(max-width:560px){.dc-bg .internalQuickControls{margin-bottom:12px}.dc-bg .internalQuickActions{display:grid!important;grid-template-columns:1fr 1fr;width:100%;gap:8px}.dc-bg .internalQuickActions>.btn,.dc-bg .internalQuickActions>a.btn{width:100%;justify-content:center}.dc-bg .internalQuickActions .marginTargetTopWrap{grid-column:1 / -1;width:100%;border-radius:18px!important;align-items:flex-start!important;flex-direction:column!important}.dc-bg .internalQuickActions .marginTargetTopText{width:100%;justify-content:space-between}.dc-bg .internalQuickActions .marginTargetTopControls{width:100%;display:grid!important;grid-template-columns:minmax(0,1fr) auto}.dc-bg .internalQuickActions .compactTargetInputGroup{justify-content:center}.dc-bg .internalQuickActions .compactTargetSave{justify-content:center}.dc-bg .internalQuickActions .compactTargetInput{width:100%!important;max-width:80px}}
+
+/* Internal page spacing + job identity polish */
+.dc-bg.internal-view-bg{padding-top:28px}
+.dc-bg.internal-view-bg .internalQuickControls{margin-top:0;margin-bottom:10px}
+.dc-bg.internal-view-bg .cleanModeShell,.dc-bg.internal-view-bg .jobHero{margin-top:8px}
+.dc-bg .jobIdentityEyebrow{width:fit-content;margin-bottom:8px;border:1px solid rgba(34,211,238,.24);background:rgba(255,255,255,.78);border-radius:999px;padding:5px 10px;font-size:11px;line-height:1;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:rgba(8,145,178,.96)}
+.dc-bg .jobIdentityTitle{margin:0;font-size:40px;line-height:1.08;font-weight:990;letter-spacing:-.045em;color:rgba(2,6,23,.96)}
+.dc-bg .jobIdentityMeta{margin-top:6px;color:rgba(15,23,42,.58);font-size:13px;line-height:1.35;font-weight:850}
+.dc-bg .decisionDivider{width:100%;max-width:560px;height:1px;background:linear-gradient(90deg,rgba(15,23,42,.10),transparent);margin:16px 0 14px}
+.dc-bg .decisionJobTitle{font-size:30px;line-height:1.08}
+@media(max-width:768px){.dc-bg.internal-view-bg{padding-top:18px}.dc-bg.internal-view-bg .internalQuickControls{margin-bottom:8px}.dc-bg .jobIdentityTitle{font-size:33px;line-height:1.08}.dc-bg .decisionJobTitle{font-size:26px}.dc-bg .decisionDivider{margin:14px 0 12px}}
+@media(max-width:480px){.dc-bg.internal-view-bg{padding-top:14px}.dc-bg .jobIdentityTitle{font-size:29px}.dc-bg .jobIdentityMeta{font-size:12.5px}.dc-bg .decisionJobTitle{font-size:24px}}
+
 `;
