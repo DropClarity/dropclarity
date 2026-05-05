@@ -1828,6 +1828,63 @@ function MarginTargetControl({
   );
 }
 
+
+function InternalDashboardTopBar({
+  state,
+  mode,
+  onRefresh,
+  marginTarget,
+  marginTargetDraft,
+  setMarginTargetDraft,
+  onSaveMarginTarget,
+}: {
+  state: DashboardState;
+  mode: DashboardMode;
+  onRefresh: () => void;
+  marginTarget: number;
+  marginTargetDraft: string;
+  setMarginTargetDraft: (v: string) => void;
+  onSaveMarginTarget: () => void;
+}) {
+  const s = state?.summary || null;
+  const profit = parseNumberLoose(s?.net_profit);
+  const margin = parseNumberLoose(s?.margin_pct);
+  const losing = parseNumberLoose(s?.losing_jobs_count);
+  const profitHealth = !s ? "warn" : profit < 0 || losing > 0 ? "bad" : margin < 20 ? "warn" : "ok";
+  const healthLabel = profitHealth === "bad" ? "⚠ Profit risk" : profitHealth === "warn" ? "Needs optimization" : "Healthy";
+
+  return (
+    <div className="internalUtilityTopbar" aria-label="Dashboard controls">
+      <div className="internalUtilityLeft">
+        <div className="pageKicker compactKicker">Profitability Dashboard</div>
+        <div className="internalUtilityText">Focused dashboard view</div>
+      </div>
+
+      <div className="internalUtilityRight">
+        <div className="statusRow">
+          <StatusPill mode={mode} />
+          {s ? <div className={`pill health ${profitHealth} ${profitHealth === "bad" ? "riskPill" : ""}`}>{healthLabel}</div> : null}
+
+          <button className="btn" type="button" onClick={onRefresh}>
+            Refresh
+          </button>
+
+          <a className="btn uploadPulseBtn" href="/app">
+            Go to Upload
+          </a>
+        </div>
+
+        <MarginTargetControl
+          marginTarget={marginTarget}
+          marginTargetDraft={marginTargetDraft}
+          setMarginTargetDraft={setMarginTargetDraft}
+          onSaveMarginTarget={onSaveMarginTarget}
+        />
+      </div>
+    </div>
+  );
+}
+
 function TopBar({
   state,
   mode,
@@ -4165,20 +4222,29 @@ function ReportsManagerView({
 
   return (
     <div className="reportsManagerPage">
-      <div className="panel reportsManagerHero">
-        <div className="crumbs">
-          <div className="crumb">View: <strong>Manage Reports</strong></div>
-          <div className="crumb"><strong>{activeCount}</strong> active</div>
-          <div className="crumb"><strong>{hiddenCount}</strong> hidden</div>
-          <button className="crumbBtn dashboardBackBtn" type="button" onClick={onBack}>← Back to dashboard</button>
+      <div className="panel reportsManagerHero cleanModeShell">
+        <div className="modeContextHeader reportsModeHeader">
+          <div>
+            <div className="modeEyebrow">Profitability Dashboard</div>
+            <div className="modeTitle">Manage Reports</div>
+            <div className="modeSub">
+              Clean up mistaken uploads without losing control. Hide reports to remove them from totals, charts, job logs, Cost Mix, credits, and Scale metrics — then restore them anytime.
+            </div>
+          </div>
+
+          <div className="modeHeaderActions">
+            <div className="modeCount"><strong>{activeCount}</strong><span>active</span></div>
+            <div className="modeCount"><strong>{hiddenCount}</strong><span>hidden</span></div>
+            <button className="crumbBtn dashboardBackBtn" type="button" onClick={onBack}>← Back to dashboard</button>
+          </div>
         </div>
 
-        <div className="reportsManagerBody">
+        <div className="reportsManagerBody cleanReportsSummaryBody">
           <div>
             <div className="sectionEyebrow">Report Management</div>
-            <div className="reportsManagerTitle">Clean up mistaken uploads without losing control.</div>
+            <div className="reportsManagerTitle">Keep dashboard totals clean.</div>
             <div className="reportsManagerSub">
-              Hide a report to remove it from dashboard totals, charts, job logs, cost mix, credits, and Scale metrics. Restore hidden reports anytime.
+              Active reports are included in profitability metrics. Hidden reports stay available here but are removed from the working dashboard view.
             </div>
           </div>
 
@@ -4627,16 +4693,28 @@ useEffect(() => {
           </div>
         ) : (
           <>
-            <TopBar
-  state={visibleState}
-  mode={mode}
-  onRefresh={() => loadAndRender()}
-  plan={plan}
-  marginTarget={marginTarget}
-  marginTargetDraft={marginTargetDraft}
-  setMarginTargetDraft={setMarginTargetDraft}
-  onSaveMarginTarget={saveMarginTarget}
-/>
+            {view === "dashboard" ? (
+              <TopBar
+                state={visibleState}
+                mode={mode}
+                onRefresh={() => loadAndRender()}
+                plan={plan}
+                marginTarget={marginTarget}
+                marginTargetDraft={marginTargetDraft}
+                setMarginTargetDraft={setMarginTargetDraft}
+                onSaveMarginTarget={saveMarginTarget}
+              />
+            ) : (
+              <InternalDashboardTopBar
+                state={visibleState}
+                mode={mode}
+                onRefresh={() => loadAndRender()}
+                marginTarget={marginTarget}
+                marginTargetDraft={marginTargetDraft}
+                setMarginTargetDraft={setMarginTargetDraft}
+                onSaveMarginTarget={saveMarginTarget}
+              />
+            )}
             <RangeControls
   range={range}
   setRange={changeRange}
@@ -6005,6 +6083,17 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:760px){.dc-bg .profitSnapshot{padding:14px;border-radius:22px}.dc-bg .profitSnapshotTitle{font-size:28px;line-height:1.08}.dc-bg .profitSnapshotSub{font-size:14px}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr 1fr}.dc-bg .profitSnapshotMetric strong{font-size:21px}.dc-bg .profitSnapshotActions .btn{width:100%;justify-content:center}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr}.dc-bg .profitSnapshotOpportunity em{justify-self:start}}
 @media(max-width:520px){.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr}.dc-bg .profitSnapshotTitle{font-size:25px}.dc-bg .profitSnapshotMetric{padding:12px}.dc-bg .profitSnapshotMain{padding:2px}.dc-bg .kpis{grid-template-columns:1fr!important}}
 
+
+
+/* Compact utility bar for internal dashboard pages */
+.dc-bg .internalUtilityTopbar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.dc-bg .internalUtilityLeft{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:44px}
+.dc-bg .compactKicker{margin-bottom:0!important}
+.dc-bg .internalUtilityText{font-size:13px;font-weight:850;color:rgba(15,23,42,.55)}
+.dc-bg .internalUtilityRight{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.dc-bg .cleanReportsSummaryBody{padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.42fr);gap:16px;align-items:stretch;background:rgba(255,255,255,.68)}
+@media(max-width:980px){.dc-bg .internalUtilityTopbar{align-items:stretch}.dc-bg .internalUtilityRight{align-items:flex-start}.dc-bg .cleanReportsSummaryBody{grid-template-columns:1fr}}
+@media(max-width:640px){.dc-bg .internalUtilityTopbar{margin-bottom:12px}.dc-bg .internalUtilityRight,.dc-bg .internalUtilityRight .statusRow,.dc-bg .internalUtilityRight .btn,.dc-bg .internalUtilityRight .marginTargetTopWrap{width:100%;justify-content:center}.dc-bg .internalUtilityLeft{width:100%;justify-content:center}.dc-bg .internalUtilityText{display:none}.dc-bg .cleanReportsSummaryBody{padding:14px}}
 
 /* Clean mode headers for internal dashboard views */
 .dc-bg .cleanModeShell{margin-top:14px}
