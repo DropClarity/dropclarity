@@ -61,7 +61,7 @@ const pricing: PricingPlan[] = [
     featured: false,
     features: [
       "Everything in Core",
-      "Identify where you're losing money",
+      "Instantly see where you're losing money",
       "Recoverable profit opportunity tracking",
       "Automated high-risk alerts (email + dashboard)",
       "Priority actions (what to fix next)",
