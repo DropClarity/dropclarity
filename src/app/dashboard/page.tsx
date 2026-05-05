@@ -5805,4 +5805,33 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:900px){.dc-bg .topbar{align-items:flex-start!important}.dc-bg .topbarRight{width:100%;align-items:flex-start}.dc-bg .topbarRight .statusRow{justify-content:flex-start}.dc-bg .topbarRight .marginTargetTopWrap{justify-content:flex-start!important}}
 @media(max-width:560px){.dc-bg .topbarRight .statusRow{width:100%;display:grid!important;grid-template-columns:1fr 1fr;gap:8px}.dc-bg .topbarRight .statusRow .pill,.dc-bg .topbarRight .statusRow .btn,.dc-bg .topbarRight .statusRow .uploadPulseBtn{width:100%;justify-content:center}.dc-bg .topbarRight .marginTargetTopWrap{width:100%;border-radius:18px!important;align-items:flex-start!important;flex-direction:column!important}.dc-bg .topbarRight .marginTargetTopText{width:100%;justify-content:space-between}.dc-bg .topbarRight .marginTargetTopControls{width:100%;display:grid!important;grid-template-columns:minmax(0,1fr) auto}.dc-bg .topbarRight .compactTargetInputGroup{justify-content:center}.dc-bg .topbarRight .compactTargetSave{justify-content:center}.dc-bg .topbarRight .compactTargetInput{width:100%!important;max-width:80px}}
 
+
+/* Dashboard title descender fix: gives the gradient headline enough paint room without changing the desktop/tablet/mobile font sizing. */
+.dc-bg .dashboardIntro{
+  overflow:visible!important;
+  padding-bottom:2px!important;
+}
+.dc-bg .pageTitle{
+  display:block!important;
+  overflow:visible!important;
+  contain:none!important;
+  line-height:1.18!important;
+  padding-bottom:6px!important;
+  margin-bottom:-2px!important;
+}
+.dc-bg .pageTitle .gradText{
+  display:inline-block!important;
+  overflow:visible!important;
+  line-height:1.18!important;
+  padding:0 .035em .10em 0!important;
+  margin:0!important;
+  vertical-align:baseline!important;
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+@media(max-width:768px){
+  .dc-bg .pageTitle{line-height:1.18!important;padding-bottom:6px!important;margin-bottom:-2px!important}
+  .dc-bg .pageTitle .gradText{line-height:1.18!important;padding-bottom:.10em!important}
+}
+
 `;
