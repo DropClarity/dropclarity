@@ -1546,6 +1546,40 @@ function strongestJobIssue(job: JobRow, allJobs: JobRow[], marginTarget: number)
   return "This job is being monitored against your target margin.";
 }
 
+function buildDashboardHistoryUrl(nextView: ViewMode, nextJobKey = ""): string {
+  if (typeof window === "undefined") return "/dashboard";
+
+  const url = new URL(window.location.href);
+
+  if (nextView === "dashboard") {
+    url.searchParams.delete("dcView");
+    url.searchParams.delete("dcJobKey");
+  } else {
+    url.searchParams.set("dcView", nextView);
+
+    if (nextJobKey) {
+      url.searchParams.set("dcJobKey", nextJobKey);
+    } else {
+      url.searchParams.delete("dcJobKey");
+    }
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function readDashboardHistoryState(): { view: ViewMode; jobKey: string } {
+  if (typeof window === "undefined") return { view: "dashboard", jobKey: "" };
+
+  const url = new URL(window.location.href);
+  const viewParam = url.searchParams.get("dcView") as ViewMode | null;
+  const validViews = new Set<ViewMode>(["dashboard", "job", "alljobs", "highrisk", "reports"]);
+  const view = viewParam && validViews.has(viewParam) ? viewParam : "dashboard";
+  const jobKey = url.searchParams.get("dcJobKey") || "";
+
+  return { view, jobKey };
+}
+
+
 function StatusPill({ mode }: { mode: DashboardMode }) {
   const label = mode === "loading" ? "Loading" : mode === "error" ? "Needs attention" : "Ready";
   const dot = mode === "loading" ? "rgba(34,211,238,.95)" : mode === "error" ? "rgba(239,68,68,.95)" : "rgba(52,211,153,.95)";
@@ -4073,6 +4107,84 @@ export default function DashboardPage() {
   const [marginTargetDraft, setMarginTargetDraft] = useState<string>("30");
   const [emailAlertsEnabled, setEmailAlertsEnabledState] = useState<boolean>(true);
   const [alertEmails, setAlertEmailsState] = useState<string[]>([]);
+  const suppressNextHistorySyncRef = useRef(false);
+  const lastDashboardHistoryKeyRef = useRef("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const initial = readDashboardHistoryState();
+    const currentHistoryState = window.history.state || {};
+
+    window.history.replaceState(
+      {
+        ...currentHistoryState,
+        dcDashboard: true,
+        dcView: initial.view,
+        dcJobKey: initial.jobKey,
+      },
+      "",
+      buildDashboardHistoryUrl(initial.view, initial.jobKey)
+    );
+
+    suppressNextHistorySyncRef.current = true;
+    setView(initial.view);
+    setJobKey(initial.jobKey);
+    lastDashboardHistoryKeyRef.current = `${initial.view}|${initial.jobKey}`;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      const historyState = event.state || {};
+
+      if (!historyState.dcDashboard) return;
+
+      const nextView = (historyState.dcView || "dashboard") as ViewMode;
+      const nextJobKey = String(historyState.dcJobKey || "");
+
+      suppressNextHistorySyncRef.current = true;
+      lastDashboardHistoryKeyRef.current = `${nextView}|${nextJobKey}`;
+      setView(nextView);
+      setJobKey(nextJobKey);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const nextKey = `${view}|${jobKey}`;
+
+    if (suppressNextHistorySyncRef.current) {
+      suppressNextHistorySyncRef.current = false;
+      lastDashboardHistoryKeyRef.current = nextKey;
+      return;
+    }
+
+    if (lastDashboardHistoryKeyRef.current === nextKey) return;
+
+    const nextHistoryState = {
+      ...(window.history.state || {}),
+      dcDashboard: true,
+      dcView: view,
+      dcJobKey: jobKey || "",
+    };
+
+    const nextUrl = buildDashboardHistoryUrl(view, jobKey);
+
+    if (view === "dashboard") {
+      window.history.replaceState(nextHistoryState, "", nextUrl);
+    } else {
+      window.history.pushState(nextHistoryState, "", nextUrl);
+    }
+
+    lastDashboardHistoryKeyRef.current = nextKey;
+  }, [view, jobKey]);
 
   const loadAndRender = useCallback(async () => {
     if (!isLoaded) return;
