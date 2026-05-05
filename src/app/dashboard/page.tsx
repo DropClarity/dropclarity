@@ -4048,11 +4048,36 @@ useEffect(() => {
   loadAndRender();
 }, [USER_ID, isLoaded, loadAndRender, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
 
-  const saveMarginTarget = () => {
+  const saveMarginTarget = async () => {
     const next = Math.max(1, Math.min(95, parseNumberLoose(marginTargetDraft)));
+
     setMarginTarget(next);
     setMarginTargetDraft(String(next));
     writeMarginTarget(USER_ID, next);
+
+    try {
+      const token = await getToken();
+      const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
+      const normalizedEmails = normalizeEmailList(alertEmails, fallbackEmail);
+
+      const res = await fetch(`${API_BASE}/alert-settings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          marginTargetPct: next,
+          emailAlertsEnabled,
+          scaleAlertEmails: normalizedEmails,
+        }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || `Failed to save alert settings (${res.status})`);
+    } catch (err) {
+      console.error("Failed to save margin target to alert settings", err);
+    }
   };
 
   const setEmailAlertsEnabled = (enabled: boolean) => {
