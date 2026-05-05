@@ -1667,13 +1667,10 @@ function MarginTargetControl({
   onSaveMarginTarget: () => void;
 }) {
   return (
-    <div className="marginTargetTopWrap">
+    <div className="marginTargetTopWrap" aria-label="Margin target control">
       <div className="marginTargetTopText">
-        <div className="marginTargetTopKicker">Margin Target</div>
-        <div className="marginTargetTopTitle">Compare jobs against your target margin.</div>
-        <div className="marginTargetTopSub">
-          Used across job detail comparisons, high-risk flags, and Scale recoverable profit calculations.
-        </div>
+        <div className="marginTargetTopKicker">Target Margin</div>
+        <div className="marginTargetCurrent">Current: {fmtPct(marginTarget)}</div>
       </div>
 
       <div className="marginTargetTopControls">
@@ -1688,9 +1685,8 @@ function MarginTargetControl({
           <span>%</span>
         </div>
         <button className="btn compactTargetSave" type="button" onClick={onSaveMarginTarget}>
-          Save Target
+          Save
         </button>
-        <div className="marginTargetCurrent">Current target: {fmtPct(marginTarget)}</div>
       </div>
     </div>
   );
@@ -1701,11 +1697,19 @@ function TopBar({
   mode,
   onRefresh,
   plan,
+  marginTarget,
+  marginTargetDraft,
+  setMarginTargetDraft,
+  onSaveMarginTarget,
 }: {
   state: DashboardState;
   mode: DashboardMode;
   onRefresh: () => void;
   plan?: string;
+  marginTarget: number;
+  marginTargetDraft: string;
+  setMarginTargetDraft: (v: string) => void;
+  onSaveMarginTarget: () => void;
 }) {
   const s = state?.summary || null;
   const profit = parseNumberLoose(s?.net_profit);
@@ -1713,6 +1717,7 @@ function TopBar({
   const losing = parseNumberLoose(s?.losing_jobs_count);
   const profitHealth = !s ? "warn" : profit < 0 || losing > 0 ? "bad" : margin < 20 ? "warn" : "ok";
   const healthLabel = profitHealth === "bad" ? "⚠ Profit risk" : profitHealth === "warn" ? "Needs optimization" : "Healthy";
+  void plan;
 
   return (
     <div className="topbar">
@@ -1734,18 +1739,26 @@ function TopBar({
 </div>
       </div>
 
-      <div className="statusRow">
-        <StatusPill mode={mode} />
-        {s ? <div className={`pill health ${profitHealth} ${profitHealth === "bad" ? "riskPill" : ""}`}>{healthLabel}</div> : null}
+      <div className="topbarRight">
+        <div className="statusRow">
+          <StatusPill mode={mode} />
+          {s ? <div className={`pill health ${profitHealth} ${profitHealth === "bad" ? "riskPill" : ""}`}>{healthLabel}</div> : null}
 
+          <button className="btn" type="button" onClick={onRefresh}>
+            Refresh
+          </button>
 
-<button className="btn" type="button" onClick={onRefresh}>
-  Refresh
-</button>
+          <a className="btn uploadPulseBtn" href="/app">
+            Go to Upload
+          </a>
+        </div>
 
-<a className="btn uploadPulseBtn" href="/app">
-  Go to Upload
-</a>
+        <MarginTargetControl
+          marginTarget={marginTarget}
+          marginTargetDraft={marginTargetDraft}
+          setMarginTargetDraft={setMarginTargetDraft}
+          onSaveMarginTarget={onSaveMarginTarget}
+        />
       </div>
     </div>
   );
@@ -4203,6 +4216,10 @@ useEffect(() => {
   mode={mode}
   onRefresh={loadAndRender}
   plan={plan}
+  marginTarget={marginTarget}
+  marginTargetDraft={marginTargetDraft}
+  setMarginTargetDraft={setMarginTargetDraft}
+  onSaveMarginTarget={saveMarginTarget}
 />
             <RangeControls
   range={range}
@@ -4217,12 +4234,6 @@ useEffect(() => {
   onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
 />
 
-            <MarginTargetControl
-              marginTarget={marginTarget}
-              marginTargetDraft={marginTargetDraft}
-              setMarginTargetDraft={setMarginTargetDraft}
-              onSaveMarginTarget={saveMarginTarget}
-            />
 
             {view === "job" && jobKey ? (
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
@@ -5511,5 +5522,28 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:1350px){.dc-bg .scaleExecutiveGrid{grid-template-columns:1fr}.dc-bg .scaleRecoveryCommand{min-height:0}.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{grid-template-columns:1fr 1fr}.dc-bg .premiumRulesCard{grid-column:1/-1}}
 @media(max-width:900px){.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{grid-template-columns:1fr}.dc-bg .scaleRecoveryStats,.dc-bg .costRadarRows{grid-template-columns:1fr 1fr}.dc-bg .scaleQueueItem{grid-template-columns:38px minmax(0,1fr)}}
 @media(max-width:640px){.dc-bg .scaleExecutiveGrid,.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{padding-left:14px;padding-right:14px;gap:12px}.dc-bg .scaleRecoveryValue{font-size:28px}.dc-bg .scaleQueueItem{grid-template-columns:1fr}.dc-bg .scaleQueueRank{width:fit-content;padding:0 12px}.dc-bg .scaleQueueImpact{justify-self:start}.dc-bg .scaleRecoveryStats,.dc-bg .costRadarRows{grid-template-columns:1fr}.dc-bg .scaleCardHeadSplit,.dc-bg .premiumScaleHead{flex-direction:column}.dc-bg .scaleHeadRight{justify-content:flex-start}}
+
+
+/* Compact top-right margin target + universal button hover polish */
+.dc-bg .topbarRight{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:0}
+.dc-bg .topbarRight .statusRow{justify-content:flex-end}
+.dc-bg .topbarRight .marginTargetTopWrap{margin:0!important;width:auto;max-width:100%;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:10px!important;border-radius:999px!important;border:1px solid rgba(34,211,238,.16)!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(240,253,250,.76))!important;box-shadow:0 10px 28px rgba(2,6,23,.055)!important;padding:8px 10px!important}
+.dc-bg .topbarRight .marginTargetTopText{display:flex;align-items:center;gap:8px;min-width:0}
+.dc-bg .topbarRight .marginTargetTopKicker{font-size:11px!important;letter-spacing:.07em!important;white-space:nowrap;margin:0!important;color:rgba(8,145,178,.84)!important}
+.dc-bg .topbarRight .marginTargetTopTitle,.dc-bg .topbarRight .marginTargetTopSub{display:none!important}
+.dc-bg .topbarRight .marginTargetCurrent{font-size:11.5px!important;font-weight:950!important;color:rgba(15,23,42,.56)!important;white-space:nowrap;width:auto!important}
+.dc-bg .topbarRight .marginTargetTopControls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;flex-wrap:nowrap!important;flex:0 0 auto!important}
+.dc-bg .topbarRight .compactTargetInputGroup{padding:6px 9px!important;border-radius:999px!important;box-shadow:0 8px 18px rgba(2,6,23,.035)!important}
+.dc-bg .topbarRight .compactTargetInput{width:44px!important;font-size:14px!important}
+.dc-bg .topbarRight .compactTargetSave{padding:8px 11px!important;border-radius:999px!important;font-size:12px!important;background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(124,58,237,.10))!important;border-color:rgba(34,211,238,.24)!important}
+.dc-bg .btn,.dc-bg .miniBtn,.dc-bg .btn-mini,.dc-bg .rangeBtn,.dc-bg .crumbBtn,.dc-bg .deleteReportBtn,.dc-bg .reportMoreLink,.dc-bg .reportsManageLink,.dc-bg .emailPauseLink,.dc-bg .scaleQueueItem,.dc-bg .scaleTopOpportunity,.dc-bg .wowActionItem,.dc-bg .wowPrimaryJob,.dc-bg .riskQueueCard button,.dc-bg .lockedScaleActions a,.dc-bg .lockedScaleActions button{transition:transform .12s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease,color .14s ease,opacity .14s ease!important}
+.dc-bg .miniBtn:hover,.dc-bg .btn-mini:hover,.dc-bg .rangeBtn:hover,.dc-bg .crumbBtn:hover,.dc-bg .deleteReportBtn:hover,.dc-bg .reportMoreLink:hover,.dc-bg .reportsManageLink:hover,.dc-bg .emailPauseLink:hover{transform:translateY(-1px)!important;box-shadow:0 12px 28px rgba(2,6,23,.10)!important;border-color:rgba(34,211,238,.24)!important;background:rgba(255,255,255,.96)!important}
+.dc-bg .rangeBtn:hover{background:rgba(248,250,252,.98)!important;color:rgba(15,23,42,.94)!important}
+.dc-bg .rangeBtn.active:hover{background:#0f172a!important;color:#fff!important;box-shadow:0 16px 36px rgba(15,23,42,.18)!important}
+.dc-bg .scaleQueueItem:hover,.dc-bg .scaleTopOpportunity:hover,.dc-bg .wowActionItem:hover,.dc-bg .wowPrimaryJob:hover{transform:translateY(-1px)!important;box-shadow:0 16px 36px rgba(2,6,23,.10)!important;border-color:rgba(34,211,238,.22)!important}
+.dc-bg button:disabled,.dc-bg .btn:disabled{cursor:not-allowed!important;opacity:.55!important}
+.dc-bg button:disabled:hover,.dc-bg .btn:disabled:hover{transform:none!important;box-shadow:none!important}
+@media(max-width:900px){.dc-bg .topbar{align-items:flex-start!important}.dc-bg .topbarRight{width:100%;align-items:flex-start}.dc-bg .topbarRight .statusRow{justify-content:flex-start}.dc-bg .topbarRight .marginTargetTopWrap{justify-content:flex-start!important}}
+@media(max-width:560px){.dc-bg .topbarRight .statusRow{width:100%;display:grid!important;grid-template-columns:1fr 1fr;gap:8px}.dc-bg .topbarRight .statusRow .pill,.dc-bg .topbarRight .statusRow .btn,.dc-bg .topbarRight .statusRow .uploadPulseBtn{width:100%;justify-content:center}.dc-bg .topbarRight .marginTargetTopWrap{width:100%;border-radius:18px!important;align-items:flex-start!important;flex-direction:column!important}.dc-bg .topbarRight .marginTargetTopText{width:100%;justify-content:space-between}.dc-bg .topbarRight .marginTargetTopControls{width:100%;display:grid!important;grid-template-columns:minmax(0,1fr) auto}.dc-bg .topbarRight .compactTargetInputGroup{justify-content:center}.dc-bg .topbarRight .compactTargetSave{justify-content:center}.dc-bg .topbarRight .compactTargetInput{width:100%!important;max-width:80px}}
 
 `;
