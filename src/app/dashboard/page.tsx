@@ -44,6 +44,8 @@ type JobRow = {
   cost_credits?: number | string;
   credits?: number | string | { total?: number | string; cost?: number | string };
   confidence?: number | string;
+  notes?: string;
+  job_notes?: string;
   cost_breakdown?: CostBreakdown;
 };
 
@@ -578,6 +580,39 @@ async function apiGetScaleSummary(token: string | null): Promise<ScaleSummary> {
   return (data as ScaleSummary) || {};
 }
 
+async function apiSaveJobNotes(
+  token: string | null,
+  payload: {
+    jobDbId?: string | null;
+    reportId?: string | null;
+    jobId?: string | null;
+    jobName?: string | null;
+    notes: string;
+  }
+): Promise<{ ok?: boolean; notes?: string }> {
+  const res = await fetch(`${API_BASE}/job-notes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await res.text();
+  let data: { error?: string; ok?: boolean; notes?: string } | null = null;
+
+  try {
+    data = JSON.parse(text);
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error(data?.error || text || `Job notes save failed (${res.status})`);
+  }
+
+  return data || { ok: true, notes: payload.notes };
+}
+
 function getAllJobs(state: DashboardState): JobRow[] {
   if (Array.isArray(state.all_jobs)) return state.all_jobs;
   if (Array.isArray(state.lowest_profit_jobs)) return state.lowest_profit_jobs;
@@ -878,7 +913,7 @@ function seedJobFromBase(base: JobRow): EditableJob {
     material_cost: materials,
     subs_cost: subs,
     other_cost: known > 0 ? other : costs,
-    notes: "",
+    notes: String(base?.job_notes ?? base?.notes ?? ""),
     custom_categories: [],
     _editing: null,
   };
@@ -3029,6 +3064,7 @@ function JobEditor({
   access,
   onLocked,
   marginTarget = 30,
+  getToken,
 }: {
   jobKey: string;
   base: JobRow;
@@ -3041,6 +3077,7 @@ function JobEditor({
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget?: number;
+  getToken?: () => Promise<string | null>;
 }) {
   const [job, setJob] = useState<EditableJob>(() => mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
   const history = extractJobHistory(state, base || {});
@@ -3134,12 +3171,27 @@ function JobEditor({
     onLocked(feature, requiredPlan);
   };
 
-  const save = () => {
+  const save = async () => {
     if (!access.canSaveJobEdits) {
       handleLocked("Saving job edits", "Core");
       return;
     }
+
     saveJobEdit(jobKey, job, userId);
+
+    try {
+      const token = getToken ? await getToken() : null;
+      await apiSaveJobNotes(token, {
+        jobDbId: base?.id || null,
+        reportId: base?.report_id || null,
+        jobId: job.job_id || base?.job_id || null,
+        jobName: job.job_name || base?.job_name || null,
+        notes: job.notes || "",
+      });
+    } catch (err) {
+      console.error("Failed to save job notes", err);
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 900);
   };
@@ -3406,6 +3458,7 @@ function JobView({
   access,
   onLocked,
   marginTarget = 30,
+  getToken,
 }: {
   state: DashboardState;
   jobKey: string;
@@ -3416,6 +3469,7 @@ function JobView({
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget?: number;
+  getToken?: () => Promise<string | null>;
 }) {
   const base = findJobByKey(state, jobKey);
 
@@ -3441,6 +3495,7 @@ function JobView({
       access={access}
       onLocked={onLocked}
       marginTarget={marginTarget}
+      getToken={getToken}
     />
   );
 }
@@ -3453,6 +3508,7 @@ function AllJobsView({
   userId,
   access,
   onLocked,
+  getToken,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
@@ -3461,6 +3517,7 @@ function AllJobsView({
   userId: string;
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
+  getToken?: () => Promise<string | null>;
 }) {
   const jobs = getAllJobs(state);
   const [search, setSearch] = useState("");
@@ -3606,6 +3663,7 @@ function AllJobsView({
                   onBack={() => {}}
                   onAllJobs={() => {}}
                   refreshLocal={refreshLocal}
+                  getToken={getToken}
                 />
               </div>
             ))}
@@ -4236,9 +4294,9 @@ useEffect(() => {
 
 
             {view === "job" && jobKey ? (
-              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
+              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} />
             ) : view === "alljobs" ? (
-              <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} />
+              <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} getToken={getToken} />
             ) : view === "highrisk" ? (
               <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
             ) : view === "reports" ? (
