@@ -1885,6 +1885,43 @@ function InternalDashboardTopBar({
   );
 }
 
+function InternalPageQuickControls({
+  onRefresh,
+  marginTarget,
+  marginTargetDraft,
+  setMarginTargetDraft,
+  onSaveMarginTarget,
+}: {
+  onRefresh: () => void;
+  marginTarget: number;
+  marginTargetDraft: string;
+  setMarginTargetDraft: (v: string) => void;
+  onSaveMarginTarget: () => void;
+}) {
+  return (
+    <div className="internalQuickControls" aria-label="Internal dashboard controls">
+      <div className="internalQuickSpacer" />
+
+      <div className="internalQuickActions">
+        <button className="btn" type="button" onClick={onRefresh}>
+          Refresh
+        </button>
+
+        <a className="btn uploadPulseBtn" href="/app">
+          Go to Upload
+        </a>
+
+        <MarginTargetControl
+          marginTarget={marginTarget}
+          marginTargetDraft={marginTargetDraft}
+          setMarginTargetDraft={setMarginTargetDraft}
+          onSaveMarginTarget={onSaveMarginTarget}
+        />
+      </div>
+    </div>
+  );
+}
+
 function TopBar({
   state,
   mode,
@@ -4694,20 +4731,32 @@ useEffect(() => {
         ) : (
           <>
             {view === "dashboard" ? (
-              <TopBar
-                state={visibleState}
-                mode={mode}
-                onRefresh={() => loadAndRender()}
-                plan={plan}
-                marginTarget={marginTarget}
-                marginTargetDraft={marginTargetDraft}
-                setMarginTargetDraft={setMarginTargetDraft}
-                onSaveMarginTarget={saveMarginTarget}
-              />
+              <>
+                <TopBar
+                  state={visibleState}
+                  mode={mode}
+                  onRefresh={() => loadAndRender()}
+                  plan={plan}
+                  marginTarget={marginTarget}
+                  marginTargetDraft={marginTargetDraft}
+                  setMarginTargetDraft={setMarginTargetDraft}
+                  onSaveMarginTarget={saveMarginTarget}
+                />
+                <RangeControls
+                  range={range}
+                  setRange={changeRange}
+                  customFrom={customFrom}
+                  setCustomFrom={setCustomFrom}
+                  customTo={customTo}
+                  setCustomTo={setCustomTo}
+                  onApply={applyDateRange}
+                  onExportAllJobs={() => exportAllJobsCsv(visibleState)}
+                  canExport={access.canExport}
+                  onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
+                />
+              </>
             ) : (
-              <InternalDashboardTopBar
-                state={visibleState}
-                mode={mode}
+              <InternalPageQuickControls
                 onRefresh={() => loadAndRender()}
                 marginTarget={marginTarget}
                 marginTargetDraft={marginTargetDraft}
@@ -4715,19 +4764,6 @@ useEffect(() => {
                 onSaveMarginTarget={saveMarginTarget}
               />
             )}
-            <RangeControls
-  range={range}
-  setRange={changeRange}
-  customFrom={customFrom}
-  setCustomFrom={setCustomFrom}
-  customTo={customTo}
-  setCustomTo={setCustomTo}
-  onApply={applyDateRange}
-  onExportAllJobs={() => exportAllJobsCsv(visibleState)}
-  canExport={access.canExport}
-  onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
-/>
-
 
             {view === "job" && jobKey ? (
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} />
@@ -6107,4 +6143,20 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .modeCount span{font-size:12px}.dc-bg .cleanModeToolbar{align-items:center;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}.dc-bg .decisionJobHero{border-color:rgba(239,68,68,.11);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,247,237,.70) 48%,rgba(245,243,255,.58));}.dc-bg .decisionJobHeroBody{grid-template-columns:minmax(0,1fr) minmax(320px,.45fr);align-items:stretch}.dc-bg .decisionJobMain{display:flex;flex-direction:column;justify-content:center;min-height:190px}.dc-bg .decisionJobTitle{font-size:34px;line-height:1.05}.dc-bg .decisionJobSub{max-width:860px}.dc-bg .decisionSummaryCard{background:rgba(255,255,255,.82);box-shadow:0 14px 44px rgba(2,6,23,.06)}.dc-bg .warnText{color:rgba(194,65,12,.96)!important}.dc-bg .jobAnalysisHeader{background:linear-gradient(135deg,rgba(240,253,250,.86),rgba(245,243,255,.64));border-color:rgba(34,211,238,.18)}
 @media(max-width:980px){.dc-bg .modeContextHeader{flex-direction:column}.dc-bg .modeHeaderActions{justify-content:flex-start}.dc-bg .decisionJobHeroBody{grid-template-columns:1fr}.dc-bg .decisionJobMain{min-height:0}.dc-bg .cleanModeToolbar{grid-template-columns:1fr}.dc-bg .cleanModeToolbar .btn{width:fit-content}}
 @media(max-width:640px){.dc-bg .modeContextHeader{padding:14px}.dc-bg .modeTitle{font-size:25px}.dc-bg .modeSub{font-size:13.5px}.dc-bg .modeHeaderActions,.dc-bg .modeHeaderActions .crumbBtn{width:100%}.dc-bg .modeCount{width:100%;justify-content:center}.dc-bg .decisionJobTitle{font-size:28px}.dc-bg .cleanModeToolbar .btn{width:100%;justify-content:center}}
+
+
+/* Internal page top cleanup: internal views start with their own page header, while the
+   small premium controls stay available without repeating the main dashboard hero/date bar. */
+.dc-bg .internalQuickControls{display:flex;justify-content:flex-end;align-items:flex-start;gap:14px;margin:0 0 14px;min-height:44px}
+.dc-bg .internalQuickSpacer{flex:1 1 auto}
+.dc-bg .internalQuickActions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.dc-bg .internalQuickActions .marginTargetTopWrap{margin:0!important;width:auto;max-width:100%;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:10px!important;border-radius:999px!important;border:1px solid rgba(34,211,238,.16)!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(240,253,250,.76))!important;box-shadow:0 10px 28px rgba(2,6,23,.055)!important;padding:8px 10px!important}
+.dc-bg .internalQuickActions .marginTargetTopKicker{font-size:10px!important;letter-spacing:.08em!important}
+.dc-bg .internalQuickActions .marginTargetCurrent{font-size:10.5px!important}
+.dc-bg .internalQuickActions .compactTargetInputGroup{height:38px!important;min-width:88px!important;padding:0 9px!important}
+.dc-bg .internalQuickActions .compactTargetInput{width:42px!important;font-size:13px!important}
+.dc-bg .internalQuickActions .compactTargetSave{height:38px!important;padding:0 12px!important;border-radius:13px!important}
+.dc-bg .reportsManagerPage,.dc-bg .highRiskPage,.dc-bg .allJobsDetailShell,.dc-bg .jobHero{margin-top:0!important}
+@media(max-width:900px){.dc-bg .internalQuickControls{justify-content:flex-start}.dc-bg .internalQuickActions{justify-content:flex-start;width:100%}.dc-bg .internalQuickActions .marginTargetTopWrap{justify-content:flex-start!important}}
+@media(max-width:560px){.dc-bg .internalQuickControls{margin-bottom:12px}.dc-bg .internalQuickActions{display:grid!important;grid-template-columns:1fr 1fr;width:100%;gap:8px}.dc-bg .internalQuickActions>.btn,.dc-bg .internalQuickActions>a.btn{width:100%;justify-content:center}.dc-bg .internalQuickActions .marginTargetTopWrap{grid-column:1 / -1;width:100%;border-radius:18px!important;align-items:flex-start!important;flex-direction:column!important}.dc-bg .internalQuickActions .marginTargetTopText{width:100%;justify-content:space-between}.dc-bg .internalQuickActions .marginTargetTopControls{width:100%;display:grid!important;grid-template-columns:minmax(0,1fr) auto}.dc-bg .internalQuickActions .compactTargetInputGroup{justify-content:center}.dc-bg .internalQuickActions .compactTargetSave{justify-content:center}.dc-bg .internalQuickActions .compactTargetInput{width:100%!important;max-width:80px}}
 `;
