@@ -78,11 +78,11 @@ export default function Home() {
       features: [
         "Everything in Core",
         "Identify where you're losing money",
-        "Recoverable profit identified automatically",
-        "Real-time high-risk job alerts",
+        "Recoverable profit opportunity tracking",
+        "Automated high-risk alerts (email + dashboard)",
         "Priority actions (what to fix next)",
-        "Advanced job benchmarking",
-        "Team visibility",
+        "Smart job benchmarking",
+        "Actionable profit recommendations per job",
       ],
     },
   ];
