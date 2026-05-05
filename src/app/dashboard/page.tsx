@@ -237,33 +237,6 @@ type ScaleSummary = {
 };
 
 
-
-
-type AlertSettings = {
-  ok?: boolean;
-  plan?: string;
-  emailAlertsEnabled?: boolean;
-  scaleAlertEmails?: string[];
-  alertEmails?: string[];
-  primaryEmail?: string | null;
-  providerConfigured?: boolean;
-};
-
-function parseEmailListInput(value: string): string[] {
-  return String(value || "")
-    .split(/[\n,;]+/)
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean)
-    .filter((email, idx, arr) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && arr.indexOf(email) === idx)
-    .slice(0, 10);
-}
-
-function formatEmailList(emails: string[], fallback?: string | null): string {
-  const clean = Array.isArray(emails) ? emails.filter(Boolean) : [];
-  if (clean.length) return clean.join(", ");
-  return fallback || "Account email";
-}
-
 type PlanAccess = {
   normalizedPlan: "free" | "core" | "scale";
   label: string;
@@ -550,77 +523,6 @@ function exportSingleJobCsv(
   downloadCsv(`dropclarity-job-${fileSafeName(String(name))}.csv`, rows);
 }
 
-function exportAllEditedJobsDetailCsv(
-  rows: { job: JobRow; key: string }[],
-  state: DashboardState,
-  userId: string
-) {
-  const range = rangeLabel((state.range as RangeKey) || "all");
-  const csvRows: unknown[][] = [
-    ["DropClarity All Jobs Detail Export"],
-    ["Range", range],
-    ["Generated", new Date().toLocaleString()],
-    [],
-    [
-      "Job ID",
-      "Job Name",
-      "Type",
-      "Address",
-      "Date",
-      "Revenue",
-      "Labor",
-      "Materials",
-      "Subs",
-      "Other Costs",
-      "Credits / Adjustments",
-      "Custom Categories Total",
-      "Known Costs After Credits",
-      "Gross Profit",
-      "Gross Margin %",
-      "Custom Categories",
-    ],
-  ];
-
-  rows.forEach(({ job: base, key }) => {
-    const job = mergeJobWithEdits(seedJobFromBase(base || {}), key, userId);
-    const revenue = parseNumberLoose(job.revenue);
-    const labor = parseNumberLoose(job.labor_cost);
-    const materials = parseNumberLoose(job.material_cost);
-    const subs = parseNumberLoose(job.subs_cost);
-    const other = parseNumberLoose(job.other_cost);
-    const creditsApplied = getJobCreditTotal(base);
-    const customTotal = sumCustomCategories(job.custom_categories || []);
-    const knownCosts = labor + materials + subs + other + customTotal - creditsApplied;
-    const grossProfit = revenue - knownCosts;
-    const marginPct = revenue !== 0 ? (grossProfit / revenue) * 100 : 0;
-    const customText = (job.custom_categories || [])
-      .filter((c) => String(c.name || "").trim() || parseNumberLoose(c.amount) !== 0)
-      .map((c) => `${String(c.name || "Custom Category").trim()}: ${parseNumberLoose(c.amount)}`)
-      .join("; ");
-
-    csvRows.push([
-      job.job_id || base.job_id || "",
-      job.job_name || base.job_name || "",
-      job.job_type || "",
-      job.job_address || "",
-      job.job_date || dateLabel(base.created_at),
-      revenue,
-      labor,
-      materials,
-      subs,
-      other,
-      -creditsApplied,
-      customTotal,
-      knownCosts,
-      grossProfit,
-      marginPct,
-      customText,
-    ]);
-  });
-
-  downloadCsv(`dropclarity-all-jobs-detail-${fileSafeName(range)}.csv`, csvRows);
-}
-
 async function apiGetDashboard(token: string | null, range: RangeKey, customFrom: string, customTo: string): Promise<DashboardState> {
   const params = new URLSearchParams();
   params.set("range", range);
@@ -674,57 +576,6 @@ async function apiGetScaleSummary(token: string | null): Promise<ScaleSummary> {
   }
 
   return (data as ScaleSummary) || {};
-}
-
-
-async function apiGetAlertSettings(token: string | null): Promise<AlertSettings> {
-  const res = await fetch(`${API_BASE}/alert-settings`, {
-    method: "GET",
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    cache: "no-store",
-  });
-
-  const text = await res.text();
-  let data: { error?: string } | AlertSettings | null = null;
-
-  try {
-    data = JSON.parse(text) as AlertSettings;
-  } catch {}
-
-  if (!res.ok) {
-    throw new Error((data as { error?: string } | null)?.error || text || `Alert settings failed (${res.status})`);
-  }
-
-  return (data as AlertSettings) || {};
-}
-
-async function apiSaveAlertSettings(
-  token: string | null,
-  payload: { emailAlertsEnabled: boolean; scaleAlertEmails: string[]; marginTargetPct?: number }
-): Promise<AlertSettings> {
-  const res = await fetch(`${API_BASE}/alert-settings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const text = await res.text();
-  let data: { error?: string } | AlertSettings | null = null;
-
-  try {
-    data = JSON.parse(text) as AlertSettings;
-  } catch {}
-
-  if (!res.ok) {
-    throw new Error((data as { error?: string } | null)?.error || text || `Save alert settings failed (${res.status})`);
-  }
-
-  return (data as AlertSettings) || {};
 }
 
 function getAllJobs(state: DashboardState): JobRow[] {
@@ -1863,8 +1714,7 @@ function TopBar({
   Refresh
 </button>
 
-<a className="btn uploadCtaBtn" href="/app" aria-label="Go to Upload">
-  <span className="uploadCtaIcon" aria-hidden="true">↗</span>
+<a className="btn uploadPulseBtn" href="/app">
   Go to Upload
 </a>
       </div>
@@ -2006,6 +1856,8 @@ function CreditRefundKpis({ state }: { state: DashboardState }) {
   );
 }
 
+
+
 function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode }) {
   const profitRef = useRef<HTMLCanvasElement | null>(null);
   const revCostRef = useRef<HTMLCanvasElement | null>(null);
@@ -2136,11 +1988,11 @@ function JobsLog({
       <div className="panelHead responsiveHead">
         <div>
           <div className="panelTitle">All Jobs Log</div>
-          <div className="panelSub">Search, sort, open one job, or review every editable job detail together.</div>
+          <div className="panelSub">Search, sort, and open any job.</div>
         </div>
 
-        <div className="tableTools jobsLogTools">
-          <button className="btn viewAllDetailsBtn" type="button" onClick={onOpenAllJobs}>
+        <div className="tableTools">
+          <button className="btn allJobsDetailBtn" type="button" onClick={onOpenAllJobs}>
             View All Job Details
           </button>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search job..." className="searchInput" />
@@ -2330,6 +2182,204 @@ function Insights({ insights }: { insights: Insight[] }) {
   );
 }
 
+
+function ProfitCommandCenter({
+  state,
+  marginTarget,
+  onOpenJob,
+  onOpenHighRisk,
+}: {
+  state: DashboardState;
+  marginTarget: number;
+  onOpenJob: (jobKey: string) => void;
+  onOpenHighRisk: () => void;
+}) {
+  const jobs = getAllJobs(state);
+  const creditMetrics = getCreditMetrics(state);
+  const displayMix = getDisplayCostMix(state);
+  const totalRevenue = parseNumberLoose(state.summary?.revenue);
+  const totalCosts = parseNumberLoose(state.summary?.costs);
+  const totalProfit = parseNumberLoose(state.summary?.net_profit);
+  const totalMargin = parseNumberLoose(state.summary?.margin_pct);
+  const grossCostActivity = displayMix.labor + displayMix.materials + displayMix.subs + displayMix.other;
+  const costRatio = totalRevenue > 0 ? (totalCosts / totalRevenue) * 100 : 0;
+  const profitPerJob = jobs.length ? totalProfit / jobs.length : 0;
+  const avgRevenuePerJob = jobs.length ? totalRevenue / jobs.length : 0;
+
+  const opportunityRows = jobs
+    .map((job, idx) => {
+      const revenue = parseNumberLoose(job.revenue);
+      const profit = parseNumberLoose(job.profit);
+      const margin = parseNumberLoose(job.margin_pct);
+      const targetProfit = revenue * (marginTarget / 100);
+      const gap = Math.max(0, targetProfit - profit);
+      const status = profit < 0 ? "Critical" : margin < marginTarget ? "Below target" : "Healthy";
+      const comparison = jobComparisonStats(job, jobs);
+      const driver = comparison.drivers[0];
+      const issue = strongestJobIssue(job, jobs, marginTarget);
+      return {
+        job,
+        idx,
+        key: buildJobKey(job, idx),
+        revenue,
+        profit,
+        margin,
+        targetProfit,
+        gap,
+        status,
+        driver,
+        issue,
+      };
+    })
+    .sort((a, b) => b.gap - a.gap || a.profit - b.profit);
+
+  const recoverableProfit = opportunityRows.reduce((sum, row) => sum + row.gap, 0);
+  const highRiskRows = opportunityRows.filter((row) => row.gap > 0 || row.profit < 0);
+  const losingRows = opportunityRows.filter((row) => row.profit < 0);
+  const topActions = highRiskRows.slice(0, 4);
+  const topRecoverableJob = opportunityRows.find((row) => row.gap > 0) || opportunityRows[0] || null;
+
+  const materialShare = grossCostActivity > 0 ? (displayMix.materials / grossCostActivity) * 100 : 0;
+  const laborShare = grossCostActivity > 0 ? (displayMix.labor / grossCostActivity) * 100 : 0;
+  const subsShare = grossCostActivity > 0 ? (displayMix.subs / grossCostActivity) * 100 : 0;
+  const otherShare = grossCostActivity > 0 ? (displayMix.other / grossCostActivity) * 100 : 0;
+
+  const benchmarkCards = [
+    {
+      label: "Actual Margin",
+      value: fmtPct(totalMargin),
+      note: totalMargin >= marginTarget ? `Above ${fmtPct(marginTarget)} target` : `${fmtPct(marginTarget - totalMargin)} below target`,
+      cls: totalMargin >= marginTarget ? "ok" : "warn",
+    },
+    {
+      label: "Target Margin",
+      value: fmtPct(marginTarget),
+      note: "Used for recoverable profit and alerts",
+      cls: "ok",
+    },
+    {
+      label: "Profit / Job",
+      value: fmtMoney(profitPerJob),
+      note: `Avg revenue/job ${fmtMoney(avgRevenuePerJob)}`,
+      cls: profitPerJob >= 0 ? "ok" : "bad",
+    },
+    {
+      label: "Cost Ratio",
+      value: fmtPct(costRatio),
+      note: "Net costs as share of revenue",
+      cls: costRatio <= 100 - marginTarget ? "ok" : "warn",
+    },
+    {
+      label: "Materials Share",
+      value: fmtPct(materialShare),
+      note: "Gross cost activity benchmark",
+      cls: materialShare > 60 ? "warn" : "ok",
+    },
+    {
+      label: "Labor Share",
+      value: fmtPct(laborShare),
+      note: "Gross cost activity benchmark",
+      cls: laborShare > 45 ? "warn" : "ok",
+    },
+  ];
+
+  const commandSummary = recoverableProfit > 0
+    ? `DropClarity found ${fmtMoney(recoverableProfit)} in profit gap to your ${fmtPct(marginTarget)} target across ${highRiskRows.length} job${highRiskRows.length === 1 ? "" : "s"}.`
+    : `Jobs in this view are currently meeting your ${fmtPct(marginTarget)} margin target. Keep monitoring new uploads for profit leaks.`;
+
+  return (
+    <div className="wowCenter panel">
+      <div className="wowTop">
+        <div>
+          <div className="sectionEyebrow">Profit Command Center</div>
+          <div className="wowTitle">Know what profit is recoverable — and what to fix first.</div>
+          <div className="wowSub">{commandSummary}</div>
+        </div>
+        <div className="wowActions">
+          <button className="btn subtlePrimaryBtn" type="button" onClick={onOpenHighRisk}>
+            Review High-Risk Jobs
+          </button>
+        </div>
+      </div>
+
+      <div className="wowHeroGrid">
+        <div className="wowRecoveryCard">
+          <div className="wowKicker">Recoverable Profit</div>
+          <div className={recoverableProfit > 0 ? "wowRecoveryValue warnText" : "wowRecoveryValue pos"}>{fmtMoney(recoverableProfit)}</div>
+          <div className="wowRecoverySub">Estimated gap between current job profit and your {fmtPct(marginTarget)} target margin.</div>
+          <div className="wowRecoveryStats">
+            <div><span>At-risk jobs</span><strong>{highRiskRows.length}</strong></div>
+            <div><span>Losing jobs</span><strong className={losingRows.length ? "neg" : "pos"}>{losingRows.length}</strong></div>
+            <div><span>Credits tracked</span><strong>{fmtMoney(creditMetrics.totalCredits)}</strong></div>
+          </div>
+          {topRecoverableJob ? (
+            <button className="wowPrimaryJob" type="button" onClick={() => onOpenJob(topRecoverableJob.key)}>
+              <span>Top opportunity</span>
+              <strong>{topRecoverableJob.job.job_name || topRecoverableJob.job.job_id || "Review job"}</strong>
+              <em>{fmtMoney(topRecoverableJob.gap)} gap</em>
+            </button>
+          ) : null}
+        </div>
+
+        <div className="wowActionCard">
+          <div className="wowCardHead">
+            <div>
+              <div className="wowKicker">Action Queue</div>
+              <div className="wowCardTitle">What to fix first</div>
+            </div>
+            <span className="tag">Ranked by impact</span>
+          </div>
+
+          <div className="wowActionList">
+            {topActions.length ? (
+              topActions.map((row, idx) => (
+                <button className="wowActionItem" type="button" key={row.key} onClick={() => onOpenJob(row.key)}>
+                  <div className="wowActionRank">#{idx + 1}</div>
+                  <div className="wowActionBody">
+                    <div className="wowActionName">{row.job.job_name || row.job.job_id || "Unnamed job"}</div>
+                    <div className="wowActionIssue">{row.issue}</div>
+                    <div className="wowActionMeta">{row.driver?.label || "Margin"} driver · {row.status}</div>
+                  </div>
+                  <div className="wowActionImpact">{fmtMoney(row.gap)}</div>
+                </button>
+              ))
+            ) : (
+              <div className="wowEmpty">No immediate recoverable-profit actions in this range.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="wowBenchmarkCard">
+          <div className="wowCardHead">
+            <div>
+              <div className="wowKicker">Basic Benchmarking</div>
+              <div className="wowCardTitle">How this business is trending</div>
+            </div>
+          </div>
+          <div className="wowBenchmarkGrid">
+            {benchmarkCards.map((card) => (
+              <div className="wowBenchmarkItem" key={card.label}>
+                <div>
+                  <div className="wowBenchmarkLabel">{card.label}</div>
+                  <div className="wowBenchmarkNote">{card.note}</div>
+                </div>
+                <strong className={card.cls}>{card.value}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="wowCostStrip">
+        <div><span>Materials share</span><strong>{fmtPct(materialShare)}</strong></div>
+        <div><span>Labor share</span><strong>{fmtPct(laborShare)}</strong></div>
+        <div><span>Subs share</span><strong>{fmtPct(subsShare)}</strong></div>
+        <div><span>Other cost share</span><strong>{fmtPct(otherShare)}</strong></div>
+      </div>
+    </div>
+  );
+}
+
 function ScaleOversightPanel({
   state,
   plan,
@@ -2340,14 +2390,6 @@ function ScaleOversightPanel({
   onSaveMarginTarget,
   emailAlertsEnabled,
   setEmailAlertsEnabled,
-  alertEmails,
-  alertEmailDraft,
-  setAlertEmailDraft,
-  alertEmailEditing,
-  setAlertEmailEditing,
-  savingAlertSettings,
-  alertSettingsMessage,
-  onSaveAlertSettings,
   userEmail,
   onOpenJob,
   onOpenHighRisk,
@@ -2361,14 +2403,6 @@ function ScaleOversightPanel({
   onSaveMarginTarget: () => void;
   emailAlertsEnabled: boolean;
   setEmailAlertsEnabled: (v: boolean) => void;
-  alertEmails: string[];
-  alertEmailDraft: string;
-  setAlertEmailDraft: (v: string) => void;
-  alertEmailEditing: boolean;
-  setAlertEmailEditing: (v: boolean) => void;
-  savingAlertSettings: boolean;
-  alertSettingsMessage: string;
-  onSaveAlertSettings: () => void;
   userEmail?: string | null;
   onOpenJob: (jobKey: string) => void;
   onOpenHighRisk: () => void;
@@ -2692,46 +2726,10 @@ function ScaleOversightPanel({
           <div className="scaleText">
             Send an email when a job loses money, falls below your margin target, or needs immediate review.
           </div>
-          <div className="emailDestination emailDestinationEditable">
-            <div>
-              <span>Alert destination</span>
-              <strong>{formatEmailList(alertEmails, userEmail)}</strong>
-            </div>
-            <button
-              className="miniBtn emailEditBtn"
-              type="button"
-              onClick={() => {
-                setAlertEmailDraft(formatEmailList(alertEmails, userEmail));
-                setAlertEmailEditing(!alertEmailEditing);
-              }}
-            >
-              {alertEmailEditing ? "Close" : "Edit"}
-            </button>
+          <div className="emailDestination">
+            <span>Alert destination</span>
+            <strong>{userEmail || "Account email"}</strong>
           </div>
-
-          {alertEmailEditing ? (
-            <div className="emailEditPanel">
-              <label className="emailEditLabel" htmlFor="scale-alert-emails">Alert recipients</label>
-              <textarea
-                id="scale-alert-emails"
-                className="emailEditInput"
-                value={alertEmailDraft}
-                onChange={(e) => setAlertEmailDraft(e.target.value)}
-                placeholder="owner@company.com, manager@company.com"
-                rows={3}
-              />
-              <div className="emailEditHint">Add up to 10 emails. Separate each email with a comma, semicolon, or new line.</div>
-              <div className="emailEditActions">
-                <button className="btn subtlePrimaryBtn" type="button" onClick={onSaveAlertSettings} disabled={savingAlertSettings}>
-                  {savingAlertSettings ? "Saving..." : "Save recipients"}
-                </button>
-                <button className="btn" type="button" onClick={() => { setAlertEmailEditing(false); setAlertEmailDraft(formatEmailList(alertEmails, userEmail)); }}>
-                  Cancel
-                </button>
-              </div>
-              {alertSettingsMessage ? <div className="emailSettingsMessage">{alertSettingsMessage}</div> : null}
-            </div>
-          ) : null}
           <div className="emailLiveGrid">
             <div><span>Last alert sent</span><strong>{lastAlertSentLabel}</strong></div>
             <div><span>Next summary</span><strong>{nextSummaryLabel}</strong></div>
@@ -2909,14 +2907,6 @@ function DashboardBody({
   onSaveMarginTarget,
   emailAlertsEnabled,
   setEmailAlertsEnabled,
-  alertEmails,
-  alertEmailDraft,
-  setAlertEmailDraft,
-  alertEmailEditing,
-  setAlertEmailEditing,
-  savingAlertSettings,
-  alertSettingsMessage,
-  onSaveAlertSettings,
   userEmail,
 }: {
   state: DashboardState;
@@ -2937,14 +2927,6 @@ function DashboardBody({
   onSaveMarginTarget: () => void;
   emailAlertsEnabled: boolean;
   setEmailAlertsEnabled: (v: boolean) => void;
-  alertEmails: string[];
-  alertEmailDraft: string;
-  setAlertEmailDraft: (v: string) => void;
-  alertEmailEditing: boolean;
-  setAlertEmailEditing: (v: boolean) => void;
-  savingAlertSettings: boolean;
-  alertSettingsMessage: string;
-  onSaveAlertSettings: () => void;
   userEmail?: string | null;
 }) {
   const jobs = getAllJobs(state);
@@ -2954,6 +2936,16 @@ function DashboardBody({
     <>
       <Kpis state={state} />
       <DashboardHero state={state} />
+      <ProfitCommandCenter
+        state={state}
+        marginTarget={marginTarget}
+        onOpenHighRisk={onOpenHighRisk}
+        onOpenJob={(key: string) => {
+          setJobKey(key);
+          setView("job");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
       <ChartsPanel state={state} view={view} />
       <CreditRefundKpis state={state} />
       <ScaleOversightPanel
@@ -2966,14 +2958,6 @@ function DashboardBody({
         onSaveMarginTarget={onSaveMarginTarget}
         emailAlertsEnabled={emailAlertsEnabled}
         setEmailAlertsEnabled={setEmailAlertsEnabled}
-        alertEmails={alertEmails}
-        alertEmailDraft={alertEmailDraft}
-        setAlertEmailDraft={setAlertEmailDraft}
-        alertEmailEditing={alertEmailEditing}
-        setAlertEmailEditing={setAlertEmailEditing}
-        savingAlertSettings={savingAlertSettings}
-        alertSettingsMessage={alertSettingsMessage}
-        onSaveAlertSettings={onSaveAlertSettings}
         userEmail={userEmail}
         onOpenJob={(key: string) => {
           setJobKey(key);
@@ -3056,7 +3040,6 @@ function JobEditor({
   access,
   onLocked,
   marginTarget = 30,
-  compactOnly = false,
 }: {
   jobKey: string;
   base: JobRow;
@@ -3069,7 +3052,6 @@ function JobEditor({
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget?: number;
-  compactOnly?: boolean;
 }) {
   const [job, setJob] = useState<EditableJob>(() => mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
   const history = extractJobHistory(state, base || {});
@@ -3232,115 +3214,6 @@ function JobEditor({
     );
   };
 
-  if (compactOnly) {
-    return (
-      <div className="allJobsEditableCard">
-        <div className="panel jobDetailFocus allJobsCompactPanel">
-          <div className="panelHead allJobsCompactHead">
-            <div>
-              <div className="panelTitle">{job.job_name || job.job_id || "Job detail"}</div>
-              <div className="panelSub">
-                {job.job_id || "No Job ID"} • Edit job info, costs, and manual categories.
-              </div>
-            </div>
-            <div className="buttonRow allJobsCompactActions">
-              <button className="btn saveChangesBtn" type="button" onClick={save}>
-                {saved ? "Saved ✓" : access.canSaveJobEdits ? "Save changes" : "Save changes 🔒"}
-              </button>
-
-              <button
-                className="btn"
-                type="button"
-                onClick={() => access.canExport ? exportSingleJobCsv(job, base, history, state) : handleLocked("CSV exports", "Core")}
-              >
-                {access.canExport ? "Export Job CSV" : "Export Job CSV 🔒"}
-              </button>
-
-              <button className="btn" type="button" onClick={reset}>
-                Reset
-              </button>
-
-              <button className="btn" type="button" onClick={addCustom}>
-                {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
-              </button>
-            </div>
-          </div>
-
-          <div className="pad jobDetailPad allJobsCompactPad">
-            <table className="jobTable allJobsStackTable">
-              <thead>
-                <tr>
-                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Other Costs</th><th>Gross Profit</th><th>Margin</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><input className="cellEdit" value={job.job_id} onChange={(e) => setField("job_id", e.target.value)} placeholder="JOB-1021" /><div className="cellHint">Identifier</div></td>
-                  <td><input className="cellEdit" value={job.job_name} onChange={(e) => setField("job_name", e.target.value)} placeholder="Customer / project" /><div className="cellHint">Name</div></td>
-                  <td><input className="cellEdit" value={job.job_type} onChange={(e) => setField("job_type", e.target.value)} placeholder="Install" /><div className="cellHint">Optional</div></td>
-                  <td><input className="cellEdit" value={job.job_address} onChange={(e) => setField("job_address", e.target.value)} placeholder="Address" /><div className="cellHint">Optional</div></td>
-                  <td><input className="cellEdit" value={job.job_date} onChange={(e) => setField("job_date", e.target.value)} placeholder="YYYY-MM-DD" /><div className="cellHint">Optional</div></td>
-                  {renderMoneyCell("Revenue", "revenue")}
-                  {renderMoneyCell("Labor", "labor_cost")}
-                  {renderMoneyCell("Materials", "material_cost")}
-                  {renderMoneyCell("Subs", "subs_cost")}
-                  {renderMoneyCell("Other", "other_cost")}
-                  <td><div className={`calcCell ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div></td>
-                  <td><div className={`calcCell ${gm < 0 ? "neg" : ""}`}>{fmtPct(gm)}</div></td>
-                </tr>
-
-                {job.custom_categories.map((row, idx) => (
-                  <tr key={`${uid}-compact-${idx}`}>
-                    <td colSpan={6}><input className="cellEdit customInlineInput" value={row.name} disabled={!access.canUseCustomCategories} onChange={(e) => updateCustom(idx, { name: e.target.value })} placeholder="e.g. Sales Commission" /><div className="cellHint">Manual cost category</div></td>
-                    <td colSpan={4}><input
-                      className="cellEdit customAmountInput moneyEditInput"
-                      inputMode="decimal"
-                      type="text"
-                      disabled={!access.canUseCustomCategories}
-                      value={editingCustomAmountIndex === idx ? customAmountDrafts[idx] ?? "" : fmtMoney(row.amount)}
-                      onFocus={(e) => {
-                        const rawValue = String(parseNumberLoose(row.amount));
-                        setEditingCustomAmountIndex(idx);
-                        setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: rawValue }));
-
-                        window.setTimeout(() => {
-                          e.currentTarget.focus();
-                          e.currentTarget.select();
-                        }, 0);
-                      }}
-                      onChange={(e) => {
-                        const raw = e.currentTarget.value;
-                        setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: raw }));
-                        updateCustom(idx, { amount: parseMoneyInput(raw) });
-                      }}
-                      onBlur={() => {
-                        const finalValue = parseMoneyInput(customAmountDrafts[idx]);
-                        updateCustom(idx, { amount: finalValue });
-                        setCustomAmountDrafts((drafts) => {
-                          const next = { ...drafts };
-                          delete next[idx];
-                          return next;
-                        });
-                        setEditingCustomAmountIndex(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.currentTarget.blur();
-                        }
-                      }}
-                      placeholder="$0.00"
-                    /><div className="cellHint">Additional cost amount</div></td>
-                    <td colSpan={2}><div className="customRemoveWrap"><button className="btn-mini btn-danger" type="button" onClick={() => removeCustom(idx)}>× Remove</button></div></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       {showBack ? (
@@ -3401,7 +3274,7 @@ function JobEditor({
             <div><div className="panelTitle">Job detail</div><div className="panelSub">Edit job info, cost buckets, notes, and manual categories.</div></div>
             <div className="buttonRow">
               <button
-  className="btn saveChangesBtn"
+  className="btn subtleSaveBtn"
   type="button"
   onClick={save}
 >
@@ -3602,92 +3475,24 @@ function AllJobsView({
       .filter(({ job }) => !q || `${job.job_name || ""} ${job.job_id || ""}`.toLowerCase().includes(q));
   }, [jobs, search]);
 
-  const allJobsSummary = useMemo(() => {
-    return filtered.reduce(
-      (sum, row) => {
-        const edited = mergeJobWithEdits(seedJobFromBase(row.job || {}), row.key, userId);
-        const revenue = parseNumberLoose(edited.revenue);
-        const labor = parseNumberLoose(edited.labor_cost);
-        const materials = parseNumberLoose(edited.material_cost);
-        const subs = parseNumberLoose(edited.subs_cost);
-        const other = parseNumberLoose(edited.other_cost);
-        const credits = getJobCreditTotal(row.job);
-        const customTotal = sumCustomCategories(edited.custom_categories || []);
-        const costs = labor + materials + subs + other + customTotal - credits;
-        const profit = revenue - costs;
-
-        sum.revenue += revenue;
-        sum.costs += costs;
-        sum.profit += profit;
-        sum.credits += credits;
-        sum.customCategories += (edited.custom_categories || []).length;
-        return sum;
-      },
-      { revenue: 0, costs: 0, profit: 0, credits: 0, customCategories: 0 }
-    );
-  }, [filtered, userId]);
-
-  const allJobsMargin = allJobsSummary.revenue !== 0 ? (allJobsSummary.profit / allJobsSummary.revenue) * 100 : 0;
-
   return (
-    <div className="allJobsDetailPage">
-      <div className="panel allJobsDetailShell">
-        <div className="crumbs allJobsCrumbs">
-          <div className="crumb">View: <strong>All Jobs Detail</strong></div>
-          <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
-          <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
-        </div>
-
-        <div className="allJobsTopTools">
-          <input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs before editing details..." />
-          <button
-            className={access.canExport ? "btn btn-primary" : "btn lockedBtn"}
-            type="button"
-            onClick={() => access.canExport ? exportAllEditedJobsDetailCsv(filtered.map(({ job, key }) => ({ job, key })), state, userId) : onLocked("All jobs detail CSV", "Core")}
-          >
-            {access.canExport ? "Download All Jobs Detail CSV" : "Download All Jobs Detail CSV 🔒"}
-          </button>
-        </div>
-
-        <div className="jobStats allJobsSummaryStats">
-          <div className="stat"><div className="statLabel">Gross Profit</div><div className={`statValue ${allJobsSummary.profit < 0 ? "neg" : "pos"}`}>{fmtMoney(allJobsSummary.profit)}</div><div className="statSub">Filtered jobs total.</div></div>
-          <div className="stat"><div className="statLabel">Gross Margin</div><div className={`statValue ${allJobsMargin < 0 ? "neg" : "pos"}`}>{fmtPct(allJobsMargin)}</div><div className="statSub">Based on edited values.</div></div>
-          <div className="stat"><div className="statLabel">Revenue</div><div className="statValue">{fmtMoney(allJobsSummary.revenue)}</div><div className="statSub">Filtered jobs total.</div></div>
-          <div className="stat"><div className="statLabel">Known Costs</div><div className="statValue">{fmtMoney(allJobsSummary.costs)}</div><div className="statSub">Cost buckets + custom.</div></div>
-          <div className="stat"><div className="statLabel">Credits Applied</div><div className="statValue creditText">{fmtMoney(allJobsSummary.credits)}</div><div className="statSub">Tracked separately.</div></div>
-          <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{allJobsSummary.customCategories}</div><div className="statSub">Across shown jobs.</div></div>
-        </div>
-
-        <div className="allJobsStackHeader">
-          <div>
-            <div className="sectionEyebrow">Editable Job Details</div>
-            <div className="sectionTitle">All jobs in one clean editing stack</div>
-          </div>
-          <div className="sectionSubtle">Edit job IDs, names, dates, costs, and custom categories without opening each job separately.</div>
-        </div>
-
-        <div className="allJobsStack">
-          {filtered.length ? (
-            filtered.map(({ job, key }) => (
-              <JobEditor
-                key={key}
-                jobKey={key}
-                base={job}
-                state={state}
-                showBack={false}
-                userId={userId}
-                access={access}
-                onLocked={onLocked}
-                onBack={() => {}}
-                onAllJobs={() => {}}
-                refreshLocal={refreshLocal}
-                compactOnly
-              />
-            ))
-          ) : (
-            <div className="empty">No jobs match this search.</div>
-          )}
-        </div>
+    <div className="panel" style={{ marginTop: 12 }}>
+      <div className="crumbs">
+        <div className="crumb">View: <strong>All Jobs Detail</strong></div>
+        <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
+        <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+      </div>
+      <div className="pad"><input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs before expanding details..." /></div>
+      <div className="pad">
+        {filtered.length ? (
+          filtered.map(({ job, key }) => (
+            <div key={key} style={{ marginBottom: 14 }}>
+              <JobEditor jobKey={key} base={job} state={state} showBack={false} userId={userId} access={access} onLocked={onLocked} onBack={() => {}} onAllJobs={() => {}} refreshLocal={refreshLocal} />
+            </div>
+          ))
+        ) : (
+          <div className="empty">No jobs match this search.</div>
+        )}
       </div>
     </div>
   );
@@ -4014,11 +3819,6 @@ export default function DashboardPage() {
   const [marginTarget, setMarginTarget] = useState<number>(30);
   const [marginTargetDraft, setMarginTargetDraft] = useState<string>("30");
   const [emailAlertsEnabled, setEmailAlertsEnabledState] = useState<boolean>(true);
-  const [alertEmails, setAlertEmails] = useState<string[]>([]);
-  const [alertEmailDraft, setAlertEmailDraft] = useState<string>("");
-  const [alertEmailEditing, setAlertEmailEditing] = useState<boolean>(false);
-  const [savingAlertSettings, setSavingAlertSettings] = useState<boolean>(false);
-  const [alertSettingsMessage, setAlertSettingsMessage] = useState<string>("");
 
   const loadAndRender = useCallback(async () => {
     if (!isLoaded) return;
@@ -4043,26 +3843,6 @@ export default function DashboardPage() {
         console.error("Failed to load Scale summary", scaleError);
       }
 
-      try {
-        const alertSettings = await apiGetAlertSettings(token);
-        const nextEmails = Array.isArray(alertSettings.scaleAlertEmails)
-          ? alertSettings.scaleAlertEmails
-          : Array.isArray(alertSettings.alertEmails)
-          ? alertSettings.alertEmails
-          : [];
-        setAlertEmails(nextEmails);
-        setAlertEmailDraft(formatEmailList(nextEmails, alertSettings.primaryEmail || user?.primaryEmailAddress?.emailAddress || null));
-        if (typeof alertSettings.emailAlertsEnabled === "boolean") {
-          setEmailAlertsEnabledState(alertSettings.emailAlertsEnabled);
-          writeEmailAlertsEnabled(USER_ID, alertSettings.emailAlertsEnabled);
-        }
-      } catch (alertError) {
-        // Free/Core users do not have server-side Scale alert settings yet.
-        setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
-        setAlertEmailDraft(user?.primaryEmailAddress?.emailAddress || "");
-        console.error("Failed to load alert settings", alertError);
-      }
-
       setState({ ...(data || {}), range });
       setScaleSummary(scaleData);
       setMode("ready");
@@ -4071,7 +3851,7 @@ export default function DashboardPage() {
       setError(e instanceof Error ? e.message : String(e));
       console.error(e);
     }
-  }, [isLoaded, isSignedIn, getToken, range, customFrom, customTo, USER_ID, user?.primaryEmailAddress?.emailAddress]);
+  }, [isLoaded, isSignedIn, getToken, range, customFrom, customTo]);
 
 useEffect(() => {
   if (!isLoaded) return;
@@ -4080,8 +3860,6 @@ useEffect(() => {
   setMarginTarget(savedTarget);
   setMarginTargetDraft(String(savedTarget));
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
-  setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
-  setAlertEmailDraft(user?.primaryEmailAddress?.emailAddress || "");
   setDeletedReportKeys(readDeletedReports(USER_ID));
   loadAndRender();
 }, [USER_ID, isLoaded, loadAndRender]);
@@ -4093,61 +3871,9 @@ useEffect(() => {
     writeMarginTarget(USER_ID, next);
   };
 
-  const saveAlertSettings = useCallback(async () => {
-    const cleanEmails = parseEmailListInput(alertEmailDraft || formatEmailList(alertEmails, user?.primaryEmailAddress?.emailAddress || null));
-
-    if (!cleanEmails.length) {
-      setAlertSettingsMessage("Enter at least one valid email address.");
-      return;
-    }
-
-    try {
-      setSavingAlertSettings(true);
-      setAlertSettingsMessage("");
-      const token = await getToken();
-      const saved = await apiSaveAlertSettings(token, {
-        emailAlertsEnabled,
-        scaleAlertEmails: cleanEmails,
-        marginTargetPct: marginTarget,
-      });
-
-      const nextEmails = Array.isArray(saved.scaleAlertEmails) && saved.scaleAlertEmails.length ? saved.scaleAlertEmails : cleanEmails;
-      setAlertEmails(nextEmails);
-      setAlertEmailDraft(nextEmails.join(", "));
-      if (typeof saved.emailAlertsEnabled === "boolean") {
-        setEmailAlertsEnabledState(saved.emailAlertsEnabled);
-        writeEmailAlertsEnabled(USER_ID, saved.emailAlertsEnabled);
-      }
-      setAlertEmailEditing(false);
-      setAlertSettingsMessage("Alert recipients saved.");
-    } catch (e) {
-      setAlertSettingsMessage(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSavingAlertSettings(false);
-    }
-  }, [USER_ID, alertEmailDraft, alertEmails, emailAlertsEnabled, getToken, marginTarget, user?.primaryEmailAddress?.emailAddress]);
-
-  const setEmailAlertsEnabled = async (enabled: boolean) => {
+  const setEmailAlertsEnabled = (enabled: boolean) => {
     setEmailAlertsEnabledState(enabled);
     writeEmailAlertsEnabled(USER_ID, enabled);
-
-    if (!access.canUseScale) return;
-
-    try {
-      const cleanEmails = parseEmailListInput(alertEmailDraft || formatEmailList(alertEmails, user?.primaryEmailAddress?.emailAddress || null));
-      const token = await getToken();
-      const saved = await apiSaveAlertSettings(token, {
-        emailAlertsEnabled: enabled,
-        scaleAlertEmails: cleanEmails.length ? cleanEmails : alertEmails,
-        marginTargetPct: marginTarget,
-      });
-      if (Array.isArray(saved.scaleAlertEmails)) {
-        setAlertEmails(saved.scaleAlertEmails);
-        setAlertEmailDraft(formatEmailList(saved.scaleAlertEmails, user?.primaryEmailAddress?.emailAddress || null));
-      }
-    } catch (e) {
-      setAlertSettingsMessage(e instanceof Error ? e.message : String(e));
-    }
   };
 
 
@@ -4321,14 +4047,6 @@ useEffect(() => {
   onSaveMarginTarget={saveMarginTarget}
   emailAlertsEnabled={emailAlertsEnabled}
   setEmailAlertsEnabled={setEmailAlertsEnabled}
-  alertEmails={alertEmails}
-  alertEmailDraft={alertEmailDraft}
-  setAlertEmailDraft={setAlertEmailDraft}
-  alertEmailEditing={alertEmailEditing}
-  setAlertEmailEditing={setAlertEmailEditing}
-  savingAlertSettings={savingAlertSettings}
-  alertSettingsMessage={alertSettingsMessage}
-  onSaveAlertSettings={saveAlertSettings}
   userEmail={user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null}
 />
             )}
@@ -4687,6 +4405,13 @@ const dashboardCss = `
 .dc-bg .upgradeActions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
 .dc-bg .upgradePrimary{border-color:rgba(124,58,237,.24);box-shadow:0 14px 34px rgba(124,58,237,.12)}
 .dc-bg .lockedBtn{opacity:.92;cursor:pointer}
+
+.dc-bg .subtleSaveBtn{background:rgba(255,255,255,.92);border-color:rgba(15,23,42,.12);box-shadow:0 8px 20px rgba(2,6,23,.045)}
+.dc-bg .subtleSaveBtn:hover{border-color:rgba(34,211,238,.24);box-shadow:0 12px 30px rgba(34,211,238,.10)}
+.dc-bg .uploadPulseBtn,.dc-bg .dashboardBackBtn,.dc-bg .allJobsDetailBtn{position:relative;overflow:hidden;border-color:rgba(124,58,237,.20);background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(245,243,255,.88));box-shadow:0 10px 24px rgba(124,58,237,.08)}
+.dc-bg .uploadPulseBtn::after,.dc-bg .dashboardBackBtn::after,.dc-bg .allJobsDetailBtn::after{content:"";position:absolute;inset:-2px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.10),transparent);transform:translateX(-120%);animation:softSheen 3.8s ease-in-out infinite;pointer-events:none}
+@keyframes softSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
 @media(max-width:1300px){.dc-bg .scaleGrid, .dc-bg .scaleGridPremium{grid-template-columns:1fr 1fr}.dc-bg .wideScaleCard, .dc-bg .teamScaleCard{grid-column:span 2}.dc-bg .benchmarkGrid{grid-template-columns:1fr 1fr}.dc-bg .gridMix{grid-template-columns:repeat(2,minmax(0,1fr))}.dc-bg .supportGrid{grid-template-columns:1fr}.dc-bg .jobStats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1100px){.dc-bg .grid{grid-template-columns:1fr}.dc-bg .sideStack{display:grid;grid-template-columns:1fr 1fr}.dc-bg .sideStack .panel:first-child{grid-column:1/-1}.dc-bg .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.dc-bg .heroBody, .dc-bg .jobHeroBody{grid-template-columns:1fr}.dc-bg .charts, .dc-bg .jobCharts{grid-template-columns:1fr}.dc-bg .chartCard.wide{grid-column:auto}}
 @media(max-width:760px){.dc-bg .jobAnalysisHeader{align-items:flex-start;flex-direction:column}.dc-bg .sectionSubtle{text-align:left}.dc-bg .scaleGrid, .dc-bg .scaleGridPremium{grid-template-columns:1fr}.dc-bg .wideScaleCard, .dc-bg .teamScaleCard{grid-column:auto}.dc-bg .benchmarkGrid{grid-template-columns:1fr}.dc-bg .scaleMiniStats{grid-template-columns:1fr}.dc-bg{padding:32px 0 28px;background:#fff!important}.dc-bg .wrap{width:100%;padding:0 16px}.dc-bg .pageTitle{font-size:32px}.dc-bg .topbar{flex-direction:column}.dc-bg .statusRow{justify-content:flex-start}.dc-bg .rangeWrap{align-items:flex-start}.dc-bg .rangeRight{justify-content:flex-start}.dc-bg .kpis{grid-template-columns:1fr 1fr}.dc-bg .sideStack{display:flex}.dc-bg .responsiveHead{flex-direction:column}.dc-bg .tableTools{width:100%;justify-content:stretch}.dc-bg .searchInput, .dc-bg .selectInput{width:100%}.dc-bg .gridMix{grid-template-columns:1fr}.dc-bg .jobStats{grid-template-columns:1fr 1fr}.dc-bg .crumbBtn{margin-left:0!important}}
@@ -4753,17 +4478,7 @@ const dashboardCss = `
 .dc-bg .emailAlertTitle{margin-top:9px;font-size:18px;line-height:1.1;font-weight:980;color:rgba(15,23,42,.94);letter-spacing:-.025em}
 .dc-bg .emailDestination{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin:13px 0;border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(248,250,252,.9);padding:10px}
 .dc-bg .emailDestination span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.48)}
-.dc-bg .emailDestination strong{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.82);text-align:left;word-break:break-all;display:block;margin-top:4px}
-.dc-bg .emailDestinationEditable{align-items:center}
-.dc-bg .emailEditBtn{flex:0 0 auto;background:rgba(255,255,255,.86)}
-.dc-bg .emailEditPanel{margin:10px 0 12px;border:1px solid rgba(15,23,42,.075);border-radius:16px;background:rgba(255,255,255,.86);padding:11px;box-shadow:0 10px 28px rgba(2,6,23,.045)}
-.dc-bg .emailEditLabel{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.52);margin-bottom:7px}
-.dc-bg .emailEditInput{width:100%;border:1px solid rgba(15,23,42,.12);border-radius:13px;background:#fff;padding:10px 11px;font-size:13px;line-height:1.4;font-weight:800;color:#0f172a;outline:none;resize:vertical;min-height:74px}
-.dc-bg .emailEditInput:focus{border-color:rgba(34,211,238,.55);box-shadow:0 0 0 3px rgba(34,211,238,.16)}
-.dc-bg .emailEditHint{margin-top:7px;font-size:12px;font-weight:750;color:rgba(15,23,42,.54);line-height:1.35}
-.dc-bg .emailEditActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.dc-bg .emailSettingsMessage{margin-top:8px;font-size:12.5px;font-weight:850;color:rgba(15,23,42,.66)}
-.dc-bg .subtlePrimaryBtn{border-color:rgba(34,211,238,.28);background:linear-gradient(135deg,rgba(236,254,255,.96),rgba(245,243,255,.94));box-shadow:0 8px 20px rgba(2,6,23,.045)}
+.dc-bg .emailDestination strong{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.82);text-align:right;word-break:break-all}
 .dc-bg .emailNote{margin-top:10px;font-size:11.5px;line-height:1.35;font-weight:800;color:rgba(15,23,42,.46)}
 .dc-bg .btn-danger-soft{border-color:rgba(239,68,68,.18);background:rgba(254,242,242,.86);color:rgba(185,28,28,.96)}
 .dc-bg .scaleGridPremiumV2{grid-template-columns:1.15fr 1fr 1fr;align-items:start}
@@ -4780,6 +4495,13 @@ const dashboardCss = `
 .dc-bg .ruleList div{border-radius:14px;border:1px solid rgba(15,23,42,.065);background:rgba(255,255,255,.76);padding:11px}
 .dc-bg .ruleList b{display:block;font-size:13px;color:rgba(15,23,42,.92);font-weight:950}
 .dc-bg .ruleList span{display:block;margin-top:3px;font-size:12.5px;line-height:1.4;color:rgba(15,23,42,.60);font-weight:800}
+
+.dc-bg .subtleSaveBtn{background:rgba(255,255,255,.92);border-color:rgba(15,23,42,.12);box-shadow:0 8px 20px rgba(2,6,23,.045)}
+.dc-bg .subtleSaveBtn:hover{border-color:rgba(34,211,238,.24);box-shadow:0 12px 30px rgba(34,211,238,.10)}
+.dc-bg .uploadPulseBtn,.dc-bg .dashboardBackBtn,.dc-bg .allJobsDetailBtn{position:relative;overflow:hidden;border-color:rgba(124,58,237,.20);background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(245,243,255,.88));box-shadow:0 10px 24px rgba(124,58,237,.08)}
+.dc-bg .uploadPulseBtn::after,.dc-bg .dashboardBackBtn::after,.dc-bg .allJobsDetailBtn::after{content:"";position:absolute;inset:-2px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.10),transparent);transform:translateX(-120%);animation:softSheen 3.8s ease-in-out infinite;pointer-events:none}
+@keyframes softSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
 @media(max-width:1300px){.dc-bg .scaleCommandGrid{grid-template-columns:1fr 1fr}.dc-bg .scaleCommandHero{grid-column:1/-1}.dc-bg .scaleGridPremiumV2{grid-template-columns:1fr 1fr}.dc-bg .benchmarkGridV2{grid-template-columns:1fr 1fr}.dc-bg .alertsExplainerCard{grid-column:span 2}}
 @media(max-width:760px){.dc-bg .scaleControlHead{align-items:flex-start;flex-direction:column}.dc-bg .scaleHeadRight{justify-content:flex-start}.dc-bg .scaleCommandGrid{grid-template-columns:1fr;padding:14px 14px 0}.dc-bg .scaleCommandHero{grid-column:auto}.dc-bg .scaleGridPremiumV2{grid-template-columns:1fr}.dc-bg .benchmarkGridV2{grid-template-columns:1fr}.dc-bg .alertsExplainerCard{grid-column:auto}.dc-bg .targetInputRow{flex-wrap:wrap}.dc-bg .targetInput{width:110px}.dc-bg .heroScaleTitle{font-size:23px}}
 
@@ -4866,6 +4588,13 @@ const dashboardCss = `
 .dc-bg .highRiskJobCard .jobPage{margin-top:0;padding:14px}
 .dc-bg .highRiskJobCard .jobAnalysisHeader{display:none}
 .dc-bg .highRiskJobCard .jobStats{margin-bottom:0}
+
+
+.dc-bg .subtleSaveBtn{background:rgba(255,255,255,.92);border-color:rgba(15,23,42,.12);box-shadow:0 8px 20px rgba(2,6,23,.045)}
+.dc-bg .subtleSaveBtn:hover{border-color:rgba(34,211,238,.24);box-shadow:0 12px 30px rgba(34,211,238,.10)}
+.dc-bg .uploadPulseBtn,.dc-bg .dashboardBackBtn,.dc-bg .allJobsDetailBtn{position:relative;overflow:hidden;border-color:rgba(124,58,237,.20);background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(245,243,255,.88));box-shadow:0 10px 24px rgba(124,58,237,.08)}
+.dc-bg .uploadPulseBtn::after,.dc-bg .dashboardBackBtn::after,.dc-bg .allJobsDetailBtn::after{content:"";position:absolute;inset:-2px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.10),transparent);transform:translateX(-120%);animation:softSheen 3.8s ease-in-out infinite;pointer-events:none}
+@keyframes softSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 
 @media(max-width:1300px){.dc-bg .comparisonGrid{grid-template-columns:1fr 1fr}.dc-bg .comparisonTableWrap{grid-column:1/-1}.dc-bg .driverGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.dc-bg .comparisonGrid{grid-template-columns:1fr;padding:14px}.dc-bg .comparisonTableWrap{grid-column:auto}.dc-bg .driverGrid{grid-template-columns:1fr;padding:0 14px 14px}.dc-bg .comparisonValue{font-size:26px}.dc-bg .emailLiveGrid{grid-template-columns:1fr}.dc-bg .highRiskHeroBody{grid-template-columns:1fr}.dc-bg .highRiskSearchWrap{justify-content:stretch}.dc-bg .scaleCardHeaderRow{align-items:stretch;flex-direction:column}.dc-bg .viewAllAlertsBtn{width:fit-content}}
@@ -5266,100 +4995,181 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media (hover:none) and (pointer:coarse){.dc-bg .dashboardBackBtn{animation:none}.dc-bg .dashboardBackBtn:hover{transform:none!important}}
 
 
-.dc-bg /* All Jobs Detail stacked editor */
-.allJobsDetailPage{margin-top:12px}
-.dc-bg .allJobsDetailShell{overflow:hidden}
-.dc-bg .allJobsTopTools{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid rgba(15,23,42,.065);background:rgba(255,255,255,.72)}
-.dc-bg .allJobsTopTools .wideSearch{flex:1;min-width:260px}
-.dc-bg .allJobsSummaryStats{padding:16px;border-bottom:1px solid rgba(15,23,42,.065)}
-.dc-bg .allJobsStackHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:0 14px 14px;padding:16px 18px;border-radius:20px;border:1px solid rgba(34,211,238,.14);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(240,253,250,.62));box-shadow:0 10px 28px rgba(2,6,23,.045)}
-.dc-bg .allJobsStack{display:flex;flex-direction:column;gap:16px;padding:0 14px 16px}
-.dc-bg .allJobsEditableCard{width:100%}
-.dc-bg .allJobsCompactPanel{box-shadow:0 12px 34px rgba(2,6,23,.055);border-color:rgba(15,23,42,.08)}
-.dc-bg .allJobsCompactHead{align-items:flex-start}
-.dc-bg .allJobsCompactActions{max-width:780px}
-.dc-bg .allJobsCompactPad{padding:16px;overflow-x:auto}
-.dc-bg .allJobsStackTable{min-width:1320px}
+/* Enterprise wow layer: recoverable profit + action queue + basic benchmarking */
+.dc-bg .wowCenter{margin-top:12px;border-color:rgba(124,58,237,.12);background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(248,250,252,.92));box-shadow:0 26px 80px rgba(2,6,23,.09)}
+.dc-bg .wowTop{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:18px 18px 4px;flex-wrap:wrap}.dc-bg .wowTitle{margin-top:5px;font-size:28px;line-height:1.05;font-weight:990;letter-spacing:-.04em;color:rgba(15,23,42,.96)}.dc-bg .wowSub{margin-top:8px;max-width:820px;color:rgba(15,23,42,.62);font-size:14px;line-height:1.5;font-weight:780}.dc-bg .wowActions{display:flex;gap:10px;flex-wrap:wrap}.dc-bg .subtlePrimaryBtn{background:linear-gradient(90deg,rgba(34,211,238,.12),rgba(124,58,237,.12));border-color:rgba(124,58,237,.18)}
+.dc-bg .wowHeroGrid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(340px,1.15fr) minmax(340px,1fr);gap:14px;padding:14px 18px 18px}.dc-bg .wowRecoveryCard,.dc-bg .wowActionCard,.dc-bg .wowBenchmarkCard{border-radius:22px;border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.90);box-shadow:0 14px 44px rgba(2,6,23,.055);padding:16px;min-width:0}.dc-bg .wowRecoveryCard{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(240,249,255,.88));border-left:5px solid rgba(124,58,237,.82)}.dc-bg .wowKicker{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:980;color:rgba(15,23,42,.48)}.dc-bg .wowRecoveryValue{margin-top:8px;font-size:39px;line-height:1;font-weight:990;letter-spacing:-.055em;color:rgba(15,23,42,.94)}.dc-bg .warnText{color:rgba(180,83,9,.98)!important}.dc-bg .wowRecoverySub{margin-top:8px;color:rgba(15,23,42,.60);font-size:13px;line-height:1.4;font-weight:780}.dc-bg .wowRecoveryStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}.dc-bg .wowRecoveryStats div{border-radius:15px;border:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.78);padding:10px}.dc-bg .wowRecoveryStats span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:950;color:rgba(15,23,42,.45)}.dc-bg .wowRecoveryStats strong{display:block;margin-top:4px;font-size:15px;font-weight:990;color:rgba(15,23,42,.90)}
+.dc-bg .wowPrimaryJob{width:100%;margin-top:12px;text-align:left;border:1px solid rgba(124,58,237,.16);background:rgba(255,255,255,.78);border-radius:16px;padding:11px 12px;cursor:pointer;display:grid;gap:3px;transition:transform .1s ease,box-shadow .14s ease}.dc-bg .wowPrimaryJob:hover{transform:translateY(-1px);box-shadow:0 16px 38px rgba(124,58,237,.12)}.dc-bg .wowPrimaryJob span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(124,58,237,.75)}.dc-bg .wowPrimaryJob strong{font-size:13.5px;color:rgba(15,23,42,.92);font-weight:950}.dc-bg .wowPrimaryJob em{font-style:normal;font-size:12px;color:rgba(15,23,42,.55);font-weight:850}.dc-bg .wowCardHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.dc-bg .wowCardTitle{margin-top:4px;font-size:17px;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.92)}
+.dc-bg .wowActionList{display:flex;flex-direction:column;gap:8px}.dc-bg .wowActionItem{width:100%;border:1px solid rgba(15,23,42,.06);background:rgba(248,250,252,.72);border-radius:16px;padding:10px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;text-align:left;align-items:center;cursor:pointer;transition:background .12s ease,transform .1s ease,box-shadow .14s ease}.dc-bg .wowActionItem:hover{background:#fff;transform:translateY(-1px);box-shadow:0 14px 34px rgba(2,6,23,.07)}.dc-bg .wowActionRank{width:34px;height:34px;border-radius:12px;background:rgba(124,58,237,.10);color:rgba(91,33,182,.96);display:flex;align-items:center;justify-content:center;font-weight:990;font-size:12px}.dc-bg .wowActionBody{min-width:0}.dc-bg .wowActionName{font-weight:960;color:rgba(15,23,42,.94);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dc-bg .wowActionIssue{margin-top:2px;color:rgba(15,23,42,.58);font-size:12px;line-height:1.35;font-weight:760}.dc-bg .wowActionMeta{margin-top:4px;color:rgba(15,23,42,.42);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.dc-bg .wowActionImpact{font-size:13px;font-weight:990;color:rgba(180,83,9,.98);white-space:nowrap}.dc-bg .wowEmpty{border-radius:16px;border:1px dashed rgba(15,23,42,.14);background:rgba(255,255,255,.58);padding:14px;text-align:center;color:rgba(15,23,42,.55);font-weight:850;font-size:13px}
+.dc-bg .wowBenchmarkGrid{display:grid;grid-template-columns:1fr;gap:8px}.dc-bg .wowBenchmarkItem{border:1px solid rgba(15,23,42,.06);background:rgba(248,250,252,.72);border-radius:15px;padding:10px;display:flex;justify-content:space-between;gap:10px;align-items:center}.dc-bg .wowBenchmarkLabel{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.86)}.dc-bg .wowBenchmarkNote{margin-top:3px;color:rgba(15,23,42,.48);font-size:11.5px;font-weight:760}.dc-bg .wowBenchmarkItem strong{font-size:14px;font-weight:990;white-space:nowrap}.dc-bg .wowBenchmarkItem strong.ok{color:rgba(5,150,105,.95)}.dc-bg .wowBenchmarkItem strong.warn{color:rgba(180,83,9,.98)}.dc-bg .wowBenchmarkItem strong.bad{color:rgba(220,38,38,.95)}.dc-bg .wowCostStrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0 18px 18px}.dc-bg .wowCostStrip div{border-radius:16px;border:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.72);padding:11px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}.dc-bg .wowCostStrip span{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:950;color:rgba(15,23,42,.48)}.dc-bg .wowCostStrip strong{font-size:14px;font-weight:990;color:rgba(15,23,42,.86)}
+@media(max-width:1250px){.dc-bg .wowHeroGrid{grid-template-columns:1fr 1fr}.dc-bg .wowBenchmarkCard{grid-column:1/-1}.dc-bg .wowBenchmarkGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:820px){.dc-bg .wowTop{padding:14px 14px 2px}.dc-bg .wowTitle{font-size:22px}.dc-bg .wowHeroGrid{grid-template-columns:1fr;padding:12px 14px 14px}.dc-bg .wowRecoveryValue{font-size:32px}.dc-bg .wowBenchmarkGrid{grid-template-columns:1fr}.dc-bg .wowCostStrip{grid-template-columns:1fr 1fr;padding:0 14px 14px}.dc-bg .wowActionItem{grid-template-columns:auto minmax(0,1fr);align-items:flex-start}.dc-bg .wowActionImpact{grid-column:2/-1}}
+@media(max-width:560px){.dc-bg .wowCostStrip{grid-template-columns:1fr}.dc-bg .wowRecoveryStats{grid-template-columns:1fr}.dc-bg .wowTop{display:block}.dc-bg .wowActions{margin-top:12px}.dc-bg .wowActions .btn{width:100%;justify-content:center}.dc-bg .wowActionItem{grid-template-columns:1fr}.dc-bg .wowActionRank{width:fit-content;padding:0 10px}.dc-bg .wowActionImpact{grid-column:auto}}
 
-@media(max-width:900px){
-  .dc-bg .allJobsTopTools{flex-direction:column;align-items:stretch}
-  .dc-bg .allJobsTopTools .btn{justify-content:center}
-  .dc-bg .allJobsStackHeader{align-items:flex-start;flex-direction:column}
-  .dc-bg .allJobsCompactHead{flex-direction:column}
-  .dc-bg .allJobsCompactActions{width:100%;justify-content:flex-start}
-}
-@media(max-width:560px){
-  .dc-bg .allJobsTopTools{padding:12px}
-  .dc-bg .allJobsSummaryStats{padding:12px}
-  .dc-bg .allJobsStack{padding:0 10px 12px;gap:12px}
-  .dc-bg .allJobsStackHeader{margin:0 10px 12px;padding:14px}
-  .dc-bg .allJobsCompactPad{padding:12px}
-}
 
-.dc-bg /* enterprise button polish */
-.uploadCtaBtn{
-  position:relative;
+.dc-bg .profitCommandPanel{
+  margin-top:12px;
+  border-radius:24px;
+  border:1px solid rgba(15,23,42,.07);
+  background:
+    radial-gradient(700px 240px at 0% 0%,rgba(34,211,238,.13),transparent 58%),
+    radial-gradient(680px 260px at 100% 0%,rgba(124,58,237,.11),transparent 58%),
+    rgba(255,255,255,.90);
+  box-shadow:0 20px 64px rgba(2,6,23,.075);
   overflow:hidden;
-  isolation:isolate;
-  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.92));
-  border-color:rgba(124,58,237,.22);
-  box-shadow:0 10px 26px rgba(124,58,237,.08), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.dc-bg .profitCommandHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:16px;
+  border-bottom:1px solid rgba(15,23,42,.06);
+}
+.dc-bg .profitCommandTitle{
+  margin-top:4px;
+  font-size:24px;
+  line-height:1.08;
+  font-weight:990;
+  letter-spacing:-.035em;
+  color:rgba(15,23,42,.95);
+}
+.dc-bg .profitCommandSub{
+  margin-top:7px;
+  max-width:820px;
+  font-size:13.5px;
+  line-height:1.45;
+  font-weight:760;
+  color:rgba(15,23,42,.58);
+}
+.dc-bg .profitCommandBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.08);
+  background:rgba(255,255,255,.76);
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:950;
+  color:rgba(15,23,42,.72);
+}
+.dc-bg .profitCommandCards{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  padding:14px 16px 0;
+}
+.dc-bg .profitCommandCard{
+  border-radius:18px;
+  border:1px solid rgba(15,23,42,.07);
+  background:rgba(255,255,255,.82);
+  padding:12px;
+  box-shadow:0 10px 28px rgba(2,6,23,.045);
+}
+.dc-bg .profitCommandCard.warn{border-color:rgba(245,158,11,.18);background:rgba(255,251,235,.70)}
+.dc-bg .profitCommandCard.ok{border-color:rgba(16,185,129,.16);background:rgba(240,253,250,.70)}
+.dc-bg .profitCommandLabel{
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  font-weight:950;
+  color:rgba(15,23,42,.48);
+}
+.dc-bg .profitCommandValue{
+  margin-top:7px;
+  font-size:23px;
+  line-height:1;
+  font-weight:990;
+  letter-spacing:-.025em;
+  color:rgba(15,23,42,.94);
+}
+.dc-bg .profitCommandNote{
+  margin-top:7px;
+  font-size:12.5px;
+  line-height:1.35;
+  font-weight:760;
+  color:rgba(15,23,42,.56);
+}
+.dc-bg .profitCommandBody{
+  display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);
+  gap:12px;
+  padding:14px 16px 16px;
+}
+.dc-bg .profitCommandActions,.dc-bg .profitCommandBenchmark{
+  border-radius:18px;
+  border:1px solid rgba(15,23,42,.06);
+  background:rgba(255,255,255,.76);
+  padding:12px;
+}
+.dc-bg .profitCommandSectionTitle{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  font-weight:950;
+  color:rgba(15,23,42,.52);
+  margin-bottom:9px;
+}
+.dc-bg .profitCommandAction{
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  border-radius:15px;
+  border:1px solid rgba(15,23,42,.055);
+  background:rgba(248,250,252,.78);
+  padding:10px;
+}
+.dc-bg .profitCommandAction + .profitCommandAction{margin-top:8px}
+.dc-bg .profitCommandStep{
+  width:30px;height:30px;
+  display:grid;place-items:center;
+  border-radius:999px;
+  background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(124,58,237,.16));
+  font-size:12px;
+  font-weight:990;
+  color:rgba(15,23,42,.78);
+}
+.dc-bg .profitCommandActionText strong{
+  display:block;
+  font-size:13.5px;
+  line-height:1.25;
   color:rgba(15,23,42,.92);
 }
-.uploadCtaBtn::before{
-  content:"";
-  position:absolute;
-  inset:-2px;
-  z-index:-1;
-  background:linear-gradient(90deg,rgba(34,211,238,.18),rgba(124,58,237,.18),rgba(34,211,238,.18));
-  opacity:.42;
-  transform:translateX(-65%);
-  animation:uploadCtaSweep 5.5s ease-in-out infinite;
+.dc-bg .profitCommandActionText span{
+  display:block;
+  margin-top:3px;
+  font-size:12.5px;
+  line-height:1.35;
+  font-weight:760;
+  color:rgba(15,23,42,.56);
 }
-.uploadCtaBtn:hover{
-  border-color:rgba(124,58,237,.34);
-  box-shadow:0 16px 38px rgba(124,58,237,.12),0 8px 18px rgba(34,211,238,.07);
+.dc-bg .benchmarkMiniRows{display:grid;gap:8px}
+.dc-bg .benchmarkMiniRows div{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-radius:14px;
+  border:1px solid rgba(15,23,42,.055);
+  background:rgba(248,250,252,.78);
+  padding:10px;
 }
-.uploadCtaIcon{
-  width:18px;
-  height:18px;
-  display:inline-grid;
-  place-items:center;
-  border-radius:999px;
-  background:rgba(124,58,237,.08);
-  color:rgba(88,28,135,.9);
-  font-size:12px;
-  line-height:1;
+.dc-bg .benchmarkMiniRows span{font-size:12px;font-weight:850;color:rgba(15,23,42,.56)}
+.dc-bg .benchmarkMiniRows strong{font-size:13.5px;font-weight:990;color:rgba(15,23,42,.90)}
+@media(max-width:980px){
+  .dc-bg .profitCommandCards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dc-bg .profitCommandBody{grid-template-columns:1fr}
 }
-@keyframes uploadCtaSweep{
-  0%,72%{transform:translateX(-70%);opacity:.18}
-  84%{transform:translateX(0%);opacity:.46}
-  100%{transform:translateX(72%);opacity:.18}
-}
-.saveChangesBtn{
-  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.95));
-  border-color:rgba(15,23,42,.13);
-  color:rgba(15,23,42,.86);
-  box-shadow:0 8px 18px rgba(2,6,23,.045);
-}
-.saveChangesBtn:hover{
-  border-color:rgba(34,211,238,.26);
-  box-shadow:0 12px 28px rgba(2,6,23,.075),0 0 0 3px rgba(34,211,238,.055);
-}
-.viewAllDetailsBtn{
-  background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(30,41,59,.94));
-  border-color:rgba(15,23,42,.18);
-  color:#fff;
-  box-shadow:0 14px 32px rgba(15,23,42,.16);
-}
-.viewAllDetailsBtn:hover{
-  border-color:rgba(34,211,238,.28);
-  box-shadow:0 18px 42px rgba(15,23,42,.20),0 0 0 4px rgba(34,211,238,.06);
-}
-.jobsLogTools{align-items:center}
-@media(max-width:760px){
-  .dc-bg .uploadCtaBtn,.dc-bg .viewAllDetailsBtn{width:100%;justify-content:center}
-  .dc-bg .jobsLogTools{width:100%}
+@media(max-width:640px){
+  .dc-bg .profitCommandHeader{flex-direction:column}
+  .dc-bg .profitCommandBadge{width:100%;justify-content:center}
+  .dc-bg .profitCommandCards{grid-template-columns:1fr}
+  .dc-bg .profitCommandAction{grid-template-columns:28px minmax(0,1fr)}
+  .dc-bg .profitCommandAction .miniBtn{grid-column:1/-1;width:100%;justify-content:center}
+  .dc-bg .profitCommandTitle{font-size:21px}
 }
 
 `;
