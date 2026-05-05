@@ -2510,4 +2510,33 @@ const analyzePageCss = `
   .assignModal select,.assignModal input{font-size:16px!important}
 }
 @media(max-width:420px){.analyzeWrap{padding:0 14px!important}.pageTitle{font-size:27px!important}}
+
+/* Analyze title descender fix: gives the gradient headline enough paint room without changing desktop/tablet/mobile font sizing. */
+.analyzeTopbar > div:first-child{
+  overflow:visible!important;
+  padding-bottom:2px!important;
+}
+.pageTitle{
+  display:block!important;
+  overflow:visible!important;
+  contain:none!important;
+  line-height:1.18!important;
+  padding-bottom:6px!important;
+  margin-bottom:-2px!important;
+}
+.pageTitle .gradText{
+  display:inline-block!important;
+  overflow:visible!important;
+  line-height:1.18!important;
+  padding:0 .035em .10em 0!important;
+  margin:0!important;
+  vertical-align:baseline!important;
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+@media(max-width:768px){
+  .pageTitle{line-height:1.18!important;padding-bottom:6px!important;margin-bottom:-2px!important}
+  .pageTitle .gradText{line-height:1.18!important;padding-bottom:.10em!important}
+}
+
 `;
