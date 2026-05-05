@@ -1860,14 +1860,14 @@ function TopBar({
       <div className="dashboardIntro">
         <div className="pageKicker">Profitability Dashboard</div>
         <h1 className="pageTitle">
-          Every job’s <span className="gradText">profit story</span>
+          See where <span className="gradText">profit is made and lost</span>
         </h1>
         <div className="pageSub">
   {mode === "loading" ? (
     "Loading your profitability dashboard..."
   ) : s ? (
     <>
-      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> totals across every saved job analyzed in DropClarity.
+      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> job profitability, profit leaks, and margin risk across every saved analysis.
     </>
   ) : (
     "No reports yet. Run an analysis from the Upload page to generate your first dashboard."
@@ -1897,6 +1897,107 @@ function TopBar({
         />
       </div>
     </div>
+  );
+}
+
+
+function ProfitLeakSnapshot({
+  state,
+  marginTarget,
+  onOpenHighRisk,
+}: {
+  state: DashboardState;
+  marginTarget: number;
+  onOpenHighRisk: () => void;
+}) {
+  const s = state.summary || {};
+  const jobs = getAllJobs(state);
+  const range = rangeLabel((state.range as RangeKey) || "all");
+  const totalProfit = parseNumberLoose(s.net_profit);
+  const totalRevenue = parseNumberLoose(s.revenue);
+  const totalMargin = parseNumberLoose(s.margin_pct);
+
+  const rows = jobs
+    .map((job, idx) => {
+      const revenue = parseNumberLoose(job.revenue);
+      const profit = parseNumberLoose(job.profit);
+      const margin = parseNumberLoose(job.margin_pct);
+      const targetProfit = revenue * (marginTarget / 100);
+      const recoverable = Math.max(0, targetProfit - profit);
+      return {
+        job,
+        key: buildJobKey(job, idx),
+        revenue,
+        profit,
+        margin,
+        recoverable,
+      };
+    })
+    .sort((a, b) => b.recoverable - a.recoverable || a.profit - b.profit);
+
+  const losingRows = rows.filter((row) => row.profit < 0);
+  const belowTargetRows = rows.filter((row) => row.profit >= 0 && row.margin < marginTarget);
+  const recoverableProfit = rows.reduce((sum, row) => sum + row.recoverable, 0);
+  const lossAmount = losingRows.reduce((sum, row) => sum + Math.abs(Math.min(0, row.profit)), 0);
+  const topOpportunity = rows.find((row) => row.recoverable > 0) || rows[0] || null;
+  const hasRisk = losingRows.length > 0 || belowTargetRows.length > 0 || recoverableProfit > 0;
+
+  const headline = hasRisk
+    ? `${losingRows.length} job${losingRows.length === 1 ? "" : "s"} are losing money.`
+    : `Jobs are above breakeven in this ${range.toLowerCase()} view.`;
+
+  const sub = hasRisk
+    ? `DropClarity found ${fmtMoney(recoverableProfit)} in recoverable profit gap against your ${fmtPct(marginTarget)} target. Start with the highest-impact job below.`
+    : `Keep monitoring new uploads against your ${fmtPct(marginTarget)} target margin so margin drift is caught early.`;
+
+  return (
+    <section className={hasRisk ? "profitSnapshot risk" : "profitSnapshot healthy"}>
+      <div className="profitSnapshotMain">
+        <div className="profitSnapshotKicker">What needs attention first</div>
+        <h2 className="profitSnapshotTitle">{headline}</h2>
+        <p className="profitSnapshotSub">{sub}</p>
+
+        <div className="profitSnapshotActions">
+          <button className="btn profitSnapshotPrimary" type="button" onClick={onOpenHighRisk}>
+            Review high-risk jobs
+          </button>
+          <a className="btn profitSnapshotSecondary" href="#jobsPanel">
+            View job log
+          </a>
+        </div>
+      </div>
+
+      <div className="profitSnapshotMetrics">
+        <div className="profitSnapshotMetric primary">
+          <span>Recoverable Profit</span>
+          <strong>{fmtMoney(recoverableProfit)}</strong>
+          <em>Gap to {fmtPct(marginTarget)} target</em>
+        </div>
+        <div className="profitSnapshotMetric">
+          <span>Losing Jobs</span>
+          <strong className={losingRows.length ? "neg" : "pos"}>{losingRows.length}</strong>
+          <em>{lossAmount > 0 ? `${fmtMoney(lossAmount)} below breakeven` : "None below breakeven"}</em>
+        </div>
+        <div className="profitSnapshotMetric">
+          <span>Total Net Profit</span>
+          <strong className={totalProfit < 0 ? "neg" : "pos"}>{fmtMoney(totalProfit)}</strong>
+          <em>{fmtPct(totalMargin)} blended margin</em>
+        </div>
+        <div className="profitSnapshotMetric">
+          <span>Total Revenue</span>
+          <strong>{fmtMoney(totalRevenue)}</strong>
+          <em>{jobs.length} analyzed jobs</em>
+        </div>
+      </div>
+
+      {topOpportunity ? (
+        <button className="profitSnapshotOpportunity" type="button" onClick={onOpenHighRisk}>
+          <span>Top opportunity</span>
+          <strong>{topOpportunity.job.job_name || topOpportunity.job.job_id || "Review job"}</strong>
+          <em>{topOpportunity.recoverable > 0 ? `${fmtMoney(topOpportunity.recoverable)} gap` : "Monitor margin"}</em>
+        </button>
+      ) : null}
+    </section>
   );
 }
 
@@ -1963,8 +2064,8 @@ function Kpis({ state }: { state: DashboardState }) {
     <div className="panel">
       <div className="panelHead">
         <div>
-          <div className="panelTitle">Subtotal Indicators</div>
-          <div className="panelSub">Totals for the selected date range.</div>
+          <div className="panelTitle">Business Totals</div>
+          <div className="panelSub">The numbers behind the profit leaks above.</div>
         </div>
       </div>
 
@@ -3067,10 +3168,8 @@ function DashboardBody({
 
   return (
     <>
+      <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
       <Kpis state={state} />
-      <DashboardHero state={state} />
-      <ChartsPanel state={state} view={view} />
-      <CreditRefundKpis state={state} />
       <ScaleOversightPanel
         state={state}
         plan={plan}
@@ -3091,6 +3190,9 @@ function DashboardBody({
         }}
         onOpenHighRisk={onOpenHighRisk}
       />
+
+      <ChartsPanel state={state} view={view} />
+      <CreditRefundKpis state={state} />
 
       <div className="grid">
         <div className="mainCol">
@@ -5861,4 +5963,13 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .pageTitle .gradText{line-height:1.18!important;padding-bottom:.10em!important}
 }
 
+
+
+/* Launch-focused dashboard hierarchy */
+.dc-bg .profitSnapshot{position:relative;margin:18px 0 14px;border-radius:28px;border:1px solid rgba(15,23,42,.08);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,253,250,.86) 44%,rgba(245,243,255,.82));box-shadow:0 24px 80px rgba(2,6,23,.10);padding:18px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(420px,.9fr);gap:16px;overflow:hidden}.dc-bg .profitSnapshot:before{content:"";position:absolute;inset:-120px auto auto -120px;width:340px;height:340px;border-radius:999px;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 66%);pointer-events:none}.dc-bg .profitSnapshot.risk{border-color:rgba(239,68,68,.16);background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,247,237,.88) 44%,rgba(245,243,255,.82))}.dc-bg .profitSnapshot.healthy{border-color:rgba(16,185,129,.18)}.dc-bg .profitSnapshotMain{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;min-height:210px;padding:8px}.dc-bg .profitSnapshotKicker{width:fit-content;margin-bottom:10px;padding:7px 10px;border-radius:999px;border:1px solid rgba(34,211,238,.24);background:rgba(255,255,255,.78);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;color:rgba(8,145,178,.95)}.dc-bg .profitSnapshotTitle{margin:0;font-size:38px;line-height:1.03;letter-spacing:-.045em;color:rgba(2,6,23,.96);font-weight:990;max-width:760px}.dc-bg .profitSnapshotSub{margin:12px 0 0;max-width:760px;font-size:15.5px;line-height:1.55;font-weight:780;color:rgba(51,65,85,.78)}.dc-bg .profitSnapshotActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.dc-bg .profitSnapshotPrimary{background:linear-gradient(90deg,rgba(239,68,68,.13),rgba(124,58,237,.14));border-color:rgba(239,68,68,.22)}.dc-bg .profitSnapshotSecondary{background:rgba(255,255,255,.70)}.dc-bg .profitSnapshotMetrics{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.dc-bg .profitSnapshotMetric{border-radius:20px;border:1px solid rgba(15,23,42,.07);background:rgba(255,255,255,.82);padding:14px;box-shadow:0 12px 34px rgba(2,6,23,.055)}.dc-bg .profitSnapshotMetric.primary{border-color:rgba(245,158,11,.22);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,247,237,.82))}.dc-bg .profitSnapshotMetric span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(15,23,42,.50)}.dc-bg .profitSnapshotMetric strong{display:block;margin-top:8px;font-size:25px;line-height:1;font-weight:990;letter-spacing:-.03em;color:rgba(15,23,42,.94)}.dc-bg .profitSnapshotMetric em{display:block;margin-top:8px;font-style:normal;font-size:12px;line-height:1.35;font-weight:760;color:rgba(15,23,42,.55)}.dc-bg .profitSnapshotOpportunity{grid-column:1/-1;border:1px solid rgba(124,58,237,.16);background:rgba(255,255,255,.76);border-radius:18px;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;cursor:pointer;transition:transform .1s ease,box-shadow .14s ease,border-color .14s ease}.dc-bg .profitSnapshotOpportunity:hover{transform:translateY(-1px);box-shadow:0 14px 40px rgba(2,6,23,.10);border-color:rgba(124,58,237,.28)}.dc-bg .profitSnapshotOpportunity span{font-size:11px;text-transform:uppercase;letter-spacing:.075em;font-weight:950;color:rgba(124,58,237,.86)}.dc-bg .profitSnapshotOpportunity strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:950;color:rgba(15,23,42,.92)}.dc-bg .profitSnapshotOpportunity em{font-style:normal;font-size:13px;font-weight:950;color:rgba(194,65,12,.94)}
+.dc-bg .scaleInsanePanel{margin-top:14px}.dc-bg .scaleExecutiveGrid{align-items:stretch}.dc-bg .scaleRecoveryCommand,.dc-bg .scaleActionQueueCard,.dc-bg .scaleBenchmarkCard,.dc-bg .scaleCard{box-shadow:0 14px 42px rgba(2,6,23,.055)}.dc-bg .scaleQueueTitle,.dc-bg .scaleInsightTitle,.dc-bg .emailAlertTitle{letter-spacing:-.025em}.dc-bg .charts{margin-top:14px}.dc-bg .creditKpiPanel{margin-top:14px}
+
+@media(max-width:1180px){.dc-bg .profitSnapshot{grid-template-columns:1fr}.dc-bg .profitSnapshotMain{min-height:0}.dc-bg .profitSnapshotTitle{font-size:34px}.dc-bg .profitSnapshotMetrics{grid-template-columns:repeat(4,minmax(0,1fr))}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr auto}.dc-bg .profitSnapshotOpportunity span{grid-column:1/-1}.dc-bg .profitSnapshotOpportunity strong{white-space:normal}}
+@media(max-width:760px){.dc-bg .profitSnapshot{padding:14px;border-radius:22px}.dc-bg .profitSnapshotTitle{font-size:28px;line-height:1.08}.dc-bg .profitSnapshotSub{font-size:14px}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr 1fr}.dc-bg .profitSnapshotMetric strong{font-size:21px}.dc-bg .profitSnapshotActions .btn{width:100%;justify-content:center}.dc-bg .profitSnapshotOpportunity{grid-template-columns:1fr}.dc-bg .profitSnapshotOpportunity em{justify-self:start}}
+@media(max-width:520px){.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr}.dc-bg .profitSnapshotTitle{font-size:25px}.dc-bg .profitSnapshotMetric{padding:12px}.dc-bg .profitSnapshotMain{padding:2px}.dc-bg .kpis{grid-template-columns:1fr!important}}
 `;
