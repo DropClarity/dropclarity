@@ -3225,7 +3225,9 @@ function JobEditor({
         </div>
       ) : null}
 
-      <div className="jobPage">
+      <div className={showBack ? "jobPage" : "jobPage stackedJobPage"}>
+        {showBack ? (
+          <>
         <div className="jobStats">
           <div className="stat"><div className="statLabel">Gross Profit</div><div className={`statValue ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div><div className="statSub">Includes manual edits.</div></div>
           <div className="stat"><div className="statLabel">Gross Margin</div><div className={`statValue ${gm < 0 ? "neg" : "pos"}`}>{fmtPct(gm)}</div><div className="statSub">Based on edited values.</div></div>
@@ -3244,6 +3246,8 @@ function JobEditor({
         </div>
 
         <JobComparisonPanel base={base} state={state} marginTarget={marginTarget} />
+          </>
+        ) : null}
 
         <div className="panel jobDetailFocus">
           <div className="panelHead">
@@ -3345,6 +3349,7 @@ function JobEditor({
               </tbody>
             </table>
 
+            {showBack ? (
             <div className="supportGrid">
               <div className="panel miniPanel">
                 <div className="panelHead"><div><div className="panelTitle">Job notes</div><div className="panelSub">Add context for this job.</div></div></div>
@@ -3362,14 +3367,17 @@ function JobEditor({
                 </div>
               </div>
             </div>
+            ) : null}
           </div>
         </div>
 
+        {showBack ? (
         <div className="jobCharts">
           <div className="chartCard"><div className="chartHead"><div><div className="chartTitle">Gross Profit Trend</div><div className="chartSub">By period for this job</div></div></div>{hasHistory ? <canvas ref={profitRef} width={520} height={220} /> : <div className="trendEmpty">Upload this job in another period to show trends.</div>}</div>
           <div className="chartCard"><div className="chartHead"><div><div className="chartTitle">Revenue vs Costs</div><div className="chartSub">For this job only</div></div></div>{hasHistory ? <canvas ref={revCostRef} width={520} height={220} /> : <div className="trendEmpty">More periods for this job will unlock this chart.</div>}</div>
           <div className="chartCard wide"><div className="chartHead"><div><div className="chartTitle">Margin Trend</div><div className="chartSub">Gross margin % by period</div></div></div>{hasHistory ? <canvas ref={marginRef} width={520} height={220} /> : <div className="trendEmpty">Margin history appears after multiple periods.</div>}</div>
         </div>
+        ) : null}
       </div>
     </>
   );
@@ -3451,21 +3459,144 @@ function AllJobsView({
       .filter(({ job }) => !q || `${job.job_name || ""} ${job.job_id || ""}`.toLowerCase().includes(q));
   }, [jobs, search]);
 
+  const allJobsTotals = useMemo(() => {
+    const edits = readEdits(userId);
+    const revenue = filtered.reduce((sum, row) => sum + parseNumberLoose(row.job.revenue), 0);
+    const costs = filtered.reduce((sum, row) => sum + parseNumberLoose(row.job.costs), 0);
+    const profit = filtered.reduce((sum, row) => {
+      const rowRevenue = parseNumberLoose(row.job.revenue);
+      const rowCosts = parseNumberLoose(row.job.costs);
+      const rowProfit = parseNumberLoose(row.job.profit);
+      return sum + (Number.isFinite(rowProfit) ? rowProfit : rowRevenue - rowCosts);
+    }, 0);
+    const credits = filtered.reduce((sum, row) => sum + getJobCreditTotal(row.job), 0);
+    const manualCategories = filtered.reduce((sum, row) => {
+      const edit = edits[String(row.key)] || {};
+      const custom = Array.isArray(edit.custom_categories) ? edit.custom_categories : [];
+      return sum + custom.length;
+    }, 0);
+
+    return {
+      revenue,
+      costs,
+      profit,
+      margin: revenue !== 0 ? (profit / revenue) * 100 : 0,
+      credits,
+      manualCategories,
+    };
+  }, [filtered, userId]);
+
+  const visibleJobsState = useMemo<DashboardState>(() => ({
+    ...state,
+    all_jobs: filtered.map((row) => row.job),
+  }), [state, filtered]);
+
   return (
-    <div className="panel" style={{ marginTop: 12 }}>
-      <div className="crumbs">
+    <div className="panel allJobsDetailShell" style={{ marginTop: 12 }}>
+      <div className="crumbs allJobsCrumbs">
         <div className="crumb">View: <strong>All Jobs Detail</strong></div>
         <div className="crumb"><strong>{String(filtered.length)}</strong> jobs shown</div>
-        <button className="crumbBtn dashboardBackBtn" type="button" onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>← Back to dashboard</button>
+        <button
+          className="crumbBtn dashboardBackBtn"
+          type="button"
+          onClick={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        >
+          ← Back to dashboard
+        </button>
       </div>
-      <div className="pad"><input className="searchInput wideSearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs before expanding details..." /></div>
-      <div className="pad">
+
+      <div className="pad allJobsToolbarPad">
+        <input
+          className="searchInput wideSearch"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search jobs before expanding details..."
+        />
+        <button
+          className="btn"
+          type="button"
+          onClick={() => access.canExport ? exportAllJobsCsv(visibleJobsState) : onLocked("CSV exports", "Core")}
+        >
+          {access.canExport ? "Export Visible Jobs CSV" : "Export Visible Jobs CSV 🔒"}
+        </button>
+      </div>
+
+      <div className="pad allJobsSubtotalPad">
+        <div className="jobStats allJobsSubtotalGrid">
+          <div className="stat">
+            <div className="statLabel">Gross Profit</div>
+            <div className={`statValue ${allJobsTotals.profit < 0 ? "neg" : "pos"}`}>{fmtMoney(allJobsTotals.profit)}</div>
+            <div className="statSub">Combined visible jobs.</div>
+          </div>
+          <div className="stat">
+            <div className="statLabel">Gross Margin</div>
+            <div className={`statValue ${allJobsTotals.margin < 0 ? "neg" : "pos"}`}>{fmtPct(allJobsTotals.margin)}</div>
+            <div className="statSub">Based on visible jobs.</div>
+          </div>
+          <div className="stat">
+            <div className="statLabel">Revenue</div>
+            <div className="statValue">{fmtMoney(allJobsTotals.revenue)}</div>
+            <div className="statSub">Visible job revenue.</div>
+          </div>
+          <div className="stat">
+            <div className="statLabel">Known Costs</div>
+            <div className="statValue">{fmtMoney(allJobsTotals.costs)}</div>
+            <div className="statSub">Visible job costs.</div>
+          </div>
+          <div className="stat">
+            <div className="statLabel">Credits Applied</div>
+            <div className="statValue creditText">{fmtMoney(allJobsTotals.credits)}</div>
+            <div className="statSub">Credits across visible jobs.</div>
+          </div>
+          <div className="stat">
+            <div className="statLabel">Manual Categories</div>
+            <div className="statValue">{allJobsTotals.manualCategories}</div>
+            <div className="statSub">Saved local custom rows.</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="allJobsStackIntro">
+        <div>
+          <div className="sectionEyebrow">Editable Job Stack</div>
+          <div className="sectionTitle">Review every job detail in one place</div>
+          <div className="panelSub">Only editable job detail rows are shown here — no benchmark cards, notes panels, or comparison charts.</div>
+        </div>
+      </div>
+
+      <div className="pad allJobsStackPad">
         {filtered.length ? (
-          filtered.map(({ job, key }) => (
-            <div key={key} style={{ marginBottom: 14 }}>
-              <JobEditor jobKey={key} base={job} state={state} showBack={false} userId={userId} access={access} onLocked={onLocked} onBack={() => {}} onAllJobs={() => {}} refreshLocal={refreshLocal} />
-            </div>
-          ))
+          <div className="allJobsStack">
+            {filtered.map(({ job, key }, index) => (
+              <div key={key} className="allJobsStackItem">
+                <div className="allJobsStackItemHead">
+                  <div>
+                    <div className="allJobsStackJobName">{job.job_name || job.job_id || `Job ${index + 1}`}</div>
+                    <div className="allJobsStackJobMeta">{job.job_id || "No Job ID"} • {job.period_label || "Saved report"} • {dateLabel(job.created_at)}</div>
+                  </div>
+                  <button
+                    className="miniBtn"
+                    type="button"
+                    onClick={() => { setJobKey(key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  >
+                    Open full view
+                  </button>
+                </div>
+                <JobEditor
+                  jobKey={key}
+                  base={job}
+                  state={state}
+                  showBack={false}
+                  userId={userId}
+                  access={access}
+                  onLocked={onLocked}
+                  onBack={() => {}}
+                  onAllJobs={() => {}}
+                  refreshLocal={refreshLocal}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="empty">No jobs match this search.</div>
         )}
@@ -4142,6 +4273,25 @@ const dashboardCss = `
 .dc-bg .kpis{padding:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.dc-bg .kpi, .dc-bg .stat{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.84);box-shadow:0 14px 40px rgba(2,6,23,.06);padding:12px}.dc-bg .kLabel, .dc-bg .statLabel{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.52);font-weight:900}.dc-bg .kValue, .dc-bg .statValue{margin-top:7px;font-weight:980;font-size:22px;letter-spacing:-.02em;color:rgba(15,23,42,.90)}.dc-bg .kSub, .dc-bg .statSub{margin-top:7px;font-size:13px;line-height:1.35;color:rgba(15,23,42,.58);font-weight:760}.dc-bg .pos{color:rgba(5,150,105,.95)!important}.dc-bg .neg{color:rgba(220,38,38,.95)!important}.dc-bg .strong{font-weight:950}.dc-bg .charts, .dc-bg .jobCharts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.dc-bg .jobCharts{gap:12px}.dc-bg .chartCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.82);padding:12px;overflow:hidden;box-shadow:0 12px 38px rgba(2,6,23,.055)}.dc-bg .chartCard.wide{grid-column:1/-1}.dc-bg .chartHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:8px}.dc-bg .chartTitle{font-weight:950;letter-spacing:-.01em;color:rgba(15,23,42,.92);font-size:17px}.dc-bg .chartSub{color:rgba(15,23,42,.55);font-size:13px;font-weight:750}.dc-bg canvas{width:100%;height:auto;display:block}.dc-bg .trendEmpty{border-radius:18px;border:1px dashed rgba(15,23,42,.14);background:rgba(255,255,255,.55);padding:16px;color:rgba(15,23,42,.72);font-weight:850;font-size:14px;line-height:1.45}.dc-bg .mixList{display:flex;flex-direction:column;gap:14px}.dc-bg .gridMix{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dc-bg .mixRow{border:1px solid var(--line2);background:rgba(255,255,255,.82);border-radius:16px;padding:12px}.dc-bg .mixTop{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:rgba(15,23,42,.72);font-weight:850}.dc-bg .sw{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:7px}.dc-bg .barTrack{height:8px;border-radius:999px;background:rgba(15,23,42,.06);overflow:hidden;margin-top:8px}.dc-bg .barFill{height:100%;border-radius:999px}.dc-bg .mixSub{margin-top:6px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}
 .dc-bg .tableTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.dc-bg .searchInput{min-width:220px}.dc-bg .tableWrap{overflow:auto}.dc-bg .jobsTable{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}.dc-bg .jobsTable th, .dc-bg .jobsTable td{padding:13px 14px;border-bottom:1px solid rgba(15,23,42,.06);text-align:left;font-size:13.5px;font-weight:750;color:rgba(15,23,42,.72);vertical-align:middle}.dc-bg .jobsTable th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.44);font-weight:950;background:rgba(15,23,42,.025)}.dc-bg .jobName{font-weight:950;color:#0f172a;font-size:14px}.dc-bg .jobMeta, .dc-bg .itemMeta{margin-top:5px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}.dc-bg .miniBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:950;font-size:12px;cursor:pointer}.dc-bg .tag{padding:6px 10px;border-radius:999px;border:1px solid var(--line2);font-weight:950;font-size:11.5px;white-space:nowrap;background:rgba(15,23,42,.04);color:rgba(15,23,42,.78)}.dc-bg .tag.ok{border-color:rgba(52,211,153,.22);color:rgba(5,150,105,.95);background:rgba(52,211,153,.10)}.dc-bg .tag.warn{border-color:rgba(245,158,11,.22);color:rgba(180,83,9,.95);background:rgba(245,158,11,.10)}.dc-bg .tag.bad{border-color:rgba(239,68,68,.22);color:rgba(220,38,38,.95);background:rgba(239,68,68,.10)}.dc-bg .list{display:flex;flex-direction:column;gap:10px}.dc-bg .item{border-radius:18px;border:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.86);padding:11px}.dc-bg .itemTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.dc-bg .itemName{font-weight:950;font-size:14px;color:rgba(15,23,42,.88)}.dc-bg .reportActions{display:flex;align-items:center;gap:10px}.dc-bg .deleteReportBtn{width:26px;height:26px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(239,68,68,.08);color:rgba(185,28,28,.95);font-weight:950;font-size:16px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.dc-bg .empty{text-align:center;padding:24px;color:rgba(15,23,42,.55);border:1px dashed rgba(15,23,42,.14);border-radius:18px;background:rgba(255,255,255,.55);font-weight:850;margin:14px}.dc-bg .error{border:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.08);color:rgba(15,23,42,.86);border-radius:18px;padding:14px;font-weight:850;font-size:13px;white-space:pre-wrap}
 .dc-bg .crumbs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,.72));position:relative;z-index:20;pointer-events:auto}.dc-bg .crumb{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;color:rgba(15,23,42,.72)}.dc-bg .crumb strong{color:rgba(15,23,42,.92)}.dc-bg .crumbBtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.82);font-weight:950;font-size:12.5px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,border-color .12s ease;text-decoration:none;color:rgba(15,23,42,.90)}.dc-bg .crumbBtn.secondary{margin-left:0}.dc-bg .jobPage{display:flex;flex-direction:column;gap:12px;margin-top:12px}.dc-bg .jobAnalysisHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(240,253,250,.72));box-shadow:0 14px 40px rgba(2,6,23,.055);padding:14px 16px}.dc-bg .sectionEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.86)}.dc-bg .sectionTitle{margin-top:4px;font-size:20px;line-height:1.1;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.94)}.dc-bg .sectionSubtle{font-size:12.5px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.50);text-align:right}.dc-bg .jobDetailFocus{border:1px solid rgba(34,211,238,.14);box-shadow:0 18px 60px rgba(34,211,238,.08)}.dc-bg .jobStats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.dc-bg .jobDetailFocus{border-radius:18px}.dc-bg .jobDetailPad{overflow-x:auto}.dc-bg .jobTable{width:100%;min-width:1320px;table-layout:fixed;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86)}.dc-bg .jobTable th, .dc-bg .jobTable td{padding:12px 8px;border-bottom:1px solid rgba(15,23,42,.06);vertical-align:middle;font-size:12.5px}.dc-bg .jobTable th{text-align:left;font-weight:950;color:rgba(15,23,42,.86);background:rgba(15,23,42,.035);position:sticky;top:0;z-index:2;font-size:12px;white-space:nowrap}.dc-bg .cellEdit{border:1px solid rgba(15,23,42,.12);background:#ffffff;border-radius:12px;padding:10px 10px;font-weight:800;font-size:14px;color:#0f172a!important;width:100%;outline:none;transition:border-color .12s ease,box-shadow .12s ease;position:relative;z-index:2;caret-color:#0f172a}.dc-bg .cellEdit:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.2)}.dc-bg .cellHint{margin-top:6px;font-size:11.5px;color:rgba(15,23,42,.62);font-weight:750}.dc-bg .customRemoveWrap{display:flex;justify-content:center;align-items:center}.dc-bg .supportGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.dc-bg .miniPanel{box-shadow:none}.dc-bg .noteBox{min-height:110px;resize:vertical}
+
+
+.dc-bg .allJobsDetailShell{overflow:hidden}
+.dc-bg .allJobsToolbarPad{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dc-bg .allJobsToolbarPad .wideSearch{flex:1;min-width:260px}
+.dc-bg .allJobsSubtotalPad{padding-top:6px}
+.dc-bg .allJobsSubtotalGrid{margin:0;grid-template-columns:repeat(6,minmax(0,1fr))}
+.dc-bg .allJobsStackIntro{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin:4px 14px 0;padding:14px 16px;border-radius:20px;border:1px solid rgba(34,211,238,.14);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.84));box-shadow:0 12px 32px rgba(2,6,23,.045)}
+.dc-bg .allJobsStackPad{padding-top:12px}
+.dc-bg .allJobsStack{display:flex;flex-direction:column;gap:14px}
+.dc-bg .allJobsStackItem{border:1px solid rgba(15,23,42,.08);border-radius:20px;background:rgba(255,255,255,.84);box-shadow:0 12px 34px rgba(2,6,23,.055);overflow:hidden}
+.dc-bg .allJobsStackItemHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.06);background:rgba(248,250,252,.72)}
+.dc-bg .allJobsStackJobName{font-size:15px;font-weight:980;letter-spacing:-.015em;color:rgba(15,23,42,.94)}
+.dc-bg .allJobsStackJobMeta{margin-top:4px;font-size:12px;font-weight:760;color:rgba(15,23,42,.52)}
+.dc-bg .stackedJobPage{margin-top:0;gap:0}
+.dc-bg .stackedJobPage .jobDetailFocus{border:0;border-radius:0;box-shadow:none;background:transparent}
+.dc-bg .stackedJobPage .jobDetailFocus>.panelHead{background:rgba(255,255,255,.72);padding:12px 14px}
+.dc-bg .stackedJobPage .jobDetailPad{padding:12px 14px 14px}
+.dc-bg .stackedJobPage .jobTable{min-width:1320px;background:rgba(255,255,255,.92)}
 
 .dc-bg .scalePanel{
   margin-top:12px;
@@ -5225,6 +5375,10 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .profitCommandCards{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dc-bg .profitCommandBody{grid-template-columns:1fr}
 }
+
+@media(max-width:1100px){.dc-bg .allJobsSubtotalGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.dc-bg .allJobsToolbarPad{flex-direction:column;align-items:stretch}.dc-bg .allJobsToolbarPad .wideSearch{min-width:0;width:100%}.dc-bg .allJobsSubtotalGrid{grid-template-columns:1fr 1fr}.dc-bg .allJobsStackItemHead{align-items:flex-start;flex-direction:column}.dc-bg .allJobsStackIntro{margin-left:10px;margin-right:10px}}
+
 @media(max-width:640px){
   .dc-bg .profitCommandHeader{flex-direction:column}
   .dc-bg .profitCommandBadge{width:100%;justify-content:center}
@@ -5293,7 +5447,7 @@ main.dc-bg .wrap{padding-bottom:56px;}
 }
 .dc-bg .scaleRecoveryCommand{min-height:360px;border-left:5px solid rgba(124,58,237,.78);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,249,255,.82))}
 .dc-bg .scaleCommandAura{position:absolute;right:-90px;bottom:-90px;width:230px;height:230px;border-radius:999px;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 66%);pointer-events:none}
-.dc-bg .scaleRecoveryValue{margin-top:8px;font-size:42px;line-height:.95;font-weight:990;letter-spacing:-.055em;color:rgba(15,23,42,.94)}
+.dc-bg .scaleRecoveryValue{margin-top:8px;font-size:clamp(28px,2.4vw,34px);line-height:1.02;font-weight:990;letter-spacing:-.045em;color:rgba(15,23,42,.94)}
 .dc-bg .warnText{color:rgba(180,83,9,.98)!important}
 .dc-bg .scaleRecoverySub{margin-top:10px;font-size:14px;line-height:1.5;font-weight:820;color:rgba(15,23,42,.62)}
 .dc-bg .scaleRecoveryStats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
@@ -5331,6 +5485,6 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .scalePremiumGrid{display:grid;grid-template-columns:minmax(340px,.95fr) minmax(360px,1.05fr) minmax(280px,.65fr);gap:16px;padding:0 18px 18px}.dc-bg .premiumEmailCard,.dc-bg .premiumLeakCard,.dc-bg .premiumRulesCard{border-radius:22px!important;border-color:rgba(15,23,42,.08)!important;background:rgba(255,255,255,.88)!important;box-shadow:0 14px 40px rgba(2,6,23,.055)!important}.dc-bg .premiumLeakList{display:flex;flex-direction:column;gap:10px;margin-top:12px}.dc-bg .premiumLeakRow{border-radius:16px;border:1px solid rgba(15,23,42,.07);background:rgba(248,250,252,.76);padding:11px}.dc-bg .premiumLeakTop{display:flex;justify-content:space-between;gap:10px}.dc-bg .premiumLeakName{font-size:13.5px;font-weight:990;color:rgba(15,23,42,.92)}.dc-bg .premiumLeakMeta{margin-top:3px;font-size:12px;font-weight:800;color:rgba(15,23,42,.52)}.dc-bg .premiumLeakAmount{font-size:13.5px;font-weight:990;white-space:nowrap}.dc-bg .premiumLeakAmount.ok{color:rgba(5,150,105,.98)}.dc-bg .premiumLeakAmount.warn{color:rgba(180,83,9,.98)}.dc-bg .premiumLeakAmount.bad{color:rgba(220,38,38,.96)}.dc-bg .premiumLeakFix{margin-top:8px;font-size:12.25px;line-height:1.4;font-weight:760;color:rgba(15,23,42,.58)}.dc-bg .premiumReviewBtn{width:100%;justify-content:center;margin-top:14px}
 @media(max-width:1350px){.dc-bg .scaleExecutiveGrid{grid-template-columns:1fr}.dc-bg .scaleRecoveryCommand{min-height:0}.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{grid-template-columns:1fr 1fr}.dc-bg .premiumRulesCard{grid-column:1/-1}}
 @media(max-width:900px){.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{grid-template-columns:1fr}.dc-bg .scaleRecoveryStats,.dc-bg .costRadarRows{grid-template-columns:1fr 1fr}.dc-bg .scaleQueueItem{grid-template-columns:38px minmax(0,1fr)}}
-@media(max-width:640px){.dc-bg .scaleExecutiveGrid,.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{padding-left:14px;padding-right:14px;gap:12px}.dc-bg .scaleRecoveryValue{font-size:34px}.dc-bg .scaleQueueItem{grid-template-columns:1fr}.dc-bg .scaleQueueRank{width:fit-content;padding:0 12px}.dc-bg .scaleQueueImpact{justify-self:start}.dc-bg .scaleRecoveryStats,.dc-bg .costRadarRows{grid-template-columns:1fr}.dc-bg .scaleCardHeadSplit,.dc-bg .premiumScaleHead{flex-direction:column}.dc-bg .scaleHeadRight{justify-content:flex-start}}
+@media(max-width:640px){.dc-bg .scaleExecutiveGrid,.dc-bg .scaleIntelligenceStrip,.dc-bg .scalePremiumGrid{padding-left:14px;padding-right:14px;gap:12px}.dc-bg .scaleRecoveryValue{font-size:28px}.dc-bg .scaleQueueItem{grid-template-columns:1fr}.dc-bg .scaleQueueRank{width:fit-content;padding:0 12px}.dc-bg .scaleQueueImpact{justify-self:start}.dc-bg .scaleRecoveryStats,.dc-bg .costRadarRows{grid-template-columns:1fr}.dc-bg .scaleCardHeadSplit,.dc-bg .premiumScaleHead{flex-direction:column}.dc-bg .scaleHeadRight{justify-content:flex-start}}
 
 `;
