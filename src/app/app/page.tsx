@@ -561,8 +561,9 @@ function costMixTotal(cb: CostMix) {
 
 function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
   const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
+  const overallMix = normalizeCostBreakdown(out?.cost_mix || {});
 
-  return jobs.map((job: any, idx: number) => {
+  const baseRows: ClassificationCorrectionRow[] = jobs.map((job: any, idx: number) => {
     const job_id = job?.job_id == null ? null : String(job.job_id).trim() || null;
     const job_name = String(job?.job_name || job_id || `Job ${idx + 1}`).trim();
     const revenue = Number(job?.revenue) || 0;
@@ -573,6 +574,46 @@ function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
       job_id,
       job_name,
       revenue,
+      original,
+      edited: { ...original },
+    };
+  });
+
+  // If the worker returns Taxes correctly at the top-level cost_mix but an older
+  // job-level cost_breakdown still has taxes as 0, keep the classification
+  // editor aligned with the visible Cost Mix. This only fills the missing Taxes
+  // amount and leaves Labor, Materials, Subs, and Other untouched.
+  const rowTaxesTotal = baseRows.reduce(
+    (sum, row) => sum + (Number(row.original.taxes) || 0),
+    0,
+  );
+  const missingTaxes = (Number(overallMix.taxes) || 0) - rowTaxesTotal;
+
+  if (!baseRows.length || missingTaxes <= 0.005) return baseRows;
+
+  const rowCostTotals = baseRows.map((row) =>
+    Math.max(0, costMixTotal(row.original)),
+  );
+  const totalRowCosts = rowCostTotals.reduce(
+    (sum, value) => sum + (Number(value) || 0),
+    0,
+  );
+
+  return baseRows.map((row, idx) => {
+    const share =
+      baseRows.length === 1
+        ? 1
+        : totalRowCosts > 0
+          ? (rowCostTotals[idx] || 0) / totalRowCosts
+          : 1 / baseRows.length;
+    const taxShare = missingTaxes * share;
+    const original: CostMix = {
+      ...row.original,
+      taxes: (Number(row.original.taxes) || 0) + taxShare,
+    };
+
+    return {
+      ...row,
       original,
       edited: { ...original },
     };
