@@ -43,6 +43,7 @@ type CostMix = {
   labor: number;
   materials: number;
   subs: number;
+  taxes: number;
   other: number;
 };
 
@@ -280,6 +281,22 @@ function categorizeCostLine(description = "") {
 
   if (
     [
+      "tax",
+      "taxes",
+      "sales tax",
+      "use tax",
+      "state tax",
+      "local tax",
+      "county tax",
+      "city tax",
+      "taxable",
+    ].some((k) => d.includes(k))
+  ) {
+    return "taxes";
+  }
+
+  if (
+    [
       "subcontractor",
       "subcontractors",
       "subcontract",
@@ -347,6 +364,7 @@ function buildCostMix(out: any): CostMix {
       labor: Number(mix.labor) || 0,
       materials: Number(mix.materials) || 0,
       subs: Number(mix.subs) || 0,
+      taxes: Number(mix.taxes) || 0,
       other: Number(mix.other) || 0,
     };
   }
@@ -354,6 +372,7 @@ function buildCostMix(out: any): CostMix {
   let labor = 0;
   let materials = 0;
   let subs = 0;
+  let taxes = 0;
   let other = 0;
 
   const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
@@ -372,13 +391,14 @@ function buildCostMix(out: any): CostMix {
         );
         const cat = String(line?.category || "").toLowerCase();
         const desc = String(line?.description || line?.name || "");
-        const finalCat = ["labor", "materials", "subs", "other"].includes(cat)
+        const finalCat = ["labor", "materials", "subs", "taxes", "other"].includes(cat)
           ? cat
           : categorizeCostLine(cat + " " + desc);
 
         if (finalCat === "labor") labor += amount;
         else if (finalCat === "subs") subs += amount;
         else if (finalCat === "materials") materials += amount;
+        else if (finalCat === "taxes") taxes += amount;
         else other += amount;
       }
     } else {
@@ -386,11 +406,12 @@ function buildCostMix(out: any): CostMix {
       labor += Number(cb.labor) || 0;
       materials += Number(cb.materials) || 0;
       subs += Number(cb.subs) || 0;
+      taxes += Number(cb.taxes) || 0;
       other += Number(cb.other) || 0;
     }
   }
 
-  return { labor, materials, subs, other };
+  return { labor, materials, subs, taxes, other };
 }
 
 function getCreditsAppliedFromResult(out: any, costMix: CostMix) {
@@ -432,6 +453,7 @@ function buildCostMixDisplay(costMix: CostMix, creditsApplied = 0): CostMixDispl
     labor: Number(costMix.labor) || 0,
     materials: Number(costMix.materials) || 0,
     subs: Number(costMix.subs) || 0,
+    taxes: Number(costMix.taxes) || 0,
     other: Math.abs(displayedOther) < 0.005 ? 0 : displayedOther,
   };
 
@@ -455,6 +477,12 @@ function buildCostMixDisplay(costMix: CostMix, creditsApplied = 0): CostMixDispl
       label: "Subs",
       color: "rgba(251,146,60,.92)",
       colorClass: "bg-orange-400",
+    },
+    {
+      key: "taxes",
+      label: "Taxes",
+      color: "rgba(59,130,246,.88)",
+      colorClass: "bg-blue-500",
     },
     {
       key: "other",
@@ -522,12 +550,13 @@ function normalizeCostBreakdown(cb: any): CostMix {
     labor: Number(cb?.labor) || 0,
     materials: Number(cb?.materials) || 0,
     subs: Number(cb?.subs) || 0,
+    taxes: Number(cb?.taxes) || 0,
     other: Number(cb?.other) || 0,
   };
 }
 
 function costMixTotal(cb: CostMix) {
-  return (Number(cb.labor) || 0) + (Number(cb.materials) || 0) + (Number(cb.subs) || 0) + (Number(cb.other) || 0);
+  return (Number(cb.labor) || 0) + (Number(cb.materials) || 0) + (Number(cb.subs) || 0) + (Number(cb.taxes) || 0) + (Number(cb.other) || 0);
 }
 
 function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
@@ -593,10 +622,11 @@ function correctedResultFromRows(current: any, rows: ClassificationCorrectionRow
       sum.labor += cb.labor;
       sum.materials += cb.materials;
       sum.subs += cb.subs;
+      sum.taxes += cb.taxes;
       sum.other += cb.other;
       return sum;
     },
-    { labor: 0, materials: 0, subs: 0, other: 0 }
+    { labor: 0, materials: 0, subs: 0, taxes: 0, other: 0 }
   );
 
   const losingJobKeys = new Set(
@@ -904,10 +934,11 @@ export default function AppPage() {
         sum.labor += Number(row.edited.labor) || 0;
         sum.materials += Number(row.edited.materials) || 0;
         sum.subs += Number(row.edited.subs) || 0;
+        sum.taxes += Number(row.edited.taxes) || 0;
         sum.other += Number(row.edited.other) || 0;
         return sum;
       },
-      { labor: 0, materials: 0, subs: 0, other: 0 } as CostMix,
+      { labor: 0, materials: 0, subs: 0, taxes: 0, other: 0 } as CostMix,
     );
   }, [classificationRows]);
 
@@ -1052,7 +1083,7 @@ export default function AppPage() {
           `Costs: ${money(jobCosts)}`,
           `Net Profit: ${money(jobProfit)}`,
           `Margin: ${pct(jobMargin)}`,
-          `Cost breakdown: Labor ${money(cb.labor)} | Materials ${money(cb.materials)} | Subs ${money(cb.subs)} | Other ${money(cb.other)}`,
+          `Cost breakdown: Labor ${money(cb.labor)} | Materials ${money(cb.materials)} | Subs ${money(cb.subs)} | Taxes ${money(cb.taxes)} | Other ${money(cb.other)}`,
         );
       });
     }
@@ -1951,7 +1982,7 @@ export default function AppPage() {
 
                   <div className="mt-4 grid gap-6 md:grid-cols-[240px_1fr] md:items-center">
                     <canvas ref={donutCanvasRef} width={220} height={220} />
-                    <div className="grid gap-3 xl:grid-cols-5">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                       {costMixDisplay.buckets.map((bucket) => (
                         <div
                           key={bucket.key}
@@ -1983,7 +2014,7 @@ export default function AppPage() {
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div>
                         <h4 className="text-base font-black text-slate-950">Need to fix a classification?</h4>
-                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Move job costs between Labor, Materials, Subs, and Other without re-uploading files.</p>
+                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Move job costs between Labor, Materials, Subs, Taxes, and Other without re-uploading files.</p>
                       </div>
 
                       <button
@@ -1997,10 +2028,11 @@ export default function AppPage() {
 
                     {classificationOpen && (
                       <div className="mt-4 space-y-3">
-                        <div className="grid gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-black text-slate-600 sm:grid-cols-4">
+                        <div className="grid gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-black text-slate-600 sm:grid-cols-2 lg:grid-cols-5">
                           <div>Labor: {money(classificationTotals.labor)}</div>
                           <div>Materials: {money(classificationTotals.materials)}</div>
                           <div>Subs: {money(classificationTotals.subs)}</div>
+                          <div>Taxes: {money(classificationTotals.taxes)}</div>
                           <div>Other: {money(classificationTotals.other)}</div>
                         </div>
 
@@ -2024,10 +2056,10 @@ export default function AppPage() {
                               </div>
 
                               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                                {(["labor", "materials", "subs", "other"] as CostBucketKey[]).map((bucket) => (
+                                {(["labor", "materials", "subs", "taxes", "other"] as CostBucketKey[]).map((bucket) => (
                                   <label key={bucket} className="block">
                                     <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-                                      {bucket === "subs" ? "Subs" : bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+                                      {bucket === "subs" ? "Subs" : bucket === "taxes" ? "Taxes" : bucket.charAt(0).toUpperCase() + bucket.slice(1)}
                                     </span>
                                     <input
                                       type="number"
