@@ -22,6 +22,7 @@ type CostBreakdown = {
   labor?: number;
   materials?: number;
   subs?: number;
+  taxes?: number;
   other?: number;
   credits_total?: number | string;
   credits?: number | string;
@@ -127,10 +128,11 @@ type EditableJob = {
   material_cost: number;
   labor_cost: number;
   subs_cost: number;
+  tax_cost: number;
   other_cost: number;
   notes: string;
   custom_categories: CustomCategory[];
-  _editing?: "revenue" | "material_cost" | "labor_cost" | "subs_cost" | "other_cost" | null;
+  _editing?: "revenue" | "material_cost" | "labor_cost" | "subs_cost" | "tax_cost" | "other_cost" | null;
 };
 
 type CustomCategory = { name: string; amount: number };
@@ -143,7 +145,7 @@ type CreditMetrics = {
   avgCreditPerJob: number;
   avgCreditPerCreditJob: number;
   creditRatePct: number;
-  creditsByBucket: { labor: number; materials: number; subs: number; other: number; };
+  creditsByBucket: { labor: number; materials: number; subs: number; taxes: number; other: number; };
   biggestCreditJob: JobRow | null;
   biggestCreditAmount: number;
   positiveCostActivity: number;
@@ -417,11 +419,13 @@ function exportAllJobsCsv(state: DashboardState) {
       "Labor",
       "Materials",
       "Subs",
+      "Taxes",
       "Other",
       "Total Credits",
       "Labor Credits",
       "Materials Credits",
       "Subs Credits",
+      "Tax Credits",
       "Other Credits",
       "Status",
     ],
@@ -442,11 +446,13 @@ function exportAllJobsCsv(state: DashboardState) {
       parseNumberLoose(job.cost_breakdown?.labor),
       parseNumberLoose(job.cost_breakdown?.materials),
       parseNumberLoose(job.cost_breakdown?.subs),
+      parseNumberLoose(job.cost_breakdown?.taxes),
       parseNumberLoose(job.cost_breakdown?.other),
       getJobCreditTotal(job),
       getBucketCreditAmount(job.cost_breakdown?.labor),
       getBucketCreditAmount(job.cost_breakdown?.materials),
       getBucketCreditAmount(job.cost_breakdown?.subs),
+      getBucketCreditAmount(job.cost_breakdown?.taxes),
       getBucketCreditAmount(job.cost_breakdown?.other),
       status.label,
     ]);
@@ -465,10 +471,11 @@ function exportSingleJobCsv(
   const labor = parseNumberLoose(job.labor_cost);
   const materials = parseNumberLoose(job.material_cost);
   const subs = parseNumberLoose(job.subs_cost);
+  const taxes = parseNumberLoose(job.tax_cost);
   const other = parseNumberLoose(job.other_cost);
   const creditsApplied = getJobCreditTotal(base);
   const customTotal = sumCustomCategories(job.custom_categories || []);
-  const totalCosts = labor + materials + subs + other + customTotal - creditsApplied;
+  const totalCosts = labor + materials + subs + taxes + other + customTotal - creditsApplied;
   const profit = revenue - totalCosts;
   const margin = revenue !== 0 ? (profit / revenue) * 100 : 0;
 
@@ -489,6 +496,7 @@ function exportSingleJobCsv(
     ["Labor", labor],
     ["Materials", materials],
     ["Subs", subs],
+    ["Taxes", taxes],
     ["Other Costs", other],
     ["Credits / Adjustments", -creditsApplied],
     ["Custom Categories", customTotal],
@@ -826,10 +834,11 @@ function rebuildDashboardFromVisibleReports(state: DashboardState, visibleReport
       mix.labor += parseNumberLoose(cb.labor);
       mix.materials += parseNumberLoose(cb.materials);
       mix.subs += parseNumberLoose(cb.subs);
+      mix.taxes += parseNumberLoose(cb.taxes);
       mix.other += parseNumberLoose(cb.other);
       return mix;
     },
-    { labor: 0, materials: 0, subs: 0, other: 0 }
+    { labor: 0, materials: 0, subs: 0, taxes: 0, other: 0 }
   );
 
   const latestReport = visibleReports
@@ -899,8 +908,9 @@ function seedJobFromBase(base: JobRow): EditableJob {
   const labor = parseNumberLoose(cb.labor);
   const materials = parseNumberLoose(cb.materials);
   const subs = parseNumberLoose(cb.subs);
+  const taxes = parseNumberLoose(cb.taxes);
   const other = getTrueOtherCostFromBreakdown(cb);
-  const known = labor + materials + subs + other;
+  const known = labor + materials + subs + taxes + other;
 
   return {
     job_id: String(base?.job_id ?? ""),
@@ -912,6 +922,7 @@ function seedJobFromBase(base: JobRow): EditableJob {
     labor_cost: labor,
     material_cost: materials,
     subs_cost: subs,
+    tax_cost: taxes,
     other_cost: known > 0 ? other : costs,
     notes: String(base?.job_notes ?? base?.notes ?? ""),
     custom_categories: [],
@@ -980,6 +991,7 @@ function summarizeJobHealth(job: EditableJob, history: JobHistoryRow[]) {
     parseNumberLoose(job.material_cost) +
     parseNumberLoose(job.labor_cost) +
     parseNumberLoose(job.subs_cost) +
+    parseNumberLoose(job.tax_cost) +
     parseNumberLoose(job.other_cost) +
     sumCustomCategories(job.custom_categories || []);
   const gp = revenue - knownCosts;
@@ -1222,9 +1234,10 @@ function getDisplayCostMix(state: DashboardState) {
     const labor = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.labor)), 0);
     const materials = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.materials)), 0);
     const subs = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.subs)), 0);
+    const taxes = jobs.reduce((sum, job) => sum + Math.max(0, parseNumberLoose(job.cost_breakdown?.taxes)), 0);
     const other = jobs.reduce((sum, job) => sum + getTrueOtherCostFromBreakdown(job.cost_breakdown), 0);
 
-    return { labor, materials, subs, other, credits };
+    return { labor, materials, subs, taxes, other, credits };
   }
 
   const mix = state.cost_mix || state.mix || {};
@@ -1232,9 +1245,10 @@ function getDisplayCostMix(state: DashboardState) {
   const labor = Math.max(0, parseNumberLoose(mix.labor));
   const materials = Math.max(0, parseNumberLoose(mix.materials));
   const subs = Math.max(0, parseNumberLoose(mix.subs));
+  const taxes = Math.max(0, parseNumberLoose(mix.taxes));
   const other = Math.max(0, parseNumberLoose(mix.other) + credits);
 
-  return { labor, materials, subs, other, credits };
+  return { labor, materials, subs, taxes, other, credits };
 }
 
 function buildCostMixParts(state: DashboardState): CostPart[] {
@@ -1244,6 +1258,7 @@ function buildCostMixParts(state: DashboardState): CostPart[] {
     { label: "Labor", value: displayMix.labor, color: "rgba(34,211,238,.95)", shadow: "rgba(34,211,238,.25)" },
     { label: "Materials", value: displayMix.materials, color: "rgba(124,58,237,.90)", shadow: "rgba(124,58,237,.20)" },
     { label: "Subs", value: displayMix.subs, color: "rgba(37,99,235,.90)", shadow: "rgba(37,99,235,.18)" },
+    { label: "Taxes", value: displayMix.taxes, color: "rgba(59,130,246,.90)", shadow: "rgba(59,130,246,.18)" },
     { label: "Other Costs", value: displayMix.other, color: "rgba(52,211,153,.90)", shadow: "rgba(52,211,153,.20)" },
     { label: "Credits / Adjustments", value: displayMix.credits > 0 ? -displayMix.credits : 0, color: "rgba(100,116,139,.82)", shadow: "rgba(100,116,139,.14)" },
   ];
@@ -1400,6 +1415,7 @@ function getJobCreditTotal(job: JobRow): number {
     getBucketCreditAmount(cb.labor) +
     getBucketCreditAmount(cb.materials) +
     getBucketCreditAmount(cb.subs) +
+    getBucketCreditAmount(cb.taxes) +
     getBucketCreditAmount(cb.other)
   );
 }
@@ -1425,6 +1441,7 @@ function getCreditMetrics(state: DashboardState): CreditMetrics {
     labor: 0,
     materials: 0,
     subs: 0,
+    taxes: 0,
     other: totalCredits,
   };
 
@@ -1435,6 +1452,7 @@ function getCreditMetrics(state: DashboardState): CreditMetrics {
       Math.max(0, parseNumberLoose(cb.labor)) +
       Math.max(0, parseNumberLoose(cb.materials)) +
       Math.max(0, parseNumberLoose(cb.subs)) +
+      Math.max(0, parseNumberLoose(cb.taxes)) +
       getTrueOtherCostFromBreakdown(cb)
     );
   }, 0);
@@ -1528,6 +1546,7 @@ function jobComparisonStats(base: JobRow, allJobs: JobRow[]) {
     { label: "Labor", current: parseNumberLoose(baseMix.labor), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.labor))) },
     { label: "Materials", current: parseNumberLoose(baseMix.materials), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.materials))) },
     { label: "Subs", current: parseNumberLoose(baseMix.subs), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.subs))) },
+    { label: "Taxes", current: parseNumberLoose(baseMix.taxes), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.taxes))) },
     { label: "Other Costs", current: getTrueOtherCostFromBreakdown(baseMix), average: avgOf(pool.map((j) => getTrueOtherCostFromBreakdown(j.cost_breakdown))) },
     { label: "Credits", current: -getJobCreditTotal(base), average: avgOf(pool.map((j) => -getJobCreditTotal(j))) },
   ].map((x) => ({ ...x, gap: x.current - x.average })).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
@@ -2599,7 +2618,7 @@ function ProfitCommandCenter({
   const totalCosts = parseNumberLoose(state.summary?.costs);
   const totalProfit = parseNumberLoose(state.summary?.net_profit);
   const totalMargin = parseNumberLoose(state.summary?.margin_pct);
-  const grossCostActivity = displayMix.labor + displayMix.materials + displayMix.subs + displayMix.other;
+  const grossCostActivity = displayMix.labor + displayMix.materials + displayMix.subs + displayMix.taxes + displayMix.other;
   const costRatio = totalRevenue > 0 ? (totalCosts / totalRevenue) * 100 : 0;
   const profitPerJob = jobs.length ? totalProfit / jobs.length : 0;
   const avgRevenuePerJob = jobs.length ? totalRevenue / jobs.length : 0;
@@ -2640,6 +2659,7 @@ function ProfitCommandCenter({
   const materialShare = grossCostActivity > 0 ? (displayMix.materials / grossCostActivity) * 100 : 0;
   const laborShare = grossCostActivity > 0 ? (displayMix.labor / grossCostActivity) * 100 : 0;
   const subsShare = grossCostActivity > 0 ? (displayMix.subs / grossCostActivity) * 100 : 0;
+  const taxShare = grossCostActivity > 0 ? (displayMix.taxes / grossCostActivity) * 100 : 0;
   const otherShare = grossCostActivity > 0 ? (displayMix.other / grossCostActivity) * 100 : 0;
 
   const benchmarkCards = [
@@ -2678,6 +2698,12 @@ function ProfitCommandCenter({
       value: fmtPct(laborShare),
       note: "Gross cost activity benchmark",
       cls: laborShare > 45 ? "warn" : "ok",
+    },
+    {
+      label: "Tax Share",
+      value: fmtPct(taxShare),
+      note: "Sales/use tax bucket",
+      cls: "ok",
     },
   ];
 
@@ -2772,6 +2798,7 @@ function ProfitCommandCenter({
         <div><span>Materials share</span><strong>{fmtPct(materialShare)}</strong></div>
         <div><span>Labor share</span><strong>{fmtPct(laborShare)}</strong></div>
         <div><span>Subs share</span><strong>{fmtPct(subsShare)}</strong></div>
+        <div><span>Tax share</span><strong>{fmtPct(taxShare)}</strong></div>
         <div><span>Other cost share</span><strong>{fmtPct(otherShare)}</strong></div>
       </div>
     </div>
@@ -2839,11 +2866,13 @@ function ScaleOversightPanel({
   const materialTotal = displayMixForScale.materials;
   const laborTotal = displayMixForScale.labor;
   const subsTotal = displayMixForScale.subs;
+  const taxTotal = displayMixForScale.taxes;
   const otherTotal = displayMixForScale.other;
-  const knownCosts = materialTotal + laborTotal + subsTotal + otherTotal;
+  const knownCosts = materialTotal + laborTotal + subsTotal + taxTotal + otherTotal;
   const materialShare = knownCosts ? (materialTotal / knownCosts) * 100 : 0;
   const laborShare = knownCosts ? (laborTotal / knownCosts) * 100 : 0;
   const subsShare = knownCosts ? (subsTotal / knownCosts) * 100 : 0;
+  const taxShare = knownCosts ? (taxTotal / knownCosts) * 100 : 0;
   const otherShare = knownCosts ? (otherTotal / knownCosts) * 100 : 0;
   const totalRevenue = parseNumberLoose(state.summary?.revenue || backendStats?.total_revenue);
   const totalCosts = parseNumberLoose(state.summary?.costs || backendStats?.total_costs);
@@ -2920,6 +2949,7 @@ function ScaleOversightPanel({
     { label: "Cost Ratio", value: fmtPct(costRatio), note: "Net costs as share of revenue", cls: costRatio <= 100 - marginTarget ? "ok" : "warn" },
     { label: "Materials Share", value: fmtPct(materialShare), note: "Gross cost activity benchmark", cls: materialShare > 60 ? "warn" : "ok" },
     { label: "Labor Share", value: fmtPct(laborShare), note: "Gross cost activity benchmark", cls: laborShare > 45 ? "warn" : "ok" },
+    { label: "Tax Share", value: fmtPct(taxShare), note: "Sales/use tax bucket", cls: "ok" },
   ];
 
   const leakRows = [
@@ -2957,6 +2987,7 @@ function ScaleOversightPanel({
     { label: "Materials", value: materialShare, amount: materialTotal },
     { label: "Labor", value: laborShare, amount: laborTotal },
     { label: "Subs", value: subsShare, amount: subsTotal },
+    { label: "Taxes", value: taxShare, amount: taxTotal },
     { label: "Other", value: otherShare, amount: otherTotal },
   ];
 
@@ -3413,15 +3444,16 @@ function JobEditor({
 
   const [saved, setSaved] = useState(false);
   const [editingMoneyField, setEditingMoneyField] = useState<
-    "revenue" | "labor_cost" | "material_cost" | "subs_cost" | "other_cost" | null
+    "revenue" | "labor_cost" | "material_cost" | "subs_cost" | "tax_cost" | "other_cost" | null
   >(null);
   const [moneyDrafts, setMoneyDrafts] = useState<
-    Record<"revenue" | "labor_cost" | "material_cost" | "subs_cost" | "other_cost", string>
+    Record<"revenue" | "labor_cost" | "material_cost" | "subs_cost" | "tax_cost" | "other_cost", string>
   >({
     revenue: "",
     labor_cost: "",
     material_cost: "",
     subs_cost: "",
+    tax_cost: "",
     other_cost: "",
   });
   const [editingCustomAmountIndex, setEditingCustomAmountIndex] = useState<number | null>(null);
@@ -3436,6 +3468,7 @@ function JobEditor({
       labor_cost: "",
       material_cost: "",
       subs_cost: "",
+      tax_cost: "",
       other_cost: "",
     });
     setCustomAmountDrafts({});
@@ -3443,7 +3476,7 @@ function JobEditor({
 
   const customTotal = sumCustomCategories(job.custom_categories || []);
   const creditsApplied = getJobCreditTotal(base);
-  const knownCosts = parseNumberLoose(job.material_cost) + parseNumberLoose(job.labor_cost) + parseNumberLoose(job.subs_cost) + parseNumberLoose(job.other_cost) + customTotal - creditsApplied;
+  const knownCosts = parseNumberLoose(job.material_cost) + parseNumberLoose(job.labor_cost) + parseNumberLoose(job.subs_cost) + parseNumberLoose(job.tax_cost) + parseNumberLoose(job.other_cost) + customTotal - creditsApplied;
   const gp = parseNumberLoose(job.revenue) - knownCosts;
   const gm = parseNumberLoose(job.revenue) !== 0 ? (gp / parseNumberLoose(job.revenue)) * 100 : 0;
   const comparison = jobComparisonStats(base || {}, getAllJobs(state));
@@ -3549,7 +3582,7 @@ function JobEditor({
 
   const renderMoneyCell = (
     label: string,
-    field: "revenue" | "labor_cost" | "material_cost" | "subs_cost" | "other_cost"
+    field: "revenue" | "labor_cost" | "material_cost" | "subs_cost" | "tax_cost" | "other_cost"
   ) => {
     const isEditing = editingMoneyField === field;
     const displayValue = isEditing ? moneyDrafts[field] : fmtMoney(job[field]);
@@ -3735,7 +3768,7 @@ function JobEditor({
             <table className="jobTable">
               <thead>
                 <tr>
-                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Other Costs</th><th>Gross Profit</th><th>Margin</th>
+                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Taxes</th><th>Other Costs</th><th>Gross Profit</th><th>Margin</th>
                 </tr>
               </thead>
               <tbody>
@@ -3749,6 +3782,7 @@ function JobEditor({
                   {renderMoneyCell("Labor", "labor_cost")}
                   {renderMoneyCell("Materials", "material_cost")}
                   {renderMoneyCell("Subs", "subs_cost")}
+                  {renderMoneyCell("Taxes", "tax_cost")}
                   {renderMoneyCell("Other", "other_cost")}
                   <td><div className={`calcCell ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div></td>
                   <td><div className={`calcCell ${gm < 0 ? "neg" : ""}`}>{fmtPct(gm)}</div></td>
@@ -3757,7 +3791,7 @@ function JobEditor({
                 {job.custom_categories.map((row, idx) => (
                   <tr key={`${uid}-${idx}`}>
                     <td colSpan={6}><input className="cellEdit customInlineInput" value={row.name} disabled={!access.canUseCustomCategories} onChange={(e) => updateCustom(idx, { name: e.target.value })} placeholder="e.g. Sales Commission" /><div className="cellHint">Manual cost category</div></td>
-                    <td colSpan={4}><input
+                    <td colSpan={5}><input
                       className="cellEdit customAmountInput moneyEditInput"
                       inputMode="decimal"
                       type="text"
@@ -6226,5 +6260,34 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .profitSnapshotOpportunity{margin-top:16px!important}
 @media(max-width:900px){.dc-bg .profitSnapshot{padding:18px!important}.dc-bg .refinedSnapshotTitle{font-size:25px!important}.dc-bg .profitSnapshotNumber{font-size:30px}.dc-bg .refinedSnapshotSub{font-size:14px!important}.dc-bg .profitSnapshotMetric strong{font-size:20px!important}}
 @media(max-width:560px){.dc-bg .profitSnapshot{padding:16px!important}.dc-bg .refinedSnapshotTitle{font-size:23px!important;gap:6px}.dc-bg .profitSnapshotNumber{font-size:28px}.dc-bg .refinedSnapshotActions{display:grid;grid-template-columns:1fr;width:100%}.dc-bg .refinedSnapshotActions .btn{justify-content:center;width:100%}}
+
+
+/* Tax bucket + iPad negative number fluidity patch */
+.dc-bg .moneyEditInput,
+.dc-bg .calcCell,
+.dc-bg .statValue,
+.dc-bg .kValue,
+.dc-bg .kv strong,
+.dc-bg .riskMetricGrid strong,
+.dc-bg .mixTop > span:last-child,
+.dc-bg .comparisonTable td,
+.dc-bg .jobsTable td,
+.dc-bg .reportsTable td,
+.dc-bg .premiumLeakAmount,
+.dc-bg .scaleQueueImpact,
+.dc-bg .wowActionImpact{
+  white-space:nowrap!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+  hyphens:none!important;
+}
+.dc-bg .moneyEditInput,
+.dc-bg .calcCell{
+  min-width:0!important;
+  text-align:left;
+}
+.dc-bg .jobTable{min-width:1460px!important;}
+.dc-bg .stackedJobPage .jobTable{min-width:1460px!important;}
+@media(max-width:768px){.dc-bg .jobTable{min-width:1380px!important}.dc-bg .stackedJobPage .jobTable{min-width:1380px!important}}
 
 `;
