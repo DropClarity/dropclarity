@@ -588,6 +588,70 @@ async function apiGetScaleSummary(token: string | null): Promise<ScaleSummary> {
   return (data as ScaleSummary) || {};
 }
 
+
+type AlertSettingsResponse = {
+  ok?: boolean;
+  marginTargetPct?: number | string;
+  emailAlertsEnabled?: boolean;
+  scaleAlertEmails?: string[];
+  alertEmails?: string[];
+  primaryEmail?: string | null;
+};
+
+async function apiGetAlertSettings(token: string | null): Promise<AlertSettingsResponse | null> {
+  const res = await fetch(`${API_BASE}/alert-settings`, {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  let data: AlertSettingsResponse | { error?: string } | null = null;
+
+  try {
+    data = JSON.parse(text) as AlertSettingsResponse;
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error((data as { error?: string } | null)?.error || text || `Alert settings failed (${res.status})`);
+  }
+
+  return (data as AlertSettingsResponse) || null;
+}
+
+async function apiSaveAlertSettings(
+  token: string | null,
+  payload: {
+    marginTargetPct: number;
+    emailAlertsEnabled: boolean;
+    scaleAlertEmails: string[];
+  }
+): Promise<AlertSettingsResponse | null> {
+  const res = await fetch(`${API_BASE}/alert-settings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await res.text();
+  let data: AlertSettingsResponse | { error?: string } | null = null;
+
+  try {
+    data = JSON.parse(text) as AlertSettingsResponse;
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error((data as { error?: string } | null)?.error || text || `Alert settings save failed (${res.status})`);
+  }
+
+  return (data as AlertSettingsResponse) || null;
+}
+
 async function apiSaveJobNotes(
   token: string | null,
   payload: {
@@ -4634,12 +4698,44 @@ export default function DashboardPage() {
 useEffect(() => {
   if (!isLoaded) return;
 
+  const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
   const savedTarget = readMarginTarget(USER_ID);
   setMarginTarget(savedTarget);
   setMarginTargetDraft(String(savedTarget));
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
-  setAlertEmailsState(readAlertEmails(USER_ID, user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null));
+  setAlertEmailsState(readAlertEmails(USER_ID, fallbackEmail));
   setDeletedReportKeys(readDeletedReports(USER_ID));
+
+  const syncAlertSettings = async () => {
+    if (!isSignedIn) return;
+
+    try {
+      const token = await getToken();
+      const settings = await apiGetAlertSettings(token);
+      const serverTarget = parseNumberLoose(settings?.marginTargetPct);
+
+      if (serverTarget > 0 && serverTarget <= 95) {
+        setMarginTarget(serverTarget);
+        setMarginTargetDraft(String(serverTarget));
+        writeMarginTarget(USER_ID, serverTarget);
+      }
+
+      if (typeof settings?.emailAlertsEnabled === "boolean") {
+        setEmailAlertsEnabledState(settings.emailAlertsEnabled);
+        writeEmailAlertsEnabled(USER_ID, settings.emailAlertsEnabled);
+      }
+
+      const serverEmails = normalizeEmailList(settings?.scaleAlertEmails || settings?.alertEmails || [], fallbackEmail);
+      if (serverEmails.length) {
+        setAlertEmailsState(serverEmails);
+        writeAlertEmails(USER_ID, serverEmails, fallbackEmail);
+      }
+    } catch (err) {
+      console.error("Failed to load server alert settings", err);
+    }
+  };
+
+  syncAlertSettings();
 
   const cached = readDashboardCache(USER_ID, range, customFrom, customTo);
   if (cached?.state) {
@@ -4651,7 +4747,7 @@ useEffect(() => {
   } else {
     loadAndRender();
   }
-}, [USER_ID, isLoaded, loadAndRender, range, customFrom, customTo, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
+}, [USER_ID, isLoaded, isSignedIn, getToken, loadAndRender, range, customFrom, customTo, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
 
   const saveMarginTarget = async () => {
     const next = Math.max(1, Math.min(95, parseNumberLoose(marginTargetDraft)));
@@ -4665,21 +4761,18 @@ useEffect(() => {
       const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
       const normalizedEmails = normalizeEmailList(alertEmails, fallbackEmail);
 
-      const res = await fetch(`${API_BASE}/alert-settings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          marginTargetPct: next,
-          emailAlertsEnabled,
-          scaleAlertEmails: normalizedEmails,
-        }),
+      const settings = await apiSaveAlertSettings(token, {
+        marginTargetPct: next,
+        emailAlertsEnabled,
+        scaleAlertEmails: normalizedEmails,
       });
 
-      const text = await res.text();
-      if (!res.ok) throw new Error(text || `Failed to save alert settings (${res.status})`);
+      const serverTarget = parseNumberLoose(settings?.marginTargetPct);
+      if (serverTarget > 0 && serverTarget <= 95) {
+        setMarginTarget(serverTarget);
+        setMarginTargetDraft(String(serverTarget));
+        writeMarginTarget(USER_ID, serverTarget);
+      }
     } catch (err) {
       console.error("Failed to save margin target to alert settings", err);
     }
