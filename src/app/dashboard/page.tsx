@@ -714,25 +714,26 @@ function deletedReportsKey(userId: string): string {
 }
 
 function readDeletedReports(userId: string): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const arr = JSON.parse(localStorage.getItem(deletedReportsKey(userId)) || "[]");
-    return Array.isArray(arr) ? arr.map(String) : [];
-  } catch {
-    return [];
-  }
+  void userId;
+  return [];
 }
 
 function writeDeletedReports(userId: string, keys: string[]) {
+  void userId;
+  void keys;
+
+  // Sync fix: report visibility cannot live in browser-only localStorage.
+  // Keeping it out of localStorage prevents one device from hiding reports that
+  // another device still includes, which was causing different dashboard totals.
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(deletedReportsKey(userId), JSON.stringify(Array.from(new Set(keys))));
+    localStorage.removeItem(deletedReportsKey(userId));
   } catch {}
 }
 
 function filterDeletedReports(reports: ReportRow[], deletedKeys: string[]): ReportRow[] {
-  const blocked = new Set(deletedKeys.map(String));
-  return (Array.isArray(reports) ? reports : []).filter((r, idx) => !blocked.has(reportDeleteKey(r, idx)));
+  void deletedKeys;
+  return Array.isArray(reports) ? reports : [];
 }
 
 function extractJobsFromReports(reports: ReportRow[]): JobRow[] {
@@ -2555,7 +2556,7 @@ function PastReports({
         <div>
           <div className="panelTitle">Past Reports</div>
           <div className="panelSub">
-            Saved upload snapshots. Review or hide mistaken uploads from dashboard totals.
+            Saved upload snapshots. Totals now rebuild from server reports so every device matches.
           </div>
         </div>
         <button className="reportsManageLink" type="button" onClick={onManageReports}>
@@ -4402,7 +4403,7 @@ function ReportsManagerView({
             <div className="modeEyebrow">Profitability Dashboard</div>
             <div className="modeTitle">Manage Reports</div>
             <div className="modeSub">
-              Clean up mistaken uploads without losing control. Hide reports to remove them from totals, charts, job logs, Cost Mix, credits, and Scale metrics — then restore them anytime.
+              Review saved uploads from the server-backed reports list. Dashboard totals now stay synced across devices instead of relying on browser-only hidden-report state.
             </div>
           </div>
 
@@ -4418,7 +4419,7 @@ function ReportsManagerView({
             <div className="sectionEyebrow">Report Management</div>
             <div className="reportsManagerTitle">Keep dashboard totals clean.</div>
             <div className="reportsManagerSub">
-              Active reports are included in profitability metrics. Hidden reports stay available here but are removed from the working dashboard view.
+              Server reports are included in profitability metrics so totals match across logged-in devices.
             </div>
           </div>
 
@@ -4437,7 +4438,7 @@ function ReportsManagerView({
         <div className="panelHead responsiveHead">
           <div>
             <div className="panelTitle">All Reports</div>
-            <div className="panelSub">Search by job name, Job ID, upload type, date, or report ID. Hide mistaken uploads and dashboard totals update immediately.</div>
+            <div className="panelSub">Search by job name, Job ID, upload type, date, or report ID. Totals are synced from the authenticated dashboard API.</div>
           </div>
 
           <div className="tableTools reportManagerTools">
@@ -4455,7 +4456,7 @@ function ReportsManagerView({
 
         <div className="reportsBulkActions">
           <button className="btn btn-danger-soft" type="button" onClick={onDeleteAllReports} disabled={!allReports.length || activeCount === 0}>
-            Hide all active reports
+            Hide disabled
           </button>
           <button className="btn" type="button" onClick={onRestoreAllReports} disabled={hiddenCount === 0}>
             Restore hidden reports
@@ -4509,7 +4510,7 @@ function ReportsManagerView({
                           </button>
                         ) : (
                           <button className="miniBtn reportHideBtn" type="button" onClick={() => onDeleteReport(report, originalIdx)}>
-                            Hide
+                            Disabled
                           </button>
                         )}
                       </td>
@@ -4681,7 +4682,7 @@ export default function DashboardPage() {
 
       setState(nextState);
       setScaleSummary(scaleData);
-      writeDashboardCache(USER_ID, range, customFrom, customTo, nextState, scaleData);
+      // Sync fix: do not rely on browser-local dashboard snapshots for totals.
       setMode("ready");
     } catch (e: unknown) {
       if (background) {
@@ -4741,16 +4742,10 @@ useEffect(() => {
     setMarginTarget(syncedTarget);
     setMarginTargetDraft(String(syncedTarget));
 
-    const cached = readDashboardCache(USER_ID, range, customFrom, customTo);
-    if (cached?.state) {
-      setState({ ...(cached.state || {}), range });
-      setScaleSummary(cached.scaleSummary || null);
-      setMode("ready");
-      setError("");
-      loadAndRender({ background: true });
-    } else {
-      loadAndRender();
-    }
+    // Sync fix: always load dashboard totals from the authenticated API instead of
+    // showing a browser-local cached snapshot first. This prevents one device from
+    // showing stale revenue/profit/cost totals while another device has fresher reports.
+    loadAndRender();
   };
 
   initializeDashboardSettingsAndData();
@@ -4759,6 +4754,25 @@ useEffect(() => {
     cancelled = true;
   };
 }, [USER_ID, isLoaded, isSignedIn, getToken, loadAndRender, range, customFrom, customTo, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    if (typeof window === "undefined") return;
+
+    const refreshWhenReturningToDashboard = () => {
+      if (document.visibilityState === "visible") {
+        loadAndRender({ background: true });
+      }
+    };
+
+    window.addEventListener("focus", refreshWhenReturningToDashboard);
+    document.addEventListener("visibilitychange", refreshWhenReturningToDashboard);
+
+    return () => {
+      window.removeEventListener("focus", refreshWhenReturningToDashboard);
+      document.removeEventListener("visibilitychange", refreshWhenReturningToDashboard);
+    };
+  }, [isLoaded, isSignedIn, loadAndRender]);
 
   const saveMarginTarget = async () => {
     const next = Math.max(1, Math.min(95, parseNumberLoose(marginTargetDraft)));
@@ -4825,32 +4839,17 @@ useEffect(() => {
   );
 
   const persistDeletedReports = (keys: string[]) => {
-    const next = Array.from(new Set(keys.map(String)));
+    void keys;
+    const next: string[] = [];
     setDeletedReportKeys(next);
     writeDeletedReports(USER_ID, next);
   };
 
-  const handleDeleteReport = (report: ReportRow, idx: number) => {
-    const ok = window.confirm(
-      "Hide this upload from dashboard totals? This removes it from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this browser. You can restore it from Manage Reports."
+  const handleDeleteReport = (_report: ReportRow, _idx: number) => {
+    window.alert(
+      "Report hiding was disabled on this page to keep dashboard totals synced exactly across devices. To remove a mistaken upload from every device, delete or exclude it from the server-side reports source/API."
     );
-
-    if (!ok) return;
-
-    const originalIdx = allReports.findIndex((r, originalIndex) => {
-      if (r === report) return true;
-      const sameId = (r.id && report.id && r.id === report.id) || (r.analysis_id && report.analysis_id && r.analysis_id === report.analysis_id);
-      if (sameId) return true;
-      return (
-        reportDeleteKey(r, originalIndex) === reportDeleteKey(report, idx) ||
-        (String(r.created_at || "") === String(report.created_at || "") &&
-          String(r.period_label || "") === String(report.period_label || "") &&
-          parseNumberLoose(r.net_profit) === parseNumberLoose(report.net_profit))
-      );
-    });
-    const key = reportDeleteKey(report, originalIdx >= 0 ? originalIdx : idx);
-    persistDeletedReports([...deletedReportKeys, key]);
-
+    persistDeletedReports([]);
     setJobKey("");
   };
 
@@ -4861,14 +4860,10 @@ useEffect(() => {
   };
 
   const handleDeleteAllReports = () => {
-    const ok = window.confirm(
-      "Hide all active reports from dashboard totals? This will clear the dashboard view on this browser, but you can restore hidden reports from this same page."
+    window.alert(
+      "Report hiding was disabled on this page to keep dashboard totals synced exactly across devices. To remove uploads from every device, handle that server-side instead of browser localStorage."
     );
-
-    if (!ok) return;
-
-    const allKeys = allReports.map((report, idx) => reportDeleteKey(report, idx));
-    persistDeletedReports(allKeys);
+    persistDeletedReports([]);
     setView("reports");
     setJobKey("");
   };
