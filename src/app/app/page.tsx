@@ -2612,4 +2612,221 @@ const analyzePageCss = `
   .pageTitle .gradText{line-height:1.18!important;padding-bottom:.10em!important}
 }
 
+
+/* DropClarity Analyze UI polish pass: spacing + responsive density only. */
+.analyzeShell{
+  padding-top:clamp(30px,4vw,58px)!important;
+  padding-bottom:clamp(72px,7vw,112px)!important;
+}
+.analyzeWrap{
+  width:min(1520px,calc(100vw - 56px))!important;
+  max-width:1520px!important;
+}
+.analyzeTopbar{
+  margin-bottom:22px!important;
+  gap:22px!important;
+}
+.pageKicker{
+  margin-bottom:12px!important;
+  padding:7px 13px!important;
+}
+.pageTitle{
+  max-width:920px!important;
+  font-size:clamp(31px,3.05vw,46px)!important;
+  letter-spacing:-.052em!important;
+}
+.pageSub{
+  max-width:760px!important;
+  margin-top:11px!important;
+}
+.analyzeActions{
+  margin-bottom:20px!important;
+  gap:12px!important;
+}
+.analyzeActions button{
+  border-radius:18px!important;
+  padding-left:22px!important;
+  padding-right:22px!important;
+}
+.uploadPanel,
+.resultsPanel{
+  border-radius:28px!important;
+  box-shadow:0 22px 64px rgba(2,6,23,.075)!important;
+}
+.uploadPanel>div:first-child,
+.resultsPanel>div:first-child{
+  padding:22px 24px!important;
+}
+.uploadPanel [role="button"]{
+  margin:22px!important;
+  padding:22px!important;
+  border-radius:26px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.78))!important;
+}
+.uploadPanel [role="button"]>div{
+  gap:18px!important;
+}
+.uploadPanel .grid.gap-3,
+.resultsPanel .grid.gap-3{
+  gap:14px!important;
+}
+.uploadPanel .grid.gap-3>div{
+  border-radius:24px!important;
+  padding:18px!important;
+  box-shadow:0 10px 28px rgba(2,6,23,.045)!important;
+}
+.uploadPanel .break-words,
+.assignModal .break-words{
+  line-height:1.35!important;
+}
+.resultsBody{
+  padding:22px!important;
+}
+.resultKpiGrid{
+  gap:14px!important;
+}
+.resultKpiGrid>div{
+  min-height:112px!important;
+  padding:18px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+}
+.smartSummaryPanel{
+  margin-top:18px!important;
+  padding:24px!important;
+}
+.smartSummaryPanel h3{
+  max-width:900px!important;
+}
+.analysisGrid,
+.bottomAnalysisGrid{
+  margin-top:18px!important;
+  gap:18px!important;
+}
+.analysisGrid>div,
+.bottomAnalysisGrid>div,
+.costMixPanel{
+  padding:22px!important;
+  border-radius:28px!important;
+}
+.analysisGrid canvas{
+  max-height:290px!important;
+}
+.costMixPanel{
+  margin-top:18px!important;
+}
+.costMixPanel>div:first-child{
+  gap:18px!important;
+}
+.costMixPanel p{
+  max-width:920px!important;
+}
+.costMixPanel .grid.gap-6{
+  gap:28px!important;
+}
+.costMixPanel .grid.gap-3>div,
+.bottomAnalysisGrid .grid.gap-3>div,
+.bottomAnalysisGrid label,
+.mt-4.grid.gap-3>div{
+  border-radius:22px!important;
+}
+.bottomAnalysisGrid .grid.gap-3{
+  grid-template-columns:1fr!important;
+}
+@media(min-width:1280px){
+  .bottomAnalysisGrid .grid.gap-3{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(min-width:1536px){
+  .bottomAnalysisGrid .grid.gap-3{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+.assignModal{
+  max-width:min(1080px,calc(100vw - 40px))!important;
+}
+.assignModal>div:first-child{
+  padding:24px!important;
+}
+.assignModal .grid.gap-4.xl\:grid-cols-2{
+  gap:18px!important;
+}
+.assignModal .rounded-3xl.border.bg-white.p-5{
+  padding:20px!important;
+  border-radius:26px!important;
+}
+.assignModal .mt-5.grid{
+  gap:16px!important;
+}
+.assignModal .shrink-0.border-t{
+  gap:16px!important;
+}
+.floatingDashboardCta{
+  right:24px!important;
+  bottom:24px!important;
+}
+
+@media(max-width:1280px){
+  .analyzeWrap{width:min(100%,calc(100vw - 40px))!important;max-width:1120px!important}
+  .analysisGrid,.bottomAnalysisGrid{grid-template-columns:1fr!important}
+}
+@media(max-width:1024px){
+  .analyzeTopbar{gap:18px!important}
+  .resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .costMixPanel .mt-4.grid.gap-6{grid-template-columns:1fr!important;text-align:left!important}
+  .costMixPanel canvas{justify-self:center!important}
+  .costMixPanel .grid.gap-3.sm\:grid-cols-2.xl\:grid-cols-5{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:860px){
+  .analyzeWrap{width:100%!important;max-width:100%!important;padding:0 20px!important}
+  .analyzeTopbar{margin-bottom:18px!important}
+  .pageTitle{font-size:clamp(30px,8vw,40px)!important;letter-spacing:-.046em!important}
+  .pageSub{max-width:100%!important}
+  .resultKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:20px!important}
+  .resultsBody{padding:20px!important}
+  .smartSummaryPanel,.analysisGrid>div,.bottomAnalysisGrid>div,.costMixPanel{padding:20px!important}
+  .assignModal>div:first-child{padding:20px!important}
+}
+@media(max-width:640px){
+  .analyzeShell{padding-top:26px!important;padding-bottom:96px!important}
+  .analyzeWrap{padding:0 16px!important}
+  .pageKicker{font-size:11px!important}
+  .pageTitle{font-size:29px!important;line-height:1.13!important}
+  .pageSub{font-size:14px!important;line-height:1.55!important}
+  .analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+  .analyzeActions button{width:100%!important;min-height:48px!important;border-radius:16px!important}
+  .uploadPanel,.resultsPanel{border-radius:24px!important}
+  .uploadPanel>div:first-child,.resultsPanel>div:first-child{padding:18px!important}
+  .uploadPanel [role="button"]{margin:14px!important;padding:16px!important;border-radius:22px!important}
+  .uploadPanel [role="button"]>div{gap:14px!important;align-items:flex-start!important}
+  .uploadPanel .grid.gap-3{grid-template-columns:1fr!important;padding-left:14px!important;padding-right:14px!important;padding-bottom:14px!important}
+  .resultKpiGrid{grid-template-columns:1fr!important}
+  .resultKpiGrid>div{min-height:96px!important}
+  .resultsBody{padding:16px!important}
+  .smartSummaryPanel,.analysisGrid>div,.bottomAnalysisGrid>div,.costMixPanel{padding:16px!important;border-radius:24px!important}
+  .smartSummaryPanel h3{font-size:23px!important;line-height:1.15!important}
+  .analysisGrid h3,.bottomAnalysisGrid h3,.costMixPanel h3{font-size:19px!important}
+  .analysisGrid canvas{height:250px!important;max-height:250px!important}
+  .costMixPanel .grid.gap-3.sm\:grid-cols-2.xl\:grid-cols-5{grid-template-columns:1fr!important}
+  .floatingDashboardCta{left:14px!important;right:14px!important;bottom:14px!important}
+  .assignModalOverlay{padding:0!important}
+  .assignModal{width:100%!important;height:100dvh!important;max-width:100%!important;max-height:100dvh!important;margin:0!important;border-radius:0!important}
+  .assignModal>div:first-child{padding:18px!important}
+  .assignModal h2{font-size:22px!important;line-height:1.12!important}
+  .assignModal .min-h-0.flex-1{padding:14px!important}
+  .assignModal .mb-5.rounded-3xl{border-radius:24px!important;padding:16px!important}
+  .assignModal .rounded-3xl.border.bg-white.p-5{padding:16px!important;border-radius:24px!important}
+  .assignModal .shrink-0.border-t{padding:14px!important}
+  .assignModal .grid.grid-cols-2{grid-template-columns:1fr!important;width:100%!important}
+}
+@media(max-width:420px){
+  .analyzeWrap{padding:0 13px!important}
+  .pageTitle{font-size:27px!important}
+  .uploadPanel [role="button"] .h-12.w-12{height:42px!important;width:42px!important;border-radius:18px!important}
+  .resultKpiGrid>div div:nth-child(2){font-size:22px!important}
+}
+
 `;
