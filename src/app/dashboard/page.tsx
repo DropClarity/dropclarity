@@ -4084,6 +4084,10 @@ function AllJobsView({
 }) {
   const jobs = getAllJobs(state);
   const [search, setSearch] = useState("");
+  const [allJobsVisibleCount, setAllJobsVisibleCount] = useState(() => {
+    if (typeof window === "undefined") return 12;
+    return window.innerWidth <= 768 ? 6 : 18;
+  });
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -4091,6 +4095,17 @@ function AllJobsView({
       .map((job, idx) => ({ job, idx, key: buildJobKey(job, idx) }))
       .filter(({ job }) => !q || `${job.job_name || ""} ${job.job_id || ""}`.toLowerCase().includes(q));
   }, [jobs, search]);
+
+  useEffect(() => {
+    const firstBatch = typeof window !== "undefined" && window.innerWidth <= 768 ? 6 : 18;
+    setAllJobsVisibleCount(firstBatch);
+  }, [search, jobs.length]);
+
+  const visibleJobRows = useMemo(() => {
+    return filtered.slice(0, Math.max(1, allJobsVisibleCount));
+  }, [filtered, allJobsVisibleCount]);
+
+  const hasMoreAllJobs = visibleJobRows.length < filtered.length;
 
   const allJobsTotals = useMemo(() => {
     const edits = readEdits(userId);
@@ -4198,7 +4213,7 @@ function AllJobsView({
       <div className="pad allJobsStackPad">
         {filtered.length ? (
           <div className="allJobsStack">
-            {filtered.map(({ job, key }, index) => (
+            {visibleJobRows.map(({ job, key }, index) => (
               <div key={key} className="allJobsStackItem">
                 <div className="allJobsStackItemHead compactJobStackHeader">
                   <div>
@@ -4228,6 +4243,18 @@ function AllJobsView({
                 />
               </div>
             ))}
+
+            {hasMoreAllJobs ? (
+              <div className="allJobsLoadMoreWrap">
+                <button
+                  className="btn allJobsLoadMoreBtn"
+                  type="button"
+                  onClick={() => setAllJobsVisibleCount((count) => count + (typeof window !== "undefined" && window.innerWidth <= 768 ? 6 : 18))}
+                >
+                  Load more jobs ({visibleJobRows.length} of {filtered.length})
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="empty">No jobs match this search.</div>
@@ -6484,5 +6511,15 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .jobTable{min-width:1460px!important;}
 .dc-bg .stackedJobPage .jobTable{min-width:1460px!important;}
 @media(max-width:768px){.dc-bg .jobTable{min-width:1380px!important}.dc-bg .stackedJobPage .jobTable{min-width:1380px!important}}
+
+
+/* Mobile stability patch: avoid mounting every full editable job editor at once in All Jobs. */
+.dc-bg .allJobsLoadMoreWrap{display:flex;justify-content:center;padding:18px 0 4px;}
+.dc-bg .allJobsLoadMoreBtn{min-width:min(100%,260px);justify-content:center;}
+@media(max-width:768px){
+  .dc-bg .allJobsStackItem{contain:layout paint style;}
+  .dc-bg .allJobsLoadMoreWrap{position:relative;padding:16px 0 2px;}
+  .dc-bg .allJobsLoadMoreBtn{width:100%;} 
+}
 
 `;
