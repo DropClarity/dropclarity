@@ -147,9 +147,9 @@ export default function Home() {
               Built for HVAC, plumbing, roofing, electrical, and home service operators
             </div>
 
-            <h1 className="max-w-[760px] pt-2 pb-4 text-[38px] font-black leading-[1.14] tracking-[-0.045em] text-slate-950 sm:text-[48px] md:text-[54px] lg:text-[58px] xl:text-[64px]">
-              Find the Jobs
-              <span className="block bg-gradient-to-r from-slate-950 via-violet-700 to-slate-950 bg-clip-text py-1 text-transparent">
+            <h1 className="max-w-[760px] pt-3 pb-5 text-[38px] font-black leading-[1.22] tracking-[-0.045em] text-slate-950 sm:text-[48px] sm:leading-[1.18] md:text-[54px] lg:text-[58px] xl:text-[64px] xl:leading-[1.12]">
+              <span className="block pb-1">Find the Jobs</span>
+              <span className="block bg-gradient-to-r from-slate-950 via-violet-700 to-slate-950 bg-clip-text py-2 text-transparent">
                 Draining Your Profit.
               </span>
             </h1>
@@ -442,15 +442,15 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
             {[
               ["1", "underpriced job found"],
               ["$14.8k+", "estimated margin opportunity"],
               ["24", "jobs reviewed instantly"],
             ].map(([a, b]) => (
-              <div key={a} className="rounded-3xl border border-white/10 bg-white/10 p-6">
-                <div className="text-3xl font-black">{a}</div>
-                <div className="mt-2 text-sm font-bold uppercase tracking-wide text-white/50">{b}</div>
+              <div key={a} className="rounded-3xl border border-white/10 bg-white/10 p-5 sm:p-6">
+                <div className="text-[26px] font-black leading-none tracking-[-0.03em] sm:text-3xl lg:text-4xl">{a}</div>
+                <div className="mt-3 text-[12px] font-bold uppercase leading-5 tracking-wide text-white/50 sm:text-sm">{b}</div>
               </div>
             ))}
           </div>
