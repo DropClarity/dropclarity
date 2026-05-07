@@ -2627,53 +2627,67 @@ function PastReports({
   onDeleteReport: (report: ReportRow, idx: number) => void;
   onManageReports: () => void;
 }) {
+  const activeCount = reports.length;
+  const latestReports = reports.slice(0, 6);
+
   return (
-    <div className="panel">
-      <div className="panelHead responsiveHead">
+    <div className="panel pastReportsPanel">
+      <div className="panelHead responsiveHead pastReportsHead">
         <div>
-          <div className="panelTitle">Past Reports</div>
-          <div className="panelSub">
-            Saved upload snapshots. Review or hide mistaken uploads from dashboard totals.
+          <div className="panelTitle pastReportsTitle">Past Reports</div>
+          <div className="panelSub pastReportsSub">
+            Saved uploads that feed dashboard totals. Hide mistakes without deleting history.
           </div>
         </div>
-        <button className="reportsManageLink" type="button" onClick={onManageReports}>
-          Manage
+        <button className="reportsManageLink premiumManageLink" type="button" onClick={onManageReports}>
+          Manage reports
           <span aria-hidden="true">→</span>
         </button>
       </div>
 
-      <div className="pad">
-        <div className="reportMiniStats">
-          <span>{totalReports} total</span>
-          <span>{reports.length} active</span>
-          {hiddenReportsCount > 0 ? <span>{hiddenReportsCount} hidden</span> : null}
+      <div className="pad pastReportsPad">
+        <div className="reportMiniStats premiumReportStats" aria-label="Report status summary">
+          <span><b>{totalReports}</b> total</span>
+          <span><b>{activeCount}</b> active</span>
+          {hiddenReportsCount > 0 ? <span><b>{hiddenReportsCount}</b> hidden</span> : null}
         </div>
 
-        {reports.length ? (
-          <div className="list">
-            {reports.slice(0, 8).map((r, idx) => {
+        {latestReports.length ? (
+          <div className="list pastReportsList">
+            {latestReports.map((r, idx) => {
               const p = parseNumberLoose(r.net_profit);
               const info = getReportDisplayInfo(r, allJobs);
               const creditTotal = getReportCreditTotal(r, allJobs);
+              const margin = parseNumberLoose(r.margin_pct);
 
               return (
-                <div className="item reportPreviewItem" key={`${r.id || r.created_at}-${idx}`}>
-                  <div className="itemTop">
-                    <div>
-                      <div className="itemName reportItemTitle">{info.title}</div>
-                      <div className="itemMeta">{info.subtitle}</div>
-                      <div className="reportTagRow">
-                        {info.tags.slice(0, 3).map((tag) => (
-                          <span className="reportInfoTag" key={tag}>{tag}</span>
-                        ))}
-                      </div>
+                <div className="item reportPreviewItem premiumReportCard" key={`${r.id || r.created_at}-${idx}`}>
+                  <div className="premiumReportTopline">
+                    <div className="premiumReportIdentity">
+                      <div className="itemName reportItemTitle premiumReportName">{info.title}</div>
+                      <div className="itemMeta premiumReportMeta">{info.subtitle}</div>
                     </div>
-                    <div className="reportActions">
-                      <div className={p < 0 ? "neg strong" : "pos strong"}>{fmtMoney(p)}</div>
-                      <button className="deleteReportBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Hide this upload from dashboard totals">×</button>
+
+                    <div className="premiumReportProfitBlock">
+                      <div className={p < 0 ? "premiumReportProfit neg" : "premiumReportProfit pos"}>{fmtMoney(p)}</div>
+                      <button className="deleteReportBtn premiumReportHideBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Hide this upload from dashboard totals" aria-label="Hide this report from dashboard totals">
+                        ×
+                      </button>
                     </div>
                   </div>
-                  <div className="itemMeta">Revenue: <b>{fmtMoney(r.revenue)}</b> • Costs: <b>{fmtMoney(r.costs)}</b> • Margin: <b>{fmtPct(r.margin_pct)}</b>{creditTotal > 0 ? <> • Credits: <b>{fmtMoney(creditTotal)}</b></> : null}</div>
+
+                  <div className="reportTagRow premiumReportTagRow">
+                    {info.tags.slice(0, 3).map((tag) => (
+                      <span className="reportInfoTag premiumReportTag" key={tag}>{tag}</span>
+                    ))}
+                  </div>
+
+                  <div className="premiumReportMetrics" aria-label="Report financial metrics">
+                    <div><span>Revenue</span><strong>{fmtMoney(r.revenue)}</strong></div>
+                    <div><span>Costs</span><strong>{fmtMoney(r.costs)}</strong></div>
+                    <div><span>Margin</span><strong>{fmtPct(margin)}</strong></div>
+                    {creditTotal > 0 ? <div><span>Credits</span><strong>{fmtMoney(creditTotal)}</strong></div> : null}
+                  </div>
                 </div>
               );
             })}
@@ -2682,9 +2696,9 @@ function PastReports({
           <div className="empty">No active reports in this view.</div>
         )}
 
-        {reports.length > 8 ? (
-          <button className="reportMoreLink" type="button" onClick={onManageReports}>
-            View {reports.length - 8} more report{reports.length - 8 === 1 ? "" : "s"} →
+        {reports.length > latestReports.length ? (
+          <button className="reportMoreLink premiumReportMoreLink" type="button" onClick={onManageReports}>
+            View {reports.length - latestReports.length} more report{reports.length - latestReports.length === 1 ? "" : "s"} →
           </button>
         ) : null}
       </div>
@@ -6521,5 +6535,17 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .allJobsLoadMoreWrap{position:relative;padding:16px 0 2px;}
   .dc-bg .allJobsLoadMoreBtn{width:100%;} 
 }
+
+
+/* Launch polish patch: Past Reports premium cards + All Jobs mobile KPI responsiveness */
+.dc-bg .pastReportsPanel{overflow:hidden;border-color:rgba(15,23,42,.075);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,250,252,.86));box-shadow:0 18px 55px rgba(15,23,42,.055)}
+.dc-bg .pastReportsHead{align-items:flex-start!important;padding-bottom:14px;background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.72));border-bottom:1px solid rgba(15,23,42,.065)}
+.dc-bg .pastReportsTitle{letter-spacing:-.025em}.dc-bg .pastReportsSub{max-width:330px;line-height:1.45}.dc-bg .premiumManageLink{gap:6px;padding:8px 11px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(15,23,42,.075);box-shadow:0 8px 20px rgba(15,23,42,.035);white-space:nowrap}.dc-bg .premiumManageLink:hover{border-color:rgba(34,211,238,.24);background:#fff;transform:translateY(-1px)}
+.dc-bg .pastReportsPad{padding:16px}.dc-bg .premiumReportStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}.dc-bg .premiumReportStats span{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;padding:8px 10px;border-radius:999px;border:1px solid rgba(15,23,42,.075);background:rgba(255,255,255,.82);font-size:11.5px;font-weight:900;color:rgba(15,23,42,.58);box-shadow:0 8px 18px rgba(15,23,42,.025)}.dc-bg .premiumReportStats b{font-weight:1000;color:rgba(15,23,42,.80)}
+.dc-bg .pastReportsList{gap:10px}.dc-bg .premiumReportCard{border-radius:18px;border:1px solid rgba(15,23,42,.075);background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.90));box-shadow:0 14px 34px rgba(15,23,42,.045);padding:14px}.dc-bg .premiumReportTopline{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.dc-bg .premiumReportIdentity{min-width:0}.dc-bg .premiumReportName{font-size:14.5px;line-height:1.28;letter-spacing:-.015em;color:rgba(15,23,42,.93);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.dc-bg .premiumReportMeta{margin-top:5px;font-size:12px;line-height:1.35;color:rgba(15,23,42,.56);font-weight:800}.dc-bg .premiumReportProfitBlock{display:flex;align-items:center;gap:8px;flex:0 0 auto}.dc-bg .premiumReportProfit{font-size:14.5px;font-weight:1000;letter-spacing:-.01em;white-space:nowrap}.dc-bg .premiumReportHideBtn{width:32px;height:32px;min-width:32px;border-radius:999px;font-size:18px;background:rgba(254,242,242,.9);border-color:rgba(248,113,113,.24);box-shadow:none}.dc-bg .premiumReportHideBtn:hover{background:#fff1f2;box-shadow:0 8px 18px rgba(239,68,68,.10)}
+.dc-bg .premiumReportTagRow{margin-top:10px;gap:6px}.dc-bg .premiumReportTag{font-size:10.5px;padding:5px 8px;background:rgba(248,250,252,.95);border-color:rgba(15,23,42,.08);color:rgba(15,23,42,.58)}.dc-bg .premiumReportMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.dc-bg .premiumReportMetrics div{min-width:0;border-radius:12px;border:1px solid rgba(15,23,42,.055);background:rgba(248,250,252,.72);padding:8px 9px}.dc-bg .premiumReportMetrics span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.045em;font-weight:950;color:rgba(15,23,42,.42);white-space:nowrap}.dc-bg .premiumReportMetrics strong{display:block;margin-top:3px;font-size:12px;font-weight:1000;color:rgba(15,23,42,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dc-bg .premiumReportMoreLink{width:100%;justify-content:center;margin-top:12px;border-radius:14px;border:1px dashed rgba(34,211,238,.26);background:rgba(236,254,255,.38);font-weight:950}
+.dc-bg .allJobsDetailShell{max-width:100%;overflow:hidden}.dc-bg .allJobsSubtotalPad{overflow:visible}.dc-bg .allJobsSubtotalGrid{width:100%;max-width:100%;min-width:0}.dc-bg .allJobsSubtotalGrid .stat{min-width:0;overflow:hidden}.dc-bg .allJobsSubtotalGrid .statValue{font-size:clamp(19px,2.1vw,26px);line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dc-bg .allJobsSubtotalGrid .statLabel,.dc-bg .allJobsSubtotalGrid .statSub{min-width:0;overflow-wrap:anywhere}
+@media(max-width:900px){.dc-bg .premiumReportMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}.dc-bg .premiumReportStats{grid-template-columns:repeat(3,minmax(0,1fr))}.dc-bg .allJobsSubtotalGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dc-bg .allJobsSubtotalGrid .stat{padding:14px 12px}.dc-bg .allJobsSubtotalGrid .statValue{font-size:clamp(18px,5.2vw,24px)}}
+@media(max-width:520px){.dc-bg .pastReportsHead{gap:12px}.dc-bg .premiumManageLink{width:100%;justify-content:center}.dc-bg .premiumReportStats{grid-template-columns:1fr 1fr}.dc-bg .premiumReportStats span{font-size:11px;padding:8px 7px}.dc-bg .premiumReportCard{padding:13px;border-radius:17px}.dc-bg .premiumReportTopline{gap:10px}.dc-bg .premiumReportProfitBlock{align-items:flex-start}.dc-bg .premiumReportProfit{font-size:13.5px}.dc-bg .premiumReportHideBtn{width:34px;height:34px;min-width:34px}.dc-bg .premiumReportMetrics{grid-template-columns:1fr 1fr;gap:7px}.dc-bg .premiumReportMetrics div{padding:8px}.dc-bg .premiumReportMetrics strong{font-size:11.5px}.dc-bg .allJobsSubtotalGrid{grid-template-columns:1fr!important;gap:10px!important}.dc-bg .allJobsSubtotalGrid .stat{width:100%;padding:14px 14px}.dc-bg .allJobsSubtotalGrid .statValue{font-size:24px;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}.dc-bg .allJobsStackPad{padding-left:12px!important;padding-right:12px!important}.dc-bg .cleanModeToolbar{padding-left:12px!important;padding-right:12px!important}.dc-bg .allJobsSubtotalPad{padding-left:12px!important;padding-right:12px!important}}
 
 `;
