@@ -788,33 +788,6 @@ function findJobByKey(state: DashboardState, key: string): JobRow | null {
   return jobs.find((j, idx) => buildJobKey(j, idx) === key) || null;
 }
 
-function findJobKeyForReport(report: ReportRow, allJobs: JobRow[] = []): string {
-  const reportJobs = getReportJobs(report, allJobs);
-  const firstJob = reportJobs[0] || null;
-  const reportIds = new Set(
-    [report.id, report.analysis_id, firstJob?.report_id]
-      .map((x) => String(x || "").trim())
-      .filter(Boolean)
-  );
-
-  const matchIdx = (Array.isArray(allJobs) ? allJobs : []).findIndex((job) => {
-    const jobReportId = String(job.report_id || "").trim();
-    const sameReport = reportIds.size ? reportIds.has(jobReportId) : true;
-    const sameJobId = firstJob?.job_id
-      ? String(job.job_id || "").trim() === String(firstJob.job_id || "").trim()
-      : false;
-    const sameJobName = firstJob?.job_name
-      ? String(job.job_name || "").trim() === String(firstJob.job_name || "").trim()
-      : false;
-
-    if (firstJob) return sameReport && (sameJobId || sameJobName || (!firstJob.job_id && !firstJob.job_name));
-    return sameReport;
-  });
-
-  if (matchIdx >= 0) return buildJobKey(allJobs[matchIdx], matchIdx);
-  return "";
-}
-
 function reportDeleteKey(r: ReportRow, idx = 0): string {
   return String(r.id || r.analysis_id || `${r.created_at || "unknown"}_${r.period_label || "report"}_${r.net_profit || "0"}_${idx}`);
 }
@@ -2727,7 +2700,6 @@ function PastReports({
   hiddenReportsCount,
   onDeleteReport,
   onManageReports,
-  onOpenReportJob,
 }: {
   reports: ReportRow[];
   allJobs: JobRow[];
@@ -2735,7 +2707,6 @@ function PastReports({
   hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
   onManageReports: () => void;
-  onOpenReportJob: (report: ReportRow) => void;
 }) {
   const activeCount = reports.length;
   const latestReports = reports.slice(0, 6);
@@ -2780,9 +2751,6 @@ function PastReports({
 
                     <div className="premiumReportProfitBlock">
                       <div className={p < 0 ? "premiumReportProfit neg" : "premiumReportProfit pos"}>{fmtMoney(p)}</div>
-                      <button className="miniBtn reportViewBtn" type="button" onClick={() => onOpenReportJob(r)} title="View this report's job detail">
-                        View
-                      </button>
                       <button className="deleteReportBtn premiumReportHideBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Hide this upload from dashboard totals" aria-label="Hide this report from dashboard totals">
                         ×
                       </button>
@@ -3548,7 +3516,6 @@ function DashboardBody({
   hiddenReportsCount,
   onDeleteReport,
   onManageReports,
-  onOpenReportJob,
   onHideJob,
   plan,
   scaleSummary,
@@ -3572,7 +3539,6 @@ function DashboardBody({
   hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
   onManageReports: () => void;
-  onOpenReportJob: (report: ReportRow) => void;
   onHideJob: (job: JobRow, key: string) => void;
   plan: string;
   scaleSummary: ScaleSummary | null;
@@ -3636,7 +3602,7 @@ function DashboardBody({
         </div>
 
         <div className="sideStack">
-          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} onOpenReportJob={onOpenReportJob} />
+          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} />
           <Insights insights={insights} />
         </div>
       </div>
@@ -4041,6 +4007,9 @@ function JobEditor({
                   {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
                 </button>
 
+                {onHideJob ? (
+                  <button className="lowkeyHideJobBtn inlineHideJobBtn" type="button" onClick={() => onHideJob(base, jobKey)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
+                ) : null}
               </div>
             </div>
           )}
@@ -4591,7 +4560,6 @@ function ReportsManagerView({
   onDeleteAllReports,
   onRestoreAllReports,
   onRefresh,
-  onOpenReportJob,
 }: {
   allReports: ReportRow[];
   activeReports: ReportRow[];
@@ -4603,7 +4571,6 @@ function ReportsManagerView({
   onDeleteAllReports: () => void;
   onRestoreAllReports: () => void;
   onRefresh: () => void;
-  onOpenReportJob: (report: ReportRow) => void;
 }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<ReportsSortKey>("newest");
@@ -4761,22 +4728,15 @@ function ReportsManagerView({
                       <td>{fmtPct(report.margin_pct)}{creditTotal > 0 ? <div className="reportCreditText">Credits {fmtMoney(creditTotal)}</div> : null}</td>
                       <td><span className={hidden ? "tag warn" : "tag ok"}>{hidden ? "Hidden" : "Active"}</span></td>
                       <td>
-                        <div className="reportRowActions">
-                          {!hidden ? (
-                            <button className="miniBtn reportViewBtn" type="button" onClick={() => onOpenReportJob(report)}>
-                              View
-                            </button>
-                          ) : null}
-                          {hidden ? (
-                            <button className="miniBtn" type="button" onClick={() => onRestoreReport(report, originalIdx)}>
-                              Restore
-                            </button>
-                          ) : (
-                            <button className="miniBtn reportHideBtn" type="button" onClick={() => onDeleteReport(report, originalIdx)}>
-                              Hide
-                            </button>
-                          )}
-                        </div>
+                        {hidden ? (
+                          <button className="miniBtn" type="button" onClick={() => onRestoreReport(report, originalIdx)}>
+                            Restore
+                          </button>
+                        ) : (
+                          <button className="miniBtn reportHideBtn" type="button" onClick={() => onDeleteReport(report, originalIdx)}>
+                            Hide
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -5112,21 +5072,9 @@ useEffect(() => {
   };
 
   const handleHideJob = (job: JobRow, key: string) => {
-    const reportId = String(job?.report_id || "").trim();
-    const matchingReportIndex = reportId
-      ? allReports.findIndex((report) =>
-          [report.id, report.analysis_id].map((x) => String(x || "").trim()).includes(reportId)
-        )
-      : -1;
-
-    if (matchingReportIndex >= 0) {
-      handleDeleteReport(allReports[matchingReportIndex], matchingReportIndex);
-      return;
-    }
-
     const jobLabel = job.job_name || job.job_id || "this job";
     const ok = window.confirm(
-      `Hide ${jobLabel} from dashboard totals? This removes this saved item from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device.`
+      `Hide ${jobLabel} from dashboard totals? This removes only this job from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device. You can restore by clearing hidden job preferences later.`
     );
 
     if (!ok) return;
@@ -5160,19 +5108,6 @@ useEffect(() => {
     void persistDeletedReports([...deletedReportKeys, key]);
 
     setJobKey("");
-  };
-
-  const handleOpenReportJob = (report: ReportRow) => {
-    const key = findJobKeyForReport(report, getAllJobs(visibleState));
-
-    if (!key) {
-      window.alert("No job detail was found for this report in the current dashboard view.");
-      return;
-    }
-
-    setJobKey(key);
-    setView("job");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleRestoreReport = (_report: ReportRow, idx: number) => {
@@ -5273,7 +5208,7 @@ useEffect(() => {
               <ReportsManagerView
                 allReports={allReports}
                 activeReports={reports}
-                allJobs={getAllJobs(visibleState)}
+                allJobs={getAllJobs(state)}
                 deletedReportKeys={deletedReportKeys}
                 onBack={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                 onDeleteReport={handleDeleteReport}
@@ -5281,7 +5216,6 @@ useEffect(() => {
                 onDeleteAllReports={handleDeleteAllReports}
                 onRestoreAllReports={handleRestoreAllReports}
                 onRefresh={() => loadAndRender()}
-                onOpenReportJob={handleOpenReportJob}
               />
             ) : (
               <DashboardBody
@@ -5295,7 +5229,6 @@ useEffect(() => {
   hiddenReportsCount={hiddenReportsCount}
   onDeleteReport={handleDeleteReport}
   onManageReports={() => { setView("reports"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-  onOpenReportJob={handleOpenReportJob}
   onHideJob={handleHideJob}
   plan={plan}
   scaleSummary={scaleSummary}
@@ -6827,10 +6760,128 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{min-width:36px!important;min-height:36px!important}
 }
 
-/* Targeted patch: report View actions and clean All Jobs stacked editor actions */
-.dc-bg .reportRowActions{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;white-space:nowrap}
-.dc-bg .reportViewBtn{background:rgba(255,255,255,.9);border-color:rgba(15,23,42,.08);color:rgba(15,23,42,.82)}
-.dc-bg .premiumReportProfitBlock .reportViewBtn{height:30px;padding:7px 10px;font-size:11px}
-@media(max-width:640px){.dc-bg .reportRowActions{gap:6px}.dc-bg .premiumReportProfitBlock .reportViewBtn{height:32px;padding:7px 9px}}
+
+/* Responsive-only hardening pass: prevents cramped sections and preserves layout across phones, tablets, laptops, and wide desktops. */
+.dc-bg *{box-sizing:border-box}
+.dc-bg img,.dc-bg canvas,.dc-bg svg{max-width:100%}
+.dc-bg canvas{display:block;width:100%!important;height:auto;min-height:220px}
+.dc-bg .wrap{overflow:visible!important}
+.dc-bg .panel,.dc-bg .chartCard,.dc-bg .scalePanel,.dc-bg .creditKpiPanel,.dc-bg .hero,.dc-bg .rangeWrap,.dc-bg .profitSnapshot,.dc-bg .jobHero,.dc-bg .cleanModeShell{max-width:100%;min-width:0;overflow:hidden}
+.dc-bg .panelHead,.dc-bg .chartHead,.dc-bg .responsiveHead,.dc-bg .premiumScaleHead,.dc-bg .scaleControlHead,.dc-bg .wowTop,.dc-bg .scaleCardHeadSplit,.dc-bg .emailCardTop,.dc-bg .riskTitleRow,.dc-bg .premiumReportTopline,.dc-bg .modeContextHeader{min-width:0}
+.dc-bg .panelHead > div,.dc-bg .chartHead > div,.dc-bg .responsiveHead > div,.dc-bg .premiumScaleHead > div,.dc-bg .scaleControlHead > div,.dc-bg .modeContextHeader > div,.dc-bg .premiumReportIdentity,.dc-bg .riskMain,.dc-bg .scaleQueueBody,.dc-bg .wowActionBody{min-width:0}
+.dc-bg .pageTitle,.dc-bg .pageSub,.dc-bg .panelTitle,.dc-bg .panelSub,.dc-bg .chartTitle,.dc-bg .chartSub,.dc-bg .modeTitle,.dc-bg .modeSub,.dc-bg .jobIdentityTitle,.dc-bg .jobIdentityMeta,.dc-bg .riskJobName,.dc-bg .riskJobMeta,.dc-bg .premiumReportName,.dc-bg .premiumReportMeta,.dc-bg .scaleQueueName,.dc-bg .scaleQueueIssue,.dc-bg .wowActionName,.dc-bg .wowActionIssue{overflow-wrap:anywhere}
+.dc-bg .btn,.dc-bg .miniBtn,.dc-bg .crumbBtn,.dc-bg .rangeBtn,.dc-bg .tag,.dc-bg .pill{flex-shrink:0}
+.dc-bg .searchInput,.dc-bg .selectInput,.dc-bg input,.dc-bg textarea{max-width:100%;min-width:0}
+
+@media(max-width:1440px){
+  .dc-bg .wrap{width:min(100%,calc(100vw - 28px))!important;max-width:100%!important}
+  .dc-bg .grid{grid-template-columns:minmax(0,1fr)!important}
+  .dc-bg .sideStack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .dc-bg .scaleExecutiveGrid,.dc-bg .wowHeroGrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .dc-bg .scaleBenchmarkCard,.dc-bg .wowBenchmarkCard{grid-column:1/-1}
+  .dc-bg .scalePremiumGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dc-bg .alertsExplainerCard,.dc-bg .premiumRulesCard{grid-column:1/-1}
+  .dc-bg .gridMix,.dc-bg .creditKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+
+@media(max-width:1180px){
+  .dc-bg{padding-top:28px!important}
+  .dc-bg .wrap{width:min(100%,calc(100vw - 24px))!important}
+  .dc-bg .topbar,.dc-bg .heroBody,.dc-bg .jobHeroBody,.dc-bg .decisionJobHeroBody,.dc-bg .reportsManagerBody,.dc-bg .scaleIntelligenceStrip,.dc-bg .riskCommandHero{grid-template-columns:1fr!important;display:grid!important}
+  .dc-bg .topbarRight,.dc-bg .internalUtilityRight{width:100%;align-items:stretch!important}
+  .dc-bg .statusRow,.dc-bg .internalQuickActions{justify-content:flex-start;flex-wrap:wrap}
+  .dc-bg .marginTargetTopWrap{width:100%;justify-content:space-between;flex-wrap:wrap}
+  .dc-bg .rangeWrap{align-items:stretch!important;flex-direction:column!important}
+  .dc-bg .rangeRight{width:100%;align-items:stretch!important;flex-direction:column!important}
+  .dc-bg .rangeButtons{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));width:100%}
+  .dc-bg .rangeBtn{width:100%;justify-content:center;padding-inline:8px!important}
+  .dc-bg .customDates{width:100%;display:grid!important;grid-template-columns:1fr 1fr auto;gap:10px}
+  .dc-bg .summaryCard,.dc-bg .jobSummaryCard,.dc-bg .reportsSummaryCard{width:100%;max-width:100%}
+  .dc-bg .kpis,.dc-bg .jobStats,.dc-bg .allJobsSubtotalGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .dc-bg .charts,.dc-bg .jobCharts{grid-template-columns:1fr!important}
+  .dc-bg .chartCard.wide{grid-column:auto!important}
+  .dc-bg .profitSnapshotMetrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dc-bg .tableTools,.dc-bg .reportManagerTools,.dc-bg .riskSearchControls{width:100%;display:grid!important;grid-template-columns:1fr 1fr;gap:10px;justify-content:stretch!important}
+  .dc-bg .tableTools .allJobsDetailBtn,.dc-bg .reportManagerTools .btn,.dc-bg .riskSearchControls .searchInput{grid-column:1/-1}
+  .dc-bg .modeHeaderActions{width:100%;justify-content:flex-start!important}
+  .dc-bg .cleanModeToolbar{grid-template-columns:1fr!important}
+  .dc-bg .cleanModeToolbar .btn{width:100%;justify-content:center}
+}
+
+@media(max-width:900px){
+  .dc-bg .wrap{width:min(100%,calc(100vw - 20px))!important}
+  .dc-bg .sideStack,.dc-bg .scaleExecutiveGrid,.dc-bg .wowHeroGrid,.dc-bg .scalePremiumGrid,.dc-bg .lockedFeatureGrid,.dc-bg .supportGrid{grid-template-columns:1fr!important}
+  .dc-bg .scaleBenchmarkCard,.dc-bg .wowBenchmarkCard,.dc-bg .alertsExplainerCard,.dc-bg .premiumRulesCard{grid-column:auto!important}
+  .dc-bg .scaleHeadRight{width:100%;justify-content:flex-start!important;align-items:flex-start!important;flex-wrap:wrap}
+  .dc-bg .scaleRecoveryStats,.dc-bg .wowRecoveryStats,.dc-bg .riskSummaryGrid,.dc-bg .creditKpiGrid,.dc-bg .gridMix{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dc-bg .kpis,.dc-bg .jobStats,.dc-bg .allJobsSubtotalGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dc-bg .panelHead,.dc-bg .chartHead,.dc-bg .responsiveHead,.dc-bg .premiumScaleHead,.dc-bg .scaleControlHead,.dc-bg .modeContextHeader,.dc-bg .allJobsStackItemHead{flex-direction:column!important;align-items:stretch!important;gap:12px!important}
+  .dc-bg .premiumReportTopline{align-items:flex-start!important;gap:12px!important}
+  .dc-bg .premiumReportProfitBlock{align-items:flex-end!important;flex-shrink:0}
+  .dc-bg .premiumReportMetrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dc-bg .scaleQueueItem,.dc-bg .wowActionItem{grid-template-columns:auto minmax(0,1fr)!important;align-items:flex-start!important}
+  .dc-bg .scaleQueueImpact,.dc-bg .wowActionImpact{grid-column:2;justify-self:start;margin-top:4px}
+  .dc-bg .riskQueueCard{grid-template-columns:1fr!important;gap:12px!important}
+  .dc-bg .riskRank{justify-self:start}
+  .dc-bg .riskActions{width:100%;display:grid!important;grid-template-columns:1fr 1fr auto;gap:8px}
+  .dc-bg .riskActions .btn{width:100%;justify-content:center}
+}
+
+@media(max-width:640px){
+  .dc-bg{padding-top:18px!important;padding-bottom:28px!important}
+  .dc-bg .wrap{width:100%!important;padding-inline:12px!important}
+  .dc-bg .topbar,.dc-bg .rangeWrap,.dc-bg .hero,.dc-bg .panel,.dc-bg .scalePanel,.dc-bg .chartCard,.dc-bg .creditKpiPanel,.dc-bg .profitSnapshot,.dc-bg .jobHero,.dc-bg .cleanModeShell{border-radius:20px!important}
+  .dc-bg .topbar{gap:12px!important;margin-bottom:12px!important}
+  .dc-bg .pageTitle{font-size:clamp(28px,9vw,34px)!important;line-height:1.12!important;letter-spacing:-.035em!important}
+  .dc-bg .pageSub{font-size:13.5px!important;line-height:1.45!important}
+  .dc-bg .statusRow{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  .dc-bg .statusRow .pill,.dc-bg .statusRow .btn,.dc-bg .statusRow .uploadPulseBtn{width:100%;justify-content:center;min-width:0}
+  .dc-bg .marginTargetTopWrap{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;padding:12px!important;margin:10px 0 12px!important}
+  .dc-bg .marginTargetTopText,.dc-bg .marginTargetTopControls{width:100%;display:grid!important;grid-template-columns:1fr auto;align-items:center;gap:8px}
+  .dc-bg .compactTargetInputGroup{width:100%;justify-content:center}
+  .dc-bg .compactTargetInput{width:100%!important;max-width:92px!important}
+  .dc-bg .rangeWrap{padding:14px!important;margin:12px 0!important}
+  .dc-bg .rangeButtons{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+  .dc-bg .rangeBtn{min-height:38px!important;font-size:11.5px!important}
+  .dc-bg .customDates{grid-template-columns:1fr!important}
+  .dc-bg .customDates .btn{width:100%;justify-content:center}
+  .dc-bg .heroBody,.dc-bg .pad,.dc-bg .panelHead,.dc-bg .chartCard,.dc-bg .modeContextHeader,.dc-bg .reportsManagerBody,.dc-bg .riskCommandHero,.dc-bg .jobHeroBody{padding:14px!important}
+  .dc-bg .heroTitle,.dc-bg .modeTitle,.dc-bg .reportsManagerTitle,.dc-bg .riskCommandTitle,.dc-bg .jobIdentityTitle{font-size:24px!important;line-height:1.12!important}
+  .dc-bg .heroBadges,.dc-bg .reportTagRow,.dc-bg .emailRecipientList{gap:6px!important}
+  .dc-bg .kpis,.dc-bg .jobStats,.dc-bg .allJobsSubtotalGrid,.dc-bg .profitSnapshotMetrics,.dc-bg .scaleRecoveryStats,.dc-bg .wowRecoveryStats,.dc-bg .riskSummaryGrid,.dc-bg .creditKpiGrid,.dc-bg .gridMix,.dc-bg .premiumReportMetrics,.dc-bg .riskMetricGrid,.dc-bg .emailLiveGrid{grid-template-columns:1fr!important}
+  .dc-bg .kpi,.dc-bg .stat,.dc-bg .riskSummaryCard,.dc-bg .creditKpiCard,.dc-bg .mixRow{padding:12px!important;min-height:0!important}
+  .dc-bg .kValue,.dc-bg .statValue,.dc-bg .scaleRecoveryValue,.dc-bg .wowRecoveryValue{font-size:22px!important;line-height:1.1!important}
+  .dc-bg .chartCard canvas{min-height:190px!important}
+  .dc-bg .chartTitle{font-size:15px!important}.dc-bg .chartSub{font-size:12.5px!important;line-height:1.35!important}
+  .dc-bg .tableTools,.dc-bg .reportManagerTools,.dc-bg .riskSearchControls{grid-template-columns:1fr!important}
+  .dc-bg .tableTools .btn,.dc-bg .tableTools .searchInput,.dc-bg .tableTools .selectInput,.dc-bg .reportManagerTools .btn,.dc-bg .reportManagerTools .searchInput,.dc-bg .reportManagerTools .selectInput,.dc-bg .riskSearchControls .searchInput,.dc-bg .riskSearchControls .selectInput{width:100%;min-height:40px!important}
+  .dc-bg .premiumReportTopline{display:grid!important;grid-template-columns:1fr!important}
+  .dc-bg .premiumReportProfitBlock{width:100%;display:grid!important;grid-template-columns:1fr auto auto;align-items:center!important;gap:8px!important}
+  .dc-bg .premiumReportProfit{justify-self:start;font-size:18px!important}
+  .dc-bg .reportsBulkActions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .dc-bg .reportsBulkActions .btn{width:100%;justify-content:center}
+  .dc-bg .modeHeaderActions{display:grid!important;grid-template-columns:1fr!important;width:100%}
+  .dc-bg .modeCount,.dc-bg .modeHeaderActions .crumbBtn{width:100%;justify-content:center}
+  .dc-bg .scaleQueueItem,.dc-bg .wowActionItem{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;text-align:left!important}
+  .dc-bg .scaleQueueRank,.dc-bg .wowActionRank,.dc-bg .scaleQueueImpact,.dc-bg .wowActionImpact{grid-column:auto!important;justify-self:start!important}
+  .dc-bg .scaleCard,.dc-bg .scaleRecoveryCommand,.dc-bg .scaleActionQueueCard,.dc-bg .scaleBenchmarkCard,.dc-bg .wowRecoveryCard,.dc-bg .wowActionCard,.dc-bg .wowBenchmarkCard,.dc-bg .lockedScaleHero{padding:14px!important;border-radius:18px!important}
+  .dc-bg .emailCardTop{display:grid!important;grid-template-columns:1fr!important}.dc-bg .emailCardTop .miniBtn{width:100%;justify-content:center}
+  .dc-bg .emailEditActions,.dc-bg .lockedScaleActions,.dc-bg .profitSnapshotActions,.dc-bg .wowActions{display:grid!important;grid-template-columns:1fr!important;width:100%;gap:8px!important}
+  .dc-bg .emailEditActions .btn,.dc-bg .lockedScaleActions .btn,.dc-bg .profitSnapshotActions .btn,.dc-bg .wowActions .btn{width:100%;justify-content:center}
+  .dc-bg .riskActions{grid-template-columns:1fr!important}.dc-bg .riskActions .lowkeyHideJobBtn{justify-self:center}
+  .dc-bg .allJobsStackItem{border-radius:18px!important;overflow:hidden}.dc-bg .stackedHeaderActions{width:100%;display:grid!important;grid-template-columns:auto 1fr;gap:8px}.dc-bg .stackedHeaderActions .compactFullViewBtn{width:100%;justify-content:center}
+  .dc-bg .stackedJobActions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;padding:12px!important}.dc-bg .stackedJobActions .buttonRow{display:grid!important;grid-template-columns:1fr!important;width:100%;gap:8px!important}.dc-bg .stackedJobActions .btn{width:100%;justify-content:center}
+  .dc-bg .buttonRow{gap:8px!important;flex-wrap:wrap!important}.dc-bg .buttonRow .btn{flex:1 1 160px;justify-content:center}
+  .dc-bg .upgradeOverlay{padding:14px!important}.dc-bg .upgradeModal{width:min(100%,420px)!important;max-height:calc(100dvh - 28px);overflow:auto}
+}
+
+@media(max-width:390px){
+  .dc-bg .wrap{padding-inline:10px!important}
+  .dc-bg .pageTitle{font-size:27px!important}
+  .dc-bg .statusRow{grid-template-columns:1fr!important}
+  .dc-bg .rangeButtons{grid-template-columns:1fr 1fr!important}
+  .dc-bg .premiumReportProfitBlock{grid-template-columns:1fr auto!important}.dc-bg .premiumReportHideBtn{grid-column:2}.dc-bg .reportViewBtn{grid-column:1;grid-row:2;width:100%;justify-content:center}
+  .dc-bg .profitSnapshotTitle{font-size:24px!important}.dc-bg .profitSnapshotMetric strong{font-size:20px!important}
+}
 
 `;
