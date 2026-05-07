@@ -788,6 +788,33 @@ function findJobByKey(state: DashboardState, key: string): JobRow | null {
   return jobs.find((j, idx) => buildJobKey(j, idx) === key) || null;
 }
 
+function findJobKeyForReport(report: ReportRow, allJobs: JobRow[] = []): string {
+  const reportJobs = getReportJobs(report, allJobs);
+  const firstJob = reportJobs[0] || null;
+  const reportIds = new Set(
+    [report.id, report.analysis_id, firstJob?.report_id]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean)
+  );
+
+  const matchIdx = (Array.isArray(allJobs) ? allJobs : []).findIndex((job) => {
+    const jobReportId = String(job.report_id || "").trim();
+    const sameReport = reportIds.size ? reportIds.has(jobReportId) : true;
+    const sameJobId = firstJob?.job_id
+      ? String(job.job_id || "").trim() === String(firstJob.job_id || "").trim()
+      : false;
+    const sameJobName = firstJob?.job_name
+      ? String(job.job_name || "").trim() === String(firstJob.job_name || "").trim()
+      : false;
+
+    if (firstJob) return sameReport && (sameJobId || sameJobName || (!firstJob.job_id && !firstJob.job_name));
+    return sameReport;
+  });
+
+  if (matchIdx >= 0) return buildJobKey(allJobs[matchIdx], matchIdx);
+  return "";
+}
+
 function reportDeleteKey(r: ReportRow, idx = 0): string {
   return String(r.id || r.analysis_id || `${r.created_at || "unknown"}_${r.period_label || "report"}_${r.net_profit || "0"}_${idx}`);
 }
@@ -2700,6 +2727,7 @@ function PastReports({
   hiddenReportsCount,
   onDeleteReport,
   onManageReports,
+  onOpenReportJob,
 }: {
   reports: ReportRow[];
   allJobs: JobRow[];
@@ -2707,6 +2735,7 @@ function PastReports({
   hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
   onManageReports: () => void;
+  onOpenReportJob: (report: ReportRow) => void;
 }) {
   const activeCount = reports.length;
   const latestReports = reports.slice(0, 6);
@@ -2751,6 +2780,9 @@ function PastReports({
 
                     <div className="premiumReportProfitBlock">
                       <div className={p < 0 ? "premiumReportProfit neg" : "premiumReportProfit pos"}>{fmtMoney(p)}</div>
+                      <button className="miniBtn reportViewBtn" type="button" onClick={() => onOpenReportJob(r)} title="View this report's job detail">
+                        View
+                      </button>
                       <button className="deleteReportBtn premiumReportHideBtn" type="button" onClick={() => onDeleteReport(r, idx)} title="Hide this upload from dashboard totals" aria-label="Hide this report from dashboard totals">
                         ×
                       </button>
@@ -3516,6 +3548,7 @@ function DashboardBody({
   hiddenReportsCount,
   onDeleteReport,
   onManageReports,
+  onOpenReportJob,
   onHideJob,
   plan,
   scaleSummary,
@@ -3539,6 +3572,7 @@ function DashboardBody({
   hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
   onManageReports: () => void;
+  onOpenReportJob: (report: ReportRow) => void;
   onHideJob: (job: JobRow, key: string) => void;
   plan: string;
   scaleSummary: ScaleSummary | null;
@@ -3602,7 +3636,7 @@ function DashboardBody({
         </div>
 
         <div className="sideStack">
-          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} />
+          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} onOpenReportJob={onOpenReportJob} />
           <Insights insights={insights} />
         </div>
       </div>
@@ -4007,9 +4041,6 @@ function JobEditor({
                   {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
                 </button>
 
-                {onHideJob ? (
-                  <button className="lowkeyHideJobBtn inlineHideJobBtn" type="button" onClick={() => onHideJob(base, jobKey)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
-                ) : null}
               </div>
             </div>
           )}
@@ -4560,6 +4591,7 @@ function ReportsManagerView({
   onDeleteAllReports,
   onRestoreAllReports,
   onRefresh,
+  onOpenReportJob,
 }: {
   allReports: ReportRow[];
   activeReports: ReportRow[];
@@ -4571,6 +4603,7 @@ function ReportsManagerView({
   onDeleteAllReports: () => void;
   onRestoreAllReports: () => void;
   onRefresh: () => void;
+  onOpenReportJob: (report: ReportRow) => void;
 }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<ReportsSortKey>("newest");
@@ -4728,15 +4761,22 @@ function ReportsManagerView({
                       <td>{fmtPct(report.margin_pct)}{creditTotal > 0 ? <div className="reportCreditText">Credits {fmtMoney(creditTotal)}</div> : null}</td>
                       <td><span className={hidden ? "tag warn" : "tag ok"}>{hidden ? "Hidden" : "Active"}</span></td>
                       <td>
-                        {hidden ? (
-                          <button className="miniBtn" type="button" onClick={() => onRestoreReport(report, originalIdx)}>
-                            Restore
-                          </button>
-                        ) : (
-                          <button className="miniBtn reportHideBtn" type="button" onClick={() => onDeleteReport(report, originalIdx)}>
-                            Hide
-                          </button>
-                        )}
+                        <div className="reportRowActions">
+                          {!hidden ? (
+                            <button className="miniBtn reportViewBtn" type="button" onClick={() => onOpenReportJob(report)}>
+                              View
+                            </button>
+                          ) : null}
+                          {hidden ? (
+                            <button className="miniBtn" type="button" onClick={() => onRestoreReport(report, originalIdx)}>
+                              Restore
+                            </button>
+                          ) : (
+                            <button className="miniBtn reportHideBtn" type="button" onClick={() => onDeleteReport(report, originalIdx)}>
+                              Hide
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -5072,9 +5112,21 @@ useEffect(() => {
   };
 
   const handleHideJob = (job: JobRow, key: string) => {
+    const reportId = String(job?.report_id || "").trim();
+    const matchingReportIndex = reportId
+      ? allReports.findIndex((report) =>
+          [report.id, report.analysis_id].map((x) => String(x || "").trim()).includes(reportId)
+        )
+      : -1;
+
+    if (matchingReportIndex >= 0) {
+      handleDeleteReport(allReports[matchingReportIndex], matchingReportIndex);
+      return;
+    }
+
     const jobLabel = job.job_name || job.job_id || "this job";
     const ok = window.confirm(
-      `Hide ${jobLabel} from dashboard totals? This removes only this job from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device. You can restore by clearing hidden job preferences later.`
+      `Hide ${jobLabel} from dashboard totals? This removes this saved item from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device.`
     );
 
     if (!ok) return;
@@ -5108,6 +5160,19 @@ useEffect(() => {
     void persistDeletedReports([...deletedReportKeys, key]);
 
     setJobKey("");
+  };
+
+  const handleOpenReportJob = (report: ReportRow) => {
+    const key = findJobKeyForReport(report, getAllJobs(visibleState));
+
+    if (!key) {
+      window.alert("No job detail was found for this report in the current dashboard view.");
+      return;
+    }
+
+    setJobKey(key);
+    setView("job");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleRestoreReport = (_report: ReportRow, idx: number) => {
@@ -5208,7 +5273,7 @@ useEffect(() => {
               <ReportsManagerView
                 allReports={allReports}
                 activeReports={reports}
-                allJobs={getAllJobs(state)}
+                allJobs={getAllJobs(visibleState)}
                 deletedReportKeys={deletedReportKeys}
                 onBack={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                 onDeleteReport={handleDeleteReport}
@@ -5216,6 +5281,7 @@ useEffect(() => {
                 onDeleteAllReports={handleDeleteAllReports}
                 onRestoreAllReports={handleRestoreAllReports}
                 onRefresh={() => loadAndRender()}
+                onOpenReportJob={handleOpenReportJob}
               />
             ) : (
               <DashboardBody
@@ -5229,6 +5295,7 @@ useEffect(() => {
   hiddenReportsCount={hiddenReportsCount}
   onDeleteReport={handleDeleteReport}
   onManageReports={() => { setView("reports"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+  onOpenReportJob={handleOpenReportJob}
   onHideJob={handleHideJob}
   plan={plan}
   scaleSummary={scaleSummary}
@@ -6759,5 +6826,11 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .lowkeyHideJobBtn{min-width:36px;min-height:36px}
   .dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{min-width:36px!important;min-height:36px!important}
 }
+
+/* Targeted patch: report View actions and clean All Jobs stacked editor actions */
+.dc-bg .reportRowActions{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;white-space:nowrap}
+.dc-bg .reportViewBtn{background:rgba(255,255,255,.9);border-color:rgba(15,23,42,.08);color:rgba(15,23,42,.82)}
+.dc-bg .premiumReportProfitBlock .reportViewBtn{height:30px;padding:7px 10px;font-size:11px}
+@media(max-width:640px){.dc-bg .reportRowActions{gap:6px}.dc-bg .premiumReportProfitBlock .reportViewBtn{height:32px;padding:7px 9px}}
 
 `;
