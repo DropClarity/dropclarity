@@ -813,6 +813,33 @@ function writeDeletedReports(userId: string, keys: string[]) {
   } catch {}
 }
 
+
+function hiddenJobsKey(userId: string): string {
+  return `dc_hidden_jobs_${userId}`;
+}
+
+function readHiddenJobs(userId: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const arr = JSON.parse(localStorage.getItem(hiddenJobsKey(userId)) || "[]");
+    return Array.isArray(arr) ? arr.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHiddenJobs(userId: string, keys: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(hiddenJobsKey(userId), JSON.stringify(Array.from(new Set(keys.map(String)))));
+  } catch {}
+}
+
+function filterHiddenJobs(jobs: JobRow[], hiddenKeys: string[]): JobRow[] {
+  const blocked = new Set(hiddenKeys.map(String));
+  return (Array.isArray(jobs) ? jobs : []).filter((job, idx) => !blocked.has(buildJobKey(job, idx)));
+}
+
 function filterDeletedReports(reports: ReportRow[], deletedKeys: string[]): ReportRow[] {
   const blocked = new Set(deletedKeys.map(String));
   return (Array.isArray(reports) ? reports : []).filter((r, idx) => !blocked.has(reportDeleteKey(r, idx)));
@@ -1012,6 +1039,48 @@ function rebuildDashboardFromVisibleReports(state: DashboardState, visibleReport
       jobs_count: visibleJobs.length,
       losing_jobs_count: losingJobsCount,
       reports_count: visibleReports.length,
+    },
+  };
+}
+
+function rebuildDashboardFromVisibleJobs(state: DashboardState, visibleJobs: JobRow[]): DashboardState {
+  const jobs = Array.isArray(visibleJobs) ? visibleJobs : [];
+  const revenue = jobs.reduce((sum, job) => sum + parseNumberLoose(job.revenue), 0);
+  const costs = jobs.reduce((sum, job) => sum + parseNumberLoose(job.costs), 0);
+  const netProfit = jobs.reduce((sum, job) => {
+    const profit = parseNumberLoose(job.profit);
+    return sum + (Number.isFinite(profit) ? profit : parseNumberLoose(job.revenue) - parseNumberLoose(job.costs));
+  }, 0);
+  const marginPct = revenue ? (netProfit / revenue) * 100 : 0;
+  const losingJobsCount = jobs.filter((job) => parseNumberLoose(job.profit) < 0).length;
+  const costMix = jobs.reduce(
+    (mix, job) => {
+      const cb = job.cost_breakdown || {};
+      mix.labor += parseNumberLoose(cb.labor);
+      mix.materials += parseNumberLoose(cb.materials);
+      mix.subs += parseNumberLoose(cb.subs);
+      mix.taxes += parseNumberLoose(cb.taxes);
+      mix.other += parseNumberLoose(cb.other);
+      return mix;
+    },
+    { labor: 0, materials: 0, subs: 0, taxes: 0, other: 0 }
+  );
+
+  return {
+    ...state,
+    all_jobs: jobs,
+    lowest_profit_jobs: jobs.slice().sort((a, b) => parseNumberLoose(a.profit) - parseNumberLoose(b.profit)),
+    jobs_losing_money: jobs.filter((job) => parseNumberLoose(job.profit) < 0),
+    cost_mix: costMix,
+    mix: costMix,
+    summary: {
+      ...(state.summary || {}),
+      revenue,
+      costs,
+      net_profit: netProfit,
+      margin_pct: marginPct,
+      jobs_count: jobs.length,
+      losing_jobs_count: losingJobsCount,
     },
   };
 }
@@ -2519,10 +2588,12 @@ function JobsLog({
   jobs,
   onOpenJob,
   onOpenAllJobs,
+  onHideJob,
 }: {
   jobs: JobRow[];
   onOpenJob: (jobKey: string) => void;
   onOpenAllJobs: () => void;
+  onHideJob: (job: JobRow, key: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<JobsSortKey>("date");
@@ -2603,7 +2674,12 @@ function JobsLog({
                       {getJobCreditTotal(job) > 0 ? fmtMoney(getJobCreditTotal(job)) : "—"}
                     </td>
                     <td><span className={`tag ${status.cls}`}>{status.label}</span></td>
-                    <td><button className="miniBtn" type="button" onClick={() => onOpenJob(key)}>View</button></td>
+                    <td>
+                      <div className="jobRowActions">
+                        <button className="lowkeyHideJobBtn" type="button" onClick={() => onHideJob(job, key)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
+                        <button className="miniBtn" type="button" onClick={() => onOpenJob(key)}>View</button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -3440,6 +3516,7 @@ function DashboardBody({
   hiddenReportsCount,
   onDeleteReport,
   onManageReports,
+  onHideJob,
   plan,
   scaleSummary,
   marginTarget,
@@ -3462,6 +3539,7 @@ function DashboardBody({
   hiddenReportsCount: number;
   onDeleteReport: (report: ReportRow, idx: number) => void;
   onManageReports: () => void;
+  onHideJob: (job: JobRow, key: string) => void;
   plan: string;
   scaleSummary: ScaleSummary | null;
   marginTarget: number;
@@ -3519,6 +3597,7 @@ function DashboardBody({
               setView("job");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
+            onHideJob={onHideJob}
           />
         </div>
 
@@ -3579,6 +3658,7 @@ function JobEditor({
   onLocked,
   marginTarget = 30,
   getToken,
+  onHideJob,
 }: {
   jobKey: string;
   base: JobRow;
@@ -3592,6 +3672,7 @@ function JobEditor({
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget?: number;
   getToken?: () => Promise<string | null>;
+  onHideJob?: (job: JobRow, key: string) => void;
 }) {
   const [job, setJob] = useState<EditableJob>(() => mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
   const history = extractJobHistory(state, base || {});
@@ -3892,6 +3973,10 @@ function JobEditor({
   <button className="btn" type="button" onClick={addCustom}>
     {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
   </button>
+
+  {onHideJob ? (
+    <button className="lowkeyHideJobBtn inlineHideJobBtn" type="button" onClick={() => onHideJob(base, jobKey)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
+  ) : null}
               </div>
             </div>
           ) : (
@@ -3921,6 +4006,10 @@ function JobEditor({
                 <button className="btn" type="button" onClick={addCustom}>
                   {access.canUseCustomCategories ? "＋ Add category" : "＋ Add category 🔒"}
                 </button>
+
+                {onHideJob ? (
+                  <button className="lowkeyHideJobBtn inlineHideJobBtn" type="button" onClick={() => onHideJob(base, jobKey)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
+                ) : null}
               </div>
             </div>
           )}
@@ -4041,6 +4130,7 @@ function JobView({
   onLocked,
   marginTarget = 30,
   getToken,
+  onHideJob,
 }: {
   state: DashboardState;
   jobKey: string;
@@ -4052,6 +4142,7 @@ function JobView({
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget?: number;
   getToken?: () => Promise<string | null>;
+  onHideJob: (job: JobRow, key: string) => void;
 }) {
   const base = findJobByKey(state, jobKey);
 
@@ -4078,6 +4169,7 @@ function JobView({
       onLocked={onLocked}
       marginTarget={marginTarget}
       getToken={getToken}
+      onHideJob={onHideJob}
     />
   );
 }
@@ -4091,6 +4183,7 @@ function AllJobsView({
   access,
   onLocked,
   getToken,
+  onHideJob,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
@@ -4100,6 +4193,7 @@ function AllJobsView({
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
   getToken?: () => Promise<string | null>;
+  onHideJob: (job: JobRow, key: string) => void;
 }) {
   const jobs = getAllJobs(state);
   const [search, setSearch] = useState("");
@@ -4239,13 +4333,16 @@ function AllJobsView({
                     <div className="allJobsStackJobName">{job.job_name || job.job_id || `Job ${index + 1}`}</div>
                     <div className="allJobsStackJobMeta">Job ID: {job.job_id || "No Job ID"} • {analyzedDateLabel(job.created_at)}</div>
                   </div>
-                  <button
-                    className="miniBtn compactFullViewBtn"
-                    type="button"
-                    onClick={() => { setJobKey(key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  >
-                    Full view
-                  </button>
+                  <div className="jobRowActions stackedHeaderActions">
+                    <button className="lowkeyHideJobBtn" type="button" onClick={() => onHideJob(job, key)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
+                    <button
+                      className="miniBtn compactFullViewBtn"
+                      type="button"
+                      onClick={() => { setJobKey(key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    >
+                      Full view
+                    </button>
+                  </div>
                 </div>
                 <JobEditor
                   jobKey={key}
@@ -4259,6 +4356,7 @@ function AllJobsView({
                   onAllJobs={() => {}}
                   refreshLocal={refreshLocal}
                   getToken={getToken}
+                  onHideJob={onHideJob}
                 />
               </div>
             ))}
@@ -4293,6 +4391,7 @@ function HighRiskJobsView({
   access,
   onLocked,
   marginTarget,
+  onHideJob,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
@@ -4302,6 +4401,7 @@ function HighRiskJobsView({
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget: number;
+  onHideJob: (job: JobRow, key: string) => void;
 }) {
   const jobs = getAllJobs(state);
   const [search, setSearch] = useState("");
@@ -4436,6 +4536,7 @@ function HighRiskJobsView({
                   <button className="btn" type="button" onClick={() => { setJobKey(row.key); setView("alljobs"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                     View All Jobs
                   </button>
+                  <button className="lowkeyHideJobBtn riskHideJobBtn" type="button" onClick={() => onHideJob(row.job, row.key)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
                 </div>
               </div>
             );
@@ -4688,6 +4789,7 @@ export default function DashboardPage() {
   const [view, setView] = useState<ViewMode>("dashboard");
   const [jobKey, setJobKey] = useState<string>("");
   const [deletedReportKeys, setDeletedReportKeys] = useState<string[]>([]);
+  const [hiddenJobKeys, setHiddenJobKeys] = useState<string[]>([]);
   const [range, setRange] = useState<RangeKey>("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -4838,6 +4940,7 @@ useEffect(() => {
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
   setAlertEmailsState(readAlertEmails(USER_ID, fallbackEmail));
   setDeletedReportKeys(readDeletedReports(USER_ID));
+  setHiddenJobKeys(readHiddenJobs(USER_ID));
 
   const initializeDashboardSettingsAndData = async () => {
     let syncedTarget = savedTarget;
@@ -4944,10 +5047,11 @@ useEffect(() => {
     return allReports.filter((report, idx) => deletedSet.has(reportDeleteKey(report, idx))).length;
   }, [allReports, deletedReportKeys]);
 
-  const visibleState = useMemo(
-    () => rebuildDashboardFromVisibleReports(state, reports),
-    [state, reports]
-  );
+  const visibleState = useMemo(() => {
+    const reportFilteredState = rebuildDashboardFromVisibleReports(state, reports);
+    const jobFilteredRows = filterHiddenJobs(getAllJobs(reportFilteredState), hiddenJobKeys);
+    return rebuildDashboardFromVisibleJobs(reportFilteredState, jobFilteredRows);
+  }, [state, reports, hiddenJobKeys]);
 
   const persistDeletedReports = async (keys: string[]) => {
     const next = normalizeDeletedReportKeys(keys);
@@ -4965,6 +5069,21 @@ useEffect(() => {
       // Keep local hiding available even if the server sync endpoint is unavailable.
       console.error("Failed to sync hidden reports", err);
     }
+  };
+
+  const handleHideJob = (job: JobRow, key: string) => {
+    const jobLabel = job.job_name || job.job_id || "this job";
+    const ok = window.confirm(
+      `Hide ${jobLabel} from dashboard totals? This removes only this job from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device. You can restore by clearing hidden job preferences later.`
+    );
+
+    if (!ok) return;
+
+    const next = Array.from(new Set([...hiddenJobKeys, key].map(String)));
+    setHiddenJobKeys(next);
+    writeHiddenJobs(USER_ID, next);
+    setJobKey("");
+    if (view === "job") setView("dashboard");
   };
 
   const handleDeleteReport = (report: ReportRow, idx: number) => {
@@ -5080,11 +5199,11 @@ useEffect(() => {
             )}
 
             {view === "job" && jobKey ? (
-              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} />
+              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} onHideJob={handleHideJob} />
             ) : view === "alljobs" ? (
-              <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} getToken={getToken} />
+              <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} getToken={getToken} onHideJob={handleHideJob} />
             ) : view === "highrisk" ? (
-              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} />
+              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} onHideJob={handleHideJob} />
             ) : view === "reports" ? (
               <ReportsManagerView
                 allReports={allReports}
@@ -5110,6 +5229,7 @@ useEffect(() => {
   hiddenReportsCount={hiddenReportsCount}
   onDeleteReport={handleDeleteReport}
   onManageReports={() => { setView("reports"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+  onHideJob={handleHideJob}
   plan={plan}
   scaleSummary={scaleSummary}
   marginTarget={marginTarget}
@@ -6613,6 +6733,31 @@ main.dc-bg .wrap{padding-bottom:56px;}
     font-size:10.5px!important;
     padding:6px 8px!important;
   }
+}
+
+
+/* Launch polish: low-key hide actions and aligned editable job buckets */
+.dc-bg .jobRowActions{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;white-space:nowrap}
+.dc-bg .lowkeyHideJobBtn{appearance:none;border:0;background:transparent;color:rgba(100,116,139,.46);font-weight:950;font-size:16px;line-height:1;width:26px;height:26px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:none!important;transition:color .12s ease,background .12s ease,opacity .12s ease,transform .12s ease}
+.dc-bg .lowkeyHideJobBtn:hover{color:rgba(15,23,42,.70);background:rgba(15,23,42,.045);transform:none!important;box-shadow:none!important}
+.dc-bg .inlineHideJobBtn{margin-left:2px;align-self:center}
+.dc-bg .riskHideJobBtn{align-self:center}
+.dc-bg .stackedHeaderActions{flex-shrink:0}
+.dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{border:0!important;background:transparent!important;color:rgba(100,116,139,.48)!important;box-shadow:none!important;width:26px!important;height:26px!important;min-width:26px!important;font-size:16px!important}
+.dc-bg .premiumReportHideBtn:hover,.dc-bg .deleteReportBtn:hover{background:rgba(15,23,42,.045)!important;color:rgba(15,23,42,.70)!important;transform:none!important;box-shadow:none!important;border-color:transparent!important}
+.dc-bg .jobTable th,.dc-bg .jobTable td{vertical-align:top!important}
+.dc-bg .jobTable .cellEdit,.dc-bg .jobTable .moneyEditInput,.dc-bg .jobTable .calcCell{margin-top:0!important}
+.dc-bg .jobTable .calcCell{min-height:48px;display:flex;align-items:center;justify-content:flex-start}
+.dc-bg .jobTable td:has(.moneyEditInput),.dc-bg .jobTable td:has(.calcCell){padding-top:12px!important}
+@media (max-width:768px){
+  .dc-bg .jobRowActions{gap:6px}
+  .dc-bg .lowkeyHideJobBtn{width:30px;height:30px;font-size:16px}
+  .dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{width:30px!important;height:30px!important;min-width:30px!important}
+  .dc-bg .jobTable .calcCell{min-height:44px}
+}
+@media (hover:none) and (pointer:coarse){
+  .dc-bg .lowkeyHideJobBtn{min-width:36px;min-height:36px}
+  .dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{min-width:36px!important;min-height:36px!important}
 }
 
 `;
