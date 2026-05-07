@@ -4698,55 +4698,66 @@ export default function DashboardPage() {
 useEffect(() => {
   if (!isLoaded) return;
 
+  let cancelled = false;
+
   const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
   const savedTarget = readMarginTarget(USER_ID);
-  setMarginTarget(savedTarget);
-  setMarginTargetDraft(String(savedTarget));
+
   setEmailAlertsEnabledState(readEmailAlertsEnabled(USER_ID));
   setAlertEmailsState(readAlertEmails(USER_ID, fallbackEmail));
   setDeletedReportKeys(readDeletedReports(USER_ID));
 
-  const syncAlertSettings = async () => {
-    if (!isSignedIn) return;
+  const initializeDashboardSettingsAndData = async () => {
+    let syncedTarget = savedTarget;
 
-    try {
-      const token = await getToken();
-      const settings = await apiGetAlertSettings(token);
-      const serverTarget = parseNumberLoose(settings?.marginTargetPct);
+    if (isSignedIn) {
+      try {
+        const token = await getToken();
+        const settings = await apiGetAlertSettings(token);
+        const serverTarget = parseNumberLoose(settings?.marginTargetPct);
 
-      if (serverTarget > 0 && serverTarget <= 95) {
-        setMarginTarget(serverTarget);
-        setMarginTargetDraft(String(serverTarget));
-        writeMarginTarget(USER_ID, serverTarget);
+        if (serverTarget > 0 && serverTarget <= 95) {
+          syncedTarget = serverTarget;
+          writeMarginTarget(USER_ID, serverTarget);
+        }
+
+        if (!cancelled && typeof settings?.emailAlertsEnabled === "boolean") {
+          setEmailAlertsEnabledState(settings.emailAlertsEnabled);
+          writeEmailAlertsEnabled(USER_ID, settings.emailAlertsEnabled);
+        }
+
+        const serverEmails = normalizeEmailList(settings?.scaleAlertEmails || settings?.alertEmails || [], fallbackEmail);
+        if (!cancelled && serverEmails.length) {
+          setAlertEmailsState(serverEmails);
+          writeAlertEmails(USER_ID, serverEmails, fallbackEmail);
+        }
+      } catch (err) {
+        console.error("Failed to load server alert settings", err);
       }
+    }
 
-      if (typeof settings?.emailAlertsEnabled === "boolean") {
-        setEmailAlertsEnabledState(settings.emailAlertsEnabled);
-        writeEmailAlertsEnabled(USER_ID, settings.emailAlertsEnabled);
-      }
+    if (cancelled) return;
 
-      const serverEmails = normalizeEmailList(settings?.scaleAlertEmails || settings?.alertEmails || [], fallbackEmail);
-      if (serverEmails.length) {
-        setAlertEmailsState(serverEmails);
-        writeAlertEmails(USER_ID, serverEmails, fallbackEmail);
-      }
-    } catch (err) {
-      console.error("Failed to load server alert settings", err);
+    setMarginTarget(syncedTarget);
+    setMarginTargetDraft(String(syncedTarget));
+
+    const cached = readDashboardCache(USER_ID, range, customFrom, customTo);
+    if (cached?.state) {
+      setState({ ...(cached.state || {}), range });
+      setScaleSummary(cached.scaleSummary || null);
+      setMode("ready");
+      setError("");
+      loadAndRender({ background: true });
+    } else {
+      loadAndRender();
     }
   };
 
-  syncAlertSettings();
+  initializeDashboardSettingsAndData();
 
-  const cached = readDashboardCache(USER_ID, range, customFrom, customTo);
-  if (cached?.state) {
-    setState({ ...(cached.state || {}), range });
-    setScaleSummary(cached.scaleSummary || null);
-    setMode("ready");
-    setError("");
-    loadAndRender({ background: true });
-  } else {
-    loadAndRender();
-  }
+  return () => {
+    cancelled = true;
+  };
 }, [USER_ID, isLoaded, isSignedIn, getToken, loadAndRender, range, customFrom, customTo, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
 
   const saveMarginTarget = async () => {
