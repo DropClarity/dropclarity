@@ -353,6 +353,11 @@ function dateTimeLabel(v?: string | null) {
   });
 }
 
+function analyzedDateLabel(v?: string | null) {
+  const label = dateTimeLabel(v);
+  return label === "—" ? "Analysis date unavailable" : `Analyzed ${label}`;
+}
+
 function rangeLabel(range: RangeKey) {
   if (range === "mtd") return "Month-to-date";
   if (range === "last7") return "Last 7 Days";
@@ -2587,7 +2592,7 @@ function JobsLog({
                   <tr key={key}>
                     <td>
                       <div className="jobName">{job.job_name || job.job_id || "Unnamed job"}</div>
-                      <div className="jobMeta">{job.job_id || "No Job ID"} • {job.period_label || "Report"}</div>
+                      <div className="jobMeta jobsLogAnalyzedMeta">{job.job_id || "No Job ID"} • {analyzedDateLabel(job.created_at)}</div>
                     </td>
                     <td>{dateLabel(job.created_at)}</td>
                     <td>{fmtMoney(job.revenue)}</td>
@@ -4232,7 +4237,7 @@ function AllJobsView({
                 <div className="allJobsStackItemHead compactJobStackHeader">
                   <div>
                     <div className="allJobsStackJobName">{job.job_name || job.job_id || `Job ${index + 1}`}</div>
-                    <div className="allJobsStackJobMeta">Job ID: {job.job_id || "No Job ID"} • {job.period_label || "Saved report"} • {dateLabel(job.created_at)}</div>
+                    <div className="allJobsStackJobMeta">Job ID: {job.job_id || "No Job ID"} • {analyzedDateLabel(job.created_at)}</div>
                   </div>
                   <button
                     className="miniBtn compactFullViewBtn"
@@ -4406,7 +4411,7 @@ function HighRiskJobsView({
                   <div className="riskTitleRow">
                     <div>
                       <div className="riskJobName">{row.job.job_name || row.job.job_id || "Unnamed job"}</div>
-                      <div className="riskJobMeta">{row.job.job_id || "No Job ID"} • {dateLabel(row.job.created_at)} • {row.job.period_label || "Saved report"}</div>
+                      <div className="riskJobMeta">{row.job.job_id || "No Job ID"} • {analyzedDateLabel(row.job.created_at)}</div>
                     </div>
                     <span className={isLoss ? "tag bad" : "tag warn"}>{row.status}</span>
                   </div>
@@ -6547,5 +6552,67 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .allJobsDetailShell{max-width:100%;overflow:hidden}.dc-bg .allJobsSubtotalPad{overflow:visible}.dc-bg .allJobsSubtotalGrid{width:100%;max-width:100%;min-width:0}.dc-bg .allJobsSubtotalGrid .stat{min-width:0;overflow:hidden}.dc-bg .allJobsSubtotalGrid .statValue{font-size:clamp(19px,2.1vw,26px);line-height:1.05;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dc-bg .allJobsSubtotalGrid .statLabel,.dc-bg .allJobsSubtotalGrid .statSub{min-width:0;overflow-wrap:anywhere}
 @media(max-width:900px){.dc-bg .premiumReportMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}.dc-bg .premiumReportStats{grid-template-columns:repeat(3,minmax(0,1fr))}.dc-bg .allJobsSubtotalGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dc-bg .allJobsSubtotalGrid .stat{padding:14px 12px}.dc-bg .allJobsSubtotalGrid .statValue{font-size:clamp(18px,5.2vw,24px)}}
 @media(max-width:520px){.dc-bg .pastReportsHead{gap:12px}.dc-bg .premiumManageLink{width:100%;justify-content:center}.dc-bg .premiumReportStats{grid-template-columns:1fr 1fr}.dc-bg .premiumReportStats span{font-size:11px;padding:8px 7px}.dc-bg .premiumReportCard{padding:13px;border-radius:17px}.dc-bg .premiumReportTopline{gap:10px}.dc-bg .premiumReportProfitBlock{align-items:flex-start}.dc-bg .premiumReportProfit{font-size:13.5px}.dc-bg .premiumReportHideBtn{width:34px;height:34px;min-width:34px}.dc-bg .premiumReportMetrics{grid-template-columns:1fr 1fr;gap:7px}.dc-bg .premiumReportMetrics div{padding:8px}.dc-bg .premiumReportMetrics strong{font-size:11.5px}.dc-bg .allJobsSubtotalGrid{grid-template-columns:1fr!important;gap:10px!important}.dc-bg .allJobsSubtotalGrid .stat{width:100%;padding:14px 14px}.dc-bg .allJobsSubtotalGrid .statValue{font-size:24px;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}.dc-bg .allJobsStackPad{padding-left:12px!important;padding-right:12px!important}.dc-bg .cleanModeToolbar{padding-left:12px!important;padding-right:12px!important}.dc-bg .allJobsSubtotalPad{padding-left:12px!important;padding-right:12px!important}}
+
+
+/* Targeted launch polish: softer Past Reports subtitle + analyzed date labels + compact mobile All Jobs Log */
+.dc-bg .pastReportsSub{
+  max-width:320px!important;
+  margin-top:4px!important;
+  font-size:13px!important;
+  line-height:1.42!important;
+  font-weight:650!important;
+  letter-spacing:-.005em!important;
+  color:rgba(71,85,105,.72)!important;
+}
+.dc-bg .jobsLogAnalyzedMeta{
+  font-weight:750;
+  color:rgba(71,85,105,.70);
+}
+@media(max-width:640px){
+  .dc-bg #jobsPanel .panelHead{
+    padding:14px 14px 12px!important;
+    gap:10px!important;
+  }
+  .dc-bg #jobsPanel .panelTitle{
+    font-size:17px!important;
+    line-height:1.15!important;
+  }
+  .dc-bg #jobsPanel .panelSub{
+    font-size:12px!important;
+    line-height:1.35!important;
+    color:rgba(71,85,105,.62)!important;
+  }
+  .dc-bg #jobsPanel .tableTools{
+    gap:8px!important;
+  }
+  .dc-bg #jobsPanel .allJobsDetailBtn,
+  .dc-bg #jobsPanel .searchInput,
+  .dc-bg #jobsPanel .selectInput{
+    min-height:38px!important;
+    font-size:12px!important;
+    border-radius:12px!important;
+  }
+  .dc-bg #jobsPanel .tableWrap{
+    margin:0!important;
+  }
+  .dc-bg #jobsPanel .jobsTable th,
+  .dc-bg #jobsPanel .jobsTable td{
+    padding:10px 9px!important;
+    font-size:12px!important;
+  }
+  .dc-bg #jobsPanel .jobName{
+    font-size:12.5px!important;
+    line-height:1.25!important;
+  }
+  .dc-bg #jobsPanel .jobMeta{
+    font-size:11px!important;
+    line-height:1.25!important;
+  }
+  .dc-bg #jobsPanel .tag,
+  .dc-bg #jobsPanel .miniBtn{
+    font-size:10.5px!important;
+    padding:6px 8px!important;
+  }
+}
 
 `;
