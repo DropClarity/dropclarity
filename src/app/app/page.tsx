@@ -90,6 +90,13 @@ type PlanAccess = {
 };
 
 const FREE_FILES_PER_ANALYSIS = 3;
+const FORCE_FRESH_ANALYSIS = true;
+const ANALYZE_DEBUG_ENABLED = true;
+
+function makeAnalyzeRequestId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `analyze-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 function normalizePlan(rawPlan: unknown, rawStatus?: unknown): PlanAccess {
   const status = String(rawStatus || "inactive")
@@ -1366,9 +1373,22 @@ export default function AppPage() {
     setAnalyzing(true);
 
     try {
+      const analyzeRequestId = makeAnalyzeRequestId();
+
       const payload = {
         user_id: USER_ID,
         period_label: "Latest Period",
+        force_fresh: FORCE_FRESH_ANALYSIS,
+        debug: ANALYZE_DEBUG_ENABLED,
+        analysis_request_id: analyzeRequestId,
+        client_debug: {
+          analyze_request_id: analyzeRequestId,
+          sent_at: new Date().toISOString(),
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+          platform: typeof navigator !== "undefined" ? navigator.platform : "",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+          force_fresh: FORCE_FRESH_ANALYSIS,
+        },
         files: uploadedItems.map((it, idx) => {
           const filename = it.uploaded?.filename || it.file.name;
           const mime =
@@ -1392,6 +1412,15 @@ export default function AppPage() {
             role: it.role === "combined" ? "combined_invoice" : it.role,
             parse_mode: isStructured ? "code" : "ai",
             file_category: isStructured ? "structured" : "document",
+            local_file_debug: {
+              name: it.file.name,
+              size: it.file.size,
+              type: it.file.type || "",
+              last_modified: it.file.lastModified || null,
+              uploaded_uuid: it.uploaded?.uuid || null,
+              uploaded_size: it.uploaded?.size || null,
+              uploaded_mime: it.uploaded?.mime || null,
+            },
           };
         }),
       };
@@ -1418,7 +1447,10 @@ export default function AppPage() {
 
       setResult(data);
       setOriginalAnalyzeResult(data);
-      showToast("Analysis complete.");
+
+      const cacheStatus = data?.processing?.cache_hit === true ? "cache hit" : "fresh";
+      const debugId = data?.processing?.analysis_request_id || analyzeRequestId;
+      showToast(`Analysis complete (${cacheStatus} • ${String(debugId).slice(0, 8)}).`);
     } catch (err: any) {
       showToast(err.message || "Analyze failed.", "error");
     } finally {
@@ -1897,6 +1929,12 @@ export default function AppPage() {
               </div>
 
               <div className="resultsBody p-5">
+                {result?.processing && (
+                  <div className="mb-4 rounded-3xl border border-cyan-100 bg-cyan-50/70 p-4 text-xs font-black leading-5 text-cyan-800 sm:text-sm">
+                    Fresh-analysis debug: {result.processing.force_fresh ? "force fresh on" : "force fresh off"} • Cache: {result.processing.cache_hit ? "hit" : "not used"} • Structured files: {result.processing.structured_files_count ?? 0} • AI files: {result.processing.ai_files_count ?? 0} • Report: {String(result.report_id || "").slice(0, 8)}
+                  </div>
+                )}
+
                 {hasPossibleMappingIssue && (
                   <div className="mb-4 rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-800">
                     DropClarity found some cost activity, but job-level revenue/cost totals look incomplete. If this upload was a spreadsheet with multiple Job IDs, re-run it and mark the file as “Multiple Jobs” in the job mapping step.
