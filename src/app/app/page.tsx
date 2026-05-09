@@ -221,17 +221,93 @@ function inferRoleFromName(
     s.includes("job cost")
   )
     return "combined";
-  if (s.includes("invoice") || s.includes("revenue") || s.includes("sales"))
-    return "revenue";
+
+  // Important: vendor/supplier invoices are cost files, not revenue files.
+  // The previous rule treated any filename containing "invoice" as revenue,
+  // which can make supplier PDFs such as "Florida HVAC Supply Co. Invoice"
+  // look like they were ignored because the Worker correctly zeroes costs for
+  // revenue-tagged files. Cost/vendor language must win before generic invoice.
+  if (looksLikeVendorOrCostFileName(s)) return "cost";
+
   if (
-    s.includes("bill") ||
-    s.includes("vendor") ||
-    s.includes("expense") ||
-    s.includes("cost") ||
-    s.includes("receipt")
+    s.includes("customer invoice") ||
+    s.includes("client invoice") ||
+    s.includes("sales invoice") ||
+    s.includes("revenue") ||
+    s.includes("sales") ||
+    s.includes("payment") ||
+    s.includes("paid") ||
+    s.includes("collected")
   )
-    return "cost";
+    return "revenue";
+
+  if (s.includes("invoice")) return "unknown";
   return "unknown";
+}
+
+function looksLikeVendorOrCostFileName(name: string) {
+  const s = String(name || "").toLowerCase();
+  return [
+    "bill",
+    "vendor",
+    "supplier",
+    "supply",
+    "supplies",
+    "material",
+    "materials",
+    "expense",
+    "cost",
+    "receipt",
+    "purchase",
+    "po-",
+    "subcontractor",
+    "subcontract",
+    "freight",
+    "delivery",
+    "tax",
+    "permit",
+  ].some((k) => s.includes(k));
+}
+
+function normalizeAnalyzeMime(filename: string, mime: string) {
+  const lower = String(filename || "").toLowerCase();
+  const raw = String(mime || "").toLowerCase();
+
+  if (raw && raw !== "application/octet-stream") return raw;
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".csv")) return "text/csv";
+  if (lower.endsWith(".tsv")) return "text/tab-separated-values";
+  if (lower.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if (lower.endsWith(".xls")) return "application/vnd.ms-excel";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".webp")) return "image/webp";
+
+  return raw || "application/octet-stream";
+}
+
+function isStructuredAnalyzeFile(filename: string, mime: string) {
+  const lower = String(filename || "").toLowerCase();
+  const m = String(mime || "").toLowerCase();
+
+  return (
+    lower.endsWith(".csv") ||
+    lower.endsWith(".tsv") ||
+    lower.endsWith(".xlsx") ||
+    lower.endsWith(".xls") ||
+    m.includes("csv") ||
+    m.includes("tab-separated") ||
+    m.includes("spreadsheet") ||
+    m.includes("excel") ||
+    m.includes("officedocument.spreadsheet")
+  );
+}
+
+function analyzeKindForRole(role: FileRole, index: number) {
+  if (role === "revenue") return "revenue_file";
+  if (role === "cost") return "cost_file";
+  if (role === "combined") return "combined_invoice";
+  return index === 0 ? "job_export" : "supporting";
 }
 
 function bestJobIdentifier(job: any) {
@@ -1326,15 +1402,34 @@ export default function AppPage() {
   function validateAssignments() {
     const nextErrors: Record<string, AssignmentError> = {};
 
+    let vendorInvoiceRoleWarning = false;
+
     uploadedItems.forEach((it) => {
       const error: AssignmentError = {};
+      const filename = it.uploaded?.filename || it.file.name || "";
+
       if (!it.job_id.trim()) error.job_id = true;
       if (it.role !== "revenue" && it.role !== "cost" && it.role !== "combined")
         error.role = true;
+
+      // Supplier/vendor invoices should be Cost files. If they are accidentally
+      // tagged as Revenue, the Worker intentionally treats them as customer
+      // revenue documents and removes costs, which makes the PDF appear like it
+      // was not analyzed. Block that mismatch before the request is sent.
+      if (it.role === "revenue" && looksLikeVendorOrCostFileName(filename)) {
+        error.role = true;
+        vendorInvoiceRoleWarning = true;
+      }
+
       if (error.job_id || error.role) nextErrors[it.id] = error;
     });
 
     setAssignmentErrors(nextErrors);
+
+    if (vendorInvoiceRoleWarning) {
+      showToast("One uploaded file looks like a vendor/supplier cost invoice. Change its File Type to Cost before analyzing.", "error");
+      return false;
+    }
 
     if (Object.keys(nextErrors).length > 0) {
       showToast("Review the highlighted fields before continuing.", "error");
@@ -1371,23 +1466,21 @@ export default function AppPage() {
         period_label: "Latest Period",
         files: uploadedItems.map((it, idx) => {
           const filename = it.uploaded?.filename || it.file.name;
-          const mime =
-            it.uploaded?.mime || it.file.type || "application/octet-stream";
-          const lower = filename.toLowerCase();
-
-          const isStructured =
-            lower.endsWith(".csv") ||
-            lower.endsWith(".xlsx") ||
-            lower.endsWith(".xls") ||
-            mime.includes("csv") ||
-            mime.includes("spreadsheet") ||
-            mime.includes("excel");
+          const mime = normalizeAnalyzeMime(
+            filename,
+            it.uploaded?.mime || it.file.type || "application/octet-stream",
+          );
+          const isStructured = isStructuredAnalyzeFile(filename, mime);
 
           return {
             uuid: it.uploaded?.uuid,
-            kind: idx === 0 ? "job_export" : "supporting",
+            kind: analyzeKindForRole(it.role, idx),
             filename,
             mime,
+            size: it.uploaded?.size ?? it.file.size ?? null,
+            cdnUrl: it.uploaded?.cdnUrl || null,
+            client_mime: it.file.type || null,
+            uploaded_mime: it.uploaded?.mime || null,
             job_id: it.job_id.trim(),
             role: it.role === "combined" ? "combined_invoice" : it.role,
             parse_mode: isStructured ? "code" : "ai",
