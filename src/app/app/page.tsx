@@ -938,6 +938,7 @@ export default function AppPage() {
   const [assignmentErrors, setAssignmentErrors] = useState<
     Record<string, AssignmentError>
   >({});
+  const [analysisDebug, setAnalysisDebug] = useState<any>(null);
 
   const uploadedItems = items.filter(
     (it) => it.status === "uploaded" && it.uploaded?.uuid,
@@ -1205,6 +1206,7 @@ export default function AppPage() {
 
     setResult(null);
     setOriginalAnalyzeResult(null);
+    setAnalysisDebug(null);
     setReportCopied(false);
 
     setItems((prev) => {
@@ -1366,9 +1368,23 @@ export default function AppPage() {
     setAnalyzing(true);
 
     try {
+      const clientAnalysisRunId =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random()}`;
+
       const payload = {
         user_id: USER_ID,
         period_label: "Latest Period",
+        force_fresh: true,
+        debug: true,
+        cache_bust: Date.now(),
+        client_analysis_run_id: clientAnalysisRunId,
+        client_debug: {
+          user_agent:
+            typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+          requested_at: new Date().toISOString(),
+        },
         files: uploadedItems.map((it, idx) => {
           const filename = it.uploaded?.filename || it.file.name;
           const mime =
@@ -1388,6 +1404,9 @@ export default function AppPage() {
             kind: idx === 0 ? "job_export" : "supporting",
             filename,
             mime,
+            size: it.uploaded?.size ?? it.file.size ?? null,
+            client_file_size: it.file.size ?? null,
+            client_file_last_modified: it.file.lastModified ?? null,
             job_id: it.job_id.trim(),
             role: it.role === "combined" ? "combined_invoice" : it.role,
             parse_mode: isStructured ? "code" : "ai",
@@ -1402,8 +1421,11 @@ export default function AppPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          Pragma: "no-cache",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        cache: "no-store",
         body: JSON.stringify(payload),
       });
 
@@ -1418,8 +1440,17 @@ export default function AppPage() {
 
       setResult(data);
       setOriginalAnalyzeResult(data);
+      setAnalysisDebug({
+        client_analysis_run_id: clientAnalysisRunId,
+        report_id: data?.report_id || null,
+        worker_version: data?.debug?.worker_version || data?.processing?.worker_version || data?.worker_version || null,
+        cache_hit: data?.debug?.cache_hit ?? data?.processing?.cache_hit ?? data?.cache_hit ?? null,
+        force_fresh: data?.debug?.force_fresh ?? data?.processing?.force_fresh ?? data?.force_fresh ?? true,
+        created_at: data?.created_at || data?.debug?.created_at || null,
+      });
       showToast("Analysis complete.");
     } catch (err: any) {
+      setAnalysisDebug(null);
       showToast(err.message || "Analyze failed.", "error");
     } finally {
       setAnalyzing(false);
@@ -1739,6 +1770,7 @@ export default function AppPage() {
                   setItems([]);
                   setResult(null);
                   setOriginalAnalyzeResult(null);
+                  setAnalysisDebug(null);
                   setReportCopied(false);
                   setAssignmentErrors({});
                 }}
@@ -1900,6 +1932,13 @@ export default function AppPage() {
                 {hasPossibleMappingIssue && (
                   <div className="mb-4 rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-800">
                     DropClarity found some cost activity, but job-level revenue/cost totals look incomplete. If this upload was a spreadsheet with multiple Job IDs, re-run it and mark the file as “Multiple Jobs” in the job mapping step.
+                  </div>
+                )}
+
+                {analysisDebug && (
+                  <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 text-xs font-bold leading-5 text-slate-500">
+                    Debug: force fresh {String(analysisDebug.force_fresh)} • cache hit {String(analysisDebug.cache_hit)} • report {analysisDebug.report_id || "new"} • run {analysisDebug.client_analysis_run_id}
+                    {analysisDebug.worker_version ? ` • worker ${analysisDebug.worker_version}` : ""}
                   </div>
                 )}
 
