@@ -1421,8 +1421,6 @@ export default function AppPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-          Pragma: "no-cache",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
