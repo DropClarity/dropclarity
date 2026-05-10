@@ -3588,62 +3588,152 @@ function DashboardBody({
 }) {
   const jobs = getAllJobs(state);
   const insights = Array.isArray(state.insights) ? state.insights : [];
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [costsOpen, setCostsOpen] = useState(true);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+
+  const openJob = (key: string) => {
+    setJobKey(key);
+    setView("job");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <>
-      <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
-      <Kpis state={state} />
-      <ScaleOversightPanel
-        state={state}
-        plan={plan}
-        scaleSummary={scaleSummary}
-        marginTarget={marginTarget}
-        marginTargetDraft={marginTargetDraft}
-        setMarginTargetDraft={setMarginTargetDraft}
-        onSaveMarginTarget={onSaveMarginTarget}
-        emailAlertsEnabled={emailAlertsEnabled}
-        setEmailAlertsEnabled={setEmailAlertsEnabled}
-        userEmail={userEmail}
-        alertEmails={alertEmails}
-        setAlertEmails={setAlertEmails}
-        onOpenJob={(key: string) => {
-          setJobKey(key);
-          setView("job");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        onOpenHighRisk={onOpenHighRisk}
-      />
+      <section className="dcOrientationPanel" aria-label="Dashboard guide">
+        <div className="dcOrientationIntro">
+          <div className="dcSectionEyebrow">Start here</div>
+          <h2>Profit leaks first. Details second.</h2>
+          <p>
+            DropClarity ranks the jobs that need attention, then keeps the deeper charts, cost mix, reports, and job history organized underneath.
+          </p>
+        </div>
+        <div className="dcOrientationSteps" aria-label="How to read this dashboard">
+          <a href="#attention" className="dcOrientationStep"><span>1</span><strong>Review risk</strong><em>See the fastest profit issue.</em></a>
+          <a href="#fixFirst" className="dcOrientationStep"><span>2</span><strong>Fix first</strong><em>Open the highest-impact jobs.</em></a>
+          <a href="#jobsPanel" className="dcOrientationStep"><span>3</span><strong>Audit jobs</strong><em>Search, edit, export, or hide reports.</em></a>
+        </div>
+      </section>
 
-      <ChartsPanel state={state} view={view} />
-      <CreditRefundKpis state={state} />
+      <div id="attention" className="dcDashboardSection dcPrimarySection">
+        <div className="dcSectionHeader">
+          <div>
+            <div className="dcSectionEyebrow">Immediate attention</div>
+            <h2>What needs review first</h2>
+            <p>High-level profit risk across the selected date range.</p>
+          </div>
+        </div>
+        <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
+      </div>
 
-      <div className="grid">
-        <div className="mainCol">
-          <JobsLog
-            jobs={jobs}
-            onOpenAllJobs={() => {
-              setView("alljobs");
-              setJobKey("");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onOpenJob={(key: string) => {
-              setJobKey(key);
-              setView("job");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onHideJob={onHideJob}
-          />
+      <div id="fixFirst" className="dcDashboardSection dcActionSection">
+        <div className="dcSectionHeader">
+          <div>
+            <div className="dcSectionEyebrow">Recommended actions</div>
+            <h2>What to fix first</h2>
+            <p>Premium Scale controls stay intact, but this area is now positioned as the main decision center.</p>
+          </div>
+          <button className="btn dcSectionCta" type="button" onClick={onOpenHighRisk}>Review High-Risk Jobs</button>
+        </div>
+        <ScaleOversightPanel
+          state={state}
+          plan={plan}
+          scaleSummary={scaleSummary}
+          marginTarget={marginTarget}
+          marginTargetDraft={marginTargetDraft}
+          setMarginTargetDraft={setMarginTargetDraft}
+          onSaveMarginTarget={onSaveMarginTarget}
+          emailAlertsEnabled={emailAlertsEnabled}
+          setEmailAlertsEnabled={setEmailAlertsEnabled}
+          userEmail={userEmail}
+          alertEmails={alertEmails}
+          setAlertEmails={setAlertEmails}
+          onOpenJob={openJob}
+          onOpenHighRisk={onOpenHighRisk}
+        />
+      </div>
+
+      <div className="dcDashboardSection dcHealthSection">
+        <div className="dcSectionHeader compact">
+          <div>
+            <div className="dcSectionEyebrow">Business health</div>
+            <h2>The numbers behind the alerts</h2>
+            <p>Revenue, costs, margin, and job count stay visible, but secondary to the action queue.</p>
+          </div>
+        </div>
+        <Kpis state={state} />
+      </div>
+
+      <div className="dcDashboardSection dcAccordionSection">
+        <button className="dcAccordionHeader" type="button" onClick={() => setAnalyticsOpen((v) => !v)} aria-expanded={analyticsOpen}>
+          <div>
+            <div className="dcSectionEyebrow">Detailed analytics</div>
+            <h2>Charts and trend views</h2>
+            <p>Open when you want deeper visual analysis of the lowest-profit jobs and revenue vs. costs.</p>
+          </div>
+          <span>{analyticsOpen ? "Hide" : "Show"}</span>
+        </button>
+        {analyticsOpen ? <ChartsPanel state={state} view={view} /> : null}
+      </div>
+
+      <div className="dcDashboardSection dcAccordionSection">
+        <button className="dcAccordionHeader" type="button" onClick={() => setCostsOpen((v) => !v)} aria-expanded={costsOpen}>
+          <div>
+            <div className="dcSectionEyebrow">Cost structure</div>
+            <h2>Cost mix and credits</h2>
+            <p>Labor, materials, subs, taxes, other costs, and credits stay grouped together.</p>
+          </div>
+          <span>{costsOpen ? "Hide" : "Show"}</span>
+        </button>
+        {costsOpen ? (
+          <div className="dcCostGroup">
+            <ChartsPanel state={state} view={view} />
+            <CreditRefundKpis state={state} />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="dcDashboardSection dcOpsSection">
+        <div className="dcSectionHeader">
+          <div>
+            <div className="dcSectionEyebrow">Operations</div>
+            <h2>Jobs, uploads, and saved reports</h2>
+            <p>Search jobs, open details, manage reports, hide mistaken uploads, and export files from one workspace.</p>
+          </div>
         </div>
 
-        <div className="sideStack">
-          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} onOpenReportJob={onOpenReportJob} />
-          <Insights insights={insights} />
+        <div className="grid dcOpsGrid">
+          <div className="mainCol">
+            <JobsLog
+              jobs={jobs}
+              onOpenAllJobs={() => {
+                setView("alljobs");
+                setJobKey("");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onOpenJob={openJob}
+              onHideJob={onHideJob}
+            />
+          </div>
+
+          <div className="sideStack">
+            <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} onOpenReportJob={onOpenReportJob} />
+            <div className="dcAccordionSection dcInsightsDrawer">
+              <button className="dcAccordionHeader mini" type="button" onClick={() => setInsightsOpen((v) => !v)} aria-expanded={insightsOpen}>
+                <div>
+                  <div className="dcSectionEyebrow">AI insights</div>
+                  <h2>Extra notes</h2>
+                </div>
+                <span>{insightsOpen ? "Hide" : "Show"}</span>
+              </button>
+              {insightsOpen ? <Insights insights={insights} /> : null}
+            </div>
+          </div>
         </div>
       </div>
     </>
   );
 }
-
 
 function JobComparisonPanel({ base, state, marginTarget }: { base: JobRow; state: DashboardState; marginTarget: number }) {
   const allJobs = getAllJobs(state);
@@ -6833,4 +6923,201 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .premiumReportProfitBlock .reportViewBtn{height:30px;padding:7px 10px;font-size:11px}
 @media(max-width:640px){.dc-bg .reportRowActions{gap:6px}.dc-bg .premiumReportProfitBlock .reportViewBtn{height:32px;padding:7px 9px}}
 
+
+
+/* Enterprise navigation restructure: keeps all dashboard mechanics intact while reducing first-load overwhelm */
+.dc-bg .dcOrientationPanel,
+.dc-bg .dcDashboardSection{
+  width:100%;
+  box-sizing:border-box;
+}
+.dc-bg .dcOrientationPanel{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+  gap:18px;
+  align-items:stretch;
+  margin:18px 0 18px;
+  padding:18px;
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(248,250,252,.86) 45%,rgba(236,254,255,.72));
+  box-shadow:0 20px 60px rgba(15,23,42,.06);
+}
+.dc-bg .dcOrientationIntro h2,
+.dc-bg .dcSectionHeader h2,
+.dc-bg .dcAccordionHeader h2{
+  margin:0;
+  color:#0f172a;
+  letter-spacing:-.04em;
+  font-weight:950;
+}
+.dc-bg .dcOrientationIntro h2{font-size:clamp(22px,2.4vw,34px);line-height:1.02;margin-top:6px}
+.dc-bg .dcOrientationIntro p,
+.dc-bg .dcSectionHeader p,
+.dc-bg .dcAccordionHeader p{
+  margin:7px 0 0;
+  color:rgba(71,85,105,.82);
+  font-weight:750;
+  line-height:1.45;
+}
+.dc-bg .dcSectionEyebrow{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  color:#0891b2;
+  background:rgba(6,182,212,.08);
+  border:1px solid rgba(6,182,212,.15);
+  font-size:11px;
+  line-height:1;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  font-weight:950;
+}
+.dc-bg .dcOrientationSteps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.dc-bg .dcOrientationStep{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+  padding:14px;
+  text-decoration:none;
+  color:#0f172a;
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:22px;
+  background:rgba(255,255,255,.88);
+  box-shadow:0 12px 28px rgba(15,23,42,.045);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.dc-bg .dcOrientationStep:hover{transform:translateY(-1px);border-color:rgba(124,58,237,.22);box-shadow:0 18px 34px rgba(15,23,42,.07)}
+.dc-bg .dcOrientationStep span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;height:28px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#22d3ee,#8b5cf6);
+  color:white;
+  font-size:12px;
+  font-weight:950;
+}
+.dc-bg .dcOrientationStep strong{font-size:14px;font-weight:950;letter-spacing:-.02em}
+.dc-bg .dcOrientationStep em{font-style:normal;font-size:12px;line-height:1.35;color:rgba(71,85,105,.72);font-weight:750}
+.dc-bg .dcDashboardSection{
+  margin:18px 0;
+}
+.dc-bg .dcSectionHeader{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  margin:0 0 12px;
+  padding:0 2px;
+}
+.dc-bg .dcSectionHeader.compact{margin-bottom:10px}
+.dc-bg .dcSectionHeader h2,
+.dc-bg .dcAccordionHeader h2{font-size:clamp(22px,2vw,30px);line-height:1.08;margin-top:7px}
+.dc-bg .dcSectionCta{white-space:nowrap;background:linear-gradient(135deg,rgba(236,254,255,.95),rgba(245,243,255,.96));border-color:rgba(124,58,237,.18)}
+.dc-bg .dcPrimarySection .profitSnapshot{margin-top:0!important}
+.dc-bg .dcActionSection > .scalePanel,
+.dc-bg .dcHealthSection > .panel,
+.dc-bg .dcAccordionSection,
+.dc-bg .dcOpsSection > .grid{
+  position:relative;
+}
+.dc-bg .dcActionSection .scalePanel{
+  margin-top:0!important;
+  box-shadow:0 24px 70px rgba(15,23,42,.075)!important;
+  border-color:rgba(124,58,237,.16)!important;
+}
+.dc-bg .dcActionSection .scalePanel .scaleIntelligenceStrip,
+.dc-bg .dcActionSection .scalePanel .scalePremiumGrid{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid rgba(15,23,42,.06);
+}
+.dc-bg .dcHealthSection .panel{margin-top:0!important;box-shadow:0 18px 52px rgba(15,23,42,.045)!important}
+.dc-bg .dcAccordionSection{
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:30px;
+  background:rgba(255,255,255,.86);
+  box-shadow:0 18px 50px rgba(15,23,42,.045);
+  overflow:hidden;
+}
+.dc-bg .dcAccordionHeader{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:20px;
+  border:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.8));
+  text-align:left;
+  cursor:pointer;
+}
+.dc-bg .dcAccordionHeader span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  height:40px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.08);
+  background:white;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:950;
+  box-shadow:0 10px 24px rgba(15,23,42,.05);
+}
+.dc-bg .dcAccordionHeader.mini{padding:16px}
+.dc-bg .dcAccordionHeader.mini h2{font-size:20px}
+.dc-bg .dcAccordionSection > .chartsGrid,
+.dc-bg .dcAccordionSection > .panel,
+.dc-bg .dcCostGroup{
+  margin:0!important;
+  padding:0 18px 18px;
+}
+.dc-bg .dcCostGroup .chartsGrid{margin:0!important}
+.dc-bg .dcCostGroup .chartCard:not(:has(.mixList)){display:none!important}
+.dc-bg .dcCostGroup .chartCard:has(.mixList){grid-column:1/-1!important}
+.dc-bg .dcCostGroup > .panel{margin-top:14px!important}
+.dc-bg .dcOpsGrid{margin-top:0!important;align-items:start}
+.dc-bg .dcOpsGrid #jobsPanel,
+.dc-bg .dcOpsGrid .pastReportsPanel{margin-top:0!important}
+.dc-bg .dcInsightsDrawer{margin-top:14px!important;border-radius:24px!important}
+.dc-bg .dcInsightsDrawer .panel{margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important}
+.dc-bg .dcInsightsDrawer .panelHead{display:none!important}
+.dc-bg .dcInsightsDrawer .pad{padding:0 16px 16px!important}
+@media(max-width:1100px){
+  .dc-bg .dcOrientationPanel{grid-template-columns:1fr;gap:14px}
+  .dc-bg .dcOrientationSteps{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:820px){
+  .dc-bg .dcOrientationPanel{border-radius:24px;padding:14px;margin:14px 0}
+  .dc-bg .dcOrientationSteps{grid-template-columns:1fr}
+  .dc-bg .dcSectionHeader{align-items:flex-start;flex-direction:column;gap:10px}
+  .dc-bg .dcSectionCta{width:100%;justify-content:center}
+  .dc-bg .dcAccordionHeader{align-items:flex-start;padding:16px;flex-direction:column}
+  .dc-bg .dcAccordionHeader span{width:100%}
+  .dc-bg .dcAccordionSection > .chartsGrid,
+  .dc-bg .dcAccordionSection > .panel,
+  .dc-bg .dcCostGroup{padding:0 12px 12px}
+}
+@media(max-width:560px){
+  .dc-bg .dcDashboardSection{margin:14px 0}
+  .dc-bg .dcOrientationIntro h2{font-size:22px}
+  .dc-bg .dcSectionHeader h2,
+  .dc-bg .dcAccordionHeader h2{font-size:21px}
+  .dc-bg .dcOrientationPanel,
+  .dc-bg .dcAccordionSection{border-radius:22px}
+}
 `;
