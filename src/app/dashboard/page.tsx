@@ -2003,7 +2003,7 @@ function RangeControls({
     <div>
       <div className="rangeLabel">Date Range</div>
       <div className="rangeSub">
-        Filter the whole dashboard by period.
+        Choose the jobs and reports shown below.
       </div>
     </div>
 
@@ -2216,14 +2216,14 @@ function TopBar({
       <div className="dashboardIntro">
         <div className="pageKicker">Profitability Dashboard</div>
         <h1 className="pageTitle">
-          See where <span className="gradText">profit is made and lost</span>
+          Find the jobs quietly draining profit
         </h1>
         <div className="pageSub">
   {mode === "loading" ? (
     "Loading your profitability dashboard..."
   ) : s ? (
     <>
-      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> job profitability, profit leaks, and margin risk across every saved analysis.
+      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> uploaded jobs, margin risk, and recoverable profit.
     </>
   ) : (
     "No reports yet. Run an analysis from the Upload page to generate your first dashboard."
@@ -2499,7 +2499,7 @@ function CreditRefundKpis({ state }: { state: DashboardState }) {
       <div className="creditKpiHead">
         <div>
           <div className="creditKpiTitle">Credit / Refund Tracking</div>
-          <div className="creditKpiSub">Supplier credits, refunds, and credit memos are included in profit, but shown separately from true Other costs so the dashboard reconciles cleanly.</div>
+          <div className="creditKpiSub">Credits and refunds are included in profit, but separated from true operating costs.</div>
         </div>
       </div>
 
@@ -2550,7 +2550,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
         <div className="chartHead">
           <div>
             <div className="chartTitle">Lowest-Profit Jobs</div>
-            <div className="chartSub">Lowest 5 jobs by net profit in the selected range</div>
+            <div className="chartSub">Lowest 5 jobs in the selected range</div>
           </div>
         </div>
         {jobs.length ? <canvas ref={profitRef} width={520} height={220} /> : <div className="trendEmpty">No jobs in this range yet.</div>}
@@ -2560,7 +2560,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
         <div className="chartHead">
           <div>
             <div className="chartTitle">Revenue vs Costs</div>
-            <div className="chartSub">Revenue and costs for the lowest 5 jobs</div>
+            <div className="chartSub">Revenue vs. costs for the lowest 5 jobs</div>
           </div>
         </div>
         {jobs.length ? <canvas ref={revCostRef} width={520} height={220} /> : <div className="trendEmpty">No job-level totals yet.</div>}
@@ -2571,7 +2571,7 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
           <div>
             <div className="chartTitle">Cost Mix</div>
             <div className="chartSub">
-              Shows true cost buckets separately from credits/adjustments. Net costs still include credits for profit and margin.
+              True cost buckets shown separately from credits. Net costs still include credits for profit and margin.
             </div>
           </div>
 
@@ -2650,7 +2650,7 @@ function JobsLog({
       <div className="panelHead responsiveHead">
         <div>
           <div className="panelTitle">All Jobs Log</div>
-          <div className="panelSub">Search, sort, and open any job.</div>
+          <div className="panelSub">Search jobs, open details, and audit saved results.</div>
         </div>
 
         <div className="tableTools">
@@ -2746,7 +2746,7 @@ function PastReports({
         <div>
           <div className="panelTitle pastReportsTitle">Past Reports</div>
           <div className="panelSub pastReportsSub">
-            Saved uploads that feed dashboard totals. Hide mistakes without deleting history.
+            Saved uploads feeding the dashboard. Hide mistakes without deleting history.
           </div>
         </div>
         <button className="reportsManageLink premiumManageLink" type="button" onClick={onManageReports}>
@@ -3018,7 +3018,7 @@ function ProfitCommandCenter({
           <div className="wowCardHead">
             <div>
               <div className="wowKicker">Action Queue</div>
-              <div className="wowCardTitle">What to fix first</div>
+              <div className="wowCardTitle">Fix these first</div>
             </div>
             <span className="tag">Ranked by impact</span>
           </div>
@@ -3374,7 +3374,7 @@ function ScaleOversightPanel({
           <div className="scaleCardHeadSplit">
             <div>
               <div className="scaleKicker">Action Queue</div>
-              <div className="scaleQueueTitle">What to fix first</div>
+              <div className="scaleQueueTitle">Fix these first</div>
             </div>
             <span className="tag">Ranked by impact</span>
           </div>
@@ -3603,15 +3603,15 @@ function DashboardBody({
       <section className="dcOrientationPanel" aria-label="Dashboard guide">
         <div className="dcOrientationIntro">
           <div className="dcSectionEyebrow">Start here</div>
-          <h2>Profit leaks first. Details second.</h2>
+          <h2>Start with the leak. Then open the details.</h2>
           <p>
-            DropClarity ranks the jobs that need attention, then keeps the deeper charts, cost mix, reports, and job history organized underneath.
+            A simpler path through your dashboard: review risk, fix the biggest leak, then audit the supporting job data.
           </p>
         </div>
         <div className="dcOrientationSteps" aria-label="How to read this dashboard">
-          <a href="#attention" className="dcOrientationStep"><span>1</span><strong>Review risk</strong><em>See the fastest profit issue.</em></a>
-          <a href="#fixFirst" className="dcOrientationStep"><span>2</span><strong>Fix first</strong><em>Open the highest-impact jobs.</em></a>
-          <a href="#jobsPanel" className="dcOrientationStep"><span>3</span><strong>Audit jobs</strong><em>Search, edit, export, or hide reports.</em></a>
+          <a href="#attention" className="dcOrientationStep"><span>1</span><strong>Review risk</strong><em>Top profit leak</em></a>
+          <a href="#fixFirst" className="dcOrientationStep"><span>2</span><strong>Fix first</strong><em>Highest impact jobs</em></a>
+          <a href="#jobsPanel" className="dcOrientationStep"><span>3</span><strong>Audit jobs</strong><em>Search and manage</em></a>
         </div>
       </section>
 
@@ -3619,8 +3619,8 @@ function DashboardBody({
         <div className="dcSectionHeader">
           <div>
             <div className="dcSectionEyebrow">Immediate attention</div>
-            <h2>What needs review first</h2>
-            <p>High-level profit risk across the selected date range.</p>
+            <h2>Profit leaks to review first</h2>
+            <p>The fastest way to see what needs attention.</p>
           </div>
         </div>
         <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
@@ -3630,8 +3630,8 @@ function DashboardBody({
         <div className="dcSectionHeader">
           <div>
             <div className="dcSectionEyebrow">Recommended actions</div>
-            <h2>What to fix first</h2>
-            <p>Premium Scale controls stay intact, but this area is now positioned as the main decision center.</p>
+            <h2>Fix these first</h2>
+            <p>Highest-impact jobs and alerts, ranked for action.</p>
           </div>
           <button className="btn dcSectionCta" type="button" onClick={onOpenHighRisk}>Review High-Risk Jobs</button>
         </div>
@@ -3657,8 +3657,8 @@ function DashboardBody({
         <div className="dcSectionHeader compact">
           <div>
             <div className="dcSectionEyebrow">Business health</div>
-            <h2>The numbers behind the alerts</h2>
-            <p>Revenue, costs, margin, and job count stay visible, but secondary to the action queue.</p>
+            <h2>Business totals</h2>
+            <p>A clean snapshot of revenue, costs, margin, and job volume.</p>
           </div>
         </div>
         <Kpis state={state} />
@@ -3668,8 +3668,8 @@ function DashboardBody({
         <button className="dcAccordionHeader" type="button" onClick={() => setAnalyticsOpen((v) => !v)} aria-expanded={analyticsOpen}>
           <div>
             <div className="dcSectionEyebrow">Detailed analytics</div>
-            <h2>Charts and trend views</h2>
-            <p>Open when you want deeper visual analysis of the lowest-profit jobs and revenue vs. costs.</p>
+            <h2>Charts and trends</h2>
+            <p>Open for deeper views after reviewing the profit leaks.</p>
           </div>
           <span>{analyticsOpen ? "Hide" : "Show"}</span>
         </button>
@@ -3680,8 +3680,8 @@ function DashboardBody({
         <button className="dcAccordionHeader" type="button" onClick={() => setCostsOpen((v) => !v)} aria-expanded={costsOpen}>
           <div>
             <div className="dcSectionEyebrow">Cost structure</div>
-            <h2>Cost mix and credits</h2>
-            <p>Labor, materials, subs, taxes, other costs, and credits stay grouped together.</p>
+            <h2>Cost mix, credits, and adjustments</h2>
+            <p>See where costs are concentrated without mixing credits into true cost buckets.</p>
           </div>
           <span>{costsOpen ? "Hide" : "Show"}</span>
         </button>
@@ -3697,8 +3697,8 @@ function DashboardBody({
         <div className="dcSectionHeader">
           <div>
             <div className="dcSectionEyebrow">Operations</div>
-            <h2>Jobs, uploads, and saved reports</h2>
-            <p>Search jobs, open details, manage reports, hide mistaken uploads, and export files from one workspace.</p>
+            <h2>Job log and saved reports</h2>
+            <p>Open job details, export files, or hide mistaken uploads.</p>
           </div>
         </div>
 
@@ -3722,7 +3722,7 @@ function DashboardBody({
               <button className="dcAccordionHeader mini" type="button" onClick={() => setInsightsOpen((v) => !v)} aria-expanded={insightsOpen}>
                 <div>
                   <div className="dcSectionEyebrow">AI insights</div>
-                  <h2>Extra notes</h2>
+                  <h2>Additional notes</h2>
                 </div>
                 <span>{insightsOpen ? "Hide" : "Show"}</span>
               </button>
@@ -7120,4 +7120,258 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .dcOrientationPanel,
   .dc-bg .dcAccordionSection{border-radius:22px}
 }
+
+/* DropClarity enterprise readability pass: softer surfaces, shorter guide, stronger hierarchy */
+.dc-bg{
+  background:
+    radial-gradient(circle at 8% 4%, rgba(34,211,238,.10), transparent 28%),
+    radial-gradient(circle at 88% 8%, rgba(124,58,237,.10), transparent 30%),
+    linear-gradient(180deg,#ffffff 0%,#f8fbff 28%,#f6f8fc 100%) !important;
+  color:#0f172a;
+}
+.dc-bg .wrap{padding-top:34px}
+.dc-bg .topbar{margin-bottom:18px}
+.dc-bg .pageKicker,
+.dc-bg .dcSectionEyebrow,
+.dc-bg .scaleKicker,
+.dc-bg .kLabel,
+.dc-bg .statLabel,
+.dc-bg .creditKpiLabel{
+  letter-spacing:.105em;
+}
+.dc-bg .pageTitle{
+  max-width:760px;
+  font-size:clamp(34px,3.7vw,54px);
+  line-height:.98;
+  letter-spacing:-.065em;
+}
+.dc-bg .pageSub{
+  max-width:760px;
+  margin-top:14px;
+  font-size:16px;
+  line-height:1.45;
+  color:rgba(15,23,42,.62);
+}
+.dc-bg .topbarRight{
+  padding:10px;
+  border-radius:28px;
+  background:rgba(255,255,255,.58);
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:0 22px 70px rgba(15,23,42,.07);
+  backdrop-filter:blur(14px);
+}
+.dc-bg .rangeWrap{
+  margin-top:14px;
+  border:1px solid rgba(15,23,42,.055);
+  background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(248,250,252,.86));
+  box-shadow:0 18px 46px rgba(15,23,42,.055);
+}
+.dc-bg .dcOrientationPanel{
+  grid-template-columns:1fr auto;
+  gap:18px;
+  padding:16px 18px;
+  border-radius:26px;
+  border:1px solid rgba(34,211,238,.18);
+  background:
+    linear-gradient(135deg,rgba(236,253,245,.74),rgba(239,246,255,.72) 48%,rgba(245,243,255,.66));
+  box-shadow:0 22px 70px rgba(14,165,233,.10);
+}
+.dc-bg .dcOrientationIntro h2{
+  font-size:clamp(22px,2.2vw,30px);
+  letter-spacing:-.045em;
+  margin-top:6px;
+}
+.dc-bg .dcOrientationIntro p{
+  max-width:670px;
+  margin-top:7px;
+  font-size:14.5px;
+  line-height:1.42;
+  color:rgba(15,23,42,.58);
+}
+.dc-bg .dcOrientationSteps{
+  grid-template-columns:repeat(3,minmax(140px,1fr));
+  align-items:stretch;
+  min-width:min(620px,100%);
+}
+.dc-bg .dcOrientationStep{
+  min-height:92px;
+  padding:14px;
+  background:rgba(255,255,255,.72);
+  border-color:rgba(255,255,255,.78);
+  box-shadow:0 14px 34px rgba(15,23,42,.055);
+}
+.dc-bg .dcOrientationStep span{
+  width:30px;
+  height:30px;
+  font-size:13px;
+  box-shadow:0 10px 20px rgba(79,70,229,.16);
+}
+.dc-bg .dcOrientationStep strong{font-size:14.5px;letter-spacing:-.01em}
+.dc-bg .dcOrientationStep em{font-size:12.5px;color:rgba(15,23,42,.50)}
+.dc-bg .dcDashboardSection{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  margin:22px 0;
+}
+.dc-bg .dcPrimarySection{
+  padding:0;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,247,237,.66),rgba(255,255,255,.88) 42%,rgba(239,246,255,.74));
+  border:1px solid rgba(251,146,60,.13);
+  box-shadow:0 24px 70px rgba(251,146,60,.08);
+}
+.dc-bg .dcActionSection{
+  padding:0;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(245,243,255,.76),rgba(255,255,255,.90) 45%,rgba(236,253,245,.62));
+  border:1px solid rgba(124,58,237,.13);
+  box-shadow:0 26px 78px rgba(124,58,237,.085);
+}
+.dc-bg .dcHealthSection{
+  padding:0;
+  border-radius:28px;
+  background:linear-gradient(180deg,rgba(248,250,252,.94),rgba(255,255,255,.86));
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:0 18px 52px rgba(15,23,42,.055);
+}
+.dc-bg .dcOpsSection{
+  padding:0;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.90));
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:0 22px 64px rgba(15,23,42,.065);
+}
+.dc-bg .dcSectionHeader{
+  padding:22px 24px 14px;
+}
+.dc-bg .dcSectionHeader h2,
+.dc-bg .dcAccordionHeader h2{
+  font-size:clamp(23px,2.3vw,32px);
+  line-height:1.05;
+  letter-spacing:-.05em;
+}
+.dc-bg .dcSectionHeader p,
+.dc-bg .dcAccordionHeader p{
+  margin-top:6px;
+  max-width:680px;
+  font-size:14.5px;
+  line-height:1.42;
+  color:rgba(15,23,42,.56);
+}
+.dc-bg .profitSnapshot{
+  margin:0 18px 18px!important;
+  border-radius:26px!important;
+  border-color:rgba(255,255,255,.70)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.88),rgba(255,251,235,.74) 48%,rgba(245,243,255,.66))!important;
+  box-shadow:0 24px 70px rgba(15,23,42,.08)!important;
+}
+.dc-bg .profitSnapshotMain h2{font-size:clamp(28px,3vw,42px);letter-spacing:-.06em}
+.dc-bg .profitSnapshotSub{font-size:15px;line-height:1.42;color:rgba(15,23,42,.62)}
+.dc-bg .profitSnapshotMetric,
+.dc-bg .kpi,
+.dc-bg .chartCard,
+.dc-bg .creditKpi,
+.dc-bg .panel,
+.dc-bg .scaleCard,
+.dc-bg .scaleTargetCard,
+.dc-bg .scaleEmailCard{
+  border-color:rgba(15,23,42,.065)!important;
+  background:rgba(255,255,255,.82)!important;
+  box-shadow:0 16px 42px rgba(15,23,42,.055)!important;
+}
+.dc-bg .profitSnapshotMetric.primary{
+  background:linear-gradient(135deg,rgba(255,251,235,.92),rgba(255,255,255,.82))!important;
+  border-color:rgba(245,158,11,.16)!important;
+}
+.dc-bg .scalePanel.premiumScalePanel{
+  margin:0 18px 18px!important;
+  border-radius:26px;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.92),rgba(245,243,255,.64) 42%,rgba(236,253,245,.56));
+  box-shadow:0 22px 70px rgba(79,70,229,.08)!important;
+}
+.dc-bg .scaleControlHead{padding:18px 20px 8px!important}
+.dc-bg .scaleCommandGrid{padding:14px 18px 4px!important}
+.dc-bg .scaleGridPremiumV2{padding:14px 18px 18px!important}
+.dc-bg .scaleText,
+.dc-bg .alertMeta,
+.dc-bg .benchmarkNote,
+.dc-bg .leakMeta,
+.dc-bg .actionMeta,
+.dc-bg .leakFix,
+.dc-bg .panelSub,
+.dc-bg .chartSub,
+.dc-bg .creditKpiNote,
+.dc-bg .mixSub{
+  color:rgba(15,23,42,.56)!important;
+  line-height:1.42;
+}
+.dc-bg .dcAccordionSection{
+  overflow:hidden;
+  border-radius:26px!important;
+  border:1px solid rgba(15,23,42,.055)!important;
+  background:linear-gradient(135deg,rgba(248,250,252,.92),rgba(255,255,255,.86))!important;
+  box-shadow:0 18px 50px rgba(15,23,42,.055)!important;
+}
+.dc-bg .dcAccordionHeader{
+  padding:20px 22px;
+  background:transparent!important;
+}
+.dc-bg .dcCostGroup .chartCard:has(.mixList){
+  background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(236,253,245,.38))!important;
+}
+.dc-bg .mixRow{
+  background:rgba(255,255,255,.78)!important;
+  border-color:rgba(15,23,42,.06)!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.045);
+}
+.dc-bg .tableWrap{
+  background:rgba(255,255,255,.64);
+}
+.dc-bg .jobsTable thead{
+  background:rgba(248,250,252,.92);
+}
+.dc-bg .jobsTable tbody tr:hover{
+  background:rgba(239,246,255,.62);
+}
+.dc-bg .pastReportsPanel{
+  background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(248,250,252,.82))!important;
+}
+.dc-bg .btn,
+.dc-bg .rangeBtn,
+.dc-bg .miniBtn,
+.dc-bg .reportsManageLink{
+  box-shadow:0 10px 24px rgba(15,23,42,.045);
+}
+.dc-bg .btn:hover,
+.dc-bg .rangeBtn:hover,
+.dc-bg .miniBtn:hover,
+.dc-bg .reportsManageLink:hover{
+  transform:translateY(-1px);
+}
+@media(max-width:1100px){
+  .dc-bg .dcOrientationPanel{grid-template-columns:1fr}
+  .dc-bg .dcOrientationSteps{min-width:0;width:100%}
+  .dc-bg .topbarRight{width:100%}
+}
+@media(max-width:820px){
+  .dc-bg .wrap{padding-top:24px}
+  .dc-bg .topbarRight{padding:0;background:transparent;border:0;box-shadow:none}
+  .dc-bg .dcOrientationPanel{padding:14px;border-radius:22px}
+  .dc-bg .dcOrientationSteps{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .dc-bg .dcOrientationStep{min-height:auto;padding:12px 10px}
+  .dc-bg .dcOrientationStep em{display:none}
+  .dc-bg .dcSectionHeader{padding:18px 16px 12px}
+  .dc-bg .profitSnapshot,
+  .dc-bg .scalePanel.premiumScalePanel{margin:0 12px 12px!important}
+}
+@media(max-width:560px){
+  .dc-bg .dcOrientationSteps{grid-template-columns:1fr}
+  .dc-bg .pageTitle{font-size:31px}
+  .dc-bg .pageSub{font-size:14.5px}
+  .dc-bg .dcSectionHeader h2,
+  .dc-bg .dcAccordionHeader h2{font-size:22px}
+}
+
 `;
