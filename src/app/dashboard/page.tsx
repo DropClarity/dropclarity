@@ -2216,7 +2216,7 @@ function TopBar({
       <div className="dashboardIntro">
         <div className="pageKicker">Profitability Dashboard</div>
         <h1 className="pageTitle">
-          Find jobs draining profit
+          Find jobs <span className="gradText">draining profit</span>
         </h1>
         <div className="pageSub">
   {mode === "loading" ? (
