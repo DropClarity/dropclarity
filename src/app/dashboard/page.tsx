@@ -2118,7 +2118,6 @@ function InternalDashboardTopBar({
   return (
     <div className="internalUtilityTopbar" aria-label="Dashboard controls">
       <div className="internalUtilityLeft">
-        <div className="pageKicker compactKicker">Profitability Dashboard</div>
         <div className="internalUtilityText">Focused dashboard view</div>
       </div>
 
@@ -2214,7 +2213,6 @@ function TopBar({
   return (
     <div className="topbar">
       <div className="dashboardIntro">
-        <div className="pageKicker">Profitability Dashboard</div>
         <h1 className="pageTitle">
           Find jobs <span className="gradText">draining profit</span>
         </h1>
@@ -2310,7 +2308,6 @@ function ProfitLeakSnapshot({
   return (
     <section className={hasRisk ? "profitSnapshot risk" : "profitSnapshot healthy"}>
       <div className="profitSnapshotMain">
-        <div className="profitSnapshotKicker">What needs attention first</div>
         <h2 className="profitSnapshotTitle refinedSnapshotTitle">
           {hasRisk ? (
             <>
@@ -3613,7 +3610,6 @@ function DashboardBody({
       <div id="attention" className="dcDashboardSection dcPrimarySection">
         <div className="dcSectionHeader">
           <div>
-            <div className="dcSectionEyebrow">Immediate attention</div>
             <h2>Profit leaks first</h2>
             <p>Start here when reviewing performance.</p>
           </div>
@@ -3624,7 +3620,6 @@ function DashboardBody({
       <div id="fixFirst" className="dcDashboardSection dcActionSection">
         <div className="dcSectionHeader">
           <div>
-            <div className="dcSectionEyebrow">Recommended actions</div>
             <h2>Fix these first</h2>
             <p>Highest-impact issues ranked first so you know what to review now.</p>
           </div>
@@ -3651,7 +3646,6 @@ function DashboardBody({
       <div className="dcDashboardSection dcHealthSection">
         <div className="dcSectionHeader compact">
           <div>
-            <div className="dcSectionEyebrow">Business health</div>
             <h2>Business totals</h2>
             <p>Revenue, costs, margin, and job volume.</p>
           </div>
@@ -3662,7 +3656,6 @@ function DashboardBody({
       <div className="dcDashboardSection dcAccordionSection">
         <button className="dcAccordionHeader" type="button" onClick={() => setAnalyticsOpen((v) => !v)} aria-expanded={analyticsOpen}>
           <div>
-            <div className="dcSectionEyebrow">Detailed analytics</div>
             <h2>Charts and trends</h2>
             <p>Optional deeper charts when you want trend detail.</p>
           </div>
@@ -3674,7 +3667,6 @@ function DashboardBody({
       <div className="dcDashboardSection dcAccordionSection">
         <button className="dcAccordionHeader" type="button" onClick={() => setCostsOpen((v) => !v)} aria-expanded={costsOpen}>
           <div>
-            <div className="dcSectionEyebrow">Cost structure</div>
             <h2>Cost mix, credits, and adjustments</h2>
             <p>See where costs are concentrated and how credits affect totals.</p>
           </div>
@@ -3691,7 +3683,6 @@ function DashboardBody({
       <div className="dcDashboardSection dcOpsSection">
         <div className="dcSectionHeader">
           <div>
-            <div className="dcSectionEyebrow">Operations</div>
             <h2>Job log and saved reports</h2>
             <p>Audit jobs, open details, export data, and manage saved reports.</p>
           </div>
@@ -3716,7 +3707,6 @@ function DashboardBody({
             <div className="dcAccordionSection dcInsightsDrawer">
               <button className="dcAccordionHeader mini" type="button" onClick={() => setInsightsOpen((v) => !v)} aria-expanded={insightsOpen}>
                 <div>
-                  <div className="dcSectionEyebrow">AI insights</div>
                   <h2>Additional notes</h2>
                 </div>
                 <span>{insightsOpen ? "Hide" : "Show"}</span>
@@ -8130,4 +8120,20 @@ main.dc-bg .customAmountInput{
     grid-template-columns:1fr!important;
   }
 }
+
+/* DropClarity cleanup: remove redundant blue section bubbles; keep the Start Here guide rail and status/action pills. */
+main.dc-bg .pageKicker,
+main.dc-bg .dcSectionEyebrow,
+main.dc-bg .profitSnapshotKicker{
+  display:none!important;
+}
+main.dc-bg .dcOrientationIntro h2,
+main.dc-bg .dcSectionHeader h2,
+main.dc-bg .dcAccordionHeader h2{
+  margin-top:0!important;
+}
+main.dc-bg .profitSnapshotTitle{
+  margin-top:0!important;
+}
+
 `;
