@@ -7873,38 +7873,51 @@ main.dc-bg .customCostTh{
 main.dc-bg .inlineCustomHead{
   display:flex!important;
   align-items:center!important;
-  gap:8px!important;
+  gap:6px!important;
   width:100%!important;
   min-width:0!important;
+  min-height:18px!important;
+  line-height:1.2!important;
 }
 
 main.dc-bg .customHeaderEdit{
   flex:1 1 auto!important;
   min-width:0!important;
   width:100%!important;
-  height:38px!important;
-  border-radius:12px!important;
-  padding:0 10px!important;
-  font-size:13.5px!important;
-  font-weight:760!important;
+  height:auto!important;
+  min-height:18px!important;
+  border-radius:0!important;
+  padding:0!important;
+  font-size:11.5px!important;
+  font-weight:950!important;
   line-height:1.2!important;
+  letter-spacing:inherit!important;
+  color:rgba(71,85,105,.62)!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+
+main.dc-bg .customHeaderEdit:focus{
   color:#0f172a!important;
-  background:rgba(255,255,255,.92)!important;
-  border:1px solid rgba(124,58,237,.16)!important;
+  background:rgba(255,255,255,.72)!important;
+  border-radius:8px!important;
+  box-shadow:0 0 0 2px rgba(34,211,238,.14)!important;
 }
 
 main.dc-bg .inlineCustomRemove{
   flex:0 0 auto!important;
-  width:24px!important;
-  height:24px!important;
-  border-radius:8px!important;
+  width:18px!important;
+  height:18px!important;
+  border-radius:6px!important;
   border:1px solid rgba(15,23,42,.08)!important;
-  background:rgba(255,255,255,.72)!important;
-  color:rgba(100,116,139,.72)!important;
-  font-size:17px!important;
+  background:rgba(255,255,255,.58)!important;
+  color:rgba(100,116,139,.62)!important;
+  font-size:13px!important;
   line-height:1!important;
-  font-weight:780!important;
+  font-weight:800!important;
   box-shadow:none!important;
+  transform:translateY(-1px)!important;
 }
 
 main.dc-bg .inlineCustomRemove:hover{
