@@ -9,13 +9,13 @@ type Plan = "free" | "core" | "scale";
 
 const PRICE_TO_PLAN: Record<string, Plan> = {
   // Legacy starter price now maps to Core if anyone still checks out with it
-  price_1TPuIPRZe2CjTTV9Zmom5RZe: "core",
+  price_1TXUvIDCdAr97ZqWEBV0OylS: "core",
 
   // Legacy pro price now maps to Core
-  price_1TPuKCRZe2CjTTV9JERg2aZP: "core",
+  price_1TXUvKDCdAr97ZqWHh6K29gj: "core",
 
   // Scale stays Scale
-  price_1TPuKkRZe2CjTTV9lVpmYk5A: "scale",
+  price_1TXUvHDCdAr97ZqW4E9252Tj: "scale",
 };
 
 function normalizePlan(plan: unknown): Plan {
