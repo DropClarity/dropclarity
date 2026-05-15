@@ -2311,7 +2311,14 @@ function ProfitLeakSnapshot({
         <h2 className="profitSnapshotTitle refinedSnapshotTitle">
           {hasRisk ? (
             <>
-              <span className="profitSnapshotNumber">{losingRows.length}</span>
+              <span
+  className="profitSnapshotNumber"
+  style={{
+    color: losingRows.length > 0 ? "#dc2626" : undefined,
+  }}
+>
+  {losingRows.length}
+</span>
               <span> job{losingRows.length === 1 ? "" : "s"} losing money</span>
             </>
           ) : (
