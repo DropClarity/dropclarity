@@ -7963,4 +7963,136 @@ main.dc-bg .customAmountInput{
     font-size:28px!important;
   }
 }
+
+/* Surgical patch v2: slight desktop width adjustment + compact mobile Date Range only.
+   Desktop intentionally avoids vw-based 92% shrinking. It trims the canvas subtly
+   while keeping the dashboard broad and enterprise-like. */
+@media (min-width:1180px){
+  main.dc-bg .wrap,
+  main.dc-bg:not(.internal-view-bg) .wrap{
+    width:min(1760px,calc(100vw - 72px))!important;
+    max-width:1760px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+
+  main.dc-bg.internal-view-bg .wrap{
+    width:min(1880px,calc(100vw - 44px))!important;
+    max-width:1880px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
+
+@media (min-width:1540px){
+  main.dc-bg .wrap,
+  main.dc-bg:not(.internal-view-bg) .wrap{
+    width:min(1760px,calc(100vw - 88px))!important;
+    max-width:1760px!important;
+  }
+
+  main.dc-bg.internal-view-bg .wrap{
+    width:min(1920px,calc(100vw - 56px))!important;
+    max-width:1920px!important;
+  }
+}
+
+@media (max-width:760px){
+  main.dc-bg .rangeWrap{
+    margin:10px 0 12px!important;
+    padding:10px!important;
+    gap:9px!important;
+    border-radius:16px!important;
+    align-items:stretch!important;
+  }
+
+  main.dc-bg .rangeLabel{
+    font-size:15px!important;
+    line-height:1.15!important;
+  }
+
+  main.dc-bg .rangeSub{
+    margin-top:2px!important;
+    font-size:12px!important;
+    line-height:1.25!important;
+  }
+
+  main.dc-bg .rangeRight{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+    justify-content:stretch!important;
+  }
+
+  main.dc-bg .rangeButtons{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:7px!important;
+    overflow:visible!important;
+    padding-bottom:0!important;
+  }
+
+  main.dc-bg .rangeBtn{
+    width:100%!important;
+    min-height:36px!important;
+    padding:8px 8px!important;
+    font-size:11.5px!important;
+    line-height:1.15!important;
+    border-radius:999px!important;
+    justify-content:center!important;
+    text-align:center!important;
+  }
+
+  main.dc-bg .rangeBtn:nth-child(5){
+    grid-column:2 / 3!important;
+  }
+
+  main.dc-bg .rangeRight > .btn{
+    width:auto!important;
+    min-height:38px!important;
+    padding:9px 16px!important;
+    font-size:12px!important;
+    border-radius:13px!important;
+    justify-self:center!important;
+    justify-content:center!important;
+  }
+
+  main.dc-bg .customDates{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr auto!important;
+    gap:7px!important;
+  }
+
+  main.dc-bg .customDates input,
+  main.dc-bg .customDates .btn{
+    min-height:36px!important;
+    padding:8px 10px!important;
+    font-size:12px!important;
+    border-radius:12px!important;
+  }
+}
+
+@media (max-width:430px){
+  main.dc-bg .rangeButtons{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .rangeBtn:nth-child(5){
+    grid-column:auto!important;
+  }
+
+  main.dc-bg .rangeRight > .btn{
+    width:100%!important;
+    justify-self:stretch!important;
+  }
+
+  main.dc-bg .customDates{
+    grid-template-columns:1fr!important;
+  }
+}
 `;
