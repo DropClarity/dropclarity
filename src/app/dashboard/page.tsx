@@ -8137,51 +8137,120 @@ main.dc-bg .profitSnapshotTitle{
 }
 
 
-/* DropClarity guide rail spacing fix: prevents the Start Here pill and numbered steps from touching or clipping on any device. */
+/* DropClarity guide rail final spacing + button affordance fix */
 main.dc-bg .dcGuideRail{
+  position:relative!important;
   display:flex!important;
   flex-wrap:wrap!important;
   align-items:center!important;
   gap:10px!important;
-  padding-top:6px!important;
-  padding-bottom:6px!important;
-  row-gap:10px!important;
+  margin:13px 0 18px!important;
+  padding:12px!important;
+  min-height:auto!important;
+  overflow:visible!important;
 }
+
+main.dc-bg .dcGuideRail::before{
+  content:"Start here"!important;
+  position:static!important;
+  left:auto!important;
+  top:auto!important;
+  transform:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  align-self:center!important;
+  margin:0 2px 0 0!important;
+  min-height:34px!important;
+  padding:8px 12px!important;
+  border-radius:999px!important;
+  white-space:nowrap!important;
+  line-height:1!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  letter-spacing:.075em!important;
+  text-transform:uppercase!important;
+  color:rgba(8,145,178,.90)!important;
+  background:linear-gradient(135deg,rgba(236,254,255,.94),rgba(224,242,254,.78))!important;
+  border:1px solid rgba(34,211,238,.28)!important;
+  box-shadow:0 10px 24px rgba(8,145,178,.08)!important;
+}
+
 main.dc-bg .dcGuideRail a{
+  position:relative!important;
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:10px!important;
-  min-height:44px!important;
-  padding:10px 14px!important;
+  gap:9px!important;
+  min-height:38px!important;
+  padding:9px 14px!important;
+  border-radius:999px!important;
   line-height:1.1!important;
+  cursor:pointer!important;
+  user-select:none!important;
+  text-decoration:none!important;
+  background:rgba(255,255,255,.82)!important;
+  border:1px solid rgba(15,23,42,.075)!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.045)!important;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease!important;
 }
-main.dc-bg .dcGuideRail a:first-child{
-  min-height:44px!important;
-  padding-top:10px!important;
-  padding-bottom:10px!important;
+
+main.dc-bg .dcGuideRail a:hover{
+  transform:translateY(-1px)!important;
+  background:rgba(255,255,255,.98)!important;
+  border-color:rgba(124,58,237,.22)!important;
+  box-shadow:0 14px 30px rgba(79,70,229,.10)!important;
 }
+
+main.dc-bg .dcGuideRail a:focus-visible{
+  outline:3px solid rgba(34,211,238,.22)!important;
+  outline-offset:3px!important;
+}
+
 main.dc-bg .dcGuideRail a span{
-  flex-shrink:0!important;
+  flex:0 0 auto!important;
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
+  line-height:1!important;
 }
-@media(max-width:768px){
+
+@media(max-width:900px){
   main.dc-bg .dcGuideRail{
-    gap:8px!important;
-    row-gap:8px!important;
-    padding-top:6px!important;
-    padding-bottom:6px!important;
+    gap:9px!important;
+    padding:11px!important;
   }
+
+  main.dc-bg .dcGuideRail::before{
+    min-height:32px!important;
+    padding:8px 11px!important;
+  }
+
   main.dc-bg .dcGuideRail a{
-    min-height:42px!important;
-    padding:9px 12px!important;
+    min-height:38px!important;
+    padding:9px 13px!important;
   }
-  main.dc-bg .dcGuideRail a:first-child{
-    min-height:42px!important;
-    padding-top:9px!important;
-    padding-bottom:9px!important;
+}
+
+@media(max-width:560px){
+  main.dc-bg .dcGuideRail{
+    align-items:stretch!important;
+    gap:8px!important;
+    padding:10px!important;
+  }
+
+  main.dc-bg .dcGuideRail::before{
+    width:fit-content!important;
+    max-width:100%!important;
+    margin-bottom:2px!important;
+  }
+
+  main.dc-bg .dcGuideRail a{
+    width:100%!important;
+    justify-content:flex-start!important;
+    min-height:40px!important;
+    padding:10px 13px!important;
   }
 }
 
