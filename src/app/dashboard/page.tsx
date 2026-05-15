@@ -2003,7 +2003,7 @@ function RangeControls({
     <div>
       <div className="rangeLabel">Date Range</div>
       <div className="rangeSub">
-        Filter the dashboard before reviewing jobs.
+        Choose which jobs and reports to show.
       </div>
     </div>
 
@@ -2223,7 +2223,7 @@ function TopBar({
     "Loading your profitability dashboard..."
   ) : s ? (
     <>
-      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> jobs. Start with profit leaks, then review high-risk jobs and saved reports.
+      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> jobs, margin risk, and recoverable profit.
     </>
   ) : (
     "No reports yet. Upload job files to create your first dashboard."
@@ -2656,7 +2656,7 @@ function JobsLog({
       <div className="panelHead responsiveHead">
         <div>
           <div className="panelTitle">All Jobs Log</div>
-          <div className="panelSub">Search jobs, open details, hide mistakes, or export the full job log.</div>
+          <div className="panelSub">Search jobs, open details, and audit saved results.</div>
         </div>
 
         <div className="tableTools">
@@ -3339,7 +3339,7 @@ function ScaleOversightPanel({
         <div>
           <div className="panelTitle">Scale Profit Control Center</div>
           <div className="panelSub">
-            Your priority queue for recoverable profit, high-risk jobs, benchmarks, and real-time alerts.
+            Premium oversight for recoverable profit, high-risk jobs, benchmarks, and real-time email alerts.
           </div>
         </div>
 
@@ -3628,7 +3628,7 @@ function DashboardBody({
           <div>
             <div className="dcSectionEyebrow">Recommended actions</div>
             <h2>Fix these first</h2>
-            <p>Highest-impact issues ranked first so you know what to review now.</p>
+            <p>Highest-impact issues ranked first.</p>
           </div>
           <button className="btn dcSectionCta" type="button" onClick={onOpenHighRisk}>Review High-Risk Jobs</button>
         </div>
@@ -3666,7 +3666,7 @@ function DashboardBody({
           <div>
             <div className="dcSectionEyebrow">Detailed analytics</div>
             <h2>Charts and trends</h2>
-            <p>Optional deeper charts when you want trend detail.</p>
+            <p>Open when you want charts and trends.</p>
           </div>
           <span>{analyticsOpen ? "Hide" : "Show"}</span>
         </button>
@@ -3678,7 +3678,7 @@ function DashboardBody({
           <div>
             <div className="dcSectionEyebrow">Cost structure</div>
             <h2>Cost mix, credits, and adjustments</h2>
-            <p>See where costs are concentrated and how credits affect totals.</p>
+            <p>Costs and credits shown separately.</p>
           </div>
           <span>{costsOpen ? "Hide" : "Show"}</span>
         </button>
@@ -3695,7 +3695,7 @@ function DashboardBody({
           <div>
             <div className="dcSectionEyebrow">Operations</div>
             <h2>Job log and saved reports</h2>
-            <p>Audit jobs, open details, export data, and manage saved reports.</p>
+            <p>Search jobs, export data, and manage reports.</p>
           </div>
         </div>
 
@@ -7564,227 +7564,5 @@ main.dc-bg .wrap{padding-bottom:56px;}
     grid-template-columns:minmax(0,1fr) 400px!important;
     gap:22px!important;
   }
-}
-
-
-/* Launch-ready visual clarity pass: typography, readability, action hierarchy, and responsive polish. */
-main.dc-bg{
-  --dc-ink:#0f172a;
-  --dc-muted:rgba(51,65,85,.68);
-  --dc-soft:rgba(51,65,85,.54);
-  --dc-border:rgba(15,23,42,.075);
-  --dc-card:rgba(255,255,255,.92);
-  font-family:Inter,"SF Pro Text","SF Pro Display",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif!important;
-  -webkit-font-smoothing:antialiased;
-  text-rendering:geometricPrecision;
-}
-main.dc-bg *{box-sizing:border-box}
-main.dc-bg .wrap{width:calc(100vw - 56px)!important;max-width:none!important}
-main.dc-bg .pageTitle,
-main.dc-bg .dcSectionHeader h2,
-main.dc-bg .dcAccordionHeader h2,
-main.dc-bg .panelTitle,
-main.dc-bg .profitSnapshotTitle,
-main.dc-bg .scaleQueueTitle,
-main.dc-bg .scaleInsightTitle,
-main.dc-bg .emailAlertTitle,
-main.dc-bg .premiumLeakName,
-main.dc-bg .jobName,
-main.dc-bg .itemName,
-main.dc-bg .riskCommandTitle,
-main.dc-bg .modeTitle{
-  font-family:Inter,"SF Pro Display",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif!important;
-  color:var(--dc-ink)!important;
-  font-weight:850!important;
-  letter-spacing:-.035em!important;
-}
-main.dc-bg .pageTitle{font-size:clamp(34px,3.1vw,52px)!important;line-height:1.02!important;max-width:860px!important}
-main.dc-bg .gradText{letter-spacing:-.04em!important}
-main.dc-bg .pageSub,
-main.dc-bg .panelSub,
-main.dc-bg .dcSectionHeader p,
-main.dc-bg .dcAccordionHeader p,
-main.dc-bg .profitSnapshotSub,
-main.dc-bg .scaleRecoverySub,
-main.dc-bg .scaleText,
-main.dc-bg .scaleInsightText,
-main.dc-bg .creditKpiSub,
-main.dc-bg .modeSub,
-main.dc-bg .jobMeta,
-main.dc-bg .itemMeta,
-main.dc-bg .premiumReportMeta,
-main.dc-bg .mixSub,
-main.dc-bg .kSub,
-main.dc-bg .statSub,
-main.dc-bg .chartSub{
-  color:var(--dc-muted)!important;
-  font-weight:620!important;
-  letter-spacing:-.01em!important;
-  line-height:1.55!important;
-}
-main.dc-bg .pageSub{font-size:15.5px!important;max-width:850px!important}
-main.dc-bg .dcSectionHeader h2,
-main.dc-bg .dcAccordionHeader h2{font-size:clamp(24px,1.65vw,31px)!important;line-height:1.08!important}
-main.dc-bg .panelTitle{font-size:22px!important;line-height:1.12!important}
-main.dc-bg .pageKicker,
-main.dc-bg .dcSectionEyebrow,
-main.dc-bg .sectionEyebrow,
-main.dc-bg .profitSnapshotKicker,
-main.dc-bg .scaleKicker,
-main.dc-bg .wowKicker,
-main.dc-bg .kLabel,
-main.dc-bg .statLabel,
-main.dc-bg .creditKpiLabel,
-main.dc-bg .mixTop b,
-main.dc-bg .rangeLabel{
-  font-weight:850!important;
-  letter-spacing:.07em!important;
-}
-main.dc-bg .topbar{padding-top:10px!important;margin-bottom:18px!important;gap:28px!important}
-main.dc-bg .topbarRight{align-self:flex-start!important}
-main.dc-bg .rangeWrap{margin:16px 0 14px!important;padding:15px 16px!important;border-radius:22px!important}
-main.dc-bg .rangeSub{font-size:13px!important;color:var(--dc-soft)!important;font-weight:650!important}
-main.dc-bg .dcGuideRail{position:relative;margin:13px 0 16px!important;padding:10px 12px 10px 102px!important;min-height:48px!important;align-items:center!important}
-main.dc-bg .dcGuideRail::before{content:"Start here";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:rgba(8,145,178,.82);background:rgba(236,254,255,.78);border:1px solid rgba(34,211,238,.22);border-radius:999px;padding:6px 9px;white-space:nowrap}
-main.dc-bg .dcGuideRail a{font-size:13px!important;font-weight:780!important;color:rgba(15,23,42,.76)!important;padding:9px 12px!important}
-main.dc-bg .dcDashboardSection{scroll-margin-top:92px}
-main.dc-bg .dcPrimarySection,
-main.dc-bg .dcActionSection,
-main.dc-bg .dcHealthSection,
-main.dc-bg .dcOpsSection,
-main.dc-bg .dcAccordionSection{border-color:var(--dc-border)!important;box-shadow:0 18px 48px rgba(15,23,42,.052)!important}
-main.dc-bg .dcSectionHeader{padding:20px 24px 12px!important}
-main.dc-bg .profitSnapshot{padding:18px!important;gap:18px!important;grid-template-columns:minmax(0,1.06fr) minmax(440px,.94fr)!important}
-main.dc-bg .profitSnapshotMain{padding:10px 8px!important;min-height:190px!important}
-main.dc-bg .profitSnapshotTitle{font-size:clamp(31px,2.55vw,44px)!important;line-height:1.05!important}
-main.dc-bg .profitSnapshotSub{font-size:15px!important;max-width:760px!important}
-main.dc-bg .profitSnapshotMiniKpi{border:1px solid rgba(15,23,42,.07)!important}
-main.dc-bg .profitSnapshotMiniKpi strong{font-weight:860!important;color:#0f172a!important}
-main.dc-bg .profitSnapshotPrimary,
-main.dc-bg .subtlePrimaryBtn,
-main.dc-bg .premiumReviewBtn{background:linear-gradient(135deg,rgba(14,165,233,.14),rgba(124,58,237,.14))!important;border-color:rgba(124,58,237,.18)!important;color:#10172a!important;font-weight:850!important}
-main.dc-bg .profitSnapshotMetric{padding:16px!important;border:1px solid rgba(15,23,42,.07)!important}
-main.dc-bg .profitSnapshotMetric span{font-size:11px!important;font-weight:850!important;letter-spacing:.075em!important;color:rgba(71,85,105,.7)!important}
-main.dc-bg .profitSnapshotMetric strong{font-size:clamp(24px,1.5vw,30px)!important;line-height:1.05!important;letter-spacing:-.035em!important}
-main.dc-bg .scalePanel.premiumScalePanel{overflow:hidden!important}
-main.dc-bg .scaleControlHead{padding:18px 20px 12px!important;gap:16px!important}
-main.dc-bg .scaleHeadRight{gap:10px!important}
-main.dc-bg .scaleExecutiveGrid{gap:14px!important;padding:14px!important}
-main.dc-bg .scaleRecoveryCommand,
-main.dc-bg .scaleActionQueueCard,
-main.dc-bg .scaleBenchmarkCard,
-main.dc-bg .scaleInsightNarrative,
-main.dc-bg .scaleCostRadar,
-main.dc-bg .scaleCard{border:1px solid rgba(15,23,42,.07)!important;background:rgba(255,255,255,.90)!important;box-shadow:0 12px 34px rgba(15,23,42,.042)!important}
-main.dc-bg .scaleRecoveryValue{font-size:clamp(31px,2vw,42px)!important;letter-spacing:-.05em!important;line-height:1.05!important}
-main.dc-bg .scaleQueueItem{border:1px solid rgba(15,23,42,.065)!important;background:rgba(248,250,252,.74)!important}
-main.dc-bg .scaleQueueName{font-size:15px!important;font-weight:850!important;line-height:1.2!important}
-main.dc-bg .scaleQueueIssue{font-size:13px!important;line-height:1.45!important;color:rgba(51,65,85,.72)!important;font-weight:640!important}
-main.dc-bg .scaleQueueMeta{font-size:11px!important;letter-spacing:.07em!important;color:rgba(71,85,105,.68)!important}
-main.dc-bg .scaleBenchmarkRow,
-main.dc-bg .premiumLeakRow,
-main.dc-bg .ruleList div,
-main.dc-bg .costRadarRow{border-color:rgba(15,23,42,.065)!important;background:rgba(248,250,252,.72)!important}
-main.dc-bg .scaleBenchmarkLabel,
-main.dc-bg .wowBenchmarkLabel{font-size:13.5px!important;font-weight:820!important;color:#0f172a!important}
-main.dc-bg .scaleBenchmarkNote,
-main.dc-bg .wowBenchmarkNote{font-size:12.5px!important;line-height:1.4!important;color:rgba(51,65,85,.58)!important;font-weight:620!important}
-main.dc-bg .dcHealthSection > .panel > .panelHead{display:none!important}
-main.dc-bg .dcHealthSection .panel{background:transparent!important;border:0!important;box-shadow:none!important}
-main.dc-bg .kpis{padding:18px!important;gap:14px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
-main.dc-bg .kpi,
-main.dc-bg .creditKpiCard,
-main.dc-bg .stat{border:1px solid rgba(15,23,42,.07)!important;background:rgba(255,255,255,.90)!important;box-shadow:0 10px 26px rgba(15,23,42,.036)!important;padding:18px!important}
-main.dc-bg .kValue,
-main.dc-bg .statValue,
-main.dc-bg .creditKpiValue{font-weight:850!important;letter-spacing:-.045em!important;line-height:1.05!important}
-main.dc-bg .dcAccordionHeader{padding:19px 22px!important}
-main.dc-bg .dcCostGroup{padding:0 18px 18px!important}
-main.dc-bg .chartCard.wide{padding:18px!important}
-main.dc-bg .mixList.gridMix{gap:12px!important}
-main.dc-bg .mixRow{padding:14px!important;border-radius:16px!important}
-main.dc-bg .mixTop{font-size:13.5px!important;color:#0f172a!important}
-main.dc-bg .barTrack{height:8px!important;background:rgba(15,23,42,.07)!important}
-main.dc-bg .creditKpiPanel{padding:18px!important;border-radius:20px!important;border:1px solid rgba(15,23,42,.065)!important;background:rgba(255,255,255,.88)!important}
-main.dc-bg .dcOpsGrid{grid-template-columns:minmax(0,1fr) 390px!important;gap:22px!important;margin:0 18px 18px!important}
-main.dc-bg .tableTools{gap:10px!important}
-main.dc-bg .searchInput,
-main.dc-bg .selectInput,
-main.dc-bg .cellEdit,
-main.dc-bg .compactTargetInput{font-family:inherit!important;font-size:14px!important;font-weight:650!important;color:#0f172a!important}
-main.dc-bg .jobsTable{font-size:14px!important}
-main.dc-bg .jobsTable th{font-size:11.5px!important;font-weight:800!important;letter-spacing:.08em!important;color:rgba(71,85,105,.62)!important;padding:15px 16px!important}
-main.dc-bg .jobsTable td{font-size:14px!important;font-weight:680!important;color:rgba(30,41,59,.88)!important;padding:17px 16px!important;line-height:1.4!important}
-main.dc-bg .jobName{font-size:15px!important;line-height:1.22!important}
-main.dc-bg .jobMeta{font-size:12.5px!important}
-main.dc-bg .tag{font-weight:780!important;letter-spacing:-.005em!important}
-main.dc-bg .miniBtn,
-main.dc-bg .btn,
-main.dc-bg .rangeBtn{font-family:inherit!important;font-weight:820!important;letter-spacing:-.01em!important}
-main.dc-bg .pastReportsPanel .panelSub{max-width:310px!important}
-main.dc-bg .premiumReportName{font-size:14.5px!important;line-height:1.22!important}
-main.dc-bg .premiumReportMeta{font-size:12px!important}
-main.dc-bg .premiumReportMetrics div{min-width:0!important}
-main.dc-bg .premiumReportMetrics strong{font-size:12.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
-main.dc-bg .insightTitle{font-size:15px!important;font-weight:850!important;line-height:1.25!important;color:#0f172a!important}
-main.dc-bg .insightDetail,
-main.dc-bg .insightRecommendation p{font-size:13px!important;line-height:1.45!important;color:rgba(51,65,85,.68)!important;font-weight:620!important}
-main.dc-bg.internal-view-bg .wrap{width:calc(100vw - 48px)!important;max-width:none!important}
-main.dc-bg .modeContextHeader{padding:18px!important;border-radius:20px!important}
-main.dc-bg .modeTitle{font-size:clamp(30px,2.4vw,44px)!important}
-main.dc-bg .jobTable th{font-size:11.5px!important;line-height:1.2!important;color:rgba(71,85,105,.62)!important}
-main.dc-bg .jobTable td{font-size:13.5px!important;line-height:1.35!important}
-main.dc-bg .riskQueueCard{border-color:rgba(15,23,42,.07)!important;background:rgba(255,255,255,.92)!important}
-main.dc-bg .riskJobName{font-size:16px!important;font-weight:850!important;line-height:1.22!important;color:#0f172a!important}
-main.dc-bg .riskInsightBox{font-size:13.5px!important;line-height:1.48!important;color:rgba(51,65,85,.74)!important}
-@media (min-width: 1500px){
-  main.dc-bg .wrap{width:calc(100vw - 72px)!important}
-  main.dc-bg.internal-view-bg .wrap{width:calc(100vw - 56px)!important}
-  main.dc-bg .dcOpsGrid{grid-template-columns:minmax(0,1fr) 410px!important}
-}
-@media (max-width: 1180px){
-  main.dc-bg .profitSnapshot{grid-template-columns:1fr!important}
-  main.dc-bg .scaleExecutiveGrid{grid-template-columns:1fr!important}
-  main.dc-bg .dcOpsGrid{grid-template-columns:1fr!important}
-  main.dc-bg .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  main.dc-bg .dcGuideRail{padding-left:12px!important;padding-top:44px!important}
-  main.dc-bg .dcGuideRail::before{top:12px;transform:none}
-}
-@media (max-width: 900px){
-  main.dc-bg .wrap,
-  main.dc-bg.internal-view-bg .wrap{width:100%!important;padding-inline:14px!important}
-  main.dc-bg .topbar{gap:16px!important}
-  main.dc-bg .pageTitle{font-size:34px!important}
-  main.dc-bg .pageSub{font-size:14.5px!important}
-  main.dc-bg .dcSectionHeader{padding:17px 16px 11px!important}
-  main.dc-bg .profitSnapshot,
-  main.dc-bg .scalePanel.premiumScalePanel,
-  main.dc-bg .dcOpsGrid{margin-left:10px!important;margin-right:10px!important}
-  main.dc-bg .profitSnapshotMetrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  main.dc-bg .scaleHeadRight{width:100%;justify-content:flex-start!important}
-  main.dc-bg .panelHead.responsiveHead{align-items:flex-start!important;gap:14px!important}
-  main.dc-bg .tableTools{width:100%;display:grid!important;grid-template-columns:1fr!important}
-  main.dc-bg .tableTools .btn,
-  main.dc-bg .tableTools .searchInput,
-  main.dc-bg .tableTools .selectInput{width:100%!important}
-}
-@media (max-width: 560px){
-  main.dc-bg .wrap,
-  main.dc-bg.internal-view-bg .wrap{padding-inline:12px!important}
-  main.dc-bg .pageTitle{font-size:31px!important;line-height:1.04!important}
-  main.dc-bg .dcSectionHeader h2,
-  main.dc-bg .dcAccordionHeader h2{font-size:22px!important}
-  main.dc-bg .profitSnapshotMetrics,
-  main.dc-bg .kpis{grid-template-columns:1fr!important}
-  main.dc-bg .profitSnapshot{padding:14px!important}
-  main.dc-bg .profitSnapshotTitle{font-size:28px!important}
-  main.dc-bg .profitSnapshotMetric strong{font-size:22px!important}
-  main.dc-bg .dcGuideRail{padding-top:42px!important}
-  main.dc-bg .dcGuideRail a{width:100%!important}
-  main.dc-bg .scaleControlHead{padding:16px!important}
-  main.dc-bg .scaleExecutiveGrid,
-  main.dc-bg .scalePremiumGrid,
-  main.dc-bg .scaleIntelligenceStrip{padding:12px!important;gap:12px!important}
-  main.dc-bg .jobsTable td{font-size:13px!important;padding:14px 12px!important}
 }
 `;
