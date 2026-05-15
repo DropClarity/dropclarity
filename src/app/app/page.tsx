@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 
-const API_BASE = "https://dropclarity.com/api";
+const API_BASE = "https://dropclarity-api.armarntajalli.workers.dev/api";
 
 type FileRole = "" | "revenue" | "cost" | "combined";
 
