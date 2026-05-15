@@ -7964,83 +7964,59 @@ main.dc-bg .customAmountInput{
   }
 }
 
-/* Final surgical override: slightly restrain desktop dashboard width and make the mobile Date Range block more compact. */
-@media (min-width: 1281px){
+
+/* DropClarity surgical launch-width + mobile Date Range polish
+   Only affects the outer dashboard frame on desktop and the Date Range controls on mobile. */
+@media (min-width: 769px){
   main.dc-bg .wrap{
-    width:min(1680px,calc(100vw - 96px))!important;
-    max-width:1680px!important;
+    width:min(94vw, 1720px)!important;
+    max-width:1720px!important;
     margin-left:auto!important;
     margin-right:auto!important;
-    padding-left:0!important;
-    padding-right:0!important;
-  }
-
-  main.dc-bg.internal-view-bg .wrap{
-    width:min(1780px,calc(100vw - 80px))!important;
-    max-width:1780px!important;
   }
 }
 
-@media (min-width: 1600px){
-  main.dc-bg .wrap{
-    width:min(1700px,calc(100vw - 112px))!important;
-    max-width:1700px!important;
-  }
-
-  main.dc-bg.internal-view-bg .wrap{
-    width:min(1820px,calc(100vw - 88px))!important;
-    max-width:1820px!important;
-  }
-}
-
-@media (max-width: 560px){
+@media (max-width: 640px){
   main.dc-bg .rangeWrap{
-    margin:12px 0 10px!important;
-    padding:12px!important;
-    border-radius:18px!important;
+    margin:12px 0 14px!important;
+    padding:14px!important;
     gap:10px!important;
+    border-radius:18px!important;
   }
 
   main.dc-bg .rangeLabel{
-    font-size:14px!important;
+    font-size:15px!important;
     line-height:1.15!important;
   }
 
   main.dc-bg .rangeSub{
+    margin-top:3px!important;
     font-size:12px!important;
-    line-height:1.3!important;
-    margin-top:2px!important;
+    line-height:1.35!important;
   }
 
   main.dc-bg .rangeRight{
     width:100%!important;
-    display:grid!important;
-    grid-template-columns:1fr!important;
-    gap:8px!important;
+    gap:9px!important;
   }
 
   main.dc-bg .rangeButtons{
     width:100%!important;
     display:grid!important;
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:7px!important;
-    padding-bottom:0!important;
+    gap:8px!important;
     overflow:visible!important;
+    flex-wrap:unset!important;
+    padding-bottom:0!important;
   }
 
-  main.dc-bg .rangeBtn{
+  main.dc-bg .rangeButtons .rangeBtn{
     width:100%!important;
     min-height:38px!important;
     padding:8px 10px!important;
     font-size:12px!important;
-    line-height:1.1!important;
     border-radius:999px!important;
-  }
-
-  main.dc-bg .rangeButtons .rangeBtn:nth-child(5){
-    grid-column:1 / -1!important;
-    width:58%!important;
-    justify-self:start!important;
+    white-space:nowrap!important;
   }
 
   main.dc-bg .rangeRight > .btn{
@@ -8055,15 +8031,16 @@ main.dc-bg .customAmountInput{
     width:100%!important;
     display:grid!important;
     grid-template-columns:1fr!important;
-    gap:7px!important;
+    gap:8px!important;
   }
 
   main.dc-bg .customDates input,
   main.dc-bg .customDates .btn{
+    width:100%!important;
     min-height:38px!important;
     padding:8px 10px!important;
     font-size:12px!important;
-    border-radius:14px!important;
+    border-radius:13px!important;
   }
 }
 
