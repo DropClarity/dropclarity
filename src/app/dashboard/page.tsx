@@ -2003,7 +2003,7 @@ function RangeControls({
     <div>
       <div className="rangeLabel">Date Range</div>
       <div className="rangeSub">
-        Filter the whole dashboard by period.
+        Choose which jobs and reports to show.
       </div>
     </div>
 
@@ -2216,17 +2216,17 @@ function TopBar({
       <div className="dashboardIntro">
         <div className="pageKicker">Profitability Dashboard</div>
         <h1 className="pageTitle">
-          See where <span className="gradText">profit is made and lost</span>
+          Find jobs <span className="gradText">draining profit</span>
         </h1>
         <div className="pageSub">
   {mode === "loading" ? (
     "Loading your profitability dashboard..."
   ) : s ? (
     <>
-      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> job profitability, profit leaks, and margin risk across every saved analysis.
+      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> jobs, margin risk, and recoverable profit.
     </>
   ) : (
-    "No reports yet. Run an analysis from the Upload page to generate your first dashboard."
+    "No reports yet. Upload job files to create your first dashboard."
   )}
 </div>
       </div>
@@ -2304,7 +2304,7 @@ function ProfitLeakSnapshot({
     : `Jobs above breakeven`;
 
   const sub = hasRisk
-    ? `${fmtMoney(recoverableProfit)} recoverable gap vs. your ${fmtPct(marginTarget)} target. Start with the highest-impact job below.`
+    ? `${fmtMoney(recoverableProfit)} recoverable gap vs. your ${fmtPct(marginTarget)} target. Review the highest-impact jobs first.`
     : `Keep monitoring new uploads against your ${fmtPct(marginTarget)} target margin so margin drift is caught early.`;
 
   return (
@@ -2499,7 +2499,7 @@ function CreditRefundKpis({ state }: { state: DashboardState }) {
       <div className="creditKpiHead">
         <div>
           <div className="creditKpiTitle">Credit / Refund Tracking</div>
-          <div className="creditKpiSub">Supplier credits, refunds, and credit memos are included in profit, but shown separately from true Other costs so the dashboard reconciles cleanly.</div>
+          <div className="creditKpiSub">Credits and refunds are included in profit, but separated from true operating costs.</div>
         </div>
       </div>
 
@@ -2518,10 +2518,12 @@ function CreditRefundKpis({ state }: { state: DashboardState }) {
 
 
 
-function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode }) {
+function ChartsPanel({ state, view, showTrendCharts = true, showCostMix = true }: { state: DashboardState; view: ViewMode; showTrendCharts?: boolean; showCostMix?: boolean }) {
   const profitRef = useRef<HTMLCanvasElement | null>(null);
   const revCostRef = useRef<HTMLCanvasElement | null>(null);
   const jobs = getAllJobs(state);
+  const parts = useMemo(() => buildCostMixParts(state), [state]);
+  const creditMetrics = useMemo(() => getCreditMetrics(state), [state]);
 
   useEffect(() => {
     if (view !== "dashboard") return;
@@ -2543,7 +2545,9 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
   }, [jobs, view]);
 
   return (
-    <div className="charts chartsOnly">
+    <div className="charts">
+      {showTrendCharts ? (
+      <>
       <div className="chartCard">
         <div className="chartHead">
           <div>
@@ -2563,55 +2567,52 @@ function ChartsPanel({ state, view }: { state: DashboardState; view: ViewMode })
         </div>
         {jobs.length ? <canvas ref={revCostRef} width={520} height={220} /> : <div className="trendEmpty">No job-level totals yet.</div>}
       </div>
-    </div>
-  );
-}
+      </>
+      ) : null}
 
-function CostMixPanel({ state }: { state: DashboardState }) {
-  const parts = useMemo(() => buildCostMixParts(state), [state]);
-  const creditMetrics = useMemo(() => getCreditMetrics(state), [state]);
-
-  return (
-    <div className="chartCard wide costMixOnlyCard">
-      <div className="chartHead responsiveHead">
-        <div>
-          <div className="chartTitle">Cost Mix</div>
-          <div className="chartSub">
-            True cost buckets shown separately from credits. Net costs still include credits for profit and margin.
+      {showCostMix ? (
+      <div className="chartCard wide">
+        <div className="chartHead responsiveHead">
+          <div>
+            <div className="chartTitle">Cost Mix</div>
+            <div className="chartSub">
+              True cost buckets shown separately from credits. Net costs still include credits for profit and margin.
+            </div>
           </div>
+
+          {creditMetrics.totalCredits > 0 ? (
+            <span className="creditAppliedPill">Credits / adjustments: -{fmtMoney(creditMetrics.totalCredits).replace("$", "$")}</span>
+          ) : null}
         </div>
 
-        {creditMetrics.totalCredits > 0 ? (
-          <span className="creditAppliedPill">Credits / adjustments: -{fmtMoney(creditMetrics.totalCredits).replace("$", "$")}</span>
-        ) : null}
-      </div>
+        <div className="mixList gridMix">
+          {parts.map((p) => {
+            const total = parts.reduce((s, x) => s + Math.abs(x.value), 0) || 1;
+            const visualValue = Math.abs(p.value);
+            const share = (visualValue / total) * 100;
+            const isCredit = p.value < 0;
 
-      <div className="mixList gridMix">
-        {parts.map((p) => {
-          const total = parts.reduce((s, x) => s + Math.abs(x.value), 0) || 1;
-          const visualValue = Math.abs(p.value);
-          const share = (visualValue / total) * 100;
-          const isCredit = p.value < 0;
-
-          return (
-            <div className={isCredit ? "mixRow creditMixRow" : "mixRow"} key={p.label}>
-              <div className="mixTop">
-                <span><span className="sw" style={{ background: p.color }} /> <b>{p.label}</b></span>
-                <span className={isCredit ? "creditText" : ""}>{fmtMoney(p.value)}</span>
+            return (
+              <div className={isCredit ? "mixRow creditMixRow" : "mixRow"} key={p.label}>
+                <div className="mixTop">
+                  <span><span className="sw" style={{ background: p.color }} /> <b>{p.label}</b></span>
+                  <span className={isCredit ? "creditText" : ""}>{fmtMoney(p.value)}</span>
+                </div>
+                <div className="barTrack">
+                  <div
+                    className={isCredit ? "barFill creditBarFill" : "barFill"}
+                    style={{ width: `${Math.min(100, share)}%`, background: p.color }}
+                  />
+                </div>
+                <div className="mixSub">
+                  {isCredit ? `Reduces total costs by ${fmtMoney(Math.abs(p.value))}` : `${fmtPct(share)} of gross cost activity`}
+                </div>
               </div>
-              <div className="barTrack">
-                <div
-                  className={isCredit ? "barFill creditBarFill" : "barFill"}
-                  style={{ width: `${Math.min(100, share)}%`, background: p.color }}
-                />
-              </div>
-              <div className="mixSub">
-                {isCredit ? `Reduces total costs by ${fmtMoney(Math.abs(p.value))}` : `${fmtPct(share)} of gross cost activity`}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+      ) : null}
     </div>
   );
 }
@@ -2655,7 +2656,7 @@ function JobsLog({
       <div className="panelHead responsiveHead">
         <div>
           <div className="panelTitle">All Jobs Log</div>
-          <div className="panelSub">Search, sort, and open any job.</div>
+          <div className="panelSub">Search jobs, open details, and audit saved results.</div>
         </div>
 
         <div className="tableTools">
@@ -2751,7 +2752,7 @@ function PastReports({
         <div>
           <div className="panelTitle pastReportsTitle">Past Reports</div>
           <div className="panelSub pastReportsSub">
-            Saved uploads that feed dashboard totals. Hide mistakes without deleting history.
+            Saved uploads feeding the dashboard. Hide mistakes without deleting history.
           </div>
         </div>
         <button className="reportsManageLink premiumManageLink" type="button" onClick={onManageReports}>
@@ -3023,7 +3024,7 @@ function ProfitCommandCenter({
           <div className="wowCardHead">
             <div>
               <div className="wowKicker">Action Queue</div>
-              <div className="wowCardTitle">What to fix first</div>
+              <div className="wowCardTitle">Fix these first</div>
             </div>
             <span className="tag">Ranked by impact</span>
           </div>
@@ -3379,7 +3380,7 @@ function ScaleOversightPanel({
           <div className="scaleCardHeadSplit">
             <div>
               <div className="scaleKicker">Action Queue</div>
-              <div className="scaleQueueTitle">What to fix first</div>
+              <div className="scaleQueueTitle">Fix these first</div>
             </div>
             <span className="tag">Ranked by impact</span>
           </div>
@@ -3593,63 +3594,143 @@ function DashboardBody({
 }) {
   const jobs = getAllJobs(state);
   const insights = Array.isArray(state.insights) ? state.insights : [];
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [costsOpen, setCostsOpen] = useState(true);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+
+  const openJob = (key: string) => {
+    setJobKey(key);
+    setView("job");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <>
-      <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
-      <Kpis state={state} />
-      <ScaleOversightPanel
-        state={state}
-        plan={plan}
-        scaleSummary={scaleSummary}
-        marginTarget={marginTarget}
-        marginTargetDraft={marginTargetDraft}
-        setMarginTargetDraft={setMarginTargetDraft}
-        onSaveMarginTarget={onSaveMarginTarget}
-        emailAlertsEnabled={emailAlertsEnabled}
-        setEmailAlertsEnabled={setEmailAlertsEnabled}
-        userEmail={userEmail}
-        alertEmails={alertEmails}
-        setAlertEmails={setAlertEmails}
-        onOpenJob={(key: string) => {
-          setJobKey(key);
-          setView("job");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        onOpenHighRisk={onOpenHighRisk}
-      />
+      <section className="dcGuideRail" aria-label="Dashboard guide">
+        <a href="#attention"><span>1</span> Review risk</a>
+        <a href="#fixFirst"><span>2</span> Fix biggest leaks</a>
+        <a href="#jobsPanel"><span>3</span> Audit jobs</a>
+      </section>
 
-      <ChartsPanel state={state} view={view} />
-      <CostMixPanel state={state} />
-      <CreditRefundKpis state={state} />
+      <div id="attention" className="dcDashboardSection dcPrimarySection">
+        <div className="dcSectionHeader">
+          <div>
+            <div className="dcSectionEyebrow">Immediate attention</div>
+            <h2>Profit leaks first</h2>
+            <p>Start here when reviewing performance.</p>
+          </div>
+        </div>
+        <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
+      </div>
 
-      <div className="grid">
-        <div className="mainCol">
-          <JobsLog
-            jobs={jobs}
-            onOpenAllJobs={() => {
-              setView("alljobs");
-              setJobKey("");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onOpenJob={(key: string) => {
-              setJobKey(key);
-              setView("job");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onHideJob={onHideJob}
-          />
+      <div id="fixFirst" className="dcDashboardSection dcActionSection">
+        <div className="dcSectionHeader">
+          <div>
+            <div className="dcSectionEyebrow">Recommended actions</div>
+            <h2>Fix these first</h2>
+            <p>Highest-impact issues ranked first.</p>
+          </div>
+          <button className="btn dcSectionCta" type="button" onClick={onOpenHighRisk}>Review High-Risk Jobs</button>
+        </div>
+        <ScaleOversightPanel
+          state={state}
+          plan={plan}
+          scaleSummary={scaleSummary}
+          marginTarget={marginTarget}
+          marginTargetDraft={marginTargetDraft}
+          setMarginTargetDraft={setMarginTargetDraft}
+          onSaveMarginTarget={onSaveMarginTarget}
+          emailAlertsEnabled={emailAlertsEnabled}
+          setEmailAlertsEnabled={setEmailAlertsEnabled}
+          userEmail={userEmail}
+          alertEmails={alertEmails}
+          setAlertEmails={setAlertEmails}
+          onOpenJob={openJob}
+          onOpenHighRisk={onOpenHighRisk}
+        />
+      </div>
+
+      <div className="dcDashboardSection dcHealthSection">
+        <div className="dcSectionHeader compact">
+          <div>
+            <div className="dcSectionEyebrow">Business health</div>
+            <h2>Business totals</h2>
+            <p>Revenue, costs, margin, and job volume.</p>
+          </div>
+        </div>
+        <Kpis state={state} />
+      </div>
+
+      <div className="dcDashboardSection dcAccordionSection">
+        <button className="dcAccordionHeader" type="button" onClick={() => setAnalyticsOpen((v) => !v)} aria-expanded={analyticsOpen}>
+          <div>
+            <div className="dcSectionEyebrow">Detailed analytics</div>
+            <h2>Charts and trends</h2>
+            <p>Open when you want charts and trends.</p>
+          </div>
+          <span>{analyticsOpen ? "Hide" : "Show"}</span>
+        </button>
+        {analyticsOpen ? <ChartsPanel state={state} view={view} showCostMix={false} /> : null}
+      </div>
+
+      <div className="dcDashboardSection dcAccordionSection">
+        <button className="dcAccordionHeader" type="button" onClick={() => setCostsOpen((v) => !v)} aria-expanded={costsOpen}>
+          <div>
+            <div className="dcSectionEyebrow">Cost structure</div>
+            <h2>Cost mix, credits, and adjustments</h2>
+            <p>Costs and credits shown separately.</p>
+          </div>
+          <span>{costsOpen ? "Hide" : "Show"}</span>
+        </button>
+        {costsOpen ? (
+          <div className="dcCostGroup">
+            <ChartsPanel state={state} view={view} showTrendCharts={false} />
+            <CreditRefundKpis state={state} />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="dcDashboardSection dcOpsSection">
+        <div className="dcSectionHeader">
+          <div>
+            <div className="dcSectionEyebrow">Operations</div>
+            <h2>Job log and saved reports</h2>
+            <p>Search jobs, export data, and manage reports.</p>
+          </div>
         </div>
 
-        <div className="sideStack">
-          <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} onOpenReportJob={onOpenReportJob} />
-          <Insights insights={insights} />
+        <div className="grid dcOpsGrid">
+          <div className="mainCol">
+            <JobsLog
+              jobs={jobs}
+              onOpenAllJobs={() => {
+                setView("alljobs");
+                setJobKey("");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onOpenJob={openJob}
+              onHideJob={onHideJob}
+            />
+          </div>
+
+          <div className="sideStack">
+            <PastReports reports={reports} allJobs={jobs} totalReports={allReportsCount} hiddenReportsCount={hiddenReportsCount} onDeleteReport={onDeleteReport} onManageReports={onManageReports} onOpenReportJob={onOpenReportJob} />
+            <div className="dcAccordionSection dcInsightsDrawer">
+              <button className="dcAccordionHeader mini" type="button" onClick={() => setInsightsOpen((v) => !v)} aria-expanded={insightsOpen}>
+                <div>
+                  <div className="dcSectionEyebrow">AI insights</div>
+                  <h2>Additional notes</h2>
+                </div>
+                <span>{insightsOpen ? "Hide" : "Show"}</span>
+              </button>
+              {insightsOpen ? <Insights insights={insights} /> : null}
+            </div>
+          </div>
         </div>
       </div>
     </>
   );
 }
-
 
 function JobComparisonPanel({ base, state, marginTarget }: { base: JobRow; state: DashboardState; marginTarget: number }) {
   const allJobs = getAllJobs(state);
@@ -4052,10 +4133,35 @@ function JobEditor({
           )}
 
           <div className="pad jobDetailPad">
-            <table className="jobTable">
+            <table className="jobTable" style={{ minWidth: `${1320 + Math.max(0, job.custom_categories.length) * 150}px` }}>
               <thead>
                 <tr>
-                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Taxes</th><th>Other Costs</th>{job.custom_categories.map((row, idx) => (<th className="customCategoryHeader" key={`${uid}-head-${idx}`}>{row.name?.trim() || `Custom ${idx + 1}`}</th>))}<th>Gross Profit</th><th>Margin</th>
+                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Taxes</th><th>Other Costs</th>
+                  {job.custom_categories.map((row, idx) => (
+                    <th className="customCostTh" key={`${uid}-custom-head-${idx}`}>
+                      <div className="inlineCustomHead">
+                        <input
+                          className="customHeaderEdit"
+                          value={row.name}
+                          disabled={!access.canUseCustomCategories}
+                          onChange={(e) => updateCustom(idx, { name: e.target.value })}
+                          placeholder="Custom cost"
+                          aria-label={`Custom cost category ${idx + 1} name`}
+                        />
+                        <button
+                          className="inlineCustomRemove"
+                          type="button"
+                          onClick={() => removeCustom(idx)}
+                          disabled={!access.canUseCustomCategories}
+                          title="Remove custom category"
+                          aria-label={`Remove custom category ${idx + 1}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </th>
+                  ))}
+                  <th>Gross Profit</th><th>Margin</th>
                 </tr>
               </thead>
               <tbody>
@@ -4072,65 +4178,47 @@ function JobEditor({
                   {renderMoneyCell("Taxes", "tax_cost")}
                   {renderMoneyCell("Other", "other_cost")}
                   {job.custom_categories.map((row, idx) => (
-                    <td className="customCategoryCell" key={`${uid}-custom-${idx}`}>
-                      <div className="customCategoryInline">
-                        <input
-                          className="cellEdit customCategoryNameInput"
-                          value={row.name}
-                          disabled={!access.canUseCustomCategories}
-                          onChange={(e) => updateCustom(idx, { name: e.target.value })}
-                          placeholder="e.g. Sales Commission"
-                          aria-label={`Custom category ${idx + 1} name`}
-                        />
-                        <input
-                          className="cellEdit customAmountInput moneyEditInput"
-                          inputMode="decimal"
-                          type="text"
-                          disabled={!access.canUseCustomCategories}
-                          value={editingCustomAmountIndex === idx ? customAmountDrafts[idx] ?? "" : fmtMoney(row.amount)}
-                          onFocus={(e) => {
-                            const rawValue = String(parseNumberLoose(row.amount));
-                            setEditingCustomAmountIndex(idx);
-                            setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: rawValue }));
+                    <td className="customCostCell" key={`${uid}-custom-cell-${idx}`}>
+                      <input
+                        className="cellEdit customAmountInput moneyEditInput"
+                        inputMode="decimal"
+                        type="text"
+                        disabled={!access.canUseCustomCategories}
+                        value={editingCustomAmountIndex === idx ? customAmountDrafts[idx] ?? "" : fmtMoney(row.amount)}
+                        onFocus={(e) => {
+                          const rawValue = String(parseNumberLoose(row.amount));
+                          setEditingCustomAmountIndex(idx);
+                          setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: rawValue }));
 
-                            window.setTimeout(() => {
-                              e.currentTarget.focus();
-                              e.currentTarget.select();
-                            }, 0);
-                          }}
-                          onChange={(e) => {
-                            const raw = e.currentTarget.value;
-                            setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: raw }));
-                            updateCustom(idx, { amount: parseMoneyInput(raw) });
-                          }}
-                          onBlur={() => {
-                            const finalValue = parseMoneyInput(customAmountDrafts[idx]);
-                            updateCustom(idx, { amount: finalValue });
-                            setCustomAmountDrafts((drafts) => {
-                              const next = { ...drafts };
-                              delete next[idx];
-                              return next;
-                            });
-                            setEditingCustomAmountIndex(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.currentTarget.blur();
-                            }
-                          }}
-                          placeholder="$0.00"
-                          aria-label={`Custom category ${idx + 1} amount`}
-                        />
-                        <button
-                          className="customInlineRemoveBtn"
-                          type="button"
-                          onClick={() => removeCustom(idx)}
-                          aria-label={`Remove custom category ${idx + 1}`}
-                          title="Remove custom category"
-                        >
-                          ×
-                        </button>
-                      </div>
+                          window.setTimeout(() => {
+                            e.currentTarget.focus();
+                            e.currentTarget.select();
+                          }, 0);
+                        }}
+                        onChange={(e) => {
+                          const raw = e.currentTarget.value;
+                          setCustomAmountDrafts((drafts) => ({ ...drafts, [idx]: raw }));
+                          updateCustom(idx, { amount: parseMoneyInput(raw) });
+                        }}
+                        onBlur={() => {
+                          const finalValue = parseMoneyInput(customAmountDrafts[idx]);
+                          updateCustom(idx, { amount: finalValue });
+                          setCustomAmountDrafts((drafts) => {
+                            const next = { ...drafts };
+                            delete next[idx];
+                            return next;
+                          });
+                          setEditingCustomAmountIndex(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        aria-label={`${row.name || `Custom category ${idx + 1}`} amount`}
+                        placeholder="$0.00"
+                      />
+                      <div className="cellHint">Manual cost</div>
                     </td>
                   ))}
                   <td><div className={`calcCell ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div></td>
@@ -6857,148 +6945,541 @@ main.dc-bg .wrap{padding-bottom:56px;}
 @media(max-width:640px){.dc-bg .reportRowActions{gap:6px}.dc-bg .premiumReportProfitBlock .reportViewBtn{height:32px;padding:7px 9px}}
 
 
-/* DropClarity patch: desktop width, cost mix placement, inline custom categories */
-.dc-bg .wrap{
-  width:min(2200px,calc(100vw - clamp(18px,2vw,36px)))!important;
-  max-width:2200px!important;
-}
-.dc-bg.internal-view-bg .wrap,
-.dc-bg .allJobsDetailShell,
-.dc-bg .reportsManagerPage,
-.dc-bg .highRiskPage,
-.dc-bg .jobPage,
-.dc-bg .jobHero{
-  width:100%!important;
-  max-width:none!important;
-}
-.dc-bg .grid.dcOpsGrid,
-.dc-bg .grid{
-  grid-template-columns:minmax(0,1.95fr) minmax(400px,.58fr);
-}
-.dc-bg .chartsOnly{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:18px;
-}
-.dc-bg .costMixOnlyCard{
+
+/* Enterprise navigation restructure: keeps all dashboard mechanics intact while reducing first-load overwhelm */
+.dc-bg .dcOrientationPanel,
+.dc-bg .dcDashboardSection{
   width:100%;
-  margin:0;
+  box-sizing:border-box;
 }
-.dc-bg .dcCostGroup .chartsOnly{
-  display:none!important;
-}
-.dc-bg .customCategoryHeader{
-  min-width:210px;
-  white-space:nowrap;
-}
-.dc-bg .customCategoryCell{
-  min-width:210px;
-  vertical-align:top;
-}
-.dc-bg .customCategoryInline{
-  position:relative;
+.dc-bg .dcOrientationPanel{
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  grid-template-areas:
-    "name remove"
-    "amount remove";
+  grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+  gap:18px;
+  align-items:stretch;
+  margin:18px 0 18px;
+  padding:18px;
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(248,250,252,.86) 45%,rgba(236,254,255,.72));
+  box-shadow:0 20px 60px rgba(15,23,42,.06);
+}
+.dc-bg .dcOrientationIntro h2,
+.dc-bg .dcSectionHeader h2,
+.dc-bg .dcAccordionHeader h2{
+  margin:0;
+  color:#0f172a;
+  letter-spacing:-.04em;
+  font-weight:950;
+}
+.dc-bg .dcOrientationIntro h2{font-size:clamp(22px,2.4vw,34px);line-height:1.02;margin-top:6px}
+.dc-bg .dcOrientationIntro p,
+.dc-bg .dcSectionHeader p,
+.dc-bg .dcAccordionHeader p{
+  margin:7px 0 0;
+  color:rgba(71,85,105,.82);
+  font-weight:750;
+  line-height:1.45;
+}
+.dc-bg .dcSectionEyebrow{
+  display:inline-flex;
   align-items:center;
+  width:max-content;
   gap:8px;
-  min-width:190px;
-}
-.dc-bg .customCategoryNameInput{
-  grid-area:name;
-  min-width:0!important;
-  height:38px!important;
-  font-size:13px!important;
-  font-weight:800!important;
-  padding-right:10px!important;
-}
-.dc-bg .customCategoryCell .customAmountInput{
-  grid-area:amount;
-  min-width:0!important;
-  height:40px!important;
-  font-size:14px!important;
-  font-weight:900!important;
-}
-.dc-bg .customInlineRemoveBtn{
-  grid-area:remove;
-  width:28px;
-  height:28px;
+  padding:6px 10px;
   border-radius:999px;
-  border:1px solid rgba(239,68,68,.18);
-  background:rgba(254,242,242,.72);
-  color:rgba(185,28,28,.82);
-  font-weight:900;
+  color:#0891b2;
+  background:rgba(6,182,212,.08);
+  border:1px solid rgba(6,182,212,.15);
+  font-size:11px;
   line-height:1;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  font-weight:950;
+}
+.dc-bg .dcOrientationSteps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.dc-bg .dcOrientationStep{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+  padding:14px;
+  text-decoration:none;
+  color:#0f172a;
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:22px;
+  background:rgba(255,255,255,.88);
+  box-shadow:0 12px 28px rgba(15,23,42,.045);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.dc-bg .dcOrientationStep:hover{transform:translateY(-1px);border-color:rgba(124,58,237,.22);box-shadow:0 18px 34px rgba(15,23,42,.07)}
+.dc-bg .dcOrientationStep span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;height:28px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#22d3ee,#8b5cf6);
+  color:white;
+  font-size:12px;
+  font-weight:950;
+}
+.dc-bg .dcOrientationStep strong{font-size:14px;font-weight:950;letter-spacing:-.02em}
+.dc-bg .dcOrientationStep em{font-style:normal;font-size:12px;line-height:1.35;color:rgba(71,85,105,.72);font-weight:750}
+.dc-bg .dcDashboardSection{
+  margin:18px 0;
+}
+.dc-bg .dcSectionHeader{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  margin:0 0 12px;
+  padding:0 2px;
+}
+.dc-bg .dcSectionHeader.compact{margin-bottom:10px}
+.dc-bg .dcSectionHeader h2,
+.dc-bg .dcAccordionHeader h2{font-size:clamp(22px,2vw,30px);line-height:1.08;margin-top:7px}
+.dc-bg .dcSectionCta{white-space:nowrap;background:linear-gradient(135deg,rgba(236,254,255,.95),rgba(245,243,255,.96));border-color:rgba(124,58,237,.18)}
+.dc-bg .dcPrimarySection .profitSnapshot{margin-top:0!important}
+.dc-bg .dcActionSection > .scalePanel,
+.dc-bg .dcHealthSection > .panel,
+.dc-bg .dcAccordionSection,
+.dc-bg .dcOpsSection > .grid{
+  position:relative;
+}
+.dc-bg .dcActionSection .scalePanel{
+  margin-top:0!important;
+  box-shadow:0 24px 70px rgba(15,23,42,.075)!important;
+  border-color:rgba(124,58,237,.16)!important;
+}
+.dc-bg .dcActionSection .scalePanel .scaleIntelligenceStrip,
+.dc-bg .dcActionSection .scalePanel .scalePremiumGrid{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid rgba(15,23,42,.06);
+}
+.dc-bg .dcHealthSection .panel{margin-top:0!important;box-shadow:0 18px 52px rgba(15,23,42,.045)!important}
+.dc-bg .dcAccordionSection{
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:30px;
+  background:rgba(255,255,255,.86);
+  box-shadow:0 18px 50px rgba(15,23,42,.045);
+  overflow:hidden;
+}
+.dc-bg .dcAccordionHeader{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:20px;
+  border:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.8));
+  text-align:left;
   cursor:pointer;
 }
-.dc-bg .customInlineRemoveBtn:hover{
-  background:rgba(254,226,226,.92);
-  border-color:rgba(239,68,68,.30);
+.dc-bg .dcAccordionHeader span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:68px;
+  height:40px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.08);
+  background:white;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:950;
+  box-shadow:0 10px 24px rgba(15,23,42,.05);
 }
-.dc-bg .jobTable{
-  width:max-content;
-  min-width:1680px!important;
+.dc-bg .dcAccordionHeader.mini{padding:16px}
+.dc-bg .dcAccordionHeader.mini h2{font-size:20px}
+.dc-bg .dcAccordionSection > .chartsGrid,
+.dc-bg .dcAccordionSection > .panel,
+.dc-bg .dcCostGroup{
+  margin:0!important;
+  padding:0 18px 18px;
 }
-.dc-bg .stackedJobPage .jobTable{
-  min-width:1680px!important;
+.dc-bg .dcCostGroup .chartsGrid{margin:0!important}
+.dc-bg .dcCostGroup .chartCard:not(:has(.mixList)){display:none!important}
+.dc-bg .dcCostGroup .chartCard:has(.mixList){grid-column:1/-1!important}
+.dc-bg .dcCostGroup > .panel{margin-top:14px!important}
+.dc-bg .dcOpsGrid{margin-top:0!important;align-items:start}
+.dc-bg .dcOpsGrid #jobsPanel,
+.dc-bg .dcOpsGrid .pastReportsPanel{margin-top:0!important}
+.dc-bg .dcInsightsDrawer{margin-top:14px!important;border-radius:24px!important}
+.dc-bg .dcInsightsDrawer .panel{margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important}
+.dc-bg .dcInsightsDrawer .panelHead{display:none!important}
+.dc-bg .dcInsightsDrawer .pad{padding:0 16px 16px!important}
+@media(max-width:1100px){
+  .dc-bg .dcOrientationPanel{grid-template-columns:1fr;gap:14px}
+  .dc-bg .dcOrientationSteps{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
-.dc-bg .jobDetailPad{
-  overflow-x:auto!important;
-  -webkit-overflow-scrolling:touch;
+@media(max-width:820px){
+  .dc-bg .dcOrientationPanel{border-radius:24px;padding:14px;margin:14px 0}
+  .dc-bg .dcOrientationSteps{grid-template-columns:1fr}
+  .dc-bg .dcSectionHeader{align-items:flex-start;flex-direction:column;gap:10px}
+  .dc-bg .dcSectionCta{width:100%;justify-content:center}
+  .dc-bg .dcAccordionHeader{align-items:flex-start;padding:16px;flex-direction:column}
+  .dc-bg .dcAccordionHeader span{width:100%}
+  .dc-bg .dcAccordionSection > .chartsGrid,
+  .dc-bg .dcAccordionSection > .panel,
+  .dc-bg .dcCostGroup{padding:0 12px 12px}
 }
-.dc-bg .jobDetailPad .jobTable th,
-.dc-bg .jobDetailPad .jobTable td{
-  padding-inline:12px!important;
+@media(max-width:560px){
+  .dc-bg .dcDashboardSection{margin:14px 0}
+  .dc-bg .dcOrientationIntro h2{font-size:22px}
+  .dc-bg .dcSectionHeader h2,
+  .dc-bg .dcAccordionHeader h2{font-size:21px}
+  .dc-bg .dcOrientationPanel,
+  .dc-bg .dcAccordionSection{border-radius:22px}
+}
+
+/* DropClarity enterprise readability pass: softer surfaces, shorter guide, stronger hierarchy */
+.dc-bg{
+  background:
+    radial-gradient(circle at 8% 4%, rgba(34,211,238,.10), transparent 28%),
+    radial-gradient(circle at 88% 8%, rgba(124,58,237,.10), transparent 30%),
+    linear-gradient(180deg,#ffffff 0%,#f8fbff 28%,#f6f8fc 100%) !important;
+  color:#0f172a;
+}
+.dc-bg .wrap{padding-top:34px}
+.dc-bg .topbar{margin-bottom:18px}
+.dc-bg .pageKicker,
+.dc-bg .dcSectionEyebrow,
+.dc-bg .scaleKicker,
+.dc-bg .kLabel,
+.dc-bg .statLabel,
+.dc-bg .creditKpiLabel{
+  letter-spacing:.105em;
+}
+.dc-bg .pageTitle{
+  max-width:760px;
+  font-size:clamp(34px,3.7vw,54px);
+  line-height:.98;
+  letter-spacing:-.065em;
+}
+.dc-bg .pageSub{
+  max-width:760px;
+  margin-top:14px;
+  font-size:16px;
+  line-height:1.45;
+  color:rgba(15,23,42,.62);
+}
+.dc-bg .topbarRight{
+  padding:10px;
+  border-radius:28px;
+  background:rgba(255,255,255,.58);
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:0 22px 70px rgba(15,23,42,.07);
+  backdrop-filter:blur(14px);
+}
+.dc-bg .rangeWrap{
+  margin-top:14px;
+  border:1px solid rgba(15,23,42,.055);
+  background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(248,250,252,.86));
+  box-shadow:0 18px 46px rgba(15,23,42,.055);
+}
+.dc-bg .dcOrientationPanel{
+  grid-template-columns:1fr auto;
+  gap:18px;
+  padding:16px 18px;
+  border-radius:26px;
+  border:1px solid rgba(34,211,238,.18);
+  background:
+    linear-gradient(135deg,rgba(236,253,245,.74),rgba(239,246,255,.72) 48%,rgba(245,243,255,.66));
+  box-shadow:0 22px 70px rgba(14,165,233,.10);
+}
+.dc-bg .dcOrientationIntro h2{
+  font-size:clamp(22px,2.2vw,30px);
+  letter-spacing:-.045em;
+  margin-top:6px;
+}
+.dc-bg .dcOrientationIntro p{
+  max-width:670px;
+  margin-top:7px;
+  font-size:14.5px;
+  line-height:1.42;
+  color:rgba(15,23,42,.58);
+}
+.dc-bg .dcOrientationSteps{
+  grid-template-columns:repeat(3,minmax(140px,1fr));
+  align-items:stretch;
+  min-width:min(620px,100%);
+}
+.dc-bg .dcOrientationStep{
+  min-height:92px;
+  padding:14px;
+  background:rgba(255,255,255,.72);
+  border-color:rgba(255,255,255,.78);
+  box-shadow:0 14px 34px rgba(15,23,42,.055);
+}
+.dc-bg .dcOrientationStep span{
+  width:30px;
+  height:30px;
+  font-size:13px;
+  box-shadow:0 10px 20px rgba(79,70,229,.16);
+}
+.dc-bg .dcOrientationStep strong{font-size:14.5px;letter-spacing:-.01em}
+.dc-bg .dcOrientationStep em{font-size:12.5px;color:rgba(15,23,42,.50)}
+.dc-bg .dcDashboardSection{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  margin:22px 0;
+}
+.dc-bg .dcPrimarySection{
+  padding:0;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,247,237,.66),rgba(255,255,255,.88) 42%,rgba(239,246,255,.74));
+  border:1px solid rgba(251,146,60,.13);
+  box-shadow:0 24px 70px rgba(251,146,60,.08);
+}
+.dc-bg .dcActionSection{
+  padding:0;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(245,243,255,.76),rgba(255,255,255,.90) 45%,rgba(236,253,245,.62));
+  border:1px solid rgba(124,58,237,.13);
+  box-shadow:0 26px 78px rgba(124,58,237,.085);
+}
+.dc-bg .dcHealthSection{
+  padding:0;
+  border-radius:28px;
+  background:linear-gradient(180deg,rgba(248,250,252,.94),rgba(255,255,255,.86));
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:0 18px 52px rgba(15,23,42,.055);
+}
+.dc-bg .dcOpsSection{
+  padding:0;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.90));
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:0 22px 64px rgba(15,23,42,.065);
+}
+.dc-bg .dcSectionHeader{
+  padding:22px 24px 14px;
+}
+.dc-bg .dcSectionHeader h2,
+.dc-bg .dcAccordionHeader h2{
+  font-size:clamp(23px,2.3vw,32px);
+  line-height:1.05;
+  letter-spacing:-.05em;
+}
+.dc-bg .dcSectionHeader p,
+.dc-bg .dcAccordionHeader p{
+  margin-top:6px;
+  max-width:680px;
+  font-size:14.5px;
+  line-height:1.42;
+  color:rgba(15,23,42,.56);
+}
+.dc-bg .profitSnapshot{
+  margin:0 18px 18px!important;
+  border-radius:26px!important;
+  border-color:rgba(255,255,255,.70)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.88),rgba(255,251,235,.74) 48%,rgba(245,243,255,.66))!important;
+  box-shadow:0 24px 70px rgba(15,23,42,.08)!important;
+}
+.dc-bg .profitSnapshotMain h2{font-size:clamp(28px,3vw,42px);letter-spacing:-.06em}
+.dc-bg .profitSnapshotSub{font-size:15px;line-height:1.42;color:rgba(15,23,42,.62)}
+.dc-bg .profitSnapshotMetric,
+.dc-bg .kpi,
+.dc-bg .chartCard,
+.dc-bg .creditKpi,
+.dc-bg .panel,
+.dc-bg .scaleCard,
+.dc-bg .scaleTargetCard,
+.dc-bg .scaleEmailCard{
+  border-color:rgba(15,23,42,.065)!important;
+  background:rgba(255,255,255,.82)!important;
+  box-shadow:0 16px 42px rgba(15,23,42,.055)!important;
+}
+.dc-bg .profitSnapshotMetric.primary{
+  background:linear-gradient(135deg,rgba(255,251,235,.92),rgba(255,255,255,.82))!important;
+  border-color:rgba(245,158,11,.16)!important;
+}
+.dc-bg .scalePanel.premiumScalePanel{
+  margin:0 18px 18px!important;
+  border-radius:26px;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.92),rgba(245,243,255,.64) 42%,rgba(236,253,245,.56));
+  box-shadow:0 22px 70px rgba(79,70,229,.08)!important;
+}
+.dc-bg .scaleControlHead{padding:18px 20px 8px!important}
+.dc-bg .scaleCommandGrid{padding:14px 18px 4px!important}
+.dc-bg .scaleGridPremiumV2{padding:14px 18px 18px!important}
+.dc-bg .scaleText,
+.dc-bg .alertMeta,
+.dc-bg .benchmarkNote,
+.dc-bg .leakMeta,
+.dc-bg .actionMeta,
+.dc-bg .leakFix,
+.dc-bg .panelSub,
+.dc-bg .chartSub,
+.dc-bg .creditKpiNote,
+.dc-bg .mixSub{
+  color:rgba(15,23,42,.56)!important;
+  line-height:1.42;
+}
+.dc-bg .dcAccordionSection{
+  overflow:hidden;
+  border-radius:26px!important;
+  border:1px solid rgba(15,23,42,.055)!important;
+  background:linear-gradient(135deg,rgba(248,250,252,.92),rgba(255,255,255,.86))!important;
+  box-shadow:0 18px 50px rgba(15,23,42,.055)!important;
+}
+.dc-bg .dcAccordionHeader{
+  padding:20px 22px;
+  background:transparent!important;
+}
+.dc-bg .dcCostGroup .chartCard:has(.mixList){
+  background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(236,253,245,.38))!important;
+}
+.dc-bg .mixRow{
+  background:rgba(255,255,255,.78)!important;
+  border-color:rgba(15,23,42,.06)!important;
+  box-shadow:0 12px 28px rgba(15,23,42,.045);
+}
+.dc-bg .tableWrap{
+  background:rgba(255,255,255,.64);
+}
+.dc-bg .jobsTable thead{
+  background:rgba(248,250,252,.92);
+}
+.dc-bg .jobsTable tbody tr:hover{
+  background:rgba(239,246,255,.62);
 }
 .dc-bg .pastReportsPanel{
-  min-width:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(248,250,252,.82))!important;
 }
-.dc-bg .premiumReportCard{
-  padding:18px!important;
+.dc-bg .btn,
+.dc-bg .rangeBtn,
+.dc-bg .miniBtn,
+.dc-bg .reportsManageLink{
+  box-shadow:0 10px 24px rgba(15,23,42,.045);
 }
-.dc-bg .premiumReportTopline{
-  gap:14px!important;
+.dc-bg .btn:hover,
+.dc-bg .rangeBtn:hover,
+.dc-bg .miniBtn:hover,
+.dc-bg .reportsManageLink:hover{
+  transform:translateY(-1px);
 }
-.dc-bg .premiumReportMetrics{
-  gap:9px!important;
+@media(max-width:1100px){
+  .dc-bg .dcOrientationPanel{grid-template-columns:1fr}
+  .dc-bg .dcOrientationSteps{min-width:0;width:100%}
+  .dc-bg .topbarRight{width:100%}
 }
-@media (min-width:1600px){
-  .dc-bg .wrap{width:calc(100vw - 44px)!important;max-width:2240px!important}
-  .dc-bg .grid.dcOpsGrid,.dc-bg .grid{grid-template-columns:minmax(0,2.15fr) minmax(430px,.55fr)}
-  .dc-bg .jobTable{min-width:1760px!important}
+@media(max-width:820px){
+  .dc-bg .wrap{padding-top:24px}
+  .dc-bg .topbarRight{padding:0;background:transparent;border:0;box-shadow:none}
+  .dc-bg .dcOrientationPanel{padding:14px;border-radius:22px}
+  .dc-bg .dcOrientationSteps{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .dc-bg .dcOrientationStep{min-height:auto;padding:12px 10px}
+  .dc-bg .dcOrientationStep em{display:none}
+  .dc-bg .dcSectionHeader{padding:18px 16px 12px}
+  .dc-bg .profitSnapshot,
+  .dc-bg .scalePanel.premiumScalePanel{margin:0 12px 12px!important}
 }
-@media (max-width:1280px){
-  .dc-bg .grid.dcOpsGrid,.dc-bg .grid{grid-template-columns:1fr!important}
-  .dc-bg .sideStack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-  .dc-bg .chartsOnly{grid-template-columns:1fr}
+@media(max-width:560px){
+  .dc-bg .dcOrientationSteps{grid-template-columns:1fr}
+  .dc-bg .pageTitle{font-size:31px}
+  .dc-bg .pageSub{font-size:14.5px}
+  .dc-bg .dcSectionHeader h2,
+  .dc-bg .dcAccordionHeader h2{font-size:22px}
 }
-@media (max-width:900px){
-  .dc-bg .sideStack{grid-template-columns:1fr}
-  .dc-bg .rangeWrap{align-items:stretch!important}
-  .dc-bg .rangeRight{width:100%!important;align-items:stretch!important}
-  .dc-bg .rangeButtons{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));width:100%!important}
-  .dc-bg .rangeBtn{width:100%!important;min-width:0!important;padding-inline:10px!important}
+
+
+/* DropClarity enterprise professional pass: neutral canvas, compact guide, stronger hierarchy */
+.dc-bg{
+  padding:34px 0 34px!important;
+  background:
+    radial-gradient(820px 360px at 8% -12%,rgba(34,211,238,.08),transparent 60%),
+    radial-gradient(760px 360px at 92% -12%,rgba(124,58,237,.075),transparent 62%),
+    linear-gradient(180deg,#ffffff 0%,#fbfcff 34%,#f6f8fb 100%)!important;
+}
+.dc-bg .wrap{padding:0 14px!important;max-width:1760px!important;width:min(1760px,calc(100vw - 24px))!important}
+.dc-bg .topbar{align-items:center!important;margin-bottom:14px!important;padding:0!important}
+.dc-bg .dashboardIntro{max-width:760px!important}
+.dc-bg .pageKicker{margin-bottom:10px!important;background:rgba(255,255,255,.92)!important;box-shadow:none!important;border-color:rgba(34,211,238,.22)!important;font-size:11.5px!important;padding:5px 10px!important;letter-spacing:.09em!important}
+.dc-bg .pageTitle{font-size:clamp(31px,3.25vw,46px)!important;line-height:1!important;letter-spacing:-.055em!important;max-width:780px!important}
+.dc-bg .pageSub{margin-top:9px!important;max-width:720px!important;font-size:15px!important;line-height:1.42!important;color:rgba(51,65,85,.68)!important;font-weight:760!important}
+.dc-bg .topbarRight{padding:8px!important;border-radius:24px!important;background:rgba(255,255,255,.78)!important;border:1px solid rgba(15,23,42,.065)!important;box-shadow:0 16px 42px rgba(15,23,42,.055)!important;backdrop-filter:blur(14px)}
+.dc-bg .statusRow{gap:8px!important}.dc-bg .pill{padding:9px 11px!important;box-shadow:0 8px 20px rgba(15,23,42,.055)!important}.dc-bg .btn{border-radius:13px!important;padding:10px 13px!important;box-shadow:none!important}.dc-bg .btn:hover{box-shadow:0 12px 28px rgba(15,23,42,.09)!important}
+.dc-bg .marginTargetTopWrap{border-radius:22px!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(240,253,250,.82))!important;box-shadow:none!important}
+.dc-bg .rangeWrap{margin:14px 0 12px!important;padding:12px 14px!important;border-radius:20px!important;background:rgba(255,255,255,.90)!important;box-shadow:0 12px 32px rgba(15,23,42,.045)!important;border:1px solid rgba(15,23,42,.06)!important}
+.dc-bg .rangeLabel{font-size:15px!important}.dc-bg .rangeSub{font-size:12.5px!important;color:rgba(51,65,85,.54)!important}.dc-bg .rangeBtn{padding:9px 13px!important;box-shadow:none!important}.dc-bg .rangeBtn.active{box-shadow:0 12px 28px rgba(15,23,42,.14)!important}
+.dc-bg .dcGuideRail{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 14px;padding:8px;border-radius:18px;border:1px solid rgba(15,23,42,.06);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.80));box-shadow:0 12px 30px rgba(15,23,42,.045)}
+.dc-bg .dcGuideRail a{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border-radius:999px;text-decoration:none;color:rgba(15,23,42,.72);font-size:12.5px;font-weight:920;border:1px solid rgba(15,23,42,.055);background:rgba(255,255,255,.72)}
+.dc-bg .dcGuideRail a span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg,#22d3ee,#7c3aed);color:#fff;font-size:11px;font-weight:980;box-shadow:0 8px 16px rgba(79,70,229,.14)}
+.dc-bg .dcOrientationPanel{display:none!important}
+.dc-bg .dcDashboardSection{margin:14px 0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+.dc-bg .dcPrimarySection,.dc-bg .dcActionSection,.dc-bg .dcHealthSection,.dc-bg .dcOpsSection{border-radius:24px!important;border:1px solid rgba(15,23,42,.065)!important;box-shadow:0 18px 46px rgba(15,23,42,.055)!important;overflow:hidden!important}
+.dc-bg .dcPrimarySection{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(255,247,237,.64) 52%,rgba(255,255,255,.90))!important;border-color:rgba(248,113,113,.12)!important}
+.dc-bg .dcActionSection{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(245,243,255,.62) 52%,rgba(255,255,255,.90))!important;border-color:rgba(124,58,237,.12)!important}
+.dc-bg .dcHealthSection,.dc-bg .dcOpsSection{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.82))!important}
+.dc-bg .dcSectionHeader{padding:16px 20px 10px!important;align-items:center!important}
+.dc-bg .dcSectionHeader h2,.dc-bg .dcAccordionHeader h2{font-size:clamp(21px,1.85vw,28px)!important;line-height:1.06!important;letter-spacing:-.045em!important;margin:0!important}
+.dc-bg .dcSectionHeader p,.dc-bg .dcAccordionHeader p{margin-top:5px!important;font-size:13.5px!important;line-height:1.38!important;color:rgba(51,65,85,.55)!important;max-width:620px!important}
+.dc-bg .dcSectionEyebrow,.dc-bg .sectionEyebrow,.dc-bg .scaleKicker,.dc-bg .kLabel,.dc-bg .statLabel,.dc-bg .creditKpiLabel{letter-spacing:.095em!important;font-size:10.5px!important;color:rgba(8,145,178,.80)!important}
+.dc-bg .profitSnapshot{margin:0 14px 14px!important;border-radius:22px!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(255,251,235,.56) 50%,rgba(255,255,255,.88))!important;box-shadow:0 16px 42px rgba(15,23,42,.055)!important;border:1px solid rgba(15,23,42,.06)!important;grid-template-columns:minmax(0,1.05fr) minmax(390px,.95fr)!important;gap:12px!important;padding:14px!important}
+.dc-bg .profitSnapshotMain{min-height:168px!important;padding:4px!important}.dc-bg .profitSnapshotKicker{box-shadow:none!important;background:#fff!important;margin-bottom:8px!important}.dc-bg .profitSnapshotTitle{font-size:clamp(27px,2.6vw,38px)!important;letter-spacing:-.055em!important}.dc-bg .profitSnapshotSub{font-size:14px!important;line-height:1.38!important;color:rgba(51,65,85,.64)!important;margin-top:9px!important}.dc-bg .profitSnapshotMiniKpis{margin-top:11px!important}.dc-bg .profitSnapshotMiniKpi{padding:8px 10px!important;box-shadow:none!important;background:rgba(255,255,255,.82)!important}.dc-bg .profitSnapshotActions{margin-top:14px!important}.dc-bg .profitSnapshotMetric{border-radius:18px!important;padding:13px!important;box-shadow:0 12px 30px rgba(15,23,42,.045)!important;background:rgba(255,255,255,.86)!important}.dc-bg .profitSnapshotMetric strong{font-size:23px!important}.dc-bg .profitSnapshotOpportunity{border-radius:16px!important;box-shadow:none!important;background:rgba(255,255,255,.82)!important}
+.dc-bg .scalePanel.premiumScalePanel{margin:0 14px 14px!important;border-radius:22px!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(248,250,252,.86))!important;box-shadow:0 16px 42px rgba(15,23,42,.055)!important;border:1px solid rgba(15,23,42,.06)!important}
+.dc-bg .scaleControlHead{padding:14px 16px 8px!important}.dc-bg .scaleCommandGrid{padding:10px 14px 2px!important}.dc-bg .scaleGridPremiumV2{padding:12px 14px 14px!important;gap:12px!important}.dc-bg .scaleRecoveryCommand{min-height:0!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(245,243,255,.50))!important}.dc-bg .actionCard,.dc-bg .benchmarkCard,.dc-bg .premiumLeakRow,.dc-bg .costRadarRow,.dc-bg .ruleList div{background:rgba(255,255,255,.76)!important;border-color:rgba(15,23,42,.06)!important}
+.dc-bg .kpis{padding:14px!important;gap:12px!important}.dc-bg .kpi,.dc-bg .stat,.dc-bg .chartCard,.dc-bg .creditKpi,.dc-bg .panel,.dc-bg .scaleCard,.dc-bg .scaleTargetCard,.dc-bg .scaleEmailCard{border-radius:18px!important;border-color:rgba(15,23,42,.065)!important;background:rgba(255,255,255,.88)!important;box-shadow:0 12px 34px rgba(15,23,42,.045)!important}.dc-bg .kValue,.dc-bg .statValue{font-size:clamp(20px,1.4vw,27px)!important}.dc-bg .kSub,.dc-bg .statSub,.dc-bg .panelSub,.dc-bg .scaleText,.dc-bg .chartSub,.dc-bg .mixSub,.dc-bg .creditKpiNote,.dc-bg .alertMeta,.dc-bg .benchmarkNote,.dc-bg .leakMeta,.dc-bg .actionMeta,.dc-bg .leakFix{color:rgba(51,65,85,.55)!important;line-height:1.38!important}
+.dc-bg .dcAccordionSection{border-radius:22px!important;border:1px solid rgba(15,23,42,.06)!important;background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(248,250,252,.78))!important;box-shadow:0 14px 38px rgba(15,23,42,.045)!important;overflow:hidden!important}.dc-bg .dcAccordionHeader{padding:16px 18px!important;background:transparent!important}.dc-bg .dcAccordionHeader span{background:#fff!important;border:1px solid rgba(15,23,42,.07)!important;border-radius:999px!important;padding:8px 12px!important;font-weight:950!important;color:rgba(15,23,42,.66)!important}
+.dc-bg .dcCostGroup{padding:0 14px 14px!important}.dc-bg .dcCostGroup .charts,.dc-bg .dcCostGroup .jobCharts{margin-top:0!important}.dc-bg .mixRow{background:rgba(255,255,255,.82)!important;border-color:rgba(15,23,42,.055)!important;box-shadow:none!important}.dc-bg .creditKpiPanel{margin-top:12px!important}
+.dc-bg .dcOpsGrid{margin:0 14px 14px!important;width:auto!important;gap:14px!important}.dc-bg .panelHead{padding:13px 14px!important;background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.78))!important}.dc-bg .tableWrap{background:rgba(255,255,255,.72)!important}.dc-bg .jobsTable th{background:rgba(248,250,252,.88)!important;color:rgba(51,65,85,.46)!important}.dc-bg .jobsTable tbody tr:hover{background:rgba(239,246,255,.58)!important}.dc-bg .pastReportsPanel{background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(248,250,252,.82))!important}
+/* Internal detail pages: less headroom, calmer cards */
+.dc-bg .internalQuickControls{margin:0 0 10px!important;min-height:0!important}.dc-bg .jobPage{margin-top:8px!important;gap:10px!important}.dc-bg .crumbs{padding:10px 12px!important;background:rgba(255,255,255,.86)!important}.dc-bg .jobAnalysisHeader{padding:13px 15px!important;border-radius:18px!important;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(248,250,252,.82))!important;box-shadow:0 12px 34px rgba(15,23,42,.045)!important}.dc-bg .sectionTitle{font-size:19px!important}.dc-bg .decisionJobMain{min-height:150px!important}.dc-bg .decisionJobTitle{font-size:clamp(25px,2.3vw,32px)!important}.dc-bg .jobHero,.dc-bg .hero{margin-top:8px!important;border-radius:20px!important}.dc-bg .jobHeroBody,.dc-bg .heroBody{padding:14px!important}.dc-bg .reportsManagerBody{padding-top:16px!important}.dc-bg .reportsManagerTitle{font-size:clamp(25px,2.5vw,36px)!important}.dc-bg .modeContextHeader{margin-top:8px!important}
+@media(max-width:1180px){.dc-bg .profitSnapshot{grid-template-columns:1fr!important}.dc-bg .profitSnapshotMetrics{grid-template-columns:repeat(4,minmax(0,1fr))!important}.dc-bg .topbarRight{width:100%!important}.dc-bg .topbar{align-items:flex-start!important}}
+@media(max-width:900px){.dc-bg{padding-top:24px!important}.dc-bg .wrap{width:100%!important;padding-inline:14px!important}.dc-bg .topbarRight{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}.dc-bg .statusRow{justify-content:flex-start!important}.dc-bg .dcGuideRail{margin-top:10px!important}.dc-bg .dcSectionHeader{padding:15px 14px 10px!important}.dc-bg .profitSnapshot,.dc-bg .scalePanel.premiumScalePanel,.dc-bg .dcOpsGrid{margin-left:10px!important;margin-right:10px!important}.dc-bg .profitSnapshotMetrics{grid-template-columns:1fr 1fr!important}.dc-bg .kpis{grid-template-columns:1fr 1fr!important}.dc-bg .dcAccordionHeader{align-items:flex-start!important}.dc-bg .dcAccordionHeader span{align-self:flex-start!important}.dc-bg .internalQuickActions{justify-content:flex-start!important}}
+@media(max-width:560px){.dc-bg{padding-top:20px!important}.dc-bg .wrap{padding-inline:12px!important}.dc-bg .pageTitle{font-size:30px!important}.dc-bg .pageSub{font-size:14px!important}.dc-bg .dcGuideRail a{width:100%;justify-content:flex-start}.dc-bg .profitSnapshotMetrics,.dc-bg .kpis{grid-template-columns:1fr!important}.dc-bg .profitSnapshot,.dc-bg .scalePanel.premiumScalePanel,.dc-bg .dcOpsGrid{margin-left:8px!important;margin-right:8px!important}.dc-bg .dcSectionHeader h2,.dc-bg .dcAccordionHeader h2{font-size:21px!important}.dc-bg .statusRow .btn,.dc-bg .statusRow a.btn{flex:1 1 auto!important;justify-content:center!important}.dc-bg .rangeWrap{padding:11px!important}.dc-bg .rangeRight,.dc-bg .rangeButtons{width:100%!important}.dc-bg .rangeBtn{flex:1 1 auto!important;text-align:center!important}}
+
+
+/* Surgical UI/layout patch: wider internal canvas, cost-only analytics separation, and inline custom categories. */
+@media (min-width: 1180px){
+  .dc-bg .wrap{width:min(1760px,calc(100vw - 48px))!important;max-width:1760px!important;padding-left:0!important;padding-right:0!important}
+  .dc-bg.internal-view-bg .wrap{width:min(1880px,calc(100vw - 32px))!important;max-width:1880px!important}
+  .dc-bg .dcOpsGrid{grid-template-columns:minmax(0,1.9fr) minmax(380px,.62fr)!important;gap:18px!important}
+  .dc-bg .jobTable{min-width:1500px}
+}
+@media (min-width: 1540px){
+  .dc-bg .wrap{width:min(1840px,calc(100vw - 64px))!important;max-width:1840px!important}
+  .dc-bg.internal-view-bg .wrap{width:min(1960px,calc(100vw - 40px))!important;max-width:1960px!important}
+  .dc-bg .grid{grid-template-columns:minmax(0,2fr) minmax(400px,.58fr)!important}
+}
+.dc-bg .dcCostGroup > .charts{margin-top:0!important}
+.dc-bg .customCostTh{min-width:150px!important;background:rgba(124,58,237,.035)!important}
+.dc-bg .customCostCell{background:linear-gradient(180deg,rgba(124,58,237,.025),rgba(255,255,255,.80))!important}
+.dc-bg .inlineCustomHead{display:flex;align-items:center;gap:6px;width:100%}
+.dc-bg .customHeaderEdit{width:100%;min-width:0;border:1px solid rgba(124,58,237,.16);background:rgba(255,255,255,.86);border-radius:10px;padding:8px 9px;font-size:12px;font-weight:950;color:#0f172a;outline:none}
+.dc-bg .customHeaderEdit:focus{border-color:rgba(34,211,238,.55);box-shadow:0 0 0 3px rgba(34,211,238,.16)}
+.dc-bg .inlineCustomRemove{flex:0 0 auto;width:25px;height:25px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(239,68,68,.08);color:rgba(185,28,28,.9);font-size:16px;line-height:1;font-weight:950;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.dc-bg .inlineCustomRemove:disabled{opacity:.45;cursor:not-allowed}
+.dc-bg .jobDetailPad{padding:16px!important}
+.dc-bg .jobTable th,.dc-bg .jobTable td{padding:12px 10px!important}
+.dc-bg .jobTable .cellEdit{min-height:48px}
+@media(max-width:760px){
+  .dc-bg .wrap{width:min(100%,calc(100vw - 20px))!important;padding:0!important}
+  .dc-bg .rangeWrap{align-items:stretch!important;padding:12px!important;border-radius:18px!important}
+  .dc-bg .rangeRight{width:100%;justify-content:flex-start!important;display:grid!important;grid-template-columns:1fr!important}
+  .dc-bg .rangeButtons{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .dc-bg .rangeBtn{width:100%;justify-content:center;padding:11px 10px!important;font-size:12.5px!important}
   .dc-bg .rangeRight > .btn{width:100%;justify-content:center}
-}
-@media (max-width:768px){
-  .dc-bg .wrap{width:calc(100vw - 20px)!important}
-  .dc-bg .jobTable,
-  .dc-bg .stackedJobPage .jobTable{
-    min-width:1540px!important;
-  }
-  .dc-bg .customCategoryHeader,
-  .dc-bg .customCategoryCell{
-    min-width:190px;
-  }
-  .dc-bg .customCategoryInline{
-    min-width:170px;
-  }
-}
-@media (max-width:520px){
-  .dc-bg .rangeButtons{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .dc-bg .customDates{display:grid!important;grid-template-columns:1fr!important}
+  .dc-bg .customDates{display:grid!important;grid-template-columns:1fr!important;width:100%}
+  .dc-bg .customDates input,.dc-bg .customDates .btn{width:100%}
+  .dc-bg .pastReportsHead,.dc-bg .premiumReportTopline{align-items:flex-start!important;gap:12px!important}
+  .dc-bg .premiumReportProfitBlock{width:100%;justify-content:space-between!important;align-items:center!important;margin-top:6px}
+  .dc-bg .premiumReportMetrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dc-bg .pastReportsPad{padding:12px!important}
+  .dc-bg .jobDetailPad{padding:12px!important}
 }
 
 `;
