@@ -7964,57 +7964,51 @@ main.dc-bg .customAmountInput{
   }
 }
 
-/* Surgical patch v2: slight desktop width adjustment + compact mobile Date Range only.
-   Desktop intentionally avoids vw-based 92% shrinking. It trims the canvas subtly
-   while keeping the dashboard broad and enterprise-like. */
+
+/* Surgical patch v3: desktop width is only reduced slightly, not capped hard.
+   This avoids the dashboard becoming a narrow centered column on large monitors. */
 @media (min-width:1180px){
-  main.dc-bg .wrap,
   main.dc-bg:not(.internal-view-bg) .wrap{
-    width:min(1760px,calc(100vw - 72px))!important;
-    max-width:1760px!important;
+    width:calc((100vw - 72px) * .92)!important;
+    max-width:none!important;
     margin-left:auto!important;
     margin-right:auto!important;
-    padding-left:0!important;
-    padding-right:0!important;
   }
 
   main.dc-bg.internal-view-bg .wrap{
-    width:min(1880px,calc(100vw - 44px))!important;
-    max-width:1880px!important;
+    width:calc((100vw - 48px) * .96)!important;
+    max-width:none!important;
     margin-left:auto!important;
     margin-right:auto!important;
   }
 }
 
-@media (min-width:1540px){
-  main.dc-bg .wrap,
+@media (min-width:1500px){
   main.dc-bg:not(.internal-view-bg) .wrap{
-    width:min(1760px,calc(100vw - 88px))!important;
-    max-width:1760px!important;
+    width:calc((100vw - 72px) * .92)!important;
+    max-width:none!important;
   }
 
   main.dc-bg.internal-view-bg .wrap{
-    width:min(1920px,calc(100vw - 56px))!important;
-    max-width:1920px!important;
+    width:calc((100vw - 56px) * .96)!important;
+    max-width:none!important;
   }
 }
 
+/* Compact mobile Date Range card/buttons only. */
 @media (max-width:760px){
   main.dc-bg .rangeWrap{
-    margin:10px 0 12px!important;
-    padding:10px!important;
-    gap:9px!important;
-    border-radius:16px!important;
-    align-items:stretch!important;
+    padding:15px 16px!important;
+    border-radius:22px!important;
+    gap:12px!important;
   }
 
   main.dc-bg .rangeLabel{
-    font-size:15px!important;
+    font-size:18px!important;
     line-height:1.15!important;
   }
 
   main.dc-bg .rangeSub{
-    margin-top:2px!important;
     font-size:12px!important;
     line-height:1.25!important;
   }
