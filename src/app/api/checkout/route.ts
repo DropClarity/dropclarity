@@ -69,15 +69,14 @@ export async function POST(req: NextRequest) {
       },
 
       subscription_data: {
-        trial_period_days: 14,
-        metadata: {
-          userId,
-          clerk_user_id: userId,
-          plan,
-          priceId,
-          price_id: priceId,
-        },
-      },
+  metadata: {
+    userId,
+    clerk_user_id: userId,
+    plan,
+    priceId,
+    price_id: priceId,
+  },
+},
 
       allow_promotion_codes: true,
     });
