@@ -8136,4 +8136,53 @@ main.dc-bg .profitSnapshotTitle{
   margin-top:0!important;
 }
 
+
+/* DropClarity guide rail spacing fix: prevents the Start Here pill and numbered steps from touching or clipping on any device. */
+main.dc-bg .dcGuideRail{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding-top:6px!important;
+  padding-bottom:6px!important;
+  row-gap:10px!important;
+}
+main.dc-bg .dcGuideRail a{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+  min-height:44px!important;
+  padding:10px 14px!important;
+  line-height:1.1!important;
+}
+main.dc-bg .dcGuideRail a:first-child{
+  min-height:44px!important;
+  padding-top:10px!important;
+  padding-bottom:10px!important;
+}
+main.dc-bg .dcGuideRail a span{
+  flex-shrink:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+@media(max-width:768px){
+  main.dc-bg .dcGuideRail{
+    gap:8px!important;
+    row-gap:8px!important;
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+  main.dc-bg .dcGuideRail a{
+    min-height:42px!important;
+    padding:9px 12px!important;
+  }
+  main.dc-bg .dcGuideRail a:first-child{
+    min-height:42px!important;
+    padding-top:9px!important;
+    padding-bottom:9px!important;
+  }
+}
+
 `;
