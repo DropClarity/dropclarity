@@ -7483,48 +7483,86 @@ main.dc-bg .wrap{padding-bottom:56px;}
 }
 
 
-/* Surgical desktop width correction: widen the dashboard canvas without touching screen edges or changing tablet/mobile behavior. */
-@media (min-width: 1180px){
-  .dc-bg .wrap{
-    width:min(1680px, calc(100vw - clamp(80px, 8vw, 180px)))!important;
-    max-width:1680px!important;
+
+/* DropClarity width correction: near-full desktop canvas without touching screen edges.
+   Desktop and large internal dashboard views get more usable width; tablet/mobile rules stay unchanged. */
+@media (min-width: 1025px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    width:calc(100vw - 56px)!important;
+    max-width:none!important;
     margin-left:auto!important;
     margin-right:auto!important;
     padding-left:0!important;
     padding-right:0!important;
   }
 
-  .dc-bg.internal-view-bg .wrap{
-    width:min(1760px, calc(100vw - clamp(64px, 6vw, 140px)))!important;
-    max-width:1760px!important;
+  main.dc-bg .dcDashboardSection,
+  main.dc-bg .rangeWrap,
+  main.dc-bg .topbar,
+  main.dc-bg .dcGuideRail,
+  main.dc-bg .jobPage,
+  main.dc-bg .reportsManagerPage,
+  main.dc-bg .highRiskPage,
+  main.dc-bg .allJobsDetailShell,
+  main.dc-bg .cleanModeShell,
+  main.dc-bg .jobHero,
+  main.dc-bg .internalQuickControls{
+    width:100%!important;
+    max-width:none!important;
   }
 
-  .dc-bg .dcOpsGrid{
-    grid-template-columns:minmax(0, 1fr) minmax(340px, 380px)!important;
+  main.dc-bg .dcOpsGrid{
+    width:auto!important;
+    max-width:none!important;
+    grid-template-columns:minmax(0,1fr) 360px!important;
     gap:18px!important;
   }
 
-  .dc-bg .dcOpsGrid .mainCol,
-  .dc-bg .dcOpsGrid .sideStack,
-  .dc-bg .dcOpsGrid .panel{
+  main.dc-bg .mainCol,
+  main.dc-bg .sideStack,
+  main.dc-bg .panel,
+  main.dc-bg .tableWrap{
     min-width:0!important;
   }
+
+  main.dc-bg .tableWrap{
+    width:100%!important;
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  main.dc-bg .jobsTable{
+    width:100%!important;
+    min-width:1120px!important;
+  }
+
+  main.dc-bg .reportsTable{
+    min-width:1080px!important;
+  }
 }
 
-@media (min-width: 1540px){
-  .dc-bg .wrap{
-    width:min(1720px, calc(100vw - clamp(96px, 7vw, 190px)))!important;
-    max-width:1720px!important;
+@media (min-width: 1440px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    width:calc(100vw - 64px)!important;
   }
 
-  .dc-bg.internal-view-bg .wrap{
-    width:min(1840px, calc(100vw - clamp(72px, 5.5vw, 150px)))!important;
-    max-width:1840px!important;
-  }
-
-  .dc-bg .dcOpsGrid{
-    grid-template-columns:minmax(0, 1fr) minmax(360px, 400px)!important;
+  main.dc-bg .dcOpsGrid{
+    grid-template-columns:minmax(0,1fr) 380px!important;
+    gap:20px!important;
   }
 }
 
+@media (min-width: 1800px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    width:calc(100vw - 72px)!important;
+  }
+
+  main.dc-bg .dcOpsGrid{
+    grid-template-columns:minmax(0,1fr) 400px!important;
+    gap:22px!important;
+  }
+}
 `;
