@@ -7482,4 +7482,127 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .jobDetailPad{padding:12px!important}
 }
 
+
+
+/* Width + responsive sizing polish patch: dashboard behaves like an app workspace without changing mechanics. */
+.dc-bg{
+  width:100vw!important;
+  max-width:100vw!important;
+  margin-left:calc(50% - 50vw)!important;
+  margin-right:calc(50% - 50vw)!important;
+  overflow-x:clip!important;
+}
+.dc-bg .wrap{
+  width:min(1680px,calc(100vw - 40px))!important;
+  max-width:1680px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+.dc-bg.internal-view-bg .wrap{
+  width:min(1840px,calc(100vw - 32px))!important;
+  max-width:1840px!important;
+}
+@media(min-width:1440px){
+  .dc-bg .wrap{width:min(1740px,calc(100vw - 56px))!important;max-width:1740px!important}
+  .dc-bg.internal-view-bg .wrap{width:min(1900px,calc(100vw - 48px))!important;max-width:1900px!important}
+  .dc-bg .topbar{gap:28px!important}
+  .dc-bg .dashboardIntro{max-width:840px!important}
+  .dc-bg .topbarRight{min-width:430px!important}
+  .dc-bg .profitSnapshot{grid-template-columns:minmax(0,1.15fr) minmax(460px,.85fr)!important;gap:18px!important;padding:18px!important}
+  .dc-bg .scaleExecutiveGrid{grid-template-columns:minmax(320px,.8fr) minmax(460px,1.25fr) minmax(330px,.85fr)!important;gap:16px!important}
+  .dc-bg .scalePremiumGrid{grid-template-columns:minmax(340px,.85fr) minmax(460px,1.1fr) minmax(280px,.65fr)!important;gap:16px!important}
+  .dc-bg .gridMix{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .dc-bg .dcOpsGrid{grid-template-columns:minmax(0,2.1fr) minmax(420px,.7fr)!important;gap:20px!important}
+  .dc-bg .kpis{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+}
+@media(min-width:1800px){
+  .dc-bg .wrap{width:min(1840px,calc(100vw - 72px))!important;max-width:1840px!important}
+  .dc-bg.internal-view-bg .wrap{width:min(1980px,calc(100vw - 56px))!important;max-width:1980px!important}
+  .dc-bg .pageTitle{font-size:48px!important}
+  .dc-bg .profitSnapshot{grid-template-columns:minmax(0,1.2fr) minmax(520px,.8fr)!important}
+  .dc-bg .dcOpsGrid{grid-template-columns:minmax(0,2.25fr) minmax(450px,.65fr)!important}
+}
+@media(max-width:1179px){
+  .dc-bg{overflow-x:hidden!important}
+  .dc-bg .wrap{width:min(100%,calc(100vw - 28px))!important;max-width:none!important;padding-left:0!important;padding-right:0!important}
+  .dc-bg.internal-view-bg .wrap{width:min(100%,calc(100vw - 24px))!important;max-width:none!important}
+  .dc-bg .topbar{gap:14px!important}
+  .dc-bg .topbarRight{min-width:0!important;width:100%!important}
+  .dc-bg .statusRow{justify-content:flex-start!important}
+  .dc-bg .rangeWrap{align-items:flex-start!important}
+  .dc-bg .rangeRight{justify-content:flex-start!important;flex:1 1 100%!important}
+  .dc-bg .charts,.dc-bg .jobCharts{grid-template-columns:1fr!important}
+  .dc-bg .chartCard canvas{height:220px!important;width:100%!important}
+  .dc-bg .scaleExecutiveGrid,.dc-bg .scalePremiumGrid,.dc-bg .scaleIntelligenceStrip{grid-template-columns:1fr!important}
+  .dc-bg .dcOpsGrid{grid-template-columns:1fr!important}
+  .dc-bg .sideStack{display:grid!important;grid-template-columns:1fr!important}
+}
+@media(max-width:760px){
+  .dc-bg{padding-top:18px!important;overflow-x:hidden!important}
+  .dc-bg .wrap{width:min(100%,calc(100vw - 18px))!important}
+  .dc-bg.internal-view-bg .wrap{width:min(100%,calc(100vw - 16px))!important}
+  .dc-bg .topbar{margin-bottom:12px!important}
+  .dc-bg .pageTitle{font-size:clamp(27px,8.2vw,34px)!important;line-height:1.02!important;letter-spacing:-.055em!important}
+  .dc-bg .pageSub{font-size:13.5px!important;line-height:1.38!important}
+  .dc-bg .topbarRight{border-radius:18px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+  .dc-bg .statusRow{gap:7px!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important}
+  .dc-bg .statusRow .pill,.dc-bg .statusRow .btn,.dc-bg .statusRow a.btn{width:100%!important;justify-content:center!important;padding:9px 10px!important;font-size:12px!important}
+  .dc-bg .marginTargetTopWrap{width:100%!important;padding:9px!important;display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .dc-bg .marginTargetTopControls{width:100%!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important}
+  .dc-bg .rangeWrap{margin:12px 0!important;padding:11px!important;border-radius:17px!important}
+  .dc-bg .rangeRight{display:grid!important;grid-template-columns:1fr!important;width:100%!important;gap:9px!important}
+  .dc-bg .rangeButtons{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;gap:7px!important}
+  .dc-bg .rangeBtn{width:100%!important;justify-content:center!important;padding:10px 8px!important;font-size:12px!important;white-space:normal!important;line-height:1.15!important}
+  .dc-bg .rangeRight > .btn{width:100%!important;justify-content:center!important}
+  .dc-bg .customDates{display:grid!important;grid-template-columns:1fr!important;width:100%!important}
+  .dc-bg .customDates input,.dc-bg .customDates .btn{width:100%!important}
+  .dc-bg .dcGuideRail{padding:7px!important;gap:6px!important}
+  .dc-bg .dcGuideRail a{width:auto!important;flex:1 1 calc(50% - 6px)!important;min-width:140px!important;padding:8px 9px!important;font-size:11.5px!important}
+  .dc-bg .dcDashboardSection{margin:12px 0!important}
+  .dc-bg .dcSectionHeader{padding:13px 12px 9px!important}
+  .dc-bg .dcSectionHeader h2,.dc-bg .dcAccordionHeader h2{font-size:20px!important;line-height:1.08!important}
+  .dc-bg .dcSectionHeader p,.dc-bg .dcAccordionHeader p{font-size:12.5px!important}
+  .dc-bg .profitSnapshot,.dc-bg .scalePanel.premiumScalePanel,.dc-bg .dcOpsGrid{margin-left:8px!important;margin-right:8px!important}
+  .dc-bg .profitSnapshot{padding:11px!important;gap:10px!important;border-radius:18px!important}
+  .dc-bg .profitSnapshotTitle{font-size:clamp(25px,7.4vw,31px)!important}
+  .dc-bg .profitSnapshotMetric strong{font-size:20px!important}
+  .dc-bg .profitSnapshotMiniKpis{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+  .dc-bg .profitSnapshotActions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .dc-bg .profitSnapshotActions .btn{width:100%!important;justify-content:center!important}
+  .dc-bg .kpis{grid-template-columns:1fr!important;padding:10px!important}
+  .dc-bg .kpi,.dc-bg .stat,.dc-bg .chartCard,.dc-bg .mixRow{padding:10px!important;border-radius:16px!important}
+  .dc-bg .kValue,.dc-bg .statValue{font-size:20px!important}
+  .dc-bg .charts,.dc-bg .jobCharts{gap:9px!important;margin-top:9px!important}
+  .dc-bg .chartCard canvas{height:170px!important;max-height:170px!important}
+  .dc-bg .chartTitle{font-size:15px!important}
+  .dc-bg .chartSub{font-size:12px!important;line-height:1.3!important}
+  .dc-bg .gridMix{grid-template-columns:1fr!important;gap:8px!important}
+  .dc-bg .dcAccordionHeader{padding:13px 12px!important;gap:10px!important}
+  .dc-bg .dcAccordionHeader span{padding:7px 10px!important;font-size:12px!important}
+  .dc-bg .panelHead{padding:12px!important;display:grid!important;grid-template-columns:1fr!important}
+  .dc-bg .tableTools{width:100%!important;display:grid!important;grid-template-columns:1fr!important;justify-content:stretch!important}
+  .dc-bg .searchInput,.dc-bg .selectInput,.dc-bg .tableTools .btn{width:100%!important;min-width:0!important}
+  .dc-bg .pastReportsPad{padding:10px!important}
+  .dc-bg .premiumReportMetrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  .dc-bg .premiumReportProfitBlock{width:100%!important;justify-content:space-between!important}
+  .dc-bg .jobStats{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .dc-bg .jobHeroBody,.dc-bg .heroBody{grid-template-columns:1fr!important;padding:12px!important}
+  .dc-bg .decisionJobTitle{font-size:24px!important}
+  .dc-bg .supportGrid{grid-template-columns:1fr!important}
+  .dc-bg .jobDetailPad{padding:10px!important}
+  .dc-bg .jobTable th,.dc-bg .jobTable td{padding:10px 8px!important}
+  .dc-bg .cellEdit{min-height:42px!important;font-size:13px!important}
+}
+@media(max-width:420px){
+  .dc-bg .wrap{width:min(100%,calc(100vw - 12px))!important}
+  .dc-bg.internal-view-bg .wrap{width:min(100%,calc(100vw - 10px))!important}
+  .dc-bg .statusRow{grid-template-columns:1fr!important}
+  .dc-bg .rangeButtons{grid-template-columns:1fr 1fr!important}
+  .dc-bg .dcGuideRail a{flex:1 1 100%!important}
+  .dc-bg .chartCard canvas{height:150px!important;max-height:150px!important}
+  .dc-bg .jobStats{grid-template-columns:1fr!important}
+}
+
 `;
