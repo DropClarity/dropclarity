@@ -3169,7 +3169,6 @@ function ScaleOversightPanel({
   const recoverableOpportunity = fallbackMetrics.recoverableOpportunity;
   const monthlyLift = recoverableOpportunity / 12;
   const lastAlertSentLabel = emailAlertsEnabled && fallbackMetrics.highRiskCount > 0 ? updatedAtLabel : "No alert sent yet";
-  const nextSummaryLabel = "Tomorrow at 8:00 AM";
   const riskLevel: "healthy" | "warning" | "critical" =
     fallbackMetrics.losingJobs.length > 0 ? "critical" : fallbackMetrics.thinMarginJobs.length > 0 ? "warning" : "healthy";
   const riskCls = riskLevel === "healthy" ? "ok" : riskLevel === "warning" ? "warn" : "bad";
@@ -3493,9 +3492,8 @@ function ScaleOversightPanel({
             </div>
           )}
 
-          <div className="emailLiveGrid">
+          <div className="emailLiveGrid singleEmailLiveGrid">
             <div><span>Last alert sent</span><strong>{lastAlertSentLabel}</strong></div>
-            <div><span>Next summary</span><strong>{nextSummaryLabel}</strong></div>
           </div>
           <div className="emailTriggerList">
             <span>✓ Job becomes unprofitable</span>
@@ -5168,16 +5166,59 @@ useEffect(() => {
     }
   };
 
+  const persistAlertSettings = useCallback((nextEnabled: boolean, nextEmails: string[], nextMarginTarget: number) => {
+    if (!isSignedIn) return;
+
+    window.setTimeout(async () => {
+      try {
+        const token = await getToken();
+        const settings = await apiSaveAlertSettings(token, {
+          marginTargetPct: Math.max(1, Math.min(95, parseNumberLoose(nextMarginTarget))),
+          emailAlertsEnabled: nextEnabled,
+          scaleAlertEmails: nextEmails,
+        });
+
+        const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
+        const serverEmails = normalizeEmailList(settings?.scaleAlertEmails || settings?.alertEmails || nextEmails, fallbackEmail);
+
+        if (serverEmails.length) {
+          setAlertEmailsState(serverEmails);
+          writeAlertEmails(USER_ID, serverEmails, fallbackEmail);
+        }
+
+        if (typeof settings?.emailAlertsEnabled === "boolean") {
+          setEmailAlertsEnabledState(settings.emailAlertsEnabled);
+          writeEmailAlertsEnabled(USER_ID, settings.emailAlertsEnabled);
+        }
+
+        const serverTarget = parseNumberLoose(settings?.marginTargetPct);
+        if (serverTarget > 0 && serverTarget <= 95) {
+          setMarginTarget(serverTarget);
+          setMarginTargetDraft(String(serverTarget));
+          writeMarginTarget(USER_ID, serverTarget);
+        }
+      } catch (err) {
+        console.error("Failed to save alert settings", err);
+      }
+    }, 0);
+  }, [USER_ID, getToken, isSignedIn, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses]);
+
   const setEmailAlertsEnabled = (enabled: boolean) => {
+    const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
+    const normalizedEmails = normalizeEmailList(alertEmails, fallbackEmail);
+
     setEmailAlertsEnabledState(enabled);
     writeEmailAlertsEnabled(USER_ID, enabled);
+    persistAlertSettings(enabled, normalizedEmails, marginTarget);
   };
 
   const setAlertEmails = (emails: string[]) => {
     const fallbackEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || null;
     const next = normalizeEmailList(emails, fallbackEmail);
+
     setAlertEmailsState(next);
     writeAlertEmails(USER_ID, next, fallbackEmail);
+    persistAlertSettings(emailAlertsEnabled, next, marginTarget);
   };
 
 
