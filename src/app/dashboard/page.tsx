@@ -7964,103 +7964,106 @@ main.dc-bg .customAmountInput{
   }
 }
 
-/* Surgical patch: slightly narrower desktop canvas and compact mobile date range. */
-@media (min-width:1025px){
-  main.dc-bg .wrap,
-  main.dc-bg.internal-view-bg .wrap{
-    width:min(92vw,1680px)!important;
+/* Final surgical override: slightly restrain desktop dashboard width and make the mobile Date Range block more compact. */
+@media (min-width: 1281px){
+  main.dc-bg .wrap{
+    width:min(1680px,calc(100vw - 96px))!important;
     max-width:1680px!important;
     margin-left:auto!important;
     margin-right:auto!important;
+    padding-left:0!important;
+    padding-right:0!important;
   }
-}
 
-@media (min-width:1500px){
-  main.dc-bg .wrap,
   main.dc-bg.internal-view-bg .wrap{
-    width:min(92vw,1695px)!important;
-    max-width:1695px!important;
+    width:min(1780px,calc(100vw - 80px))!important;
+    max-width:1780px!important;
   }
 }
 
-@media (max-width:760px){
+@media (min-width: 1600px){
+  main.dc-bg .wrap{
+    width:min(1700px,calc(100vw - 112px))!important;
+    max-width:1700px!important;
+  }
+
+  main.dc-bg.internal-view-bg .wrap{
+    width:min(1820px,calc(100vw - 88px))!important;
+    max-width:1820px!important;
+  }
+}
+
+@media (max-width: 560px){
   main.dc-bg .rangeWrap{
-    margin:10px 0 12px!important;
-    padding:10px!important;
-    gap:9px!important;
-    border-radius:16px!important;
+    margin:12px 0 10px!important;
+    padding:12px!important;
+    border-radius:18px!important;
+    gap:10px!important;
   }
 
   main.dc-bg .rangeLabel{
-    font-size:15px!important;
+    font-size:14px!important;
     line-height:1.15!important;
   }
 
   main.dc-bg .rangeSub{
-    margin-top:2px!important;
     font-size:12px!important;
-    line-height:1.25!important;
+    line-height:1.3!important;
+    margin-top:2px!important;
   }
 
   main.dc-bg .rangeRight{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
     gap:8px!important;
   }
 
   main.dc-bg .rangeButtons{
-    display:grid!important;
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:7px!important;
     width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
+    padding-bottom:0!important;
+    overflow:visible!important;
   }
 
   main.dc-bg .rangeBtn{
-    min-height:36px!important;
-    padding:8px 8px!important;
-    font-size:11.5px!important;
-    line-height:1.15!important;
-    border-radius:999px!important;
     width:100%!important;
+    min-height:38px!important;
+    padding:8px 10px!important;
+    font-size:12px!important;
+    line-height:1.1!important;
+    border-radius:999px!important;
   }
 
-  main.dc-bg .rangeBtn:nth-child(5){
-    grid-column:2 / 3!important;
+  main.dc-bg .rangeButtons .rangeBtn:nth-child(5){
+    grid-column:1 / -1!important;
+    width:58%!important;
+    justify-self:start!important;
   }
 
   main.dc-bg .rangeRight > .btn{
-    width:auto!important;
-    min-height:38px!important;
-    padding:9px 16px!important;
+    width:100%!important;
+    min-height:40px!important;
+    padding:9px 12px!important;
     font-size:12px!important;
-    justify-content:center!important;
-    justify-self:center!important;
-    border-radius:13px!important;
+    border-radius:14px!important;
   }
 
   main.dc-bg .customDates{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
     gap:7px!important;
   }
 
   main.dc-bg .customDates input,
   main.dc-bg .customDates .btn{
-    min-height:36px!important;
+    min-height:38px!important;
     padding:8px 10px!important;
     font-size:12px!important;
-    border-radius:12px!important;
-  }
-}
-
-@media (max-width:430px){
-  main.dc-bg .rangeButtons{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  }
-
-  main.dc-bg .rangeBtn:nth-child(5){
-    grid-column:auto!important;
-  }
-
-  main.dc-bg .rangeRight > .btn{
-    width:100%!important;
-    justify-self:stretch!important;
+    border-radius:14px!important;
   }
 }
 
