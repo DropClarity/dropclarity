@@ -132,9 +132,7 @@ function planLimitText(access: PlanAccess) {
 }
 
 function TinySpinner() {
-  return (
-    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-violet-700" />
-  );
+  return <span className="analyzeSpinner" aria-hidden="true" />;
 }
 
 function UploadGradientIcon() {
@@ -1661,7 +1659,7 @@ export default function AppPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm">
+              <div className={`analysisStatusPill w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm ${analyzing ? "isAnalyzing" : ""}`}>
                 {analyzing
                   ? "Analyzing…"
                   : hasUploading
@@ -1707,7 +1705,7 @@ export default function AppPage() {
                 e.stopPropagation();
                 analyzeFiles();
               }}
-              className={`rounded-2xl border px-5 py-3 text-sm font-black shadow-sm hover:shadow-md active:scale-[0.99] ${
+              className={`analyzePrimaryBtn rounded-2xl border px-5 py-3 text-sm font-black shadow-sm hover:shadow-md active:scale-[0.99] ${
                 analyzing
                   ? "border-violet-200 bg-gradient-to-r from-violet-50 via-cyan-50 to-violet-50 text-slate-900"
                   : "border-cyan-200 bg-gradient-to-r from-cyan-50 to-violet-50 text-slate-900"
@@ -1719,6 +1717,17 @@ export default function AppPage() {
               </span>
             </button>
           </div>
+
+          {analyzing && (
+            <div className="analysisProgressNote" role="status" aria-live="polite">
+              <span className="analysisProgressIcon">
+                <TinySpinner />
+              </span>
+              <span>
+                DropClarity is reading each file and building your profitability report. Larger PDFs or mixed uploads can take up to a minute.
+              </span>
+            </div>
+          )}
 
           <div className="uploadPanel relative z-10 overflow-hidden rounded-[22px] border border-slate-100 bg-white/90 shadow-xl shadow-slate-200/70 backdrop-blur">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-white/90 p-5">
@@ -2276,7 +2285,7 @@ export default function AppPage() {
                   <input
                     value={applyAll}
                     onChange={(e) => setApplyAll(e.target.value)}
-                    placeholder="e.g. JOB-1042 or Smith Kitchen Reno"
+                    placeholder="JOB-1042 or Smith Kitchen Reno"
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-950 caret-cyan-600 placeholder:font-semibold placeholder:text-slate-300 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 focus:placeholder:text-slate-200"
                   />
 
@@ -2376,7 +2385,7 @@ export default function AppPage() {
                               onChange={(e) =>
                                 updateItem(it.id, { job_id: e.target.value })
                               }
-                              placeholder="e.g. JOB-1042 or Multiple Jobs"
+                              placeholder="JOB-1042, customer name, or Multiple Jobs"
                               className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm font-black text-slate-950 caret-cyan-600 placeholder:font-semibold placeholder:text-slate-300 outline-none focus:ring-4 focus:placeholder:text-slate-200 ${
                                 jobMissing
                                   ? "border-red-400 focus:border-red-400 focus:ring-red-100"
@@ -2515,7 +2524,7 @@ function JobList({
 
 const analyzePageCss = `
 .analyzeShell{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#0f172a!important}
-.analyzeWrap{width:min(1760px,calc(100vw - 44px));max-width:1760px;margin:0 auto}
+.analyzeWrap{width:min(1880px,calc(100vw - 44px));max-width:1880px;margin:0 auto}
 .analyzeTopbar{align-items:flex-start;margin-bottom:18px}
 .pageKicker{width:fit-content;margin-bottom:10px;border:1px solid rgba(34,211,238,.28);background:rgba(255,255,255,.86);box-shadow:0 10px 28px rgba(34,211,238,.10);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:950;color:rgba(8,145,178,.95)}
 .pageTitle{margin:0;max-width:980px;font-size:clamp(30px,3.25vw,42px);line-height:1.05;font-weight:990;letter-spacing:-.045em;color:rgba(2,6,23,.96)}
@@ -2610,6 +2619,32 @@ const analyzePageCss = `
 @media(max-width:768px){
   .pageTitle{line-height:1.18!important;padding-bottom:6px!important;margin-bottom:-2px!important}
   .pageTitle .gradText{line-height:1.18!important;padding-bottom:.10em!important}
+}
+
+/* Launch polish: wider desktop workspace, clearer assignment inputs, and premium analyzing state. */
+.analysisStatusPill{transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,color .18s ease}
+.analysisStatusPill.isAnalyzing{border-color:rgba(139,92,246,.28)!important;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(245,243,255,.92),rgba(236,254,255,.88))!important;color:#312e81!important;box-shadow:0 14px 38px rgba(124,58,237,.12),0 0 0 1px rgba(255,255,255,.72) inset!important}
+.analyzePrimaryBtn{position:relative;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease}
+.analyzePrimaryBtn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(34,211,238,.11),0 10px 26px rgba(124,58,237,.10)!important}
+.analyzePrimaryBtn:not(:disabled)::before{content:"";position:absolute;inset:-28px;background:linear-gradient(90deg,rgba(34,211,238,0),rgba(139,92,246,.16),rgba(34,211,238,0));transform:translateX(-70%);animation:analyzeButtonSweep 3.2s ease-in-out infinite;pointer-events:none}
+.analyzePrimaryBtn>span{position:relative;z-index:1}
+.analyzeSpinner{display:inline-block;width:18px;height:18px;border-radius:999px;border:2.5px solid rgba(139,92,246,.20);border-top-color:#7c3aed;border-right-color:#06b6d4;box-shadow:0 0 0 5px rgba(139,92,246,.06),0 0 18px rgba(34,211,238,.18);animation:analyzeSpin .72s linear infinite}
+.analysisProgressNote{display:flex;align-items:center;gap:11px;width:fit-content;max-width:min(720px,100%);margin:-4px 0 16px;border:1px solid rgba(139,92,246,.16);border-radius:18px;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(245,243,255,.82),rgba(236,254,255,.72));padding:11px 14px;color:rgba(30,41,59,.78);font-size:13px;font-weight:850;line-height:1.45;box-shadow:0 16px 42px rgba(15,23,42,.07),0 0 0 1px rgba(255,255,255,.70) inset}
+.analysisProgressIcon{display:grid;place-items:center;flex:0 0 auto}
+.assignModal input,.assignModal select,.assignModal textarea{color:#0f172a!important;font-weight:900!important}
+.assignModal input::placeholder{color:rgba(71,85,105,.62)!important;font-weight:850!important;opacity:1!important}
+.assignModal input:focus::placeholder{color:rgba(71,85,105,.42)!important}
+.assignModal label{color:rgba(71,85,105,.86)!important}
+.assignModal .grid .rounded-3xl input{background:rgba(255,255,255,.98)!important;box-shadow:0 1px 0 rgba(15,23,42,.02) inset}
+@keyframes analyzeSpin{to{transform:rotate(360deg)}}
+@keyframes analyzeButtonSweep{0%{transform:translateX(-75%)}58%,100%{transform:translateX(75%)}}
+
+@media(min-width:1281px){
+  .uploadPanel,.resultsPanel{width:100%!important}
+}
+@media(max-width:760px){
+  .analysisProgressNote{width:100%;margin:-2px 0 14px;padding:11px 12px;font-size:12px;border-radius:16px}
+  .analyzeSpinner{width:17px;height:17px}
 }
 
 `;
