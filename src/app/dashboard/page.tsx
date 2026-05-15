@@ -7483,12 +7483,11 @@ main.dc-bg .wrap{padding-bottom:56px;}
 }
 
 
-
-/* Balanced desktop width patch: wider than the original dashboard, but no longer edge-to-edge on large screens. */
+/* Surgical desktop width correction: widen the dashboard canvas without touching screen edges or changing tablet/mobile behavior. */
 @media (min-width: 1180px){
   .dc-bg .wrap{
-    width:min(1500px,calc(100vw - 96px))!important;
-    max-width:1500px!important;
+    width:min(1680px, calc(100vw - clamp(80px, 8vw, 180px)))!important;
+    max-width:1680px!important;
     margin-left:auto!important;
     margin-right:auto!important;
     padding-left:0!important;
@@ -7496,34 +7495,35 @@ main.dc-bg .wrap{padding-bottom:56px;}
   }
 
   .dc-bg.internal-view-bg .wrap{
-    width:min(1600px,calc(100vw - 96px))!important;
-    max-width:1600px!important;
-    margin-left:auto!important;
-    margin-right:auto!important;
+    width:min(1760px, calc(100vw - clamp(64px, 6vw, 140px)))!important;
+    max-width:1760px!important;
+  }
+
+  .dc-bg .dcOpsGrid{
+    grid-template-columns:minmax(0, 1fr) minmax(340px, 380px)!important;
+    gap:18px!important;
+  }
+
+  .dc-bg .dcOpsGrid .mainCol,
+  .dc-bg .dcOpsGrid .sideStack,
+  .dc-bg .dcOpsGrid .panel{
+    min-width:0!important;
   }
 }
 
 @media (min-width: 1540px){
   .dc-bg .wrap{
-    width:min(1660px,calc(100vw - 180px))!important;
-    max-width:1660px!important;
+    width:min(1720px, calc(100vw - clamp(96px, 7vw, 190px)))!important;
+    max-width:1720px!important;
   }
 
   .dc-bg.internal-view-bg .wrap{
-    width:min(1740px,calc(100vw - 160px))!important;
-    max-width:1740px!important;
-  }
-}
-
-@media (min-width: 1900px){
-  .dc-bg .wrap{
-    width:min(1680px,calc(100vw - 260px))!important;
-    max-width:1680px!important;
+    width:min(1840px, calc(100vw - clamp(72px, 5.5vw, 150px)))!important;
+    max-width:1840px!important;
   }
 
-  .dc-bg.internal-view-bg .wrap{
-    width:min(1780px,calc(100vw - 220px))!important;
-    max-width:1780px!important;
+  .dc-bg .dcOpsGrid{
+    grid-template-columns:minmax(0, 1fr) minmax(360px, 400px)!important;
   }
 }
 
