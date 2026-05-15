@@ -5,8 +5,8 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const PRICE_IDS = {
-  core: "price_1TPuKCRZe2CjTTV9JERg2aZP",
-  scale: "price_1TPuKkRZe2CjTTV9lVpmYk5A",
+  core: "price_1TXUvKDCdAr97ZqWHh6K29gj",
+  scale: "price_1TXUvHDCdAr97ZqW4E9252Tj",
 } as const;
 
 type Plan = keyof typeof PRICE_IDS;
