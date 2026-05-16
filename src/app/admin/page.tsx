@@ -521,12 +521,12 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
 
       <div>
         <span
-          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-sm font-black ${
+          className={`text-sm font-black capitalize ${
             success
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              ? "text-emerald-700"
               : started
-                ? "border-amber-200 bg-amber-50 text-amber-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "text-amber-700"
+                : "text-red-700"
           }`}
         >
           {run.status}
@@ -534,40 +534,39 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
       </div>
 
       <div className="min-w-0">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="min-w-0 text-sm font-bold leading-5 text-slate-500">
           {files.length ? (
-            files.slice(0, 4).map((file, idx) =>
-              file.href ? (
-                <a
-                  key={`${file.label}-${idx}`}
-                  href={file.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="max-w-[190px] truncate rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
-                  title={file.label}
-                >
-                  {file.label}
-                </a>
-              ) : (
-                <span
-                  key={`${file.label}-${idx}`}
-                  className="max-w-[190px] truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm font-bold text-slate-500"
-                  title={`${file.label} — no file URL stored yet`}
-                >
-                  {file.label}
+            <>
+              {files.slice(0, 4).map((file, idx) => (
+                <span key={`${file.label}-${idx}`} className="inline">
+                  {idx > 0 && <span className="text-slate-300">, </span>}
+                  {file.href ? (
+                    <a
+                      href={file.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="break-words font-black text-cyan-700 underline decoration-cyan-200 underline-offset-4 transition hover:text-cyan-800 hover:decoration-cyan-500"
+                      title={file.label}
+                    >
+                      {file.label}
+                    </a>
+                  ) : (
+                    <span
+                      className="break-words text-slate-500"
+                      title={`${file.label} — no file URL stored yet`}
+                    >
+                      {file.label}
+                    </span>
+                  )}
                 </span>
-              ),
-            )
-          ) : (
-            <span className="text-sm font-bold text-slate-400">
-              No files logged
-            </span>
-          )}
+              ))}
 
-          {files.length > 4 && (
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-sm font-black text-slate-500">
-              +{files.length - 4}
-            </span>
+              {files.length > 4 && (
+                <span className="text-slate-400">, +{files.length - 4} more</span>
+              )}
+            </>
+          ) : (
+            <span className="text-slate-400">No files logged</span>
           )}
         </div>
 
