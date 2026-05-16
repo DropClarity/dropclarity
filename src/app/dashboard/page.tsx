@@ -4297,7 +4297,8 @@ function JobEditor({
           )}
 
           <div className="pad jobDetailPad">
-            <table className="jobTable" style={{ minWidth: `${1780 + Math.max(0, job.custom_categories.length) * 220}px` }}>
+            <div className="jobTableScroll" aria-label="Scrollable job detail buckets">
+              <table className="jobTable" style={{ minWidth: `${1680 + Math.max(0, job.custom_categories.length) * 210}px` }}>
               <thead>
                 <tr>
                   <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Taxes</th><th>Other Costs</th>
@@ -4389,7 +4390,8 @@ function JobEditor({
                   <td><div className={`calcCell ${gm < 0 ? "neg" : ""}`}>{fmtPct(gm)}</div></td>
                 </tr>
               </tbody>
-            </table>
+              </table>
+            </div>
 
             {showBack ? (
             <div className="supportGrid">
@@ -8461,28 +8463,43 @@ main.dc-bg .dcGuideRail a span{
 @media (max-width: 760px){.dc-bg .supportGrid{grid-template-columns:1fr}.dc-bg .sourceDocsPanel{grid-column:auto}.dc-bg .sourceDocLink{font-size:12px;padding:8px 9px}}
 
 
-/* Surgical patch: prevent Job Detail bucket values from being cut off.
-   Keeps the existing editable table behavior, custom categories, and horizontal scrolling.
-   Applies to both individual Job Detail and the stacked View All Jobs internal detail rows. */
+/* Launch-ready Job Detail bucket layout.
+   Only the bucket row scrolls when needed. The rest of the job detail page stays anchored,
+   so notes, benchmarks, source documents, and custom categories do not get pushed into the
+   same wide horizontal canvas. Applies to individual Job Detail and stacked View All Jobs rows. */
 main.dc-bg .jobDetailPad{
   width:100%!important;
   max-width:100%!important;
-  overflow-x:auto!important;
-  overflow-y:visible!important;
-  -webkit-overflow-scrolling:touch!important;
-  overscroll-behavior-x:contain!important;
+  overflow:visible!important;
 }
 
+main.dc-bg .jobTableScroll{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  border-radius:20px!important;
+  border:1px solid rgba(226,232,240,.86)!important;
+  background:rgba(255,255,255,.74)!important;
+}
+
+main.dc-bg .jobTableScroll::-webkit-scrollbar{height:10px}
+main.dc-bg .jobTableScroll::-webkit-scrollbar-track{background:rgba(241,245,249,.82);border-radius:999px}
+main.dc-bg .jobTableScroll::-webkit-scrollbar-thumb{background:rgba(148,163,184,.55);border-radius:999px;border:2px solid rgba(241,245,249,.82)}
+
 main.dc-bg .jobTable{
-  table-layout:auto!important;
+  table-layout:fixed!important;
   width:max-content!important;
-  min-width:1780px!important;
+  min-width:1680px!important;
+  margin:0!important;
 }
 
 main.dc-bg .stackedJobPage .jobTable{
-  table-layout:auto!important;
+  table-layout:fixed!important;
   width:max-content!important;
-  min-width:1780px!important;
+  min-width:1680px!important;
 }
 
 main.dc-bg .jobTable th,
@@ -8493,15 +8510,15 @@ main.dc-bg .jobTable td{
 }
 
 main.dc-bg .jobTable th:nth-child(1),
-main.dc-bg .jobTable td:nth-child(1){min-width:150px!important;width:150px!important;}
+main.dc-bg .jobTable td:nth-child(1){min-width:140px!important;width:140px!important;}
 main.dc-bg .jobTable th:nth-child(2),
-main.dc-bg .jobTable td:nth-child(2){min-width:180px!important;width:180px!important;}
+main.dc-bg .jobTable td:nth-child(2){min-width:170px!important;width:170px!important;}
 main.dc-bg .jobTable th:nth-child(3),
-main.dc-bg .jobTable td:nth-child(3){min-width:145px!important;width:145px!important;}
+main.dc-bg .jobTable td:nth-child(3){min-width:135px!important;width:135px!important;}
 main.dc-bg .jobTable th:nth-child(4),
-main.dc-bg .jobTable td:nth-child(4){min-width:190px!important;width:190px!important;}
+main.dc-bg .jobTable td:nth-child(4){min-width:175px!important;width:175px!important;}
 main.dc-bg .jobTable th:nth-child(5),
-main.dc-bg .jobTable td:nth-child(5){min-width:165px!important;width:165px!important;}
+main.dc-bg .jobTable td:nth-child(5){min-width:150px!important;width:150px!important;}
 main.dc-bg .jobTable th:nth-child(6),
 main.dc-bg .jobTable td:nth-child(6),
 main.dc-bg .jobTable th:nth-child(7),
@@ -8513,16 +8530,16 @@ main.dc-bg .jobTable td:nth-child(9),
 main.dc-bg .jobTable th:nth-child(10),
 main.dc-bg .jobTable td:nth-child(10),
 main.dc-bg .jobTable th:nth-child(11),
-main.dc-bg .jobTable td:nth-child(11){min-width:155px!important;width:155px!important;}
+main.dc-bg .jobTable td:nth-child(11){min-width:142px!important;width:142px!important;}
 main.dc-bg .jobTable th:nth-last-child(2),
-main.dc-bg .jobTable td:nth-last-child(2){min-width:165px!important;width:165px!important;}
+main.dc-bg .jobTable td:nth-last-child(2){min-width:155px!important;width:155px!important;}
 main.dc-bg .jobTable th:nth-last-child(1),
-main.dc-bg .jobTable td:nth-last-child(1){min-width:135px!important;width:135px!important;}
+main.dc-bg .jobTable td:nth-last-child(1){min-width:120px!important;width:120px!important;}
 
 main.dc-bg .customCostTh,
 main.dc-bg .customCostCell{
-  min-width:220px!important;
-  width:220px!important;
+  min-width:205px!important;
+  width:205px!important;
 }
 
 main.dc-bg .jobTable .cellEdit,
@@ -8549,12 +8566,60 @@ main.dc-bg .jobTable .cellHint{
   white-space:normal!important;
 }
 
+main.dc-bg .supportGrid{
+  width:100%!important;
+  max-width:100%!important;
+  margin-top:16px!important;
+}
+
+main.dc-bg .sourceDocsPanel{
+  min-width:0!important;
+}
+
+main.dc-bg .sourceDocsList{
+  display:grid!important;
+  gap:10px!important;
+}
+
+main.dc-bg .sourceDocLink{
+  max-width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+@media (min-width:1181px){
+  main.dc-bg .supportGrid{
+    grid-template-columns:minmax(0,1.35fr) minmax(0,1.08fr) minmax(300px,.72fr)!important;
+  }
+}
+
+@media (max-width:1180px){
+  main.dc-bg .supportGrid{
+    grid-template-columns:1fr 1fr!important;
+  }
+  main.dc-bg .sourceDocsPanel{
+    grid-column:1 / -1!important;
+  }
+}
+
 @media (max-width:900px){
   main.dc-bg .jobTable,
   main.dc-bg .stackedJobPage .jobTable{
-    min-width:1720px!important;
+    min-width:1580px!important;
   }
 
+  main.dc-bg .jobTable th:nth-child(1),
+  main.dc-bg .jobTable td:nth-child(1){min-width:130px!important;width:130px!important;}
+  main.dc-bg .jobTable th:nth-child(2),
+  main.dc-bg .jobTable td:nth-child(2){min-width:155px!important;width:155px!important;}
+  main.dc-bg .jobTable th:nth-child(3),
+  main.dc-bg .jobTable td:nth-child(3){min-width:125px!important;width:125px!important;}
+  main.dc-bg .jobTable th:nth-child(4),
+  main.dc-bg .jobTable td:nth-child(4){min-width:160px!important;width:160px!important;}
+  main.dc-bg .jobTable th:nth-child(5),
+  main.dc-bg .jobTable td:nth-child(5){min-width:140px!important;width:140px!important;}
   main.dc-bg .jobTable th:nth-child(6),
   main.dc-bg .jobTable td:nth-child(6),
   main.dc-bg .jobTable th:nth-child(7),
@@ -8566,7 +8631,19 @@ main.dc-bg .jobTable .cellHint{
   main.dc-bg .jobTable th:nth-child(10),
   main.dc-bg .jobTable td:nth-child(10),
   main.dc-bg .jobTable th:nth-child(11),
-  main.dc-bg .jobTable td:nth-child(11){min-width:150px!important;width:150px!important;}
+  main.dc-bg .jobTable td:nth-child(11){min-width:136px!important;width:136px!important;}
+}
+
+@media (max-width:760px){
+  main.dc-bg .supportGrid{
+    grid-template-columns:1fr!important;
+  }
+  main.dc-bg .sourceDocsPanel{
+    grid-column:auto!important;
+  }
+  main.dc-bg .jobTableScroll{
+    border-radius:16px!important;
+  }
 }
 
 @media (max-width:560px){
@@ -8576,7 +8653,7 @@ main.dc-bg .jobTable .cellHint{
 
   main.dc-bg .jobTable,
   main.dc-bg .stackedJobPage .jobTable{
-    min-width:1680px!important;
+    min-width:1520px!important;
   }
 
   main.dc-bg .jobTable .cellEdit,
@@ -8586,5 +8663,6 @@ main.dc-bg .jobTable .cellHint{
     font-size:13.5px!important;
   }
 }
+
 
 `;
