@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 
-const API_BASE = "https://dropclarity-api.armanrtajalli.workers.dev/api";
+const API_BASE = "https://dropclarity.com/api";
 const FALLBACK_USER_ID = "anon";
 
 type DashboardMode = "ready" | "loading" | "error";
@@ -28,6 +28,21 @@ type CostBreakdown = {
   credits?: number | string;
 };
 
+type SourceFileLink = {
+  uuid?: string | null;
+  filename?: string | null;
+  name?: string | null;
+  url?: string | null;
+  cdnUrl?: string | null;
+  file_url?: string | null;
+  mime?: string | null;
+  kind?: string | null;
+  role?: string | null;
+  size?: number | string | null;
+  size_bytes?: number | string | null;
+  job_id?: string | null;
+};
+
 type JobRow = {
   id?: string;
   report_id?: string;
@@ -48,6 +63,9 @@ type JobRow = {
   notes?: string;
   job_notes?: string;
   cost_breakdown?: CostBreakdown;
+  source_files?: SourceFileLink[];
+  uploaded_files?: SourceFileLink[];
+  files?: SourceFileLink[];
 };
 
 type ReportRow = {
@@ -63,6 +81,9 @@ type ReportRow = {
   jobs?: JobRow[];
   job_rows?: JobRow[];
   job_details?: JobRow[];
+  source_files?: SourceFileLink[];
+  uploaded_files?: SourceFileLink[];
+  files?: SourceFileLink[];
 };
 
 type Insight = {
@@ -570,6 +591,51 @@ async function apiGetDashboard(token: string | null, range: RangeKey, customFrom
 }
 
 
+type ReportFilesResponse = {
+  ok?: boolean;
+  files?: SourceFileLink[];
+  report?: {
+    raw?: {
+      source_files?: SourceFileLink[];
+      uploaded_files?: SourceFileLink[];
+      jobs?: JobRow[];
+    };
+  };
+};
+
+async function apiGetReportFiles(token: string | null, reportId: string): Promise<SourceFileLink[]> {
+  const cleanReportId = String(reportId || "").trim();
+  if (!cleanReportId) return [];
+
+  const params = new URLSearchParams();
+  params.set("id", cleanReportId);
+
+  const res = await fetch(`${API_BASE}/report?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  let data: ReportFilesResponse | { error?: string } | null = null;
+
+  try {
+    data = JSON.parse(text) as ReportFilesResponse;
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error((data as { error?: string } | null)?.error || text || `Report files failed (${res.status})`);
+  }
+
+  const directFiles = Array.isArray((data as ReportFilesResponse)?.files) ? (data as ReportFilesResponse).files || [] : [];
+  const raw = (data as ReportFilesResponse)?.report?.raw || {};
+  const rawFiles = Array.isArray(raw.source_files) ? raw.source_files : Array.isArray(raw.uploaded_files) ? raw.uploaded_files : [];
+
+  return dedupeSourceFiles([...directFiles, ...rawFiles]);
+}
+
 async function apiGetScaleSummary(token: string | null): Promise<ScaleSummary> {
   const res = await fetch(`${API_BASE}/scale-summary`, {
     method: "GET",
@@ -907,6 +973,77 @@ function getReportJobs(report: ReportRow, allJobs: JobRow[] = []): JobRow[] {
   return (Array.isArray(allJobs) ? allJobs : []).filter((job) =>
     reportIds.has(String(job.report_id || "").trim())
   );
+}
+
+function sourceFileUrl(file: SourceFileLink): string {
+  return String(file?.url || file?.cdnUrl || file?.file_url || (file?.uuid ? `https://ucarecdn.com/${file.uuid}/?download=1` : "")).trim();
+}
+
+function sourceFileName(file: SourceFileLink, idx = 0): string {
+  return String(file?.filename || file?.name || file?.uuid || `Uploaded file ${idx + 1}`).trim();
+}
+
+function sourceFileDedupeKey(file: SourceFileLink): string {
+  return String(file?.uuid || sourceFileUrl(file) || sourceFileName(file)).trim();
+}
+
+function dedupeSourceFiles(files: SourceFileLink[]): SourceFileLink[] {
+  const seen = new Set<string>();
+  const out: SourceFileLink[] = [];
+
+  for (const file of Array.isArray(files) ? files : []) {
+    const url = sourceFileUrl(file);
+    const key = sourceFileDedupeKey(file);
+    if (!key || !url || seen.has(key)) continue;
+    seen.add(key);
+    out.push(file);
+    if (out.length >= 12) break;
+  }
+
+  return out;
+}
+
+function normalizeSourceFileForJob(file: SourceFileLink, job: JobRow): SourceFileLink | null {
+  const url = sourceFileUrl(file);
+  if (!url) return null;
+
+  const jobId = String(job?.job_id || "").trim();
+  const fileJobId = String(file?.job_id || "").trim();
+
+  return {
+    ...file,
+    url,
+    filename: sourceFileName(file),
+    job_id: fileJobId || jobId || null,
+  };
+}
+
+function getEmbeddedJobSourceFiles(job: JobRow): SourceFileLink[] {
+  return dedupeSourceFiles([
+    ...(Array.isArray(job?.source_files) ? job.source_files : []),
+    ...(Array.isArray(job?.uploaded_files) ? job.uploaded_files : []),
+    ...(Array.isArray(job?.files) ? job.files : []),
+  ]);
+}
+
+function sourceFilesMatchJob(files: SourceFileLink[], job: JobRow): SourceFileLink[] {
+  const jobKey = String(job?.job_id || job?.job_name || "").trim().toLowerCase();
+  const normalizedJobKey = jobKey.replace(/[^a-z0-9]+/g, "");
+
+  const mapped = (Array.isArray(files) ? files : [])
+    .map((file) => normalizeSourceFileForJob(file, job))
+    .filter(Boolean) as SourceFileLink[];
+
+  if (!mapped.length) return [];
+
+  const matched = mapped.filter((file) => {
+    const fileJobId = String(file.job_id || "").trim().toLowerCase();
+    if (!fileJobId || !jobKey) return false;
+    const normalizedFileJob = fileJobId.replace(/[^a-z0-9]+/g, "");
+    return fileJobId === jobKey || normalizedFileJob === normalizedJobKey;
+  });
+
+  return dedupeSourceFiles(matched.length ? matched : mapped);
 }
 
 function cleanReportPeriodLabel(label: unknown): string {
@@ -3809,6 +3946,45 @@ function JobEditor({
   });
   const [editingCustomAmountIndex, setEditingCustomAmountIndex] = useState<number | null>(null);
   const [customAmountDrafts, setCustomAmountDrafts] = useState<Record<number, string>>({});
+  const [reportSourceFiles, setReportSourceFiles] = useState<SourceFileLink[]>([]);
+  const [sourceFilesLoading, setSourceFilesLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    const embeddedFiles = getEmbeddedJobSourceFiles(base || {});
+
+    setReportSourceFiles(embeddedFiles);
+
+    if (!showBack || embeddedFiles.length || !base?.report_id || !getToken) {
+      setSourceFilesLoading(false);
+      return () => {
+        alive = false;
+      };
+    }
+
+    setSourceFilesLoading(true);
+
+    (async () => {
+      try {
+        const token = await getToken();
+        const files = await apiGetReportFiles(token, String(base.report_id || ""));
+        if (alive) setReportSourceFiles(sourceFilesMatchJob(files, base || {}));
+      } catch (err) {
+        console.error("Failed to load source files for job", err);
+        if (alive) setReportSourceFiles([]);
+      } finally {
+        if (alive) setSourceFilesLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [base, base?.report_id, getToken, showBack]);
+
+  const sourceFilesForDisplay = useMemo(() => {
+    return sourceFilesMatchJob(reportSourceFiles, base || {});
+  }, [reportSourceFiles, base]);
 
   useEffect(() => {
     setJob(mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
@@ -4214,6 +4390,28 @@ function JobEditor({
                 </tr>
               </tbody>
             </table>
+
+            {showBack && (sourceFilesForDisplay.length > 0 || sourceFilesLoading) ? (
+              <div className="jobSourceFilesLine" aria-label="Uploaded source files for this job">
+                <span className="jobSourceFilesLabel">Source files</span>
+                {sourceFilesLoading ? (
+                  <span className="jobSourceFilesLoading">Loading files...</span>
+                ) : (
+                  sourceFilesForDisplay.map((file, idx) => (
+                    <a
+                      key={`${sourceFileDedupeKey(file)}-${idx}`}
+                      className="jobSourceFileLink"
+                      href={sourceFileUrl(file)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Open uploaded source file"
+                    >
+                      {sourceFileName(file, idx)}
+                    </a>
+                  ))
+                )}
+              </div>
+            ) : null}
 
             {showBack ? (
             <div className="supportGrid">
@@ -5481,7 +5679,7 @@ const dashboardCss = `
 .dc-bg .panel{border-radius:var(--radius);border:1px solid var(--line2);background:var(--panel);backdrop-filter:blur(14px);box-shadow:var(--shadow);overflow:hidden}.dc-bg .panelHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 14px 12px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.70))}.dc-bg .panelTitle{font-weight:950;letter-spacing:-.02em;color:rgba(15,23,42,.94);font-size:18px}.dc-bg .panelSub{margin-top:4px;color:var(--muted2);font-size:13px;line-height:1.4;font-weight:750}.dc-bg .grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(340px,.68fr);gap:14px;margin-top:12px;width:100%}.dc-bg .mainCol, .dc-bg .sideStack{display:flex;flex-direction:column;gap:14px}.dc-bg .pad{padding:14px}.dc-bg .hero, .dc-bg .jobHero{border-radius:22px;border:1px solid var(--line2);background:rgba(255,255,255,.86);box-shadow:0 18px 60px rgba(2,6,23,.08);overflow:hidden;margin-top:12px}.dc-bg .heroBody, .dc-bg .jobHeroBody{padding:16px 16px 14px;display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.dc-bg .heroTitle, .dc-bg .jobHeroTitle{font-size:30px;line-height:1.05;font-weight:980;letter-spacing:-.03em;color:rgba(15,23,42,.94)}.dc-bg .heroSub, .dc-bg .jobHeroSub{margin-top:8px;font-size:15px;line-height:1.5;color:rgba(15,23,42,.64);font-weight:750;max-width:740px}.dc-bg .heroBadges{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}.dc-bg .summaryCard, .dc-bg .jobSummaryCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86);padding:12px;display:flex;flex-direction:column;gap:10px}.dc-bg .kv{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:14px;font-weight:850;color:rgba(15,23,42,.70)}.dc-bg .kv strong{color:rgba(15,23,42,.94)}.dc-bg .divider{height:1px;background:rgba(15,23,42,.06);margin:4px 0 2px}
 .dc-bg .kpis{padding:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.dc-bg .kpi, .dc-bg .stat{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.84);box-shadow:0 14px 40px rgba(2,6,23,.06);padding:12px}.dc-bg .kLabel, .dc-bg .statLabel{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.52);font-weight:900}.dc-bg .kValue, .dc-bg .statValue{margin-top:7px;font-weight:980;font-size:22px;letter-spacing:-.02em;color:rgba(15,23,42,.90)}.dc-bg .kSub, .dc-bg .statSub{margin-top:7px;font-size:13px;line-height:1.35;color:rgba(15,23,42,.58);font-weight:760}.dc-bg .pos{color:rgba(5,150,105,.95)!important}.dc-bg .neg{color:rgba(220,38,38,.95)!important}.dc-bg .strong{font-weight:950}.dc-bg .charts, .dc-bg .jobCharts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.dc-bg .jobCharts{gap:12px}.dc-bg .chartCard{border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.82);padding:12px;overflow:hidden;box-shadow:0 12px 38px rgba(2,6,23,.055)}.dc-bg .chartCard.wide{grid-column:1/-1}.dc-bg .chartHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:8px}.dc-bg .chartTitle{font-weight:950;letter-spacing:-.01em;color:rgba(15,23,42,.92);font-size:17px}.dc-bg .chartSub{color:rgba(15,23,42,.55);font-size:13px;font-weight:750}.dc-bg canvas{width:100%;height:auto;display:block}.dc-bg .trendEmpty{border-radius:18px;border:1px dashed rgba(15,23,42,.14);background:rgba(255,255,255,.55);padding:16px;color:rgba(15,23,42,.72);font-weight:850;font-size:14px;line-height:1.45}.dc-bg .mixList{display:flex;flex-direction:column;gap:14px}.dc-bg .gridMix{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dc-bg .mixRow{border:1px solid var(--line2);background:rgba(255,255,255,.82);border-radius:16px;padding:12px}.dc-bg .mixTop{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:rgba(15,23,42,.72);font-weight:850}.dc-bg .sw{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:7px}.dc-bg .barTrack{height:8px;border-radius:999px;background:rgba(15,23,42,.06);overflow:hidden;margin-top:8px}.dc-bg .barFill{height:100%;border-radius:999px}.dc-bg .mixSub{margin-top:6px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}
 .dc-bg .tableTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.dc-bg .searchInput{min-width:220px}.dc-bg .tableWrap{overflow:auto}.dc-bg .jobsTable{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}.dc-bg .jobsTable th, .dc-bg .jobsTable td{padding:13px 14px;border-bottom:1px solid rgba(15,23,42,.06);text-align:left;font-size:13.5px;font-weight:750;color:rgba(15,23,42,.72);vertical-align:middle}.dc-bg .jobsTable th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,23,42,.44);font-weight:950;background:rgba(15,23,42,.025)}.dc-bg .jobName{font-weight:950;color:#0f172a;font-size:14px}.dc-bg .jobMeta, .dc-bg .itemMeta{margin-top:5px;color:rgba(15,23,42,.52);font-size:12px;font-weight:750}.dc-bg .miniBtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:950;font-size:12px;cursor:pointer}.dc-bg .tag{padding:6px 10px;border-radius:999px;border:1px solid var(--line2);font-weight:950;font-size:11.5px;white-space:nowrap;background:rgba(15,23,42,.04);color:rgba(15,23,42,.78)}.dc-bg .tag.ok{border-color:rgba(52,211,153,.22);color:rgba(5,150,105,.95);background:rgba(52,211,153,.10)}.dc-bg .tag.warn{border-color:rgba(245,158,11,.22);color:rgba(180,83,9,.95);background:rgba(245,158,11,.10)}.dc-bg .tag.bad{border-color:rgba(239,68,68,.22);color:rgba(220,38,38,.95);background:rgba(239,68,68,.10)}.dc-bg .list{display:flex;flex-direction:column;gap:10px}.dc-bg .item{border-radius:18px;border:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.86);padding:11px}.dc-bg .itemTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.dc-bg .itemName{font-weight:950;font-size:14px;color:rgba(15,23,42,.88)}.dc-bg .reportActions{display:flex;align-items:center;gap:10px}.dc-bg .deleteReportBtn{width:26px;height:26px;border-radius:999px;border:1px solid rgba(239,68,68,.18);background:rgba(239,68,68,.08);color:rgba(185,28,28,.95);font-weight:950;font-size:16px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.dc-bg .empty{text-align:center;padding:24px;color:rgba(15,23,42,.55);border:1px dashed rgba(15,23,42,.14);border-radius:18px;background:rgba(255,255,255,.55);font-weight:850;margin:14px}.dc-bg .error{border:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.08);color:rgba(15,23,42,.86);border-radius:18px;padding:14px;font-weight:850;font-size:13px;white-space:pre-wrap}
-.dc-bg .crumbs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,.72));position:relative;z-index:20;pointer-events:auto}.dc-bg .crumb{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;color:rgba(15,23,42,.72)}.dc-bg .crumb strong{color:rgba(15,23,42,.92)}.dc-bg .crumbBtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.82);font-weight:950;font-size:12.5px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,border-color .12s ease;text-decoration:none;color:rgba(15,23,42,.90)}.dc-bg .crumbBtn.secondary{margin-left:0}.dc-bg .jobPage{display:flex;flex-direction:column;gap:12px;margin-top:12px}.dc-bg .jobAnalysisHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(240,253,250,.72));box-shadow:0 14px 40px rgba(2,6,23,.055);padding:14px 16px}.dc-bg .sectionEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.86)}.dc-bg .sectionTitle{margin-top:4px;font-size:20px;line-height:1.1;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.94)}.dc-bg .sectionSubtle{font-size:12.5px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.50);text-align:right}.dc-bg .jobDetailFocus{border:1px solid rgba(34,211,238,.14);box-shadow:0 18px 60px rgba(34,211,238,.08)}.dc-bg .jobStats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.dc-bg .jobDetailFocus{border-radius:18px}.dc-bg .jobDetailPad{overflow-x:auto}.dc-bg .jobTable{width:100%;min-width:1320px;table-layout:fixed;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86)}.dc-bg .jobTable th, .dc-bg .jobTable td{padding:12px 8px;border-bottom:1px solid rgba(15,23,42,.06);vertical-align:middle;font-size:12.5px}.dc-bg .jobTable th{text-align:left;font-weight:950;color:rgba(15,23,42,.86);background:rgba(15,23,42,.035);position:sticky;top:0;z-index:2;font-size:12px;white-space:nowrap}.dc-bg .cellEdit{border:1px solid rgba(15,23,42,.12);background:#ffffff;border-radius:12px;padding:10px 10px;font-weight:800;font-size:14px;color:#0f172a!important;width:100%;outline:none;transition:border-color .12s ease,box-shadow .12s ease;position:relative;z-index:2;caret-color:#0f172a}.dc-bg .cellEdit:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.2)}.dc-bg .cellHint{margin-top:6px;font-size:11.5px;color:rgba(15,23,42,.62);font-weight:750}.dc-bg .customRemoveWrap{display:flex;justify-content:center;align-items:center}.dc-bg .supportGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.dc-bg .miniPanel{box-shadow:none}.dc-bg .noteBox{min-height:110px;resize:vertical}
+.dc-bg .crumbs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(255,255,255,.72));position:relative;z-index:20;pointer-events:auto}.dc-bg .crumb{display:inline-flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;color:rgba(15,23,42,.72)}.dc-bg .crumb strong{color:rgba(15,23,42,.92)}.dc-bg .crumbBtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.82);font-weight:950;font-size:12.5px;cursor:pointer;transition:transform .08s ease,box-shadow .12s ease,border-color .12s ease;text-decoration:none;color:rgba(15,23,42,.90)}.dc-bg .crumbBtn.secondary{margin-left:0}.dc-bg .jobPage{display:flex;flex-direction:column;gap:12px;margin-top:12px}.dc-bg .jobAnalysisHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-radius:20px;border:1px solid rgba(34,211,238,.16);background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(240,253,250,.72));box-shadow:0 14px 40px rgba(2,6,23,.055);padding:14px 16px}.dc-bg .sectionEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;color:rgba(8,145,178,.86)}.dc-bg .sectionTitle{margin-top:4px;font-size:20px;line-height:1.1;font-weight:980;letter-spacing:-.025em;color:rgba(15,23,42,.94)}.dc-bg .sectionSubtle{font-size:12.5px;line-height:1.4;font-weight:850;color:rgba(15,23,42,.50);text-align:right}.dc-bg .jobDetailFocus{border:1px solid rgba(34,211,238,.14);box-shadow:0 18px 60px rgba(34,211,238,.08)}.dc-bg .jobStats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.dc-bg .jobDetailFocus{border-radius:18px}.dc-bg .jobDetailPad{overflow-x:auto}.dc-bg .jobTable{width:100%;min-width:1320px;table-layout:fixed;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.86)}.dc-bg .jobTable th, .dc-bg .jobTable td{padding:12px 8px;border-bottom:1px solid rgba(15,23,42,.06);vertical-align:middle;font-size:12.5px}.dc-bg .jobTable th{text-align:left;font-weight:950;color:rgba(15,23,42,.86);background:rgba(15,23,42,.035);position:sticky;top:0;z-index:2;font-size:12px;white-space:nowrap}.dc-bg .cellEdit{border:1px solid rgba(15,23,42,.12);background:#ffffff;border-radius:12px;padding:10px 10px;font-weight:800;font-size:14px;color:#0f172a!important;width:100%;outline:none;transition:border-color .12s ease,box-shadow .12s ease;position:relative;z-index:2;caret-color:#0f172a}.dc-bg .cellEdit:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.2)}.dc-bg .cellHint{margin-top:6px;font-size:11.5px;color:rgba(15,23,42,.62);font-weight:750}.dc-bg .jobSourceFilesLine{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:0 2px;font-size:12px;color:rgba(15,23,42,.58)}.dc-bg .jobSourceFilesLabel{font-weight:950;color:rgba(15,23,42,.62);text-transform:uppercase;letter-spacing:.05em;font-size:10.5px}.dc-bg .jobSourceFileLink{display:inline-flex;align-items:center;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0891b2;font-weight:850;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}.dc-bg .jobSourceFileLink:hover{color:#0f172a}.dc-bg .jobSourceFilesLoading{font-weight:800;color:rgba(15,23,42,.45)}.dc-bg .customRemoveWrap{display:flex;justify-content:center;align-items:center}.dc-bg .supportGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.dc-bg .miniPanel{box-shadow:none}.dc-bg .noteBox{min-height:110px;resize:vertical}
 
 
 .dc-bg .allJobsDetailShell{overflow:hidden}

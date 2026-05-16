@@ -317,7 +317,7 @@ export default function AdminPage() {
               Access Denied
             </h1>
             <p className="mx-auto max-w-md text-xs font-semibold leading-5 text-slate-500 sm:text-sm">
-              You do not have permission to access the DropClarity admin
+              You do not have permission to access the Admin View
               dashboard.
             </p>
           </div>
@@ -326,8 +326,8 @@ export default function AdminPage() {
             <section className="rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/70 backdrop-blur sm:p-6 lg:p-7">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <div className="mb-3 inline-flex rounded-full border border-cyan-200 bg-cyan-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">
-                    DropClarity Admin
+                  <div className="mb-5 inline-flex rounded-full border border-cyan-200 bg-cyan-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">
+                    Admin View
                   </div>
 
                   <h1 className="text-3xl font-black tracking-[-0.045em] text-slate-950 sm:text-4xl lg:text-5xl">
@@ -402,7 +402,7 @@ export default function AdminPage() {
                   </p>
                 </div>
 
-                <div className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-black text-slate-500">
+                <div className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[13px] font-black text-slate-500">
                   {filteredRuns.length.toLocaleString()} visible
                 </div>
               </div>
@@ -514,14 +514,14 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
       </div>
 
       <div>
-        <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-black capitalize text-slate-600 shadow-sm">
+        <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[13px] font-black capitalize text-slate-600 shadow-sm">
           {run.plan || "free"}
         </span>
       </div>
 
       <div>
         <span
-          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-black ${
+          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[13px] font-black ${
             success
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : started
@@ -543,7 +543,7 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
                   href={file.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="max-w-[190px] truncate rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
+                  className="max-w-[190px] truncate rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[13px] font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
                   title={file.label}
                 >
                   {file.label}
@@ -551,7 +551,7 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
               ) : (
                 <span
                   key={`${file.label}-${idx}`}
-                  className="max-w-[190px] truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500"
+                  className="max-w-[190px] truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[13px] font-bold text-slate-500"
                   title={`${file.label} — no file URL stored yet`}
                 >
                   {file.label}
@@ -559,13 +559,13 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
               ),
             )
           ) : (
-            <span className="text-[11px] font-bold text-slate-400">
+            <span className="text-[13px] font-bold text-slate-400">
               No files logged
             </span>
           )}
 
           {files.length > 4 && (
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-black text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[13px] font-black text-slate-500">
               +{files.length - 4}
             </span>
           )}
@@ -607,12 +607,12 @@ function MetricBlock({
   valueClass?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 xl:block xl:border-0 xl:bg-transparent xl:p-0">
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-3 xl:block xl:border-0 xl:bg-transparent xl:p-0">
       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 xl:hidden">
         {label}
       </span>
       <span
-        className={`text-xs font-black ${compact ? "xl:text-[11px]" : ""} ${valueClass}`}
+        className={`text-xs font-black ${compact ? "xl:text-[13px]" : ""} ${valueClass}`}
       >
         {value}
       </span>
@@ -650,7 +650,7 @@ function StatCard({
       </h3>
 
       {sublabel && (
-        <p className="mt-1.5 text-[11px] font-bold text-slate-400">
+        <p className="mt-1.5 text-[13px] font-bold text-slate-400">
           {sublabel}
         </p>
       )}
