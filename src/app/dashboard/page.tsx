@@ -4297,7 +4297,7 @@ function JobEditor({
           )}
 
           <div className="pad jobDetailPad">
-            <table className="jobTable" style={{ minWidth: `${1320 + Math.max(0, job.custom_categories.length) * 180}px` }}>
+            <table className="jobTable" style={{ minWidth: `${1780 + Math.max(0, job.custom_categories.length) * 220}px` }}>
               <thead>
                 <tr>
                   <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Taxes</th><th>Other Costs</th>
@@ -8459,5 +8459,132 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
 @media (max-width: 1180px){.dc-bg .supportGrid{grid-template-columns:1fr 1fr}.dc-bg .sourceDocsPanel{grid-column:1 / -1}}
 @media (max-width: 760px){.dc-bg .supportGrid{grid-template-columns:1fr}.dc-bg .sourceDocsPanel{grid-column:auto}.dc-bg .sourceDocLink{font-size:12px;padding:8px 9px}}
+
+
+/* Surgical patch: prevent Job Detail bucket values from being cut off.
+   Keeps the existing editable table behavior, custom categories, and horizontal scrolling.
+   Applies to both individual Job Detail and the stacked View All Jobs internal detail rows. */
+main.dc-bg .jobDetailPad{
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:visible!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+}
+
+main.dc-bg .jobTable{
+  table-layout:auto!important;
+  width:max-content!important;
+  min-width:1780px!important;
+}
+
+main.dc-bg .stackedJobPage .jobTable{
+  table-layout:auto!important;
+  width:max-content!important;
+  min-width:1780px!important;
+}
+
+main.dc-bg .jobTable th,
+main.dc-bg .jobTable td{
+  box-sizing:border-box!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+
+main.dc-bg .jobTable th:nth-child(1),
+main.dc-bg .jobTable td:nth-child(1){min-width:150px!important;width:150px!important;}
+main.dc-bg .jobTable th:nth-child(2),
+main.dc-bg .jobTable td:nth-child(2){min-width:180px!important;width:180px!important;}
+main.dc-bg .jobTable th:nth-child(3),
+main.dc-bg .jobTable td:nth-child(3){min-width:145px!important;width:145px!important;}
+main.dc-bg .jobTable th:nth-child(4),
+main.dc-bg .jobTable td:nth-child(4){min-width:190px!important;width:190px!important;}
+main.dc-bg .jobTable th:nth-child(5),
+main.dc-bg .jobTable td:nth-child(5){min-width:165px!important;width:165px!important;}
+main.dc-bg .jobTable th:nth-child(6),
+main.dc-bg .jobTable td:nth-child(6),
+main.dc-bg .jobTable th:nth-child(7),
+main.dc-bg .jobTable td:nth-child(7),
+main.dc-bg .jobTable th:nth-child(8),
+main.dc-bg .jobTable td:nth-child(8),
+main.dc-bg .jobTable th:nth-child(9),
+main.dc-bg .jobTable td:nth-child(9),
+main.dc-bg .jobTable th:nth-child(10),
+main.dc-bg .jobTable td:nth-child(10),
+main.dc-bg .jobTable th:nth-child(11),
+main.dc-bg .jobTable td:nth-child(11){min-width:155px!important;width:155px!important;}
+main.dc-bg .jobTable th:nth-last-child(2),
+main.dc-bg .jobTable td:nth-last-child(2){min-width:165px!important;width:165px!important;}
+main.dc-bg .jobTable th:nth-last-child(1),
+main.dc-bg .jobTable td:nth-last-child(1){min-width:135px!important;width:135px!important;}
+
+main.dc-bg .customCostTh,
+main.dc-bg .customCostCell{
+  min-width:220px!important;
+  width:220px!important;
+}
+
+main.dc-bg .jobTable .cellEdit,
+main.dc-bg .jobTable .moneyEditInput,
+main.dc-bg .jobTable .customAmountInput{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+
+main.dc-bg .jobTable .calcCell{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+
+main.dc-bg .jobTable .cellHint{
+  white-space:normal!important;
+}
+
+@media (max-width:900px){
+  main.dc-bg .jobTable,
+  main.dc-bg .stackedJobPage .jobTable{
+    min-width:1720px!important;
+  }
+
+  main.dc-bg .jobTable th:nth-child(6),
+  main.dc-bg .jobTable td:nth-child(6),
+  main.dc-bg .jobTable th:nth-child(7),
+  main.dc-bg .jobTable td:nth-child(7),
+  main.dc-bg .jobTable th:nth-child(8),
+  main.dc-bg .jobTable td:nth-child(8),
+  main.dc-bg .jobTable th:nth-child(9),
+  main.dc-bg .jobTable td:nth-child(9),
+  main.dc-bg .jobTable th:nth-child(10),
+  main.dc-bg .jobTable td:nth-child(10),
+  main.dc-bg .jobTable th:nth-child(11),
+  main.dc-bg .jobTable td:nth-child(11){min-width:150px!important;width:150px!important;}
+}
+
+@media (max-width:560px){
+  main.dc-bg .jobDetailPad{
+    padding:12px!important;
+  }
+
+  main.dc-bg .jobTable,
+  main.dc-bg .stackedJobPage .jobTable{
+    min-width:1680px!important;
+  }
+
+  main.dc-bg .jobTable .cellEdit,
+  main.dc-bg .jobTable .moneyEditInput,
+  main.dc-bg .jobTable .customAmountInput,
+  main.dc-bg .jobTable .calcCell{
+    font-size:13.5px!important;
+  }
+}
 
 `;
