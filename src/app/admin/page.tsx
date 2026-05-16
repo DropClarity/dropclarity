@@ -29,11 +29,11 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
-  const adminEmails = [
-    "arman.tajalli@dropclarity.com",
-  ];
+  const adminEmails = ["arman.tajalli@dropclarity.com"];
 
-  const isAdmin = adminEmails.includes(user?.primaryEmailAddress?.emailAddress || "");
+  const isAdmin = adminEmails.includes(
+    user?.primaryEmailAddress?.emailAddress || "",
+  );
 
   useEffect(() => {
     async function loadRuns() {
@@ -49,7 +49,7 @@ export default function AdminPage() {
             headers: {
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-          }
+          },
         );
 
         if (!res.ok) {
@@ -93,19 +93,19 @@ export default function AdminPage() {
 
   const totalRevenue = runs.reduce(
     (sum, r) => sum + (Number(r.revenue_total) || 0),
-    0
+    0,
   );
 
   const totalProfit = runs.reduce(
     (sum, r) => sum + (Number(r.net_profit) || 0),
-    0
+    0,
   );
 
   const avgProcessing =
     runs.length > 0
       ? Math.round(
           runs.reduce((sum, r) => sum + (Number(r.processing_ms) || 0), 0) /
-            runs.length
+            runs.length,
         )
       : 0;
 
@@ -118,306 +118,280 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white px-4 sm:px-6 lg:px-8 py-8">
-          <div className="max-w-7xl mx-auto space-y-8">
-            {!isAdmin ? (
-              <div className="bg-[#111111] border border-white/10 rounded-3xl p-10 text-center">
-                <h1 className="text-3xl font-bold mb-3">Access Denied</h1>
-                <p className="text-white/60">
-                  You do not have permission to access the admin dashboard.
+    <main className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_18%_12%,rgba(124,58,237,0.22),transparent_30%),radial-gradient(circle_at_84%_8%,rgba(34,211,238,0.18),transparent_28%),radial-gradient(circle_at_50%_92%,rgba(59,130,246,0.14),transparent_32%),linear-gradient(180deg,#07111f_0%,#050816_48%,#070711_100%)] text-white px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-violet-500/20 blur-[90px] sm:h-[420px] sm:w-[420px]" />
+        <div className="absolute right-[-140px] top-[80px] h-[340px] w-[340px] rounded-full bg-cyan-400/16 blur-[95px] sm:h-[460px] sm:w-[460px]" />
+        <div className="absolute bottom-[-180px] left-[20%] h-[360px] w-[520px] rounded-full bg-blue-500/12 blur-[110px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:54px_54px] opacity-[0.18]" />
+      </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-8">
+        {!isAdmin ? (
+          <div className="bg-[#111111] border border-white/10 rounded-3xl p-10 text-center">
+            <h1 className="text-3xl font-bold mb-3">Access Denied</h1>
+            <p className="text-white/60">
+              You do not have permission to access the admin dashboard.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.2em] text-white/40 mb-3">
+                  DropClarity Admin
+                </p>
+
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+                  Analysis Monitoring
+                </h1>
+
+                <p className="text-white/60 mt-4 max-w-2xl text-lg">
+                  Monitor uploads, analysis health, customer usage,
+                  profitability totals, and processing performance across all
+                  users.
                 </p>
               </div>
-            ) : (
-              <>
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-white/40 mb-3">
-                      DropClarity Admin
-                    </p>
 
-                    <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-                      Analysis Monitoring
-                    </h1>
+              <div className="w-full lg:w-[360px]">
+                <input
+                  type="text"
+                  placeholder="Search users, plans, files..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-[#111111] px-5 py-4 text-white placeholder:text-white/30 outline-none focus:border-white/30"
+                />
+              </div>
+            </div>
 
-                    <p className="text-white/60 mt-4 max-w-2xl text-lg">
-                      Monitor uploads, analysis health, customer usage,
-                      profitability totals, and processing performance across
-                      all users.
-                    </p>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+              <StatCard
+                label="Total Analyses"
+                value={totalRuns.toLocaleString()}
+              />
 
-                  <div className="w-full lg:w-[360px]">
-                    <input
-                      type="text"
-                      placeholder="Search users, plans, files..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="w-full rounded-2xl border border-white/10 bg-[#111111] px-5 py-4 text-white placeholder:text-white/30 outline-none focus:border-white/30"
-                    />
-                  </div>
+              <StatCard
+                label="Successful"
+                value={successfulRuns.toLocaleString()}
+              />
+
+              <StatCard label="Failed" value={failedRuns.toLocaleString()} />
+
+              <StatCard
+                label="Revenue Scanned"
+                value={`$${Math.round(totalRevenue).toLocaleString()}`}
+              />
+
+              <StatCard
+                label="Avg Runtime"
+                value={`${(avgProcessing / 1000).toFixed(1)}s`}
+              />
+            </div>
+
+            <div className="bg-[#111111] border border-white/10 rounded-3xl overflow-hidden">
+              <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold">
+                    Recent Analysis Activity
+                  </h2>
+
+                  <p className="text-white/50 mt-1 text-sm">
+                    Live visibility into customer uploads and parsing
+                    performance.
+                  </p>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-                  <StatCard
-                    label="Total Analyses"
-                    value={totalRuns.toLocaleString()}
-                  />
-
-                  <StatCard
-                    label="Successful"
-                    value={successfulRuns.toLocaleString()}
-                  />
-
-                  <StatCard
-                    label="Failed"
-                    value={failedRuns.toLocaleString()}
-                  />
-
-                  <StatCard
-                    label="Revenue Scanned"
-                    value={`$${Math.round(totalRevenue).toLocaleString()}`}
-                  />
-
-                  <StatCard
-                    label="Avg Runtime"
-                    value={`${(avgProcessing / 1000).toFixed(1)}s`}
-                  />
+              {loading ? (
+                <div className="p-10 text-center text-white/50">
+                  Loading analysis data...
                 </div>
+              ) : error ? (
+                <div className="p-10 text-center text-red-400">{error}</div>
+              ) : filteredRuns.length === 0 ? (
+                <div className="p-10 text-center text-white/50">
+                  No analysis activity found.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1200px]">
+                    <thead>
+                      <tr className="border-b border-white/10 text-left text-sm text-white/40">
+                        <th className="px-6 py-4 font-medium">User</th>
+                        <th className="px-6 py-4 font-medium">Plan</th>
+                        <th className="px-6 py-4 font-medium">Status</th>
+                        <th className="px-6 py-4 font-medium">Files</th>
+                        <th className="px-6 py-4 font-medium">Jobs</th>
+                        <th className="px-6 py-4 font-medium">Revenue</th>
+                        <th className="px-6 py-4 font-medium">Costs</th>
+                        <th className="px-6 py-4 font-medium">Profit</th>
+                        <th className="px-6 py-4 font-medium">Margin</th>
+                        <th className="px-6 py-4 font-medium">Runtime</th>
+                        <th className="px-6 py-4 font-medium">Date</th>
+                      </tr>
+                    </thead>
 
-                <div className="bg-[#111111] border border-white/10 rounded-3xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-semibold">
-                        Recent Analysis Activity
-                      </h2>
+                    <tbody>
+                      {filteredRuns.map((run) => {
+                        const success = run.status === "success";
 
-                      <p className="text-white/50 mt-1 text-sm">
-                        Live visibility into customer uploads and parsing
-                        performance.
-                      </p>
-                    </div>
-                  </div>
+                        return (
+                          <tr
+                            key={run.id}
+                            className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                          >
+                            <td className="px-6 py-5">
+                              <div>
+                                <p className="font-medium text-white">
+                                  {run.email || "Unknown User"}
+                                </p>
 
-                  {loading ? (
-                    <div className="p-10 text-center text-white/50">
-                      Loading analysis data...
-                    </div>
-                  ) : error ? (
-                    <div className="p-10 text-center text-red-400">
-                      {error}
-                    </div>
-                  ) : filteredRuns.length === 0 ? (
-                    <div className="p-10 text-center text-white/50">
-                      No analysis activity found.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[1200px]">
-                        <thead>
-                          <tr className="border-b border-white/10 text-left text-sm text-white/40">
-                            <th className="px-6 py-4 font-medium">User</th>
-                            <th className="px-6 py-4 font-medium">Plan</th>
-                            <th className="px-6 py-4 font-medium">Status</th>
-                            <th className="px-6 py-4 font-medium">Files</th>
-                            <th className="px-6 py-4 font-medium">Jobs</th>
-                            <th className="px-6 py-4 font-medium">Revenue</th>
-                            <th className="px-6 py-4 font-medium">Costs</th>
-                            <th className="px-6 py-4 font-medium">Profit</th>
-                            <th className="px-6 py-4 font-medium">Margin</th>
-                            <th className="px-6 py-4 font-medium">Runtime</th>
-                            <th className="px-6 py-4 font-medium">Date</th>
-                          </tr>
-                        </thead>
+                                <p className="text-xs text-white/40 mt-1 break-all">
+                                  {run.user_id}
+                                </p>
+                              </div>
+                            </td>
 
-                        <tbody>
-                          {filteredRuns.map((run) => {
-                            const success = run.status === "success";
+                            <td className="px-6 py-5 capitalize text-white/80">
+                              {run.plan || "free"}
+                            </td>
 
-                            return (
-                              <tr
-                                key={run.id}
-                                className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                            <td className="px-6 py-5">
+                              <span
+                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${
+                                  success
+                                    ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                    : "bg-red-500/10 text-red-300 border-red-500/20"
+                                }`}
                               >
-                                <td className="px-6 py-5">
-                                  <div>
-                                    <p className="font-medium text-white">
-                                      {run.email || "Unknown User"}
-                                    </p>
+                                {run.status}
+                              </span>
+                            </td>
 
-                                    <p className="text-xs text-white/40 mt-1 break-all">
-                                      {run.user_id}
-                                    </p>
-                                  </div>
-                                </td>
+                            <td className="px-6 py-5 text-sm text-white/70 max-w-[260px]">
+                              <div className="space-y-1">
+                                {(run.filenames || "")
+                                  .split(",")
+                                  .slice(0, 3)
+                                  .map((file, idx) => (
+                                    <div key={idx} className="truncate">
+                                      {file.trim()}
+                                    </div>
+                                  ))}
+                              </div>
+                            </td>
 
-                                <td className="px-6 py-5 capitalize text-white/80">
-                                  {run.plan || "free"}
-                                </td>
+                            <td className="px-6 py-5 text-white/80">
+                              {run.jobs_found || 0}
+                            </td>
 
-                                <td className="px-6 py-5">
-                                  <span
-                                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${
-                                      success
-                                        ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
-                                        : "bg-red-500/10 text-red-300 border-red-500/20"
-                                    }`}
-                                  >
-                                    {run.status}
-                                  </span>
-                                </td>
+                            <td className="px-6 py-5 text-white font-medium">
+                              ${Number(run.revenue_total || 0).toLocaleString()}
+                            </td>
 
-                                <td className="px-6 py-5 text-sm text-white/70 max-w-[260px]">
-                                  <div className="space-y-1">
-                                    {(run.filenames || "")
-                                      .split(",")
-                                      .slice(0, 3)
-                                      .map((file, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="truncate"
-                                        >
-                                          {file.trim()}
-                                        </div>
-                                      ))}
-                                  </div>
-                                </td>
+                            <td className="px-6 py-5 text-white/80">
+                              ${Number(run.cost_total || 0).toLocaleString()}
+                            </td>
 
-                                <td className="px-6 py-5 text-white/80">
-                                  {run.jobs_found || 0}
-                                </td>
+                            <td className="px-6 py-5">
+                              <span
+                                className={
+                                  Number(run.net_profit) >= 0
+                                    ? "text-emerald-300 font-medium"
+                                    : "text-red-300 font-medium"
+                                }
+                              >
+                                ${Number(run.net_profit || 0).toLocaleString()}
+                              </span>
+                            </td>
 
-                                <td className="px-6 py-5 text-white font-medium">
-                                  ${Number(run.revenue_total || 0).toLocaleString()}
-                                </td>
+                            <td className="px-6 py-5 text-white/80">
+                              {Number(run.margin_percent || 0).toFixed(1)}%
+                            </td>
 
-                                <td className="px-6 py-5 text-white/80">
-                                  ${Number(run.cost_total || 0).toLocaleString()}
-                                </td>
+                            <td className="px-6 py-5 text-white/70">
+                              {(Number(run.processing_ms || 0) / 1000).toFixed(
+                                1,
+                              )}
+                              s
+                            </td>
 
-                                <td className="px-6 py-5">
-                                  <span
-                                    className={
-                                      Number(run.net_profit) >= 0
-                                        ? "text-emerald-300 font-medium"
-                                        : "text-red-300 font-medium"
-                                    }
-                                  >
-                                    ${Number(run.net_profit || 0).toLocaleString()}
-                                  </span>
-                                </td>
-
-                                <td className="px-6 py-5 text-white/80">
-                                  {Number(run.margin_percent || 0).toFixed(1)}%
-                                </td>
-
-                                <td className="px-6 py-5 text-white/70">
-                                  {(Number(run.processing_ms || 0) / 1000).toFixed(1)}s
-                                </td>
-
-                                <td className="px-6 py-5 text-white/50 text-sm whitespace-nowrap">
-                                  {new Date(run.created_at).toLocaleString()}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                            <td className="px-6 py-5 text-white/50 text-sm whitespace-nowrap">
+                              {new Date(run.created_at).toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
+              )}
+            </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <div className="bg-[#111111] border border-white/10 rounded-3xl p-6">
-                    <h3 className="text-xl font-semibold mb-5">
-                      Platform Health
-                    </h3>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="bg-[#111111] border border-white/10 rounded-3xl p-6">
+                <h3 className="text-xl font-semibold mb-5">Platform Health</h3>
 
-                    <div className="space-y-4">
-                      <HealthRow
-                        label="Success Rate"
-                        value={`${
-                          totalRuns > 0
-                            ? Math.round((successfulRuns / totalRuns) * 100)
-                            : 0
-                        }%`}
-                      />
+                <div className="space-y-4">
+                  <HealthRow
+                    label="Success Rate"
+                    value={`${
+                      totalRuns > 0
+                        ? Math.round((successfulRuns / totalRuns) * 100)
+                        : 0
+                    }%`}
+                  />
 
-                      <HealthRow
-                        label="Total Profit Scanned"
-                        value={`$${Math.round(totalProfit).toLocaleString()}`}
-                      />
+                  <HealthRow
+                    label="Total Profit Scanned"
+                    value={`$${Math.round(totalProfit).toLocaleString()}`}
+                  />
 
-                      <HealthRow
-                        label="Average Runtime"
-                        value={`${(avgProcessing / 1000).toFixed(1)} seconds`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-[#111111] border border-white/10 rounded-3xl p-6">
-                    <h3 className="text-xl font-semibold mb-5">
-                      What You Can Monitor
-                    </h3>
-
-                    <div className="space-y-4 text-white/70 text-sm leading-7">
-                      <p>
-                        • Which users are actively uploading reports
-                      </p>
-
-                      <p>
-                        • Which analyses fail or take too long
-                      </p>
-
-                      <p>
-                        • Average parsing speed across uploads
-                      </p>
-
-                      <p>
-                        • What file types users upload most
-                      </p>
-
-                      <p>
-                        • Revenue and profitability totals processed
-                      </p>
-
-                      <p>
-                        • Which plans are most active
-                      </p>
-                    </div>
-                  </div>
+                  <HealthRow
+                    label="Average Runtime"
+                    value={`${(avgProcessing / 1000).toFixed(1)} seconds`}
+                  />
                 </div>
-              </>
-            )}
-          </div>
-        </div>
+              </div>
+
+              <div className="bg-[#111111] border border-white/10 rounded-3xl p-6">
+                <h3 className="text-xl font-semibold mb-5">
+                  What You Can Monitor
+                </h3>
+
+                <div className="space-y-4 text-white/70 text-sm leading-7">
+                  <p>• Which users are actively uploading reports</p>
+
+                  <p>• Which analyses fail or take too long</p>
+
+                  <p>• Average parsing speed across uploads</p>
+
+                  <p>• What file types users upload most</p>
+
+                  <p>• Revenue and profitability totals processed</p>
+
+                  <p>• Which plans are most active</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </main>
   );
 }
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-[#111111] border border-white/10 rounded-3xl p-5">
       <p className="text-sm text-white/50">{label}</p>
 
-      <h3 className="text-3xl font-bold mt-3 tracking-tight">
-        {value}
-      </h3>
+      <h3 className="text-3xl font-bold mt-3 tracking-tight">{value}</h3>
     </div>
   );
 }
 
-function HealthRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function HealthRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between border border-white/5 rounded-2xl px-4 py-4 bg-white/[0.02]">
       <span className="text-white/50">{label}</span>
