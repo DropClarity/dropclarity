@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 
-const API_BASE = "https://dropclarity.com/api";
+const API_BASE = "https://dropclarity-api.armanrtajalli.workers.dev/";
 const FALLBACK_USER_ID = "anon";
 
 type DashboardMode = "ready" | "loading" | "error";

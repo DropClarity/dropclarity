@@ -316,7 +316,7 @@ export default function AdminPage() {
             <h1 className="mb-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
               Access Denied
             </h1>
-            <p className="mx-auto max-w-md text-xs font-semibold leading-5 text-slate-500 sm:text-sm">
+            <p className="mx-auto max-w-md text-sm font-semibold leading-5 text-slate-500 sm:text-sm">
               You do not have permission to access the Admin View
               dashboard.
             </p>
@@ -326,7 +326,7 @@ export default function AdminPage() {
             <section className="rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/70 backdrop-blur sm:p-6 lg:p-7">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <div className="mb-5 inline-flex rounded-full border border-cyan-200 bg-cyan-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">
+                  <div className="mb-5 inline-flex rounded-full border border-cyan-200 bg-cyan-50/70 px-3 py-1 text-sm font-black uppercase tracking-[0.18em] text-cyan-700">
                     Admin View
                   </div>
 
@@ -334,7 +334,7 @@ export default function AdminPage() {
                     Analysis Monitoring
                   </h1>
 
-                  <p className="mt-3 max-w-2xl text-xs font-semibold leading-5 text-slate-600 sm:text-sm">
+                  <p className="mt-3 max-w-2xl text-sm font-semibold leading-5 text-slate-600 sm:text-sm">
                     Monitor uploads, analysis health, customer usage,
                     profitability totals, and processing performance across all
                     users.
@@ -342,7 +342,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="w-full lg:w-[360px]">
-                  <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  <label className="mb-2 block text-sm font-black uppercase tracking-wider text-slate-400">
                     Search activity
                   </label>
                   <input
@@ -350,7 +350,7 @@ export default function AdminPage() {
                     placeholder="Search users, plans, files..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-950 shadow-sm outline-none placeholder:text-slate-400 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 sm:text-sm"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-sm outline-none placeholder:text-slate-400 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 sm:text-sm"
                   />
                 </div>
               </div>
@@ -392,11 +392,11 @@ export default function AdminPage() {
             <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-white/92 shadow-xl shadow-slate-200/70 backdrop-blur">
               <div className="flex flex-col gap-3 border-b border-slate-100 bg-white/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                 <div>
-                  <h2 className="text-lg font-black tracking-tight text-slate-950 sm:text-xl">
+                  <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-xl">
                     Recent Analysis Activity
                   </h2>
 
-                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                  <p className="mt-1 text-sm font-semibold leading-5 text-slate-500">
                     Live visibility into customer uploads and parsing
                     performance.
                   </p>
@@ -408,22 +408,22 @@ export default function AdminPage() {
               </div>
 
               {loading ? (
-                <div className="p-8 text-center text-xs font-bold text-slate-500">
+                <div className="p-8 text-center text-sm font-bold text-slate-500">
                   Loading analysis data...
                 </div>
               ) : error ? (
                 <div className="p-8 text-center">
-                  <div className="mx-auto max-w-xl rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-xs font-black text-red-700 sm:text-sm">
+                  <div className="mx-auto max-w-xl rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-sm font-black text-red-700 sm:text-sm">
                     {error}
                   </div>
                 </div>
               ) : filteredRuns.length === 0 ? (
                 <div className="p-8 text-center">
                   <div className="mx-auto max-w-lg rounded-3xl border border-slate-100 bg-slate-50 px-6 py-8">
-                    <h3 className="text-base font-black text-slate-950">
+                    <h3 className="text-lg font-black text-slate-950">
                       No analysis activity yet
                     </h3>
-                    <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+                    <p className="mt-2 text-sm font-semibold leading-5 text-slate-500">
                       Run a new analysis after the Worker logging update is
                       deployed, then refresh this page.
                     </p>
@@ -431,7 +431,7 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  <div className="hidden grid-cols-[minmax(170px,1.25fr)_80px_95px_minmax(170px,1.2fr)_72px_92px_92px_92px_72px_76px_118px] gap-3 bg-slate-50/70 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 xl:grid">
+                  <div className="hidden grid-cols-[minmax(170px,1.25fr)_80px_95px_minmax(170px,1.2fr)_72px_92px_92px_92px_72px_76px_118px] gap-3 bg-slate-50/70 px-4 py-3 text-sm font-black uppercase tracking-wider text-slate-400 xl:grid">
                     <div>User</div>
                     <div>Plan</div>
                     <div>Status</div>
@@ -454,7 +454,7 @@ export default function AdminPage() {
 
             <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
               <div className="rounded-[26px] border border-slate-200 bg-white/90 p-5 shadow-xl shadow-slate-200/70 backdrop-blur">
-                <h3 className="mb-4 text-lg font-black tracking-tight text-slate-950">
+                <h3 className="mb-4 text-xl font-black tracking-tight text-slate-950">
                   Platform Health
                 </h3>
 
@@ -474,11 +474,11 @@ export default function AdminPage() {
               </div>
 
               <div className="rounded-[26px] border border-slate-200 bg-white/90 p-5 shadow-xl shadow-slate-200/70 backdrop-blur">
-                <h3 className="mb-4 text-lg font-black tracking-tight text-slate-950">
+                <h3 className="mb-4 text-xl font-black tracking-tight text-slate-950">
                   What You Can Monitor
                 </h3>
 
-                <div className="grid gap-2 text-xs font-semibold leading-5 text-slate-600 sm:grid-cols-2">
+                <div className="grid gap-2 text-sm font-semibold leading-5 text-slate-600 sm:grid-cols-2">
                   <MonitorItem text="Which users are actively uploading reports" />
                   <MonitorItem text="Which analyses fail or take too long" />
                   <MonitorItem text="Average parsing speed across uploads" />
@@ -508,7 +508,7 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
           {run.email || "Unknown User"}
         </p>
 
-        <p className="mt-1 line-clamp-2 break-all text-[10px] font-semibold leading-4 text-slate-400">
+        <p className="mt-1 line-clamp-2 break-all text-sm font-semibold leading-4 text-slate-400">
           {run.user_id}
         </p>
       </div>
@@ -572,7 +572,7 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
         </div>
 
         {files.length > 0 && !files.some((file) => file.href) && (
-          <p className="mt-1 text-[10px] font-semibold leading-4 text-slate-400">
+          <p className="mt-1 text-sm font-semibold leading-4 text-slate-400">
             File names only. Add UUID/CDN URL logging in Worker to open files.
           </p>
         )}
@@ -608,11 +608,11 @@ function MetricBlock({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-3 xl:block xl:border-0 xl:bg-transparent xl:p-0">
-      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 xl:hidden">
+      <span className="text-sm font-black uppercase tracking-wider text-slate-400 xl:hidden">
         {label}
       </span>
       <span
-        className={`text-xs font-black ${compact ? "xl:text-[13px]" : ""} ${valueClass}`}
+        className={`text-sm font-black ${compact ? "xl:text-[13px]" : ""} ${valueClass}`}
       >
         {value}
       </span>
@@ -634,7 +634,7 @@ function StatCard({
   return (
     <div className="rounded-[22px] border border-slate-200 bg-white/90 p-4 shadow-lg shadow-slate-200/60 backdrop-blur">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+        <p className="text-sm font-black uppercase tracking-wider text-slate-400">
           {label}
         </p>
 
@@ -661,8 +661,8 @@ function StatCard({
 function HealthRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-      <span className="text-xs font-bold text-slate-500">{label}</span>
-      <span className="text-xs font-black text-slate-950">{value}</span>
+      <span className="text-sm font-bold text-slate-500">{label}</span>
+      <span className="text-sm font-black text-slate-950">{value}</span>
     </div>
   );
 }
