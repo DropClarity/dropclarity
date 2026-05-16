@@ -299,7 +299,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-slate-50 px-3 py-6 text-slate-950 sm:px-5 sm:py-8 lg:px-6 lg:py-10">
+    <main className="relative min-h-screen overflow-x-hidden bg-slate-50 px-3 py-6 text-slate-950 sm:px-5 sm:py-8 lg:px-8 lg:py-10 xl:px-10 2xl:px-12">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-[-180px] top-[-140px] h-[420px] w-[520px] rounded-full bg-violet-200/40 blur-[110px]" />
         <div className="absolute right-[-180px] top-[-80px] h-[420px] w-[560px] rounded-full bg-cyan-200/40 blur-[115px]" />
@@ -307,7 +307,7 @@ export default function AdminPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.03)_1px,transparent_1px)] bg-[size:52px_52px] opacity-[0.30]" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1600px] space-y-5 sm:space-y-6">
+      <div className="relative z-10 mx-auto w-full max-w-[1920px] space-y-5 sm:space-y-6">
         {!isAdmin ? (
           <div className="rounded-[24px] border border-slate-200 bg-white/90 p-7 text-center shadow-xl shadow-slate-200/70 backdrop-blur sm:p-9">
             <div className="mx-auto mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-red-50 text-sm font-black text-red-600">
@@ -326,13 +326,13 @@ export default function AdminPage() {
             <section className="rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/70 backdrop-blur sm:p-6 lg:p-7">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <div className="mb-5 inline-flex rounded-full border border-cyan-200 bg-cyan-50/70 px-3 py-1 text-sm font-black uppercase tracking-[0.18em] text-cyan-700">
-                    Admin View
-                  </div>
+                  <div className="mb-5 inline-flex rounded-full border border-cyan-200 bg-cyan-50/70 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-cyan-700">
+  Admin View
+</div>
 
-                  <h1 className="text-3xl font-black tracking-[-0.045em] text-slate-950 sm:text-4xl lg:text-5xl">
-                    Analysis Monitoring
-                  </h1>
+<h1 className="text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-3xl">
+  Analysis Monitoring
+</h1>
 
                   <p className="mt-3 max-w-2xl text-sm font-semibold leading-5 text-slate-600 sm:text-sm">
                     Monitor uploads, analysis health, customer usage,
@@ -431,7 +431,7 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  <div className="hidden grid-cols-[minmax(170px,1.25fr)_80px_95px_minmax(170px,1.2fr)_72px_92px_92px_92px_72px_76px_118px] gap-3 bg-slate-50/70 px-4 py-3 text-sm font-black uppercase tracking-wider text-slate-400 xl:grid">
+                  <div className="hidden grid-cols-[minmax(230px,1.35fr)_90px_105px_minmax(300px,1.55fr)_80px_110px_110px_110px_85px_90px_130px] gap-3 bg-slate-50/70 px-4 py-3 text-sm font-black uppercase tracking-wider text-slate-400 xl:grid">
                     <div>User</div>
                     <div>Plan</div>
                     <div>Status</div>
@@ -502,26 +502,26 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
   const files = getRunFiles(run);
 
   return (
-    <div className="grid gap-3 px-4 py-4 transition-colors hover:bg-cyan-50/35 xl:grid-cols-[minmax(170px,1.25fr)_80px_95px_minmax(170px,1.2fr)_72px_92px_92px_92px_72px_76px_118px] xl:items-center">
+    <div className="grid gap-3 px-4 py-4 transition-colors hover:bg-cyan-50/35 xl:grid-cols-[minmax(230px,1.35fr)_90px_105px_minmax(300px,1.55fr)_80px_110px_110px_110px_85px_90px_130px] xl:items-center">
       <div className="min-w-0">
-        <p className="truncate text-sm font-black text-slate-950">
+        <p className="truncate text-[15px] font-black text-slate-950">
           {run.email || "Unknown User"}
         </p>
 
-        <p className="mt-1 line-clamp-2 break-all text-sm font-semibold leading-4 text-slate-400">
+        <p className="mt-1 line-clamp-2 break-all text-[13px] font-semibold leading-4 text-slate-400">
           {run.user_id}
         </p>
       </div>
 
       <div>
-        <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[13px] font-black capitalize text-slate-600 shadow-sm">
+        <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-sm font-black capitalize text-slate-600 shadow-sm">
           {run.plan || "free"}
         </span>
       </div>
 
       <div>
         <span
-          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[13px] font-black ${
+          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-sm font-black ${
             success
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : started
@@ -543,7 +543,7 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
                   href={file.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="max-w-[190px] truncate rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[13px] font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
+                  className="max-w-[190px] truncate rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
                   title={file.label}
                 >
                   {file.label}
@@ -551,7 +551,7 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
               ) : (
                 <span
                   key={`${file.label}-${idx}`}
-                  className="max-w-[190px] truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[13px] font-bold text-slate-500"
+                  className="max-w-[190px] truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm font-bold text-slate-500"
                   title={`${file.label} — no file URL stored yet`}
                 >
                   {file.label}
@@ -559,20 +559,20 @@ function AnalysisRunRow({ run }: { run: AnalysisRun }) {
               ),
             )
           ) : (
-            <span className="text-[13px] font-bold text-slate-400">
+            <span className="text-sm font-bold text-slate-400">
               No files logged
             </span>
           )}
 
           {files.length > 4 && (
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[13px] font-black text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-sm font-black text-slate-500">
               +{files.length - 4}
             </span>
           )}
         </div>
 
         {files.length > 0 && !files.some((file) => file.href) && (
-          <p className="mt-1 text-sm font-semibold leading-4 text-slate-400">
+          <p className="mt-1 text-[13px] font-semibold leading-4 text-slate-400">
             File names only. Add UUID/CDN URL logging in Worker to open files.
           </p>
         )}
@@ -608,11 +608,11 @@ function MetricBlock({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-3 xl:block xl:border-0 xl:bg-transparent xl:p-0">
-      <span className="text-sm font-black uppercase tracking-wider text-slate-400 xl:hidden">
+      <span className="text-[13px] font-black uppercase tracking-wider text-slate-400 xl:hidden">
         {label}
       </span>
       <span
-        className={`text-sm font-black ${compact ? "xl:text-[13px]" : ""} ${valueClass}`}
+        className={`text-[15px] font-black ${compact ? "xl:text-sm" : ""} ${valueClass}`}
       >
         {value}
       </span>
