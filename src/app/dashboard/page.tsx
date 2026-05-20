@@ -1075,8 +1075,46 @@ function getReportJobs(report: ReportRow, allJobs: JobRow[] = []): JobRow[] {
   );
 }
 
+function extractUploadcareUuidFromValue(value: unknown): string {
+  const match = String(value || "").match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  return match ? match[1] : "";
+}
+
+function normalizeUploadcareSourceUrl(value: unknown): string {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const uuid = extractUploadcareUuidFromValue(raw);
+  if (/ucarecdn\.com/i.test(raw) && uuid) {
+    try {
+      const parsed = new URL(raw);
+      const pathParts = parsed.pathname.split("/").filter(Boolean);
+      const uuidIndex = pathParts.findIndex((part) => part.toLowerCase() === uuid.toLowerCase());
+      const filename = uuidIndex >= 0 ? pathParts.slice(uuidIndex + 1).join("/") : "";
+      const cleanPath = filename ? `${uuid}/${filename}` : `${uuid}/`;
+      return `https://ucarecdn.com/${cleanPath}${filename ? "" : "?download=1"}`;
+    } catch {
+      return `https://ucarecdn.com/${uuid}/?download=1`;
+    }
+  }
+
+  return raw;
+}
+
 function sourceFileUrl(file: SourceFileLink): string {
-  return String(file?.url || file?.cdnUrl || file?.file_url || (file?.uuid ? `https://ucarecdn.com/${file.uuid}/?download=1` : "")).trim();
+  const candidates = [
+    file?.cdnUrl,
+    file?.file_url,
+    file?.url,
+    file?.uuid ? `https://ucarecdn.com/${file.uuid}/?download=1` : "",
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizeUploadcareSourceUrl(candidate);
+    if (normalized) return normalized;
+  }
+
+  return "";
 }
 
 function sourceFileName(file: SourceFileLink, idx = 0): string {
@@ -4030,7 +4068,6 @@ function JobEditor({
 
   const profitRef = useRef<HTMLCanvasElement | null>(null);
   const revCostRef = useRef<HTMLCanvasElement | null>(null);
-  const marginRef = useRef<HTMLCanvasElement | null>(null);
 
   const [saved, setSaved] = useState(false);
   const [editingMoneyField, setEditingMoneyField] = useState<
@@ -4147,11 +4184,8 @@ function JobEditor({
     const profit = history.map((x) => parseNumberLoose(x.gross_profit));
     const revenue = history.map((x) => parseNumberLoose(x.revenue));
     const costs = history.map((x) => parseNumberLoose(x.costs));
-    const margin = history.map((x) => parseNumberLoose(x.gross_margin_pct));
-
     if (profitRef.current) lineChart(profitRef.current, labels, profit, "rgba(16,185,129,.95)");
     if (revCostRef.current) barChart(revCostRef.current, labels, revenue, costs);
-    if (marginRef.current) lineChart(marginRef.current, labels, margin, "rgba(124,58,237,.92)");
   }, [hasHistory, history]);
 
   const setField = (field: keyof EditableJob, value: string | number | CustomCategory[] | EditableJob["_editing"]) => {
@@ -4675,7 +4709,6 @@ function JobEditor({
         <div className="jobCharts">
           <div className="chartCard"><div className="chartHead"><div><div className="chartTitle">Gross Profit Trend</div><div className="chartSub">By period for this job</div></div></div>{hasHistory ? <canvas ref={profitRef} width={520} height={220} /> : <div className="trendEmpty">Upload this job in another period to show trends.</div>}</div>
           <div className="chartCard"><div className="chartHead"><div><div className="chartTitle">Revenue vs Costs</div><div className="chartSub">For this job only</div></div></div>{hasHistory ? <canvas ref={revCostRef} width={520} height={220} /> : <div className="trendEmpty">More periods for this job will unlock this chart.</div>}</div>
-          <div className="chartCard wide"><div className="chartHead"><div><div className="chartTitle">Margin Trend</div><div className="chartSub">Gross margin % by period</div></div></div>{hasHistory ? <canvas ref={marginRef} width={520} height={220} /> : <div className="trendEmpty">Margin history appears after multiple periods.</div>}</div>
         </div>
         ) : null}
       </div>
