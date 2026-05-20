@@ -8896,4 +8896,73 @@ main.dc-bg .dcInsightsDrawer .dcAccordionHeader.mini h2{
   }
 }
 
+
+/* Surgical internal-page title size reduction only. Main dashboard title/utility controls stay unchanged. */
+main.dc-bg.internal-view-bg .jobIdentityTitle,
+main.dc-bg .jobHero .jobIdentityTitle{
+  font-size:clamp(28px,2.45vw,34px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.038em!important;
+}
+
+main.dc-bg.internal-view-bg .decisionJobTitle,
+main.dc-bg .jobHero .decisionJobTitle{
+  font-size:clamp(22px,2vw,27px)!important;
+  line-height:1.1!important;
+  letter-spacing:-.03em!important;
+}
+
+main.dc-bg.internal-view-bg .sectionTitle,
+main.dc-bg .jobAnalysisHeader .sectionTitle{
+  font-size:clamp(17px,1.45vw,20px)!important;
+  line-height:1.16!important;
+}
+
+main.dc-bg.internal-view-bg .modeTitle,
+main.dc-bg .cleanModeShell .modeTitle{
+  font-size:clamp(25px,2vw,32px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.036em!important;
+}
+
+main.dc-bg.internal-view-bg .reportsManagerTitle,
+main.dc-bg .reportsManagerHero .reportsManagerTitle{
+  font-size:clamp(22px,1.9vw,30px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.034em!important;
+}
+
+main.dc-bg.internal-view-bg .riskCommandTitle,
+main.dc-bg .highRiskHero .riskCommandTitle{
+  font-size:clamp(22px,1.9vw,30px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.034em!important;
+}
+
+@media (max-width:760px){
+  main.dc-bg.internal-view-bg .jobIdentityTitle,
+  main.dc-bg .jobHero .jobIdentityTitle{
+    font-size:clamp(24px,7vw,29px)!important;
+  }
+
+  main.dc-bg.internal-view-bg .decisionJobTitle,
+  main.dc-bg .jobHero .decisionJobTitle{
+    font-size:clamp(20px,5.8vw,24px)!important;
+  }
+
+  main.dc-bg.internal-view-bg .sectionTitle,
+  main.dc-bg .jobAnalysisHeader .sectionTitle{
+    font-size:17px!important;
+  }
+
+  main.dc-bg.internal-view-bg .modeTitle,
+  main.dc-bg .cleanModeShell .modeTitle,
+  main.dc-bg.internal-view-bg .reportsManagerTitle,
+  main.dc-bg .reportsManagerHero .reportsManagerTitle,
+  main.dc-bg.internal-view-bg .riskCommandTitle,
+  main.dc-bg .highRiskHero .riskCommandTitle{
+    font-size:clamp(22px,6.2vw,26px)!important;
+  }
+}
+
 `;
