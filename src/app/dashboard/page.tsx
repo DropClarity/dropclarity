@@ -4596,12 +4596,22 @@ function JobEditor({
                       </select>
 
                       <input
+                        id={`${uid}-job-update-file`}
                         className="jobUpdateFileInput"
                         type="file"
                         accept=".pdf,.csv,.xlsx,.xls,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                         onChange={(e) => setUpdateFile(e.target.files?.[0] || null)}
                         aria-label="Upload additional invoice file"
                       />
+
+                      <label className={updateFile ? "jobUpdateUploadBox hasFile" : "jobUpdateUploadBox"} htmlFor={`${uid}-job-update-file`}>
+                        <span className="jobUpdateUploadIcon" aria-hidden="true">↥</span>
+                        <span className="jobUpdateUploadText">
+                          <strong>{updateFile ? updateFile.name : "Upload invoice file"}</strong>
+                          <em>{updateFile ? "Ready to add to this job" : "PDF, spreadsheet, CSV, or image"}</em>
+                        </span>
+                        <span className="jobUpdateUploadAction">{updateFile ? "Change" : "Browse"}</span>
+                      </label>
                     </div>
 
                     <button
@@ -4612,6 +4622,18 @@ function JobEditor({
                     >
                       {updateStatus === "uploading" ? "Uploading..." : updateStatus === "analyzing" ? "Analyzing..." : access.canSaveJobEdits ? "Update job with file" : "Update job with file 🔒"}
                     </button>
+
+                    {(updateStatus === "uploading" || updateStatus === "analyzing") ? (
+                      <div className="jobUpdateAiStatus" role="status" aria-live="polite">
+                        <div className="jobUpdateAiOrb" aria-hidden="true">
+                          <span />
+                        </div>
+                        <div>
+                          <strong>{updateStatus === "uploading" ? "Securing upload" : "AI is reading the file"}</strong>
+                          <em>{updateStatus === "uploading" ? "Preparing this document for analysis..." : "Extracting revenue, costs, tax, credits, and buckets..."}</em>
+                        </div>
+                      </div>
+                    ) : null}
 
                     {updateMessage ? <div className={`jobUpdateMessage ${updateStatus === "error" ? "error" : updateStatus === "success" ? "success" : ""}`}>{updateMessage}</div> : null}
                     <div className="jobUpdateHint">New files are added to this job only. Existing source files and the adjustment history stay intact.</div>
@@ -8669,16 +8691,31 @@ main.dc-bg .dcGuideRail a span{
   }
 }
 
-.dc-bg .jobUpdatePad{display:flex;flex-direction:column;gap:10px}
-.dc-bg .jobUpdateControls{display:grid;grid-template-columns:minmax(135px,.55fr) minmax(0,1fr);gap:10px;align-items:center}
-.dc-bg .jobUpdateSelect{width:100%;min-height:40px}
-.dc-bg .jobUpdateFileInput{width:100%;min-height:40px;border:1px solid rgba(15,23,42,.10);border-radius:14px;padding:8px 10px;background:rgba(255,255,255,.82);font-size:13px;color:#0f172a}
+.dc-bg .jobUpdatePad{display:flex;flex-direction:column;gap:12px}
+.dc-bg .jobUpdateControls{display:grid;grid-template-columns:minmax(135px,.48fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.dc-bg .jobUpdateSelect{width:100%;min-height:46px}
+.dc-bg .jobUpdateFileInput{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.dc-bg .jobUpdateUploadBox{min-width:0;min-height:46px;border:1px solid rgba(15,23,42,.10);border-radius:16px;padding:9px 10px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,250,252,.92));display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;cursor:pointer;box-shadow:0 10px 22px rgba(15,23,42,.04);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.dc-bg .jobUpdateUploadBox:hover{transform:translateY(-1px);border-color:rgba(34,211,238,.38);box-shadow:0 14px 28px rgba(34,211,238,.10);background:linear-gradient(135deg,rgba(236,254,255,.88),rgba(255,255,255,.96))}
+.dc-bg .jobUpdateUploadBox.hasFile{border-color:rgba(16,185,129,.28);background:linear-gradient(135deg,rgba(236,253,245,.86),rgba(255,255,255,.96))}
+.dc-bg .jobUpdateUploadIcon{width:30px;height:30px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(124,58,237,.14));color:#0f172a;font-weight:900;font-size:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.72)}
+.dc-bg .jobUpdateUploadText{min-width:0;display:flex;flex-direction:column;gap:2px}
+.dc-bg .jobUpdateUploadText strong{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;line-height:1.2;color:#0f172a;font-weight:900}
+.dc-bg .jobUpdateUploadText em{font-style:normal;font-size:11px;line-height:1.2;color:#64748b;font-weight:700}
+.dc-bg .jobUpdateUploadAction{border-radius:999px;border:1px solid rgba(15,23,42,.08);background:#fff;padding:7px 10px;font-size:11px;font-weight:900;color:#334155;white-space:nowrap}
 .dc-bg .jobUpdateBtn{align-self:flex-start}
+.dc-bg .jobUpdateAiStatus{display:flex;align-items:center;gap:12px;border:1px solid rgba(34,211,238,.18);border-radius:16px;padding:12px;background:linear-gradient(135deg,rgba(236,254,255,.62),rgba(250,245,255,.58));box-shadow:0 14px 30px rgba(15,23,42,.05)}
+.dc-bg .jobUpdateAiStatus strong{display:block;font-size:12px;font-weight:950;color:#0f172a;line-height:1.25}
+.dc-bg .jobUpdateAiStatus em{display:block;margin-top:2px;font-style:normal;font-size:11px;font-weight:700;color:#64748b;line-height:1.35}
+.dc-bg .jobUpdateAiOrb{position:relative;width:38px;height:38px;border-radius:999px;background:conic-gradient(from 0deg,rgba(34,211,238,.20),rgba(34,211,238,.95),rgba(124,58,237,.92),rgba(16,185,129,.82),rgba(34,211,238,.20));animation:jobUpdateSpin 1.05s linear infinite;box-shadow:0 0 0 6px rgba(34,211,238,.08),0 10px 24px rgba(34,211,238,.22);flex:0 0 auto}
+.dc-bg .jobUpdateAiOrb::before{content:"";position:absolute;inset:5px;border-radius:999px;background:#fff}
+.dc-bg .jobUpdateAiOrb span{position:absolute;inset:13px;border-radius:999px;background:linear-gradient(135deg,#22d3ee,#7c3aed);box-shadow:0 0 18px rgba(124,58,237,.35)}
+@keyframes jobUpdateSpin{to{transform:rotate(360deg)}}
 .dc-bg .jobUpdateMessage{font-size:12px;font-weight:800;color:#475569;line-height:1.35}
 .dc-bg .jobUpdateMessage.success{color:#047857}
 .dc-bg .jobUpdateMessage.error{color:#dc2626}
 .dc-bg .jobUpdateHint{font-size:12px;color:#64748b;line-height:1.45}
-@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}}
+@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}.dc-bg .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}.dc-bg .jobUpdateAiStatus{align-items:flex-start}}
 
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
 @media (max-width: 1180px){.dc-bg .supportGrid{grid-template-columns:1fr 1fr}.dc-bg .sourceDocsPanel{grid-column:1 / -1}}
