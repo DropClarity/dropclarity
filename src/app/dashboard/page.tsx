@@ -4296,7 +4296,11 @@ function JobEditor({
       setUpdateFile(null);
       setUpdateStatus("success");
       setUpdateMessage(addedText ? `Job updated: ${addedText}.` : "Job updated with the additional file.");
-      setReportSourceFiles((current) => dedupeSourceFiles([...(current || []), uploaded, ...((result.added?.files || []) as SourceFileLink[])]));
+
+      const savedUpdateFiles = Array.isArray(result.added?.files) ? (result.added.files as SourceFileLink[]) : [];
+      const updateFilesForDisplay = savedUpdateFiles.length ? savedUpdateFiles : [uploaded];
+
+      setReportSourceFiles((current) => dedupeSourceFiles([...updateFilesForDisplay, ...(current || [])]));
       resetJobEdit(jobKey, userId);
 
       if (onDashboardRefresh) {
