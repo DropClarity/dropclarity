@@ -34,6 +34,7 @@ type SourceFileLink = {
   name?: string | null;
   url?: string | null;
   cdnUrl?: string | null;
+  fileUrl?: string | null;
   file_url?: string | null;
   mime?: string | null;
   kind?: string | null;
@@ -806,15 +807,23 @@ async function apiUploadDashboardFile(token: string | null, file: File): Promise
     throw new Error(data?.error || text || `Upload failed (${res.status})`);
   }
 
+  const uploadUrl =
+    data?.fileUrl ||
+    data?.file_url ||
+    data?.url ||
+    data?.cdnUrl ||
+    (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null);
+
   return {
     uuid: data?.uuid || null,
     filename: data?.filename || file.name || "Additional invoice",
     mime: data?.mime || file.type || null,
     size: data?.size || file.size || null,
-    url: data?.url || data?.cdnUrl || (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null),
-    cdnUrl: data?.cdnUrl || data?.url || (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null),
-  };
-}
+    url: uploadUrl,
+    cdnUrl: uploadUrl,
+    fileUrl: uploadUrl,
+    file_url: uploadUrl,
+  };}
 
 async function apiUpdateJobWithFile(
   token: string | null,
@@ -1103,9 +1112,10 @@ function normalizeUploadcareSourceUrl(value: unknown): string {
 
 function sourceFileUrl(file: SourceFileLink): string {
   const candidates = [
-    file?.cdnUrl,
+    file?.fileUrl,
     file?.file_url,
     file?.url,
+    file?.cdnUrl,
     file?.uuid ? `https://ucarecdn.com/${file.uuid}/?download=1` : "",
   ];
 
@@ -4296,11 +4306,12 @@ function JobEditor({
       setUpdateFile(null);
       setUpdateStatus("success");
       setUpdateMessage(addedText ? `Job updated: ${addedText}.` : "Job updated with the additional file.");
+      const resultFiles = Array.isArray(result.added?.files) ? (result.added?.files as SourceFileLink[]) : [];
 
-      const savedUpdateFiles = Array.isArray(result.added?.files) ? (result.added.files as SourceFileLink[]) : [];
-      const updateFilesForDisplay = savedUpdateFiles.length ? savedUpdateFiles : [uploaded];
-
-      setReportSourceFiles((current) => dedupeSourceFiles([...updateFilesForDisplay, ...(current || [])]));
+      // Prefer the finalized /job-file-update source-file records. The immediate
+      // /upload object is only a fallback. If both records share the same UUID,
+      // dedupeSourceFiles keeps the first one, so resultFiles must come first.
+      setReportSourceFiles((current) => dedupeSourceFiles([...resultFiles, uploaded, ...(current || [])]));
       resetJobEdit(jobKey, userId);
 
       if (onDashboardRefresh) {
