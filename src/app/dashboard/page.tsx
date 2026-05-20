@@ -5989,15 +5989,7 @@ useEffect(() => {
                   onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
                 />
               </>
-            ) : (
-              <InternalPageQuickControls
-                onRefresh={() => loadAndRender()}
-                marginTarget={marginTarget}
-                marginTargetDraft={marginTargetDraft}
-                setMarginTargetDraft={setMarginTargetDraft}
-                onSaveMarginTarget={saveMarginTarget}
-              />
-            )}
+            ) : null}
 
             {view === "job" && jobKey ? (
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} onDashboardRefresh={() => loadAndRender({ background: true })} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} onHideJob={handleHideJob} />
@@ -8889,5 +8881,19 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
 @media (max-width: 1180px){.dc-bg .supportGrid{grid-template-columns:1fr 1fr}.dc-bg .sourceDocsPanel{grid-column:1 / -1}}
 @media (max-width: 760px){.dc-bg .supportGrid{grid-template-columns:1fr}.dc-bg .sourceDocsPanel{grid-column:auto}.dc-bg .sourceDocLink{font-size:12px;padding:8px 9px}}
+
+
+/* Keep the Additional notes drawer visually aligned with Past Reports on the main dashboard. */
+main.dc-bg .dcInsightsDrawer .dcAccordionHeader.mini h2{
+  font-size:22px!important;
+  line-height:1.12!important;
+  letter-spacing:-.025em!important;
+}
+
+@media (max-width:760px){
+  main.dc-bg .dcInsightsDrawer .dcAccordionHeader.mini h2{
+    font-size:19px!important;
+  }
+}
 
 `;
