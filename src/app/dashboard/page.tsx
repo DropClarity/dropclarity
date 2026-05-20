@@ -43,6 +43,8 @@ type SourceFileLink = {
   job_id?: string | null;
 };
 
+type JobUpdateFileRole = "cost" | "revenue" | "combined_invoice";
+
 type JobRow = {
   id?: string;
   report_id?: string;
@@ -756,6 +758,104 @@ async function apiSaveJobNotes(
   return data || { ok: true, notes: payload.notes };
 }
 
+
+
+type JobFileUpdateResponse = {
+  ok?: boolean;
+  error?: string;
+  updated_job?: JobRow;
+  added?: {
+    revenue?: number;
+    costs?: number;
+    profit?: number;
+    cost_breakdown?: CostBreakdown;
+    files?: SourceFileLink[];
+  };
+  jobs?: JobRow[];
+  kpis?: {
+    revenue?: number;
+    costs?: number;
+    net_profit?: number;
+    profit_margin_pct?: number;
+    jobs_count?: number;
+    losing_jobs_count?: number;
+  };
+  cost_mix?: CostBreakdown;
+};
+
+async function apiUploadDashboardFile(token: string | null, file: File): Promise<SourceFileLink> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: form,
+  });
+
+  const text = await res.text();
+  let data: (SourceFileLink & { error?: string }) | null = null;
+
+  try {
+    data = JSON.parse(text) as SourceFileLink & { error?: string };
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error(data?.error || text || `Upload failed (${res.status})`);
+  }
+
+  return {
+    uuid: data?.uuid || null,
+    filename: data?.filename || file.name || "Additional invoice",
+    mime: data?.mime || file.type || null,
+    size: data?.size || file.size || null,
+    url: data?.url || data?.cdnUrl || (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null),
+    cdnUrl: data?.cdnUrl || data?.url || (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null),
+  };
+}
+
+async function apiUpdateJobWithFile(
+  token: string | null,
+  payload: {
+    reportId: string;
+    jobDbId?: string | null;
+    jobId?: string | null;
+    jobName?: string | null;
+    role: JobUpdateFileRole;
+    files: SourceFileLink[];
+  }
+): Promise<JobFileUpdateResponse> {
+  const res = await fetch(`${API_BASE}/job-file-update`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      report_id: payload.reportId,
+      job_db_id: payload.jobDbId || null,
+      job_id: payload.jobId || null,
+      job_name: payload.jobName || null,
+      role: payload.role,
+      files: payload.files,
+    }),
+  });
+
+  const text = await res.text();
+  let data: JobFileUpdateResponse | null = null;
+
+  try {
+    data = JSON.parse(text) as JobFileUpdateResponse;
+  } catch {}
+
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || text || `Job update failed (${res.status})`);
+  }
+
+  return data;
+}
 
 
 type HiddenReportsResponse = {
@@ -3899,6 +3999,7 @@ function JobEditor({
   onBack,
   onAllJobs,
   refreshLocal,
+  onDashboardRefresh,
   userId,
   access,
   onLocked,
@@ -3913,6 +4014,7 @@ function JobEditor({
   onBack: () => void;
   onAllJobs: () => void;
   refreshLocal: () => void;
+  onDashboardRefresh?: () => Promise<void> | void;
   userId: string;
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
@@ -3948,6 +4050,10 @@ function JobEditor({
   const [customAmountDrafts, setCustomAmountDrafts] = useState<Record<number, string>>({});
   const [reportSourceFiles, setReportSourceFiles] = useState<SourceFileLink[]>([]);
   const [sourceFilesLoading, setSourceFilesLoading] = useState(false);
+  const [updateFile, setUpdateFile] = useState<File | null>(null);
+  const [updateFileRole, setUpdateFileRole] = useState<JobUpdateFileRole>("cost");
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "uploading" | "analyzing" | "success" | "error">("idle");
+  const [updateMessage, setUpdateMessage] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -3999,6 +4105,9 @@ function JobEditor({
       other_cost: "",
     });
     setCustomAmountDrafts({});
+    setUpdateFile(null);
+    setUpdateStatus("idle");
+    setUpdateMessage("");
   }, [jobKey, base, userId]);
 
   const customTotal = sumCustomCategories(job.custom_categories || []);
@@ -4105,6 +4214,67 @@ function JobEditor({
   const reset = () => {
     resetJobEdit(jobKey, userId);
     setJob(mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
+  };
+
+  const handleAddInvoiceFile = async () => {
+    if (!access.canSaveJobEdits) {
+      handleLocked("Updating analyzed jobs with new files", "Core");
+      return;
+    }
+
+    if (!updateFile) {
+      setUpdateStatus("error");
+      setUpdateMessage("Choose an invoice or cost file first.");
+      return;
+    }
+
+    if (!base?.report_id || !base?.id) {
+      setUpdateStatus("error");
+      setUpdateMessage("This job is missing the saved report reference needed for updates.");
+      return;
+    }
+
+    try {
+      setUpdateStatus("uploading");
+      setUpdateMessage("Uploading file...");
+      const token = getToken ? await getToken() : null;
+      const uploaded = await apiUploadDashboardFile(token, updateFile);
+
+      setUpdateStatus("analyzing");
+      setUpdateMessage("Analyzing and adding to this job...");
+
+      const result = await apiUpdateJobWithFile(token, {
+        reportId: String(base.report_id || ""),
+        jobDbId: String(base.id || ""),
+        jobId: job.job_id || base.job_id || null,
+        jobName: job.job_name || base.job_name || null,
+        role: updateFileRole,
+        files: [uploaded],
+      });
+
+      const addedRevenue = parseNumberLoose(result.added?.revenue);
+      const addedCosts = parseNumberLoose(result.added?.costs);
+      const addedText = [
+        addedRevenue ? `+${fmtMoney(addedRevenue)} revenue` : "",
+        addedCosts ? `+${fmtMoney(addedCosts)} costs` : "",
+      ].filter(Boolean).join(" • ");
+
+      setUpdateFile(null);
+      setUpdateStatus("success");
+      setUpdateMessage(addedText ? `Job updated: ${addedText}.` : "Job updated with the additional file.");
+      setReportSourceFiles((current) => dedupeSourceFiles([...(current || []), uploaded, ...((result.added?.files || []) as SourceFileLink[])]));
+      resetJobEdit(jobKey, userId);
+
+      if (onDashboardRefresh) {
+        await onDashboardRefresh();
+      } else {
+        refreshLocal();
+      }
+    } catch (err) {
+      console.error("Failed to update job with additional file", err);
+      setUpdateStatus("error");
+      setUpdateMessage(err instanceof Error ? err.message : "Failed to update this job.");
+    }
   };
 
   const renderMoneyCell = (
@@ -4409,6 +4579,46 @@ function JobEditor({
                 </div>
               </div>
 
+              {showBack ? (
+                <div className="panel miniPanel jobUpdatePanel">
+                  <div className="panelHead"><div><div className="panelTitle">Add missing invoice</div><div className="panelSub">Upload a late invoice or cost file and add it to this analyzed job.</div></div></div>
+                  <div className="pad jobUpdatePad">
+                    <div className="jobUpdateControls">
+                      <select
+                        className="selectInput jobUpdateSelect"
+                        value={updateFileRole}
+                        onChange={(e) => setUpdateFileRole(e.target.value as JobUpdateFileRole)}
+                        aria-label="Additional file type"
+                      >
+                        <option value="cost">Cost invoice</option>
+                        <option value="revenue">Revenue invoice</option>
+                        <option value="combined_invoice">Combined invoice</option>
+                      </select>
+
+                      <input
+                        className="jobUpdateFileInput"
+                        type="file"
+                        accept=".pdf,.csv,.xlsx,.xls,.png,.jpg,.jpeg,.webp,image/*,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                        onChange={(e) => setUpdateFile(e.target.files?.[0] || null)}
+                        aria-label="Upload additional invoice file"
+                      />
+                    </div>
+
+                    <button
+                      className="btn subtleSaveBtn jobUpdateBtn"
+                      type="button"
+                      onClick={handleAddInvoiceFile}
+                      disabled={updateStatus === "uploading" || updateStatus === "analyzing"}
+                    >
+                      {updateStatus === "uploading" ? "Uploading..." : updateStatus === "analyzing" ? "Analyzing..." : access.canSaveJobEdits ? "Update job with file" : "Update job with file 🔒"}
+                    </button>
+
+                    {updateMessage ? <div className={`jobUpdateMessage ${updateStatus === "error" ? "error" : updateStatus === "success" ? "success" : ""}`}>{updateMessage}</div> : null}
+                    <div className="jobUpdateHint">New files are added to this job only. Existing source files and the adjustment history stay intact.</div>
+                  </div>
+                </div>
+              ) : null}
+
               {(sourceFilesForDisplay.length > 0 || sourceFilesLoading) ? (
                 <div className="panel miniPanel sourceDocsPanel">
                   <div className="panelHead"><div><div className="panelTitle">Source documents</div><div className="panelSub">Original files for reference.</div></div></div>
@@ -4457,6 +4667,7 @@ function JobView({
   setView,
   setJobKey,
   refreshLocal,
+  onDashboardRefresh,
   userId,
   access,
   onLocked,
@@ -4469,6 +4680,7 @@ function JobView({
   setView: (v: ViewMode) => void;
   setJobKey: (v: string) => void;
   refreshLocal: () => void;
+  onDashboardRefresh?: () => Promise<void> | void;
   userId: string;
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
@@ -4497,6 +4709,7 @@ function JobView({
       onBack={() => { setView("dashboard"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
       onAllJobs={() => { setView("alljobs"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
       refreshLocal={refreshLocal}
+      onDashboardRefresh={onDashboardRefresh}
       access={access}
       onLocked={onLocked}
       marginTarget={marginTarget}
@@ -5608,7 +5821,7 @@ useEffect(() => {
             )}
 
             {view === "job" && jobKey ? (
-              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} onHideJob={handleHideJob} />
+              <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} onDashboardRefresh={() => loadAndRender({ background: true })} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} onHideJob={handleHideJob} />
             ) : view === "alljobs" ? (
               <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} getToken={getToken} onHideJob={handleHideJob} />
             ) : view === "highrisk" ? (
@@ -8455,6 +8668,17 @@ main.dc-bg .dcGuideRail a span{
     padding:10px 13px!important;
   }
 }
+
+.dc-bg .jobUpdatePad{display:flex;flex-direction:column;gap:10px}
+.dc-bg .jobUpdateControls{display:grid;grid-template-columns:minmax(135px,.55fr) minmax(0,1fr);gap:10px;align-items:center}
+.dc-bg .jobUpdateSelect{width:100%;min-height:40px}
+.dc-bg .jobUpdateFileInput{width:100%;min-height:40px;border:1px solid rgba(15,23,42,.10);border-radius:14px;padding:8px 10px;background:rgba(255,255,255,.82);font-size:13px;color:#0f172a}
+.dc-bg .jobUpdateBtn{align-self:flex-start}
+.dc-bg .jobUpdateMessage{font-size:12px;font-weight:800;color:#475569;line-height:1.35}
+.dc-bg .jobUpdateMessage.success{color:#047857}
+.dc-bg .jobUpdateMessage.error{color:#dc2626}
+.dc-bg .jobUpdateHint{font-size:12px;color:#64748b;line-height:1.45}
+@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}}
 
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
 @media (max-width: 1180px){.dc-bg .supportGrid{grid-template-columns:1fr 1fr}.dc-bg .sourceDocsPanel{grid-column:1 / -1}}
