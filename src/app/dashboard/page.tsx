@@ -34,6 +34,7 @@ type SourceFileLink = {
   name?: string | null;
   url?: string | null;
   cdnUrl?: string | null;
+  fileUrl?: string | null;
   file_url?: string | null;
   mime?: string | null;
   kind?: string | null;
@@ -44,6 +45,16 @@ type SourceFileLink = {
 };
 
 type JobUpdateFileRole = "cost" | "revenue" | "combined_invoice";
+
+type JobAdjustmentHistoryItem = {
+  id: string;
+  created_at: string;
+  filename: string;
+  role: JobUpdateFileRole;
+  revenue: number;
+  costs: number;
+  profit: number;
+};
 
 type JobRow = {
   id?: string;
@@ -806,15 +817,23 @@ async function apiUploadDashboardFile(token: string | null, file: File): Promise
     throw new Error(data?.error || text || `Upload failed (${res.status})`);
   }
 
+  const uploadUrl =
+    data?.fileUrl ||
+    data?.file_url ||
+    data?.url ||
+    data?.cdnUrl ||
+    (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null);
+
   return {
     uuid: data?.uuid || null,
     filename: data?.filename || file.name || "Additional invoice",
     mime: data?.mime || file.type || null,
     size: data?.size || file.size || null,
-    url: data?.url || data?.cdnUrl || (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null),
-    cdnUrl: data?.cdnUrl || data?.url || (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null),
-  };
-}
+    url: uploadUrl,
+    cdnUrl: uploadUrl,
+    fileUrl: uploadUrl,
+    file_url: uploadUrl,
+  };}
 
 async function apiUpdateJobWithFile(
   token: string | null,
@@ -1103,9 +1122,10 @@ function normalizeUploadcareSourceUrl(value: unknown): string {
 
 function sourceFileUrl(file: SourceFileLink): string {
   const candidates = [
-    file?.cdnUrl,
+    file?.fileUrl,
     file?.file_url,
     file?.url,
+    file?.cdnUrl,
     file?.uuid ? `https://ucarecdn.com/${file.uuid}/?download=1` : "",
   ];
 
@@ -1418,6 +1438,49 @@ function resetJobEdit(jobKey: string, userId: string) {
   const edits = readEdits(userId);
   delete edits[String(jobKey)];
   writeEdits(userId, edits);
+}
+
+function jobAdjustmentHistoryKey(userId: string, jobKey: string): string {
+  return `dc_job_adjustment_history_${userId}_${String(jobKey || "job").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+}
+
+function readJobAdjustmentHistory(userId: string, jobKey: string): JobAdjustmentHistoryItem[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = localStorage.getItem(jobAdjustmentHistoryKey(userId, jobKey));
+    const parsed = JSON.parse(raw || "[]") as JobAdjustmentHistoryItem[];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            id: String(item.id || `${item.created_at || Date.now()}-${item.filename || "file"}`),
+            created_at: String(item.created_at || new Date().toISOString()),
+            filename: String(item.filename || "Additional invoice"),
+            role: (item.role === "revenue" || item.role === "combined_invoice" ? item.role : "cost") as JobUpdateFileRole,
+            revenue: parseNumberLoose(item.revenue),
+            costs: parseNumberLoose(item.costs),
+            profit: parseNumberLoose(item.profit),
+          }))
+          .slice(0, 20)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeJobAdjustmentHistory(userId: string, jobKey: string, items: JobAdjustmentHistoryItem[]) {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(jobAdjustmentHistoryKey(userId, jobKey), JSON.stringify((Array.isArray(items) ? items : []).slice(0, 20)));
+  } catch {}
+}
+
+function labelForJobUpdateRole(role: JobUpdateFileRole): string {
+  if (role === "revenue") return "Revenue invoice";
+  if (role === "combined_invoice") return "Combined invoice";
+  return "Cost invoice";
 }
 
 function seedJobFromBase(base: JobRow): EditableJob {
@@ -4091,6 +4154,7 @@ function JobEditor({
   const [updateFileRole, setUpdateFileRole] = useState<JobUpdateFileRole>("cost");
   const [updateStatus, setUpdateStatus] = useState<"idle" | "uploading" | "analyzing" | "success" | "error">("idle");
   const [updateMessage, setUpdateMessage] = useState("");
+  const [adjustmentHistory, setAdjustmentHistory] = useState<JobAdjustmentHistoryItem[]>(() => readJobAdjustmentHistory(userId, jobKey));
 
   useEffect(() => {
     let alive = true;
@@ -4145,6 +4209,7 @@ function JobEditor({
     setUpdateFile(null);
     setUpdateStatus("idle");
     setUpdateMessage("");
+    setAdjustmentHistory(readJobAdjustmentHistory(userId, jobKey));
   }, [jobKey, base, userId]);
 
   const customTotal = sumCustomCategories(job.custom_categories || []);
@@ -4293,10 +4358,31 @@ function JobEditor({
         addedCosts ? `+${fmtMoney(addedCosts)} costs` : "",
       ].filter(Boolean).join(" • ");
 
+      const historyItem: JobAdjustmentHistoryItem = {
+        id: `${Date.now()}-${uploaded.uuid || updateFile.name}`,
+        created_at: new Date().toISOString(),
+        filename: sourceFileName((result.added?.files || [])[0] || uploaded, 0) || updateFile.name || "Additional invoice",
+        role: updateFileRole,
+        revenue: addedRevenue,
+        costs: addedCosts,
+        profit: addedRevenue - addedCosts,
+      };
+
+      setAdjustmentHistory((current) => {
+        const next = [historyItem, ...(current || [])].slice(0, 10);
+        writeJobAdjustmentHistory(userId, jobKey, next);
+        return next;
+      });
+
       setUpdateFile(null);
       setUpdateStatus("success");
       setUpdateMessage(addedText ? `Job updated: ${addedText}.` : "Job updated with the additional file.");
-      setReportSourceFiles((current) => dedupeSourceFiles([...(current || []), uploaded, ...((result.added?.files || []) as SourceFileLink[])]));
+      const resultFiles = Array.isArray(result.added?.files) ? (result.added?.files as SourceFileLink[]) : [];
+
+      // Prefer the finalized /job-file-update source-file records. The immediate
+      // /upload object is only a fallback. If both records share the same UUID,
+      // dedupeSourceFiles keeps the first one, so resultFiles must come first.
+      setReportSourceFiles((current) => dedupeSourceFiles([...resultFiles, uploaded, ...(current || [])]));
       resetJobEdit(jobKey, userId);
 
       if (onDashboardRefresh) {
@@ -4671,6 +4757,44 @@ function JobEditor({
 
                     {updateMessage ? <div className={`jobUpdateMessage ${updateStatus === "error" ? "error" : updateStatus === "success" ? "success" : ""}`}>{updateMessage}</div> : null}
                     <div className="jobUpdateHint">New files are added to this job only. Existing source files and the adjustment history stay intact.</div>
+                  </div>
+                </div>
+              ) : null}
+
+              {showBack ? (
+                <div className="panel miniPanel adjustmentHistoryPanel">
+                  <div className="panelHead"><div><div className="panelTitle">Adjustment history</div><div className="panelSub">Late files added to this job after the original analysis.</div></div></div>
+                  <div className="pad adjustmentHistoryPad">
+                    {adjustmentHistory.length ? (
+                      <div className="adjustmentHistoryList" aria-label="Adjustment history for this job">
+                        {adjustmentHistory.slice(0, 6).map((item) => {
+                          const netImpact = parseNumberLoose(item.profit);
+                          const amountParts = [
+                            parseNumberLoose(item.revenue) ? `+${fmtMoney(item.revenue)} revenue` : "",
+                            parseNumberLoose(item.costs) ? `+${fmtMoney(item.costs)} costs` : "",
+                          ].filter(Boolean);
+
+                          return (
+                            <div className="adjustmentHistoryItem" key={item.id}>
+                              <div className="adjustmentHistoryDot" aria-hidden="true" />
+                              <div className="adjustmentHistoryBody">
+                                <div className="adjustmentHistoryTop">
+                                  <strong>{labelForJobUpdateRole(item.role)}</strong>
+                                  <span>{dateTimeLabel(item.created_at)}</span>
+                                </div>
+                                <div className="adjustmentHistoryFile">{item.filename}</div>
+                                <div className="adjustmentHistoryMeta">
+                                  <span>{amountParts.length ? amountParts.join(" • ") : "Added source file"}</span>
+                                  <em className={netImpact < 0 ? "neg" : "pos"}>Net impact: {fmtMoney(netImpact)}</em>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="adjustmentHistoryEmpty">No late invoices added yet. New file updates will appear here.</div>
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -8744,11 +8868,23 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .jobUpdateAiOrb::before{content:"";position:absolute;inset:5px;border-radius:999px;background:#fff}
 .dc-bg .jobUpdateAiOrb span{position:absolute;inset:13px;border-radius:999px;background:linear-gradient(135deg,#22d3ee,#7c3aed);box-shadow:0 0 18px rgba(124,58,237,.35)}
 @keyframes jobUpdateSpin{to{transform:rotate(360deg)}}
+.dc-bg .adjustmentHistoryPad{display:flex;flex-direction:column;gap:10px}
+.dc-bg .adjustmentHistoryList{display:flex;flex-direction:column;gap:10px}
+.dc-bg .adjustmentHistoryItem{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:11px 12px;border:1px solid rgba(15,23,42,.08);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,250,252,.86));box-shadow:0 10px 24px rgba(15,23,42,.035)}
+.dc-bg .adjustmentHistoryDot{width:10px;height:10px;border-radius:999px;margin-top:5px;background:linear-gradient(135deg,#22d3ee,#7c3aed);box-shadow:0 0 0 5px rgba(34,211,238,.10)}
+.dc-bg .adjustmentHistoryBody{min-width:0;display:flex;flex-direction:column;gap:4px}
+.dc-bg .adjustmentHistoryTop{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.dc-bg .adjustmentHistoryTop strong{font-size:12px;font-weight:950;color:#0f172a;line-height:1.2}
+.dc-bg .adjustmentHistoryTop span{font-size:10px;font-weight:800;color:#94a3b8;white-space:nowrap}
+.dc-bg .adjustmentHistoryFile{font-size:12px;font-weight:800;color:#334155;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dc-bg .adjustmentHistoryMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#64748b;line-height:1.25}
+.dc-bg .adjustmentHistoryMeta em{font-style:normal;white-space:nowrap}
+.dc-bg .adjustmentHistoryEmpty{font-size:12px;font-weight:700;color:#64748b;line-height:1.45;border:1px dashed rgba(15,23,42,.12);border-radius:16px;padding:12px;background:rgba(248,250,252,.65)}
 .dc-bg .jobUpdateMessage{font-size:12px;font-weight:800;color:#475569;line-height:1.35}
 .dc-bg .jobUpdateMessage.success{color:#047857}
 .dc-bg .jobUpdateMessage.error{color:#dc2626}
 .dc-bg .jobUpdateHint{font-size:12px;color:#64748b;line-height:1.45}
-@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}.dc-bg .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}.dc-bg .jobUpdateAiStatus{align-items:flex-start}}
+@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}.dc-bg .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}.dc-bg .jobUpdateAiStatus{align-items:flex-start}.dc-bg .adjustmentHistoryTop,.dc-bg .adjustmentHistoryMeta{align-items:flex-start;flex-direction:column;gap:4px}.dc-bg .adjustmentHistoryMeta em{white-space:normal}}
 
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
 @media (max-width: 1180px){.dc-bg .supportGrid{grid-template-columns:1fr 1fr}.dc-bg .sourceDocsPanel{grid-column:1 / -1}}
