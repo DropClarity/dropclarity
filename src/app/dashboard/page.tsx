@@ -4585,6 +4585,49 @@ function JobEditor({
           )}
 
           <div className="pad jobDetailPad spreadsheetJobPad">
+            <div className="mobileJobFinancialSummary" aria-label="Mobile job financial summary">
+              <div className="mobileJobSummaryTop">
+                <div>
+                  <div className="mobileJobSummaryKicker">Job summary</div>
+                  <div className="mobileJobSummaryTitle">{job.job_name || job.job_id || "Unnamed job"}</div>
+                  <div className="mobileJobSummaryMeta">{job.job_id || "No Job ID"} • {job.job_date || dateLabel(base?.created_at)}</div>
+                </div>
+                <div className={gm < 0 || gp < 0 ? "mobileJobSummaryStatus neg" : gm < marginTarget ? "mobileJobSummaryStatus warn" : "mobileJobSummaryStatus pos"}>
+                  {gm < 0 || gp < 0 ? "Review" : gm < marginTarget ? "Below target" : "Healthy"}
+                </div>
+              </div>
+
+              <div className="mobileJobSummaryGrid">
+                <div>
+                  <span>Revenue</span>
+                  <strong>{fmtMoney(job.revenue)}</strong>
+                </div>
+                <div>
+                  <span>Known costs</span>
+                  <strong>{fmtMoney(knownCosts)}</strong>
+                </div>
+                <div>
+                  <span>Gross profit</span>
+                  <strong className={gp < 0 ? "neg" : "pos"}>{fmtMoney(gp)}</strong>
+                </div>
+                <div>
+                  <span>Margin</span>
+                  <strong className={gm < 0 ? "neg" : "pos"}>{fmtPct(gm)}</strong>
+                </div>
+              </div>
+
+              <div className="mobileJobSummaryHint">
+                Open the full breakdown only when you need to edit individual buckets.
+              </div>
+            </div>
+
+            <details className="mobileSpreadsheetDisclosure">
+              <summary>
+                <span>View/edit full breakdown</span>
+                <em>Spreadsheet-style editor</em>
+              </summary>
+
+              <div className="mobileSpreadsheetScroller">
             <table className="jobTable spreadsheetJobTable" style={{ minWidth: `${1180 + Math.max(0, job.custom_categories.length) * 150}px` }}>
               <thead>
                 <tr>
@@ -4678,6 +4721,8 @@ function JobEditor({
                 </tr>
               </tbody>
             </table>
+              </div>
+            </details>
 
             {showBack ? (
             <div className="supportGrid">
@@ -9425,4 +9470,218 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 @media (min-width:1200px){.dc-bg .spreadsheetJobTable{min-width:1120px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1120px!important}.dc-bg .spreadsheetJobTable td{height:68px!important}}
 @media (max-width:900px){.dc-bg .spreadsheetJobHead{align-items:stretch!important}.dc-bg .spreadsheetJobActions{justify-content:flex-start!important}.dc-bg .spreadsheetJobActions .btn{flex:1 1 140px!important;justify-content:center!important}.dc-bg .spreadsheetJobTable{min-width:1080px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1080px!important}.dc-bg .spreadsheetStackHeader{align-items:flex-start!important}.dc-bg .spreadsheetStackHeader .stackedHeaderActions{align-self:stretch!important;justify-content:flex-end!important}}
 @media (max-width:640px){.dc-bg .spreadsheetJobDetail{border-radius:18px!important}.dc-bg .spreadsheetJobHead{padding:13px 14px!important}.dc-bg .spreadsheetJobHead .panelTitle{font-size:19px!important}.dc-bg .spreadsheetJobActions{display:grid!important;grid-template-columns:1fr 1fr!important}.dc-bg .spreadsheetJobActions .btn{width:100%!important;min-width:0!important}.dc-bg .spreadsheetJobPad{border-top:1px solid rgba(15,23,42,.04)!important}.dc-bg .spreadsheetJobTable{min-width:1020px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1020px!important}.dc-bg .spreadsheetJobTable th{height:38px!important;font-size:10px!important;padding:0 9px!important}.dc-bg .spreadsheetJobTable td{height:64px!important;padding:7px 8px!important}.dc-bg .spreadsheetJobTable .cellEdit{font-size:12.2px!important;min-height:34px!important;height:34px!important;padding:6px 7px!important}.dc-bg .spreadsheetJobTable .cellHint{display:none!important}.dc-bg .spreadsheetCalcCell{font-size:12.8px!important;min-height:34px!important;height:34px!important}.dc-bg .spreadsheetStackActions .buttonRow{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.dc-bg .spreadsheetStackActions .btn{width:100%!important;justify-content:center!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobName{font-size:14px!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobMeta{font-size:11px!important}}
+
+/* Mobile job-detail readability upgrade */
+.dc-bg .mobileJobFinancialSummary{
+  display:none;
+}
+
+.dc-bg .mobileSpreadsheetDisclosure{
+  display:block;
+}
+
+.dc-bg .mobileSpreadsheetDisclosure > summary{
+  display:none;
+}
+
+.dc-bg .mobileSpreadsheetDisclosure:not([open]) > .mobileSpreadsheetScroller{
+  display:block;
+}
+
+.dc-bg .mobileSpreadsheetScroller{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+@media (max-width: 768px){
+  .dc-bg .spreadsheetJobDetail{
+    overflow:hidden;
+  }
+
+  .dc-bg .spreadsheetJobHead,
+  .dc-bg .spreadsheetStackActions{
+    align-items:stretch!important;
+  }
+
+  .dc-bg .mobileJobFinancialSummary{
+    display:block;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:22px;
+    padding:14px;
+    margin-bottom:12px;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(34,211,238,.10), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.96));
+    box-shadow:0 16px 38px rgba(15,23,42,.06);
+  }
+
+  .dc-bg .mobileJobSummaryTop{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+
+  .dc-bg .mobileJobSummaryKicker{
+    font-size:10px;
+    font-weight:950;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:#0891b2;
+  }
+
+  .dc-bg .mobileJobSummaryTitle{
+    margin-top:4px;
+    font-size:17px;
+    line-height:1.18;
+    font-weight:950;
+    color:#0f172a;
+  }
+
+  .dc-bg .mobileJobSummaryMeta{
+    margin-top:5px;
+    font-size:11.5px;
+    line-height:1.35;
+    color:#64748b;
+    font-weight:750;
+  }
+
+  .dc-bg .mobileJobSummaryStatus{
+    flex:0 0 auto;
+    border-radius:999px;
+    padding:7px 9px;
+    font-size:10.5px;
+    font-weight:950;
+    border:1px solid rgba(15,23,42,.08);
+    background:#fff;
+  }
+
+  .dc-bg .mobileJobSummaryStatus.pos{color:#059669;background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.18)}
+  .dc-bg .mobileJobSummaryStatus.warn{color:#b45309;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.20)}
+  .dc-bg .mobileJobSummaryStatus.neg{color:#dc2626;background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.18)}
+
+  .dc-bg .mobileJobSummaryGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .dc-bg .mobileJobSummaryGrid > div{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:16px;
+    padding:11px 12px;
+    background:rgba(255,255,255,.86);
+    min-width:0;
+  }
+
+  .dc-bg .mobileJobSummaryGrid span{
+    display:block;
+    font-size:10px;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#94a3b8;
+    margin-bottom:5px;
+  }
+
+  .dc-bg .mobileJobSummaryGrid strong{
+    display:block;
+    font-size:15px;
+    line-height:1.15;
+    font-weight:950;
+    color:#0f172a;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .dc-bg .mobileJobSummaryHint{
+    margin-top:10px;
+    font-size:11.5px;
+    line-height:1.45;
+    color:#64748b;
+    font-weight:750;
+  }
+
+  .dc-bg .mobileSpreadsheetDisclosure{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:18px;
+    background:#fff;
+    overflow:hidden;
+  }
+
+  .dc-bg .mobileSpreadsheetDisclosure > summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:13px 14px;
+    cursor:pointer;
+    list-style:none;
+    font-weight:950;
+    color:#0f172a;
+    background:linear-gradient(180deg, #fff, rgba(248,250,252,.92));
+  }
+
+  .dc-bg .mobileSpreadsheetDisclosure > summary::-webkit-details-marker{
+    display:none;
+  }
+
+  .dc-bg .mobileSpreadsheetDisclosure > summary::after{
+    content:"↓";
+    width:28px;
+    height:28px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(15,23,42,.08);
+    color:#64748b;
+    background:#fff;
+    flex:0 0 auto;
+  }
+
+  .dc-bg .mobileSpreadsheetDisclosure[open] > summary::after{
+    content:"↑";
+  }
+
+  .dc-bg .mobileSpreadsheetDisclosure > summary em{
+    display:block;
+    margin-top:3px;
+    font-size:11px;
+    line-height:1.25;
+    color:#64748b;
+    font-style:normal;
+    font-weight:750;
+  }
+
+  .dc-bg .mobileSpreadsheetScroller{
+    border-top:1px solid rgba(15,23,42,.08);
+    max-width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .dc-bg .mobileSpreadsheetScroller .spreadsheetJobTable{
+    margin:0!important;
+  }
+
+  .dc-bg .supportGrid{
+    gap:12px!important;
+  }
+
+  .dc-bg .supportGrid .miniPanel{
+    border-radius:20px!important;
+  }
+
+  .dc-bg .supportGrid .miniPanel .panelHead{
+    padding:14px 16px!important;
+  }
+
+  .dc-bg .supportGrid .miniPanel .panelTitle{
+    font-size:18px!important;
+  }
+}
 `;
