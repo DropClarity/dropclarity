@@ -1161,18 +1161,55 @@ function dedupeSourceFiles(files: SourceFileLink[]): SourceFileLink[] {
   return out;
 }
 
+function normalizeSourceLookupToken(value: unknown): string {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function sourceFileSearchBlob(file: SourceFileLink): string {
+  return [
+    file?.filename,
+    file?.name,
+    file?.job_id,
+    file?.role,
+    file?.kind,
+    file?.url,
+    file?.cdnUrl,
+    file?.fileUrl,
+    file?.file_url,
+    file?.uuid,
+  ]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function sourceFileLooksJobSpecific(file: SourceFileLink): boolean {
+  const blob = sourceFileSearchBlob(file);
+  const normalized = normalizeSourceLookupToken(blob);
+
+  return Boolean(
+    String(file?.job_id || "").trim() ||
+      /\b(job|project|customer|invoice|allocation|subcontractor|supplier|material|payroll|receipt)\b/i.test(blob) ||
+      /[a-z]{2,}[-_\s]?\d{4,}/i.test(blob) ||
+      /dc[-_\s]?[a-z]{2,}[-_\s]?\d{4,}/i.test(blob) ||
+      normalized.length >= 8
+  );
+}
+
 function normalizeSourceFileForJob(file: SourceFileLink, job: JobRow): SourceFileLink | null {
   const url = sourceFileUrl(file);
   if (!url) return null;
 
-  const jobId = String(job?.job_id || "").trim();
   const fileJobId = String(file?.job_id || "").trim();
 
   return {
     ...file,
     url,
     filename: sourceFileName(file),
-    job_id: fileJobId || jobId || null,
+    job_id: fileJobId || null,
   };
 }
 
@@ -1185,23 +1222,54 @@ function getEmbeddedJobSourceFiles(job: JobRow): SourceFileLink[] {
 }
 
 function sourceFilesMatchJob(files: SourceFileLink[], job: JobRow): SourceFileLink[] {
-  const jobKey = String(job?.job_id || job?.job_name || "").trim().toLowerCase();
-  const normalizedJobKey = jobKey.replace(/[^a-z0-9]+/g, "");
+  const jobId = String(job?.job_id || "").trim();
+  const jobName = String(job?.job_name || "").trim();
+  const rawJobTokens = Array.from(
+    new Set(
+      [
+        jobId,
+        jobName,
+        jobId.replace(/^dc[-_\s]*/i, ""),
+        jobName.replace(/^dc[-_\s]*/i, ""),
+      ]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+    )
+  );
+
+  const normalizedJobTokens = rawJobTokens
+    .map((value) => normalizeSourceLookupToken(value))
+    .filter((value) => value.length >= 4);
 
   const mapped = (Array.isArray(files) ? files : [])
     .map((file) => normalizeSourceFileForJob(file, job))
     .filter(Boolean) as SourceFileLink[];
 
   if (!mapped.length) return [];
+  if (!normalizedJobTokens.length) return mapped.length <= 3 ? dedupeSourceFiles(mapped) : [];
 
   const matched = mapped.filter((file) => {
-    const fileJobId = String(file.job_id || "").trim().toLowerCase();
-    if (!fileJobId || !jobKey) return false;
-    const normalizedFileJob = fileJobId.replace(/[^a-z0-9]+/g, "");
-    return fileJobId === jobKey || normalizedFileJob === normalizedJobKey;
+    const fileJobId = normalizeSourceLookupToken(file.job_id);
+    const fileName = normalizeSourceLookupToken(sourceFileName(file));
+    const fileBlob = normalizeSourceLookupToken(sourceFileSearchBlob(file));
+
+    return normalizedJobTokens.some((token) => {
+      if (!token) return false;
+      return fileJobId === token || fileName.includes(token) || fileBlob.includes(token);
+    });
   });
 
-  return dedupeSourceFiles(matched.length ? matched : mapped);
+  if (matched.length) return dedupeSourceFiles(matched);
+
+  const filesLookJobSpecific = mapped.some(sourceFileLooksJobSpecific);
+
+  // If the report-level source list looks like a multi-job packet but no file
+  // matches this job's ID/name, do not show every other job's documents on the
+  // individual job page. For simple one-job reports without job-coded filenames,
+  // keep the old fallback so users still see their original files.
+  if (filesLookJobSpecific && mapped.length > 3) return [];
+
+  return dedupeSourceFiles(mapped);
 }
 
 function cleanReportPeriodLabel(label: unknown): string {
