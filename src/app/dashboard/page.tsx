@@ -9094,4 +9094,191 @@ main.dc-bg .dashboardBackBtn{
     flex:0 1 auto!important;
   }
 }
+
+/* Launch-ready mobile polish: cleaner Past Reports actions, subtle internal back buttons, compact dashboard controls */
+main.dc-bg .premiumReportProfitBlock{
+  align-self:start!important;
+}
+main.dc-bg .premiumReportProfitBlock .reportViewBtn{
+  position:static!important;
+  transform:none!important;
+  margin:0!important;
+}
+
+@media(max-width:640px){
+  main.dc-bg .premiumReportTopline{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:11px!important;
+  }
+  main.dc-bg .premiumReportProfitBlock{
+    width:100%!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    align-items:center!important;
+    justify-content:stretch!important;
+    gap:8px!important;
+    margin-top:2px!important;
+  }
+  main.dc-bg .premiumReportProfit{
+    justify-self:start!important;
+    min-width:0!important;
+    font-size:14px!important;
+    line-height:1.1!important;
+  }
+  main.dc-bg .premiumReportProfitBlock .reportViewBtn{
+    justify-self:end!important;
+    height:32px!important;
+    min-height:32px!important;
+    padding:7px 12px!important;
+  }
+  main.dc-bg .premiumReportHideBtn{
+    justify-self:end!important;
+  }
+
+  main.dc-bg .cleanModeShell .modeHeaderActions{
+    width:100%!important;
+    align-items:flex-start!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+  }
+  main.dc-bg .cleanModeShell .modeHeaderActions .dashboardBackBtn{
+    width:auto!important;
+    max-width:100%!important;
+    margin:0!important;
+    justify-content:flex-start!important;
+    align-self:flex-start!important;
+    padding:8px 10px!important;
+    min-height:34px!important;
+    border-radius:999px!important;
+    background:rgba(255,255,255,.74)!important;
+    border:1px solid rgba(124,58,237,.18)!important;
+    box-shadow:0 8px 20px rgba(124,58,237,.06)!important;
+    font-size:12px!important;
+  }
+
+  main.dc-bg .topbar{
+    gap:12px!important;
+    margin-bottom:10px!important;
+  }
+  main.dc-bg .topbarRight{
+    gap:8px!important;
+  }
+  main.dc-bg .topbarRight .statusRow{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
+  }
+  main.dc-bg .topbarRight .statusRow .pill,
+  main.dc-bg .topbarRight .statusRow .btn,
+  main.dc-bg .topbarRight .statusRow .uploadPulseBtn{
+    min-height:34px!important;
+    height:34px!important;
+    padding:7px 9px!important;
+    border-radius:999px!important;
+    font-size:11.5px!important;
+    box-shadow:0 6px 16px rgba(15,23,42,.04)!important;
+  }
+  main.dc-bg .topbarRight .statusRow .dot{
+    width:8px!important;
+    height:8px!important;
+  }
+  main.dc-bg .topbarRight .statusRow .riskPill::after{
+    width:6px!important;
+    height:6px!important;
+    box-shadow:0 0 0 3px rgba(239,68,68,.10)!important;
+  }
+  main.dc-bg .topbarRight .marginTargetTopWrap{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:8px!important;
+    padding:8px 9px!important;
+    border-radius:16px!important;
+    background:rgba(255,255,255,.82)!important;
+    box-shadow:0 8px 22px rgba(15,23,42,.035)!important;
+  }
+  main.dc-bg .topbarRight .marginTargetTopText{
+    width:auto!important;
+    min-width:0!important;
+    display:block!important;
+  }
+  main.dc-bg .topbarRight .marginTargetTopKicker{
+    font-size:10px!important;
+    line-height:1.05!important;
+  }
+  main.dc-bg .topbarRight .marginTargetCurrent{
+    margin-top:2px!important;
+    font-size:10.5px!important;
+    line-height:1.1!important;
+  }
+  main.dc-bg .topbarRight .marginTargetTopControls{
+    width:auto!important;
+    display:flex!important;
+    grid-template-columns:none!important;
+    align-items:center!important;
+    gap:6px!important;
+  }
+  main.dc-bg .topbarRight .compactTargetInputGroup{
+    min-height:32px!important;
+    padding:5px 8px!important;
+  }
+  main.dc-bg .topbarRight .compactTargetInput{
+    width:44px!important;
+    max-width:44px!important;
+    font-size:13px!important;
+  }
+  main.dc-bg .topbarRight .compactTargetSave{
+    min-height:32px!important;
+    height:32px!important;
+    padding:6px 10px!important;
+    font-size:11.5px!important;
+  }
+
+  main.dc-bg .rangeWrap{
+    margin:10px 0 10px!important;
+    padding:10px!important;
+    border-radius:16px!important;
+    gap:9px!important;
+  }
+  main.dc-bg .rangeLabel{
+    font-size:16px!important;
+    line-height:1.1!important;
+  }
+  main.dc-bg .rangeSub{
+    display:none!important;
+  }
+  main.dc-bg .rangeRight{
+    gap:8px!important;
+  }
+  main.dc-bg .rangeButtons{
+    gap:7px!important;
+  }
+  main.dc-bg .rangeBtn{
+    min-height:34px!important;
+    padding:8px 10px!important;
+    font-size:11.5px!important;
+    border-radius:999px!important;
+  }
+  main.dc-bg .rangeRight > .btn{
+    min-height:36px!important;
+    padding:8px 10px!important;
+    font-size:11.5px!important;
+    border-radius:13px!important;
+  }
+}
+
+@media(max-width:380px){
+  main.dc-bg .topbarRight .marginTargetTopWrap{
+    grid-template-columns:1fr!important;
+  }
+  main.dc-bg .topbarRight .marginTargetTopControls{
+    width:100%!important;
+  }
+  main.dc-bg .topbarRight .compactTargetInputGroup{
+    flex:1 1 auto!important;
+  }
+}
+
 `;
