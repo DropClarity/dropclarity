@@ -5989,15 +5989,7 @@ useEffect(() => {
                   onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
                 />
               </>
-            ) : (
-              <InternalPageQuickControls
-                onRefresh={() => loadAndRender()}
-                marginTarget={marginTarget}
-                marginTargetDraft={marginTargetDraft}
-                setMarginTargetDraft={setMarginTargetDraft}
-                onSaveMarginTarget={saveMarginTarget}
-              />
-            )}
+            ) : null}
 
             {view === "job" && jobKey ? (
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} onDashboardRefresh={() => loadAndRender({ background: true })} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} onHideJob={handleHideJob} />
@@ -8891,160 +8883,85 @@ main.dc-bg .dcGuideRail a span{
 @media (max-width: 760px){.dc-bg .supportGrid{grid-template-columns:1fr}.dc-bg .sourceDocsPanel{grid-column:auto}.dc-bg .sourceDocLink{font-size:12px;padding:8px 9px}}
 
 
-/* Surgical responsive fix: Past Reports card only */
-main.dc-bg .pastReportsPanel,
-main.dc-bg .pastReportsPanel *{
-  box-sizing:border-box;
+/* Keep the Additional notes drawer visually aligned with Past Reports on the main dashboard. */
+main.dc-bg .dcInsightsDrawer .dcAccordionHeader.mini h2{
+  font-size:22px!important;
+  line-height:1.12!important;
+  letter-spacing:-.025em!important;
 }
-main.dc-bg .pastReportsPanel{
-  min-width:0!important;
-}
-main.dc-bg .pastReportsHead{
-  min-width:0!important;
-}
-main.dc-bg .pastReportsHead > div{
-  min-width:0!important;
-}
-main.dc-bg .premiumReportCard{
-  width:100%!important;
-  min-width:0!important;
-  overflow:hidden!important;
-}
-main.dc-bg .premiumReportTopline{
-  width:100%!important;
-  min-width:0!important;
-}
-main.dc-bg .premiumReportIdentity{
-  min-width:0!important;
-  flex:1 1 auto!important;
-}
-main.dc-bg .premiumReportName,
-main.dc-bg .premiumReportMeta{
-  min-width:0!important;
-  max-width:100%!important;
-  overflow:hidden!important;
-  overflow-wrap:normal!important;
-  word-break:normal!important;
-}
-main.dc-bg .premiumReportProfitBlock{
-  min-width:max-content!important;
-}
-main.dc-bg .premiumReportMetrics{
-  min-width:0!important;
-  width:100%!important;
-}
-main.dc-bg .premiumReportMetrics div{
-  min-width:0!important;
-}
-main.dc-bg .premiumReportMetrics strong{
-  min-width:0!important;
-}
-@media(max-width:980px){
-  main.dc-bg .pastReportsHead{
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:stretch!important;
-  }
-  main.dc-bg .pastReportsPanel .panelSub,
-  main.dc-bg .pastReportsSub{
-    max-width:100%!important;
-  }
-  main.dc-bg .premiumManageLink{
-    width:100%!important;
-    justify-content:center!important;
-  }
-  main.dc-bg .premiumReportTopline{
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:stretch!important;
-    gap:10px!important;
-  }
-  main.dc-bg .premiumReportIdentity{
-    width:100%!important;
-  }
-  main.dc-bg .premiumReportProfitBlock{
-    width:100%!important;
-    min-width:0!important;
-    display:grid!important;
-    grid-template-columns:minmax(0,1fr) auto auto!important;
-    align-items:center!important;
-    gap:8px!important;
-    margin-top:0!important;
-  }
-  main.dc-bg .premiumReportProfit{
-    min-width:0!important;
-    overflow:hidden!important;
-    text-overflow:ellipsis!important;
-  }
-  main.dc-bg .premiumReportTagRow{
-    display:flex!important;
-    flex-wrap:wrap!important;
-  }
-  main.dc-bg .premiumReportMetrics{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+
+@media (max-width:760px){
+  main.dc-bg .dcInsightsDrawer .dcAccordionHeader.mini h2{
+    font-size:19px!important;
   }
 }
-@media(max-width:520px){
-  main.dc-bg .pastReportsPad{
-    padding:12px!important;
-  }
-  main.dc-bg .premiumReportCard{
-    padding:12px!important;
-    border-radius:16px!important;
-  }
-  main.dc-bg .premiumReportName{
-    font-size:14px!important;
-    line-height:1.25!important;
-    -webkit-line-clamp:2!important;
-  }
-  main.dc-bg .premiumReportMeta{
-    font-size:11.5px!important;
-    line-height:1.35!important;
-    display:-webkit-box!important;
-    -webkit-line-clamp:2!important;
-    -webkit-box-orient:vertical!important;
-  }
-  main.dc-bg .premiumReportProfitBlock{
-    grid-template-columns:minmax(0,1fr) auto auto!important;
-  }
-  main.dc-bg .premiumReportProfit{
-    font-size:13.5px!important;
-  }
-  main.dc-bg .premiumReportProfitBlock .reportViewBtn{
-    min-width:46px!important;
-    height:34px!important;
-    padding:7px 10px!important;
-  }
-  main.dc-bg .premiumReportHideBtn,
-  main.dc-bg .deleteReportBtn{
-    width:34px!important;
-    height:34px!important;
-    min-width:34px!important;
-  }
-  main.dc-bg .premiumReportStats{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:8px!important;
-  }
-  main.dc-bg .premiumReportStats span{
-    min-width:0!important;
-    white-space:nowrap!important;
-  }
-  main.dc-bg .premiumReportMetrics{
-    gap:8px!important;
-  }
-  main.dc-bg .premiumReportMetrics span{
-    font-size:10px!important;
-  }
-  main.dc-bg .premiumReportMetrics strong{
-    font-size:11.5px!important;
-  }
+
+
+/* Surgical internal-page title size reduction only. Main dashboard title/utility controls stay unchanged. */
+main.dc-bg.internal-view-bg .jobIdentityTitle,
+main.dc-bg .jobHero .jobIdentityTitle{
+  font-size:clamp(28px,2.45vw,34px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.038em!important;
 }
-@media(max-width:380px){
-  main.dc-bg .premiumReportMetrics{
-    grid-template-columns:1fr!important;
+
+main.dc-bg.internal-view-bg .decisionJobTitle,
+main.dc-bg .jobHero .decisionJobTitle{
+  font-size:clamp(22px,2vw,27px)!important;
+  line-height:1.1!important;
+  letter-spacing:-.03em!important;
+}
+
+main.dc-bg.internal-view-bg .sectionTitle,
+main.dc-bg .jobAnalysisHeader .sectionTitle{
+  font-size:clamp(17px,1.45vw,20px)!important;
+  line-height:1.16!important;
+}
+
+main.dc-bg.internal-view-bg .modeTitle,
+main.dc-bg .cleanModeShell .modeTitle{
+  font-size:clamp(25px,2vw,32px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.036em!important;
+}
+
+main.dc-bg.internal-view-bg .reportsManagerTitle,
+main.dc-bg .reportsManagerHero .reportsManagerTitle{
+  font-size:clamp(22px,1.9vw,30px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.034em!important;
+}
+
+main.dc-bg.internal-view-bg .riskCommandTitle,
+main.dc-bg .highRiskHero .riskCommandTitle{
+  font-size:clamp(22px,1.9vw,30px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.034em!important;
+}
+
+@media (max-width:760px){
+  main.dc-bg.internal-view-bg .jobIdentityTitle,
+  main.dc-bg .jobHero .jobIdentityTitle{
+    font-size:clamp(24px,7vw,29px)!important;
   }
-  main.dc-bg .premiumReportProfitBlock{
-    grid-template-columns:minmax(0,1fr) auto auto!important;
+
+  main.dc-bg.internal-view-bg .decisionJobTitle,
+  main.dc-bg .jobHero .decisionJobTitle{
+    font-size:clamp(20px,5.8vw,24px)!important;
+  }
+
+  main.dc-bg.internal-view-bg .sectionTitle,
+  main.dc-bg .jobAnalysisHeader .sectionTitle{
+    font-size:17px!important;
+  }
+
+  main.dc-bg.internal-view-bg .modeTitle,
+  main.dc-bg .cleanModeShell .modeTitle,
+  main.dc-bg.internal-view-bg .reportsManagerTitle,
+  main.dc-bg .reportsManagerHero .reportsManagerTitle,
+  main.dc-bg.internal-view-bg .riskCommandTitle,
+  main.dc-bg .highRiskHero .riskCommandTitle{
+    font-size:clamp(22px,6.2vw,26px)!important;
   }
 }
 
