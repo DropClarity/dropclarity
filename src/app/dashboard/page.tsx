@@ -3108,7 +3108,6 @@ function PastReports({
             {latestReports.map((r, idx) => {
               const p = parseNumberLoose(r.net_profit);
               const info = getReportDisplayInfo(r, allJobs);
-              const creditTotal = getReportCreditTotal(r, allJobs);
               const margin = parseNumberLoose(r.margin_pct);
 
               return (
@@ -3131,7 +3130,7 @@ function PastReports({
                   </div>
 
                   <div className="reportTagRow premiumReportTagRow">
-                    {info.tags.slice(0, 3).map((tag) => (
+                    {info.tags.filter((tag) => tag !== "Has credits").slice(0, 2).map((tag) => (
                       <span className="reportInfoTag premiumReportTag" key={tag}>{tag}</span>
                     ))}
                   </div>
@@ -3140,7 +3139,6 @@ function PastReports({
                     <div><span>Revenue</span><strong>{fmtMoney(r.revenue)}</strong></div>
                     <div><span>Costs</span><strong>{fmtMoney(r.costs)}</strong></div>
                     <div><span>Margin</span><strong>{fmtPct(margin)}</strong></div>
-                    {creditTotal > 0 ? <div><span>Credits</span><strong>{fmtMoney(creditTotal)}</strong></div> : null}
                   </div>
                 </div>
               );
@@ -8965,4 +8963,135 @@ main.dc-bg .highRiskHero .riskCommandTitle{
   }
 }
 
+
+/* Surgical responsive patch: Past Reports card + internal back button sizing */
+main.dc-bg .pastReportsPanel{
+  overflow:hidden!important;
+}
+main.dc-bg .pastReportsPad{
+  min-width:0!important;
+}
+main.dc-bg .pastReportsList,
+main.dc-bg .premiumReportCard,
+main.dc-bg .premiumReportIdentity,
+main.dc-bg .premiumReportMetrics,
+main.dc-bg .premiumReportMetrics div{
+  min-width:0!important;
+}
+main.dc-bg .premiumReportTopline{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:start!important;
+  gap:12px!important;
+}
+main.dc-bg .premiumReportProfitBlock{
+  display:grid!important;
+  grid-template-columns:auto auto auto!important;
+  align-items:center!important;
+  justify-content:end!important;
+  gap:8px!important;
+  min-width:max-content!important;
+}
+main.dc-bg .premiumReportProfit{
+  font-size:clamp(13px,1.15vw,15px)!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+}
+main.dc-bg .premiumReportMetrics{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:10px!important;
+  margin-top:12px!important;
+  padding-top:12px!important;
+  border-top:1px solid rgba(15,23,42,.065)!important;
+}
+main.dc-bg .premiumReportMetrics div{
+  border:0!important;
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+main.dc-bg .premiumReportMetrics span{
+  display:block!important;
+  font-size:10.5px!important;
+  line-height:1.15!important;
+  letter-spacing:.055em!important;
+  white-space:nowrap!important;
+}
+main.dc-bg .premiumReportMetrics strong{
+  display:block!important;
+  margin-top:5px!important;
+  font-size:clamp(12px,1.05vw,14px)!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  max-width:none!important;
+  letter-spacing:-.025em!important;
+}
+main.dc-bg .dashboardBackBtn{
+  width:auto!important;
+  max-width:100%!important;
+  justify-content:center!important;
+}
+@media(max-width:900px){
+  main.dc-bg .premiumReportTopline{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  main.dc-bg .premiumReportProfitBlock{
+    width:100%!important;
+    min-width:0!important;
+    grid-template-columns:auto auto auto!important;
+    justify-content:start!important;
+  }
+  main.dc-bg .premiumReportMetrics{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:640px){
+  main.dc-bg .premiumReportCard{
+    padding:14px!important;
+  }
+  main.dc-bg .premiumReportTopline{
+    gap:10px!important;
+  }
+  main.dc-bg .premiumReportProfitBlock{
+    grid-template-columns:auto auto auto!important;
+    justify-content:space-between!important;
+  }
+  main.dc-bg .premiumReportMetrics{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  main.dc-bg .premiumReportMetrics div{
+    display:flex!important;
+    align-items:baseline!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    padding:0 0 8px!important;
+    border-bottom:1px solid rgba(15,23,42,.055)!important;
+  }
+  main.dc-bg .premiumReportMetrics div:last-child{
+    border-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  main.dc-bg .premiumReportMetrics strong{
+    text-align:right!important;
+    font-size:14px!important;
+  }
+  main.dc-bg .modeHeaderActions{
+    align-items:center!important;
+  }
+  main.dc-bg .modeHeaderActions .dashboardBackBtn,
+  main.dc-bg .crumbs .dashboardBackBtn{
+    width:auto!important;
+    max-width:min(100%,280px)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    padding:10px 14px!important;
+    font-size:12.5px!important;
+    flex:0 1 auto!important;
+  }
+}
 `;
