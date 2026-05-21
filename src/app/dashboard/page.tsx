@@ -4618,11 +4618,11 @@ function JobEditor({
               </thead>
               <tbody>
                 <tr>
-                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_id} onChange={(e) => setField("job_id", e.target.value)} placeholder="JOB-1021" /><div className="cellHint">Identifier</div></td>
-                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_name} onChange={(e) => setField("job_name", e.target.value)} placeholder="Customer / project" /><div className="cellHint">Name</div></td>
-                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_type} onChange={(e) => setField("job_type", e.target.value)} placeholder="Install" /><div className="cellHint">Optional</div></td>
-                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_address} onChange={(e) => setField("job_address", e.target.value)} placeholder="Address" /><div className="cellHint">Optional</div></td>
-                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_date} onChange={(e) => setField("job_date", e.target.value)} placeholder="YYYY-MM-DD" /><div className="cellHint">Optional</div></td>
+                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_id} onChange={(e) => setField("job_id", e.target.value)} placeholder="JOB-1021" /></td>
+                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_name} onChange={(e) => setField("job_name", e.target.value)} placeholder="Customer / project" /></td>
+                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_type} onChange={(e) => setField("job_type", e.target.value)} placeholder="Install" /></td>
+                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_address} onChange={(e) => setField("job_address", e.target.value)} placeholder="Address" /></td>
+                  <td><input className="cellEdit spreadsheetTextInput" value={job.job_date} onChange={(e) => setField("job_date", e.target.value)} placeholder="YYYY-MM-DD" /></td>
                   {renderMoneyCell("Revenue", "revenue")}
                   {renderMoneyCell("Labor", "labor_cost")}
                   {renderMoneyCell("Materials", "material_cost")}
@@ -4670,11 +4670,11 @@ function JobEditor({
                         aria-label={`${row.name || `Custom category ${idx + 1}`} amount`}
                         placeholder="$0.00"
                       />
-                      <div className="cellHint">Manual cost</div>
+                      
                     </td>
                   ))}
                   <td className="profitResultCell"><div className={`calcCell spreadsheetCalcCell ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div></td>
-                  <td className="marginResultCell"><div className={`calcCell spreadsheetCalcCell ${gm < 0 ? "neg" : ""}`}>{fmtPct(gm)}</div></td>
+                  <td className="marginResultCell"><div className={`calcCell spreadsheetCalcCell ${gm < 0 ? "neg" : "pos"}`}>{fmtPct(gm)}</div></td>
                 </tr>
               </tbody>
             </table>
@@ -9360,8 +9360,8 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 .dc-bg .spreadsheetJobTable th:nth-child(5),.dc-bg .spreadsheetJobTable td:nth-child(5){width:112px!important}
 .dc-bg .spreadsheetJobTable th:nth-child(n+6),.dc-bg .spreadsheetJobTable td:nth-child(n+6){width:124px!important;text-align:right!important}
 .dc-bg .spreadsheetJobTable .customCostTh,.dc-bg .spreadsheetJobTable .customCostCell{width:142px!important;background:rgba(250,245,255,.32)!important}
-.dc-bg .spreadsheetJobTable .profitResultCell{background:rgba(236,253,245,.48)!important}
-.dc-bg .spreadsheetJobTable .marginResultCell{background:rgba(248,250,252,.90)!important}
+.dc-bg .spreadsheetJobTable .profitResultCell{background:transparent!important}
+.dc-bg .spreadsheetJobTable .marginResultCell{background:transparent!important}
 .dc-bg .spreadsheetJobTable .cellEdit{
   min-height:38px!important;
   height:38px!important;
@@ -9371,9 +9371,9 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
   border-radius:10px!important;
   box-shadow:none!important;
   padding:7px 8px!important;
-  font-size:13px!important;
+  font-size:14px!important;
   line-height:1.15!important;
-  font-weight:850!important;
+  font-weight:900!important;
   color:#0f172a!important;
   white-space:nowrap!important;
   overflow:hidden!important;
@@ -9386,15 +9386,7 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 }
 .dc-bg .spreadsheetJobTable .cellEdit:hover{background:rgba(248,250,252,.88)!important;border-color:rgba(15,23,42,.08)!important}.dc-bg .spreadsheetJobTable .cellEdit:focus{background:#fff!important;border-color:rgba(34,211,238,.68)!important;box-shadow:0 0 0 3px rgba(34,211,238,.14)!important;overflow:visible!important;text-overflow:clip!important}
 .dc-bg .spreadsheetJobTable .cellHint{
-  margin-top:3px!important;
-  padding:0 8px!important;
-  font-size:10px!important;
-  line-height:1!important;
-  color:rgba(100,116,139,.68)!important;
-  font-weight:800!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
+  display:none!important;
 }
 .dc-bg .spreadsheetCalcCell{
   min-height:38px!important;
@@ -9403,13 +9395,16 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
   align-items:center!important;
   justify-content:flex-end!important;
   padding:0 8px!important;
-  border-radius:10px!important;
-  font-size:14px!important;
+  border-radius:0!important;
+  background:transparent!important;
+  font-size:15px!important;
   font-weight:980!important;
   font-variant-numeric:tabular-nums!important;
   white-space:nowrap!important;
 }
-.dc-bg .spreadsheetCalcCell.pos{color:#059669!important;background:rgba(16,185,129,.09)!important}.dc-bg .spreadsheetCalcCell.neg{color:#dc2626!important;background:rgba(239,68,68,.08)!important}
+.dc-bg .spreadsheetCalcCell.pos{color:#059669!important;background:transparent!important}.dc-bg .spreadsheetCalcCell.neg{color:#dc2626!important;background:transparent!important}
+
+@media (min-width:900px){.dc-bg .spreadsheetJobTable .cellEdit{font-size:15px!important}.dc-bg .spreadsheetJobTable .spreadsheetMoneyInput,.dc-bg .spreadsheetJobTable .customAmountInput{font-size:15px!important}.dc-bg .spreadsheetCalcCell{font-size:16px!important}.dc-bg .spreadsheetJobTable th{font-size:11.5px!important}.dc-bg .spreadsheetJobTable td{height:66px!important}}
 .dc-bg .spreadsheetJobTable .inlineCustomHead{display:flex!important;align-items:center!important;gap:6px!important;width:100%!important}.dc-bg .spreadsheetJobTable .customHeaderEdit{min-width:0!important;flex:1!important;border:0!important;background:transparent!important;padding:0!important;font-size:11px!important;font-weight:950!important;color:rgba(88,28,135,.78)!important;text-transform:uppercase!important;letter-spacing:.035em!important;outline:none!important}.dc-bg .spreadsheetJobTable .inlineCustomRemove{width:18px!important;height:18px!important;border-radius:999px!important;border:1px solid rgba(15,23,42,.08)!important;background:#fff!important;color:rgba(100,116,139,.65)!important;font-size:12px!important;line-height:1!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;cursor:pointer!important}
 .dc-bg .spreadsheetStackItem{
   border:1px solid rgba(15,23,42,.075)!important;
@@ -9429,5 +9424,5 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 .dc-bg .stackedJobPage .spreadsheetJobDetail{border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}.dc-bg .stackedJobPage .spreadsheetJobPad{border-radius:0!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1180px!important}.dc-bg .allJobsStack{gap:14px!important}
 @media (min-width:1200px){.dc-bg .spreadsheetJobTable{min-width:1120px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1120px!important}.dc-bg .spreadsheetJobTable td{height:68px!important}}
 @media (max-width:900px){.dc-bg .spreadsheetJobHead{align-items:stretch!important}.dc-bg .spreadsheetJobActions{justify-content:flex-start!important}.dc-bg .spreadsheetJobActions .btn{flex:1 1 140px!important;justify-content:center!important}.dc-bg .spreadsheetJobTable{min-width:1080px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1080px!important}.dc-bg .spreadsheetStackHeader{align-items:flex-start!important}.dc-bg .spreadsheetStackHeader .stackedHeaderActions{align-self:stretch!important;justify-content:flex-end!important}}
-@media (max-width:640px){.dc-bg .spreadsheetJobDetail{border-radius:18px!important}.dc-bg .spreadsheetJobHead{padding:13px 14px!important}.dc-bg .spreadsheetJobHead .panelTitle{font-size:19px!important}.dc-bg .spreadsheetJobActions{display:grid!important;grid-template-columns:1fr 1fr!important}.dc-bg .spreadsheetJobActions .btn{width:100%!important;min-width:0!important}.dc-bg .spreadsheetJobPad{border-top:1px solid rgba(15,23,42,.04)!important}.dc-bg .spreadsheetJobTable{min-width:1020px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1020px!important}.dc-bg .spreadsheetJobTable th{height:38px!important;font-size:10px!important;padding:0 9px!important}.dc-bg .spreadsheetJobTable td{height:64px!important;padding:7px 8px!important}.dc-bg .spreadsheetJobTable .cellEdit{font-size:12.2px!important;min-height:34px!important;height:34px!important;padding:6px 7px!important}.dc-bg .spreadsheetJobTable .cellHint{font-size:9.5px!important}.dc-bg .spreadsheetCalcCell{font-size:12.8px!important;min-height:34px!important;height:34px!important}.dc-bg .spreadsheetStackActions .buttonRow{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.dc-bg .spreadsheetStackActions .btn{width:100%!important;justify-content:center!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobName{font-size:14px!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobMeta{font-size:11px!important}}
+@media (max-width:640px){.dc-bg .spreadsheetJobDetail{border-radius:18px!important}.dc-bg .spreadsheetJobHead{padding:13px 14px!important}.dc-bg .spreadsheetJobHead .panelTitle{font-size:19px!important}.dc-bg .spreadsheetJobActions{display:grid!important;grid-template-columns:1fr 1fr!important}.dc-bg .spreadsheetJobActions .btn{width:100%!important;min-width:0!important}.dc-bg .spreadsheetJobPad{border-top:1px solid rgba(15,23,42,.04)!important}.dc-bg .spreadsheetJobTable{min-width:1020px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1020px!important}.dc-bg .spreadsheetJobTable th{height:38px!important;font-size:10px!important;padding:0 9px!important}.dc-bg .spreadsheetJobTable td{height:64px!important;padding:7px 8px!important}.dc-bg .spreadsheetJobTable .cellEdit{font-size:12.2px!important;min-height:34px!important;height:34px!important;padding:6px 7px!important}.dc-bg .spreadsheetJobTable .cellHint{display:none!important}.dc-bg .spreadsheetCalcCell{font-size:12.8px!important;min-height:34px!important;height:34px!important}.dc-bg .spreadsheetStackActions .buttonRow{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.dc-bg .spreadsheetStackActions .btn{width:100%!important;justify-content:center!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobName{font-size:14px!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobMeta{font-size:11px!important}}
 `;
