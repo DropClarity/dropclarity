@@ -89,8 +89,6 @@ type PlanAccess = {
   fileLimitPerAnalysis: number;
 };
 
-const FREE_FILES_PER_ANALYSIS = 3;
-
 function normalizePlan(rawPlan: unknown, rawStatus?: unknown): PlanAccess {
   const status = String(rawStatus || "inactive")
     .trim()
@@ -120,15 +118,12 @@ function normalizePlan(rawPlan: unknown, rawStatus?: unknown): PlanAccess {
     isCore,
     isScale,
     hasPaidAccess,
-    fileLimitPerAnalysis: hasPaidAccess
-      ? Number.POSITIVE_INFINITY
-      : FREE_FILES_PER_ANALYSIS,
+    fileLimitPerAnalysis: Number.POSITIVE_INFINITY,
   };
 }
 
 function planLimitText(access: PlanAccess) {
-  if (access.hasPaidAccess) return `${access.label} plan: paid access active.`;
-  return `Free plan: up to ${FREE_FILES_PER_ANALYSIS} files per analysis.`;
+  return `${access.label} plan: no file-count limit.`;
 }
 
 function TinySpinner() {
@@ -1190,17 +1185,6 @@ export default function AppPage() {
       return;
     }
 
-    if (
-      access.isFree &&
-      items.length + selectedFiles.length > FREE_FILES_PER_ANALYSIS
-    ) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`,
-        "error",
-      );
-      return;
-    }
-
     setResult(null);
     setOriginalAnalyzeResult(null);
     setReportCopied(false);
@@ -1305,14 +1289,6 @@ export default function AppPage() {
       return;
     }
 
-    if (access.isFree && items.length > FREE_FILES_PER_ANALYSIS) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to upload more.`,
-        "error",
-      );
-      return;
-    }
-
     const targets = items.filter(
       (it) => it.status === "queued" || it.status === "error",
     );
@@ -1350,14 +1326,6 @@ export default function AppPage() {
 
     if (isLoaded && !isSignedIn) {
       showToast("Please sign in before analyzing files.", "error");
-      return;
-    }
-
-    if (access.isFree && uploadedItems.length > FREE_FILES_PER_ANALYSIS) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`,
-        "error",
-      );
       return;
     }
 
@@ -1432,14 +1400,6 @@ export default function AppPage() {
 
     if (isLoaded && !isSignedIn) {
       showToast("Please sign in before analyzing files.", "error");
-      return;
-    }
-
-    if (access.isFree && uploadedItems.length > FREE_FILES_PER_ANALYSIS) {
-      showToast(
-        `Free plan allows up to ${FREE_FILES_PER_ANALYSIS} files per analysis. Upgrade to Core or Scale to analyze more files.`,
-        "error",
-      );
       return;
     }
 
