@@ -4153,6 +4153,18 @@ function JobEditor({
   const [updateStatus, setUpdateStatus] = useState<"idle" | "uploading" | "analyzing" | "success" | "error">("idle");
   const [updateMessage, setUpdateMessage] = useState("");
   const [adjustmentHistory, setAdjustmentHistory] = useState<JobAdjustmentHistoryItem[]>(() => readJobAdjustmentHistory(userId, jobKey));
+  const [isJobMobileView, setIsJobMobileView] = useState(false);
+  const [mobileBreakdownOpen, setMobileBreakdownOpen] = useState(false);
+
+  useEffect(() => {
+    const syncMobileView = () => {
+      setIsJobMobileView(typeof window !== "undefined" && window.innerWidth <= 768);
+    };
+
+    syncMobileView();
+    window.addEventListener("resize", syncMobileView);
+    return () => window.removeEventListener("resize", syncMobileView);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -4207,6 +4219,7 @@ function JobEditor({
     setUpdateFile(null);
     setUpdateStatus("idle");
     setUpdateMessage("");
+    setMobileBreakdownOpen(false);
     setAdjustmentHistory(readJobAdjustmentHistory(userId, jobKey));
   }, [jobKey, base, userId]);
 
@@ -4394,6 +4407,8 @@ function JobEditor({
       setUpdateMessage(err instanceof Error ? err.message : "Failed to update this job.");
     }
   };
+
+  const spreadsheetBreakdownOpen = !isJobMobileView || mobileBreakdownOpen;
 
   const renderMoneyCell = (
     label: string,
@@ -4621,7 +4636,13 @@ function JobEditor({
               </div>
             </div>
 
-            <details className="mobileSpreadsheetDisclosure">
+            <details
+              className="mobileSpreadsheetDisclosure"
+              open={spreadsheetBreakdownOpen}
+              onToggle={(e) => {
+                if (isJobMobileView) setMobileBreakdownOpen(e.currentTarget.open);
+              }}
+            >
               <summary>
                 <span>View/edit full breakdown</span>
                 <em>Spreadsheet-style editor</em>
