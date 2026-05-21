@@ -4503,7 +4503,7 @@ function JobEditor({
           <div className="stat"><div className="statLabel">Revenue</div><div className="statValue">{fmtMoney(job.revenue)}</div><div className="statSub">Editable below.</div></div>
           <div className="stat"><div className="statLabel">Known Costs</div><div className="statValue">{fmtMoney(knownCosts)}</div><div className="statSub">Cost buckets + custom.</div></div>
           <div className="stat"><div className="statLabel">Credits Applied</div><div className="statValue creditText">{fmtMoney(getJobCreditTotal(base))}</div><div className="statSub">Negative cost lines on this job.</div></div>
-          <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{job.custom_categories.length}</div><div className="statSub">Commission, subs, reserves, etc.</div></div>
+          <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{job.custom_categories.length}</div><div className="statSub">Commission, labor hours, reserves, etc.</div></div>
         </div>
 
         <div className="jobAnalysisHeader">
