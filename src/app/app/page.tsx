@@ -5,7 +5,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 
 const API_BASE = "https://dropclarity-api.armanrtajalli.workers.dev/api";
 
-type FileRole = "" | "revenue" | "cost" | "combined";
+type FileRole = "" | "revenue" | "cost";
 
 type QueueItem = {
   id: string;
@@ -22,7 +22,7 @@ type QueueItem = {
   };
   job_id: string;
   role: FileRole;
-  suggestedRole?: "revenue" | "cost" | "combined" | "unknown";
+  suggestedRole?: "revenue" | "cost" | "unknown";
 };
 
 type AssignmentError = {
@@ -204,16 +204,8 @@ function shortLabel(s: string) {
 
 function inferRoleFromName(
   name: string,
-): "revenue" | "cost" | "combined" | "unknown" {
+): "revenue" | "cost" | "unknown" {
   const s = name.toLowerCase();
-  if (
-    s.includes("combined") ||
-    s.includes("job summary") ||
-    s.includes("job_summary") ||
-    s.includes("job-cost") ||
-    s.includes("job cost")
-  )
-    return "combined";
   if (s.includes("invoice") || s.includes("revenue") || s.includes("sales"))
     return "revenue";
   if (
@@ -1303,7 +1295,7 @@ export default function AppPage() {
     uploadedItems.forEach((it) => {
       const error: AssignmentError = {};
       if (!it.job_id.trim()) error.job_id = true;
-      if (it.role !== "revenue" && it.role !== "cost" && it.role !== "combined")
+      if (it.role !== "revenue" && it.role !== "cost")
         error.role = true;
       if (error.job_id || error.role) nextErrors[it.id] = error;
     });
@@ -1355,7 +1347,7 @@ export default function AppPage() {
             filename,
             mime,
             job_id: it.job_id.trim(),
-            role: it.role === "combined" ? "combined_invoice" : it.role,
+            role: it.role,
             parse_mode: isStructured ? "code" : "ai",
             file_category: isStructured ? "structured" : "document",
           };
@@ -1427,8 +1419,7 @@ export default function AppPage() {
         if (
           "role" in patch &&
           (patch.role === "revenue" ||
-            patch.role === "cost" ||
-            patch.role === "combined")
+            patch.role === "cost")
         )
           current.role = false;
 
@@ -1696,7 +1687,7 @@ export default function AppPage() {
                   Upload Queue
                 </h2>
                 <p className="mt-1 text-sm font-semibold text-slate-500">
-                  Add multiple files — each uploads separately.
+                  Add revenue files and cost files separately for cleaner results.
                 </p>
               </div>
 
@@ -1746,7 +1737,7 @@ export default function AppPage() {
                     Drop files here
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">
-                    or click Choose files. Tip: put the job export first.
+                    or click Choose files. Tip: upload revenue exports separately from cost exports.
                   </div>
                   <div className="mt-1 text-xs font-bold leading-5 text-slate-400">
                     Excel/OneDrive tip: close the file in Excel and make sure it is fully synced before uploading.
@@ -1754,6 +1745,47 @@ export default function AppPage() {
                 </div>
               </div>
             </div>
+
+            {!result && (
+              <div className="uploadHowItWorks mx-5 mb-5 rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+                  <div className="min-w-0 lg:w-[30%]">
+                    <div className="text-xs font-black uppercase tracking-wider text-slate-400">
+                      How it works
+                    </div>
+                    <div className="mt-1 text-sm font-bold leading-6 text-slate-600">
+                      DropClarity is most accurate when revenue and cost files are labeled before analysis.
+                    </div>
+                  </div>
+
+                  <div className="grid flex-1 gap-3 sm:grid-cols-3">
+                    <div className="howStepCard">
+                      <div className="howStepIcon revenue">1</div>
+                      <div>
+                        <div className="howStepTitle">Revenue files</div>
+                        <div className="howStepCopy">Customer invoices, payment exports, or sales reports showing money earned.</div>
+                      </div>
+                    </div>
+
+                    <div className="howStepCard">
+                      <div className="howStepIcon cost">2</div>
+                      <div>
+                        <div className="howStepTitle">Cost files</div>
+                        <div className="howStepCopy">Vendor bills, receipts, payroll, subcontractors, materials, taxes, and other job expenses.</div>
+                      </div>
+                    </div>
+
+                    <div className="howStepCard">
+                      <div className="howStepIcon multi">3</div>
+                      <div>
+                        <div className="howStepTitle">Multiple jobs</div>
+                        <div className="howStepCopy">Use “Multiple Jobs” when one export contains many Job IDs. Upload revenue and cost exports separately.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {items.length > 0 && (
               <div className="grid gap-3 px-5 pb-5 xl:grid-cols-2 2xl:grid-cols-3">
@@ -2215,8 +2247,7 @@ export default function AppPage() {
                   </h2>
 
                   <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
-                    Add a job identifier and choose whether each file is revenue
-                    or cost.
+                    Tell DropClarity whether each file shows money earned or job costs, then choose whether it belongs to one job or many jobs.
                   </p>
                 </div>
 
@@ -2237,7 +2268,7 @@ export default function AppPage() {
                     Quick apply
                   </div>
                   <div className="mt-1 text-sm font-bold text-slate-600">
-                    Use this when every uploaded file belongs to the same job. For one export with many Job IDs, use “Multiple Jobs” instead.
+                    Use this when every uploaded file belongs to the same job. For exports with many Job IDs, use “Multiple Jobs” and upload revenue exports separately from cost exports.
                   </div>
                 </div>
 
@@ -2286,6 +2317,21 @@ export default function AppPage() {
                 </div>
               </div>
 
+              <div className="assignmentGuide mb-5 grid gap-3 lg:grid-cols-3">
+                <div className="assignmentGuideCard revenue">
+                  <div className="assignmentGuideLabel">Revenue</div>
+                  <div className="assignmentGuideText">Use for customer invoices, payment exports, AR reports, or sales totals.</div>
+                </div>
+                <div className="assignmentGuideCard cost">
+                  <div className="assignmentGuideLabel">Cost</div>
+                  <div className="assignmentGuideText">Use for vendor bills, receipts, payroll, subcontractors, materials, taxes, and job expenses.</div>
+                </div>
+                <div className="assignmentGuideCard multi">
+                  <div className="assignmentGuideLabel">Multiple Jobs</div>
+                  <div className="assignmentGuideText">Use when one spreadsheet/report contains many Job IDs. Keep revenue and cost exports as separate files.</div>
+                </div>
+              </div>
+
               <div className="grid gap-4 xl:grid-cols-2">
                 {uploadedItems.map((it) => {
                   const errors = assignmentErrors[it.id] || {};
@@ -2319,16 +2365,10 @@ export default function AppPage() {
                               ? "bg-emerald-50 text-emerald-700"
                               : it.role === "cost"
                                 ? "bg-violet-50 text-violet-700"
-                                : it.role === "combined"
-                                  ? "bg-cyan-50 text-cyan-700"
-                                  : "bg-slate-100 text-slate-600"
+                                : "bg-slate-100 text-slate-600"
                           }`}
                         >
-                          {it.role === "combined"
-                            ? "Combined Invoice"
-                            : it.role
-                              ? it.role
-                              : "type needed"}
+                          {it.role ? it.role : "type needed"}
                         </span>
                       </div>
 
@@ -2394,7 +2434,6 @@ export default function AppPage() {
                             <option value="">Select type</option>
                             <option value="revenue">Revenue</option>
                             <option value="cost">Cost</option>
-                            <option value="combined">Combined Invoice</option>
                           </select>
 
                           {roleMissing && (
@@ -2412,9 +2451,7 @@ export default function AppPage() {
 
             <div className="shrink-0 flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:p-5">
               <div className="text-xs font-bold leading-5 text-slate-500">
-                Revenue = money earned. Cost = bills, receipts, expenses.
-                Combined Invoice = one file that includes both revenue and
-                costs.
+                Revenue = money earned from customers. Cost = bills, receipts, payroll, subcontractors, materials, taxes, and expenses. For multiple jobs, upload revenue and cost exports separately.
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
@@ -2605,6 +2642,27 @@ const analyzePageCss = `
 @media(max-width:760px){
   .analysisProgressNote{width:100%;margin:-2px 0 14px;padding:11px 12px;font-size:12px;border-radius:16px}
   .analyzeSpinner{width:17px;height:17px}
+}
+
+/* Launch-ready upload guidance: clearer Revenue / Cost / Multiple Jobs flow after removing Combined Invoice. */
+.uploadHowItWorks{box-shadow:0 12px 34px rgba(2,6,23,.045)}
+.howStepCard{display:flex;gap:12px;min-width:0;border:1px solid rgba(15,23,42,.07);border-radius:18px;background:rgba(255,255,255,.86);padding:14px;box-shadow:0 10px 28px rgba(2,6,23,.035)}
+.howStepIcon{display:grid;place-items:center;flex:0 0 auto;width:34px;height:34px;border-radius:14px;font-size:13px;font-weight:950}
+.howStepIcon.revenue{background:rgba(16,185,129,.10);color:#047857;border:1px solid rgba(16,185,129,.18)}
+.howStepIcon.cost{background:rgba(124,58,237,.10);color:#6d28d9;border:1px solid rgba(124,58,237,.18)}
+.howStepIcon.multi{background:rgba(37,99,235,.10);color:#1d4ed8;border:1px solid rgba(37,99,235,.18)}
+.howStepTitle{font-size:13px;font-weight:950;color:#0f172a;line-height:1.2}
+.howStepCopy{margin-top:4px;font-size:12px;font-weight:750;line-height:1.45;color:rgba(71,85,105,.78)}
+.assignmentGuideCard{border-radius:18px;border:1px solid rgba(15,23,42,.07);background:#fff;padding:14px;box-shadow:0 10px 26px rgba(2,6,23,.04)}
+.assignmentGuideCard.revenue{border-color:rgba(16,185,129,.16);background:linear-gradient(135deg,rgba(236,253,245,.74),#fff)}
+.assignmentGuideCard.cost{border-color:rgba(124,58,237,.14);background:linear-gradient(135deg,rgba(245,243,255,.76),#fff)}
+.assignmentGuideCard.multi{border-color:rgba(37,99,235,.14);background:linear-gradient(135deg,rgba(239,246,255,.76),#fff)}
+.assignmentGuideLabel{font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;color:rgba(15,23,42,.72)}
+.assignmentGuideText{margin-top:5px;font-size:12px;font-weight:760;line-height:1.55;color:rgba(71,85,105,.78)}
+@media(max-width:760px){
+  .uploadHowItWorks{margin:0 14px 14px!important;padding:14px!important}
+  .howStepCard{padding:12px}
+  .assignmentGuide{margin-bottom:14px!important}
 }
 
 `;
