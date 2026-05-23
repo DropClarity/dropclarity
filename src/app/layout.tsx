@@ -95,15 +95,35 @@ export default function RootLayout({
                         </div>
 
                         <div className="mt-4 flex gap-3">
-                          <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                          <a
+                            href="https://www.linkedin.com/company/dropclarity"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+                            aria-label="DropClarity LinkedIn"
+                          >
                             in
-                          </div>
-                          <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                          </a>
+
+                          <a
+                            href="https://www.x.com/dropclarityllc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+                            aria-label="DropClarity X"
+                          >
                             𝕏
-                          </div>
-                          <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm">
+                          </a>
+
+                          <a
+                            href="https://www.instagram.com/dropclarity/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+                            aria-label="DropClarity Instagram"
+                          >
                             ◎
-                          </div>
+                          </a>
                         </div>
                       </div>
                     </div>
