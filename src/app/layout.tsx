@@ -122,7 +122,7 @@ export default function RootLayout({
                             className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
                             aria-label="DropClarity Instagram"
                           >
-                            ◎
+                            ◘
                           </a>
                         </div>
                       </div>
