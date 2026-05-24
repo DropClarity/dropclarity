@@ -1542,8 +1542,15 @@ export default function AppPage() {
   }, [result?.report_id, originalAnalyzeResult?.report_id]);
 
   function updateClassificationBucket(rowKey: string, bucket: CostBucketKey, rawValue: string) {
-    const value = rawValue === "" ? "" : Number(rawValue);
-    const safeValue = rawValue === "" ? "" : Number.isFinite(Number(value)) ? Number(value) : 0;
+    // Keep the user's exact typed value while editing so fields do not auto-format
+    // to 2 decimals after every keystroke. Values are normalized back to numbers
+    // when calculating totals and saving corrections.
+    const safeValue =
+      rawValue === ""
+        ? ""
+        : /^-?\\d*(\\.\\d*)?$/.test(rawValue)
+          ? rawValue
+          : String(Number(rawValue) || 0);
 
     setClassificationRows((prev) =>
       prev.map((row) =>
@@ -2160,7 +2167,7 @@ export default function AppPage() {
                                       type="number"
                                       inputMode="decimal"
                                       step="0.01"
-                                      value={row.edited[bucket] === ("" as any) ? "" : Number(row.edited[bucket] ?? 0).toFixed(2)}
+                                      value={row.edited[bucket] === ("" as any) ? "" : String(row.edited[bucket] ?? "")}
                                       onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
                                       className="classificationNumberInput mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
                                     />
