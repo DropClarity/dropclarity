@@ -430,9 +430,19 @@ function buildCostMixDisplay(costMix: CostMix, creditsApplied = 0): CostMixDispl
   const creditAbs = Math.abs(creditsValue);
 
   // Backend stores credits as signed negative adjustments so job profit reconciles to invoice totals.
-  // For display, separate those credits from true Other costs so users do not read credits as a bad cost bucket.
+  // For display, separate credits from true Other costs. This handles both legacy
+  // reports where credits were embedded as negative Other and newer edge cases
+  // where the same credit amount was duplicated as positive Other.
   const otherSigned = Number(costMix.other) || 0;
-  const displayedOther = creditAbs > 0.005 ? otherSigned + creditAbs : otherSigned;
+  let displayedOther = otherSigned;
+
+  if (creditAbs > 0.005) {
+    if (otherSigned < -0.005) {
+      displayedOther = otherSigned + creditAbs;
+    } else if (otherSigned > 0.005 && Math.abs(otherSigned - creditAbs) <= 0.005) {
+      displayedOther = 0;
+    }
+  }
 
   const displayMix: CostMix = {
     labor: Number(costMix.labor) || 0,
@@ -540,13 +550,27 @@ function normalizeCostBreakdown(cb: any): CostMix {
   };
 }
 
+function visibleCostMixFromResult(out: any): CostMix {
+  const rawMix = buildCostMix(out || {});
+  const credits = getCreditsAppliedFromResult(out || {}, rawMix);
+  const display = buildCostMixDisplay(rawMix, credits);
+  const visible: CostMix = { labor: 0, materials: 0, subs: 0, taxes: 0, other: 0 };
+
+  display.buckets.forEach((bucket) => {
+    if (bucket.key === "credits") return;
+    visible[bucket.key as CostBucketKey] = Number(bucket.value) || 0;
+  });
+
+  return visible;
+}
+
 function costMixTotal(cb: CostMix) {
   return (Number(cb.labor) || 0) + (Number(cb.materials) || 0) + (Number(cb.subs) || 0) + (Number(cb.taxes) || 0) + (Number(cb.other) || 0);
 }
 
 function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
   const jobs = Array.isArray(out?.jobs) ? out.jobs : [];
-  const overallMix = normalizeCostBreakdown(out?.cost_mix || {});
+  const visibleOverallMix = visibleCostMixFromResult(out || {});
 
   const baseRows: ClassificationCorrectionRow[] = jobs.map((job: any, idx: number) => {
     const job_id = job?.job_id == null ? null : String(job.job_id).trim() || null;
@@ -564,17 +588,19 @@ function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
     };
   });
 
-  // If the worker returns Taxes correctly at the top-level cost_mix but an older
-  // job-level cost_breakdown still has taxes as 0, keep the classification
-  // editor aligned with the visible Cost Mix. This only fills the missing Taxes
-  // amount and leaves Labor, Materials, Subs, and Other untouched.
-  const rowTaxesTotal = baseRows.reduce(
-    (sum, row) => sum + (Number(row.original.taxes) || 0),
-    0,
-  );
-  const missingTaxes = (Number(overallMix.taxes) || 0) - rowTaxesTotal;
+  if (!baseRows.length) return baseRows;
 
-  if (!baseRows.length || missingTaxes <= 0.005) return baseRows;
+  // Keep the correction editor aligned with the exact visible Cost Mix cards.
+  // This covers top-level bucket corrections from the worker, missing job-level
+  // taxes, and credit/refund display cleanup where Credits are tracked separately
+  // and should not also appear as Other.
+  if (baseRows.length === 1) {
+    return baseRows.map((row) => ({
+      ...row,
+      original: { ...visibleOverallMix },
+      edited: { ...visibleOverallMix },
+    }));
+  }
 
   const rowCostTotals = baseRows.map((row) =>
     Math.max(0, costMixTotal(row.original)),
@@ -584,17 +610,44 @@ function buildClassificationRows(out: any): ClassificationCorrectionRow[] {
     0,
   );
 
+  const currentTotals = baseRows.reduce(
+    (sum, row) => {
+      sum.labor += Number(row.original.labor) || 0;
+      sum.materials += Number(row.original.materials) || 0;
+      sum.subs += Number(row.original.subs) || 0;
+      sum.taxes += Number(row.original.taxes) || 0;
+      sum.other += Number(row.original.other) || 0;
+      return sum;
+    },
+    { labor: 0, materials: 0, subs: 0, taxes: 0, other: 0 } as CostMix,
+  );
+
+  const deltas: CostMix = {
+    labor: (Number(visibleOverallMix.labor) || 0) - currentTotals.labor,
+    materials: (Number(visibleOverallMix.materials) || 0) - currentTotals.materials,
+    subs: (Number(visibleOverallMix.subs) || 0) - currentTotals.subs,
+    taxes: (Number(visibleOverallMix.taxes) || 0) - currentTotals.taxes,
+    other: (Number(visibleOverallMix.other) || 0) - currentTotals.other,
+  };
+
+  const hasDelta = (Object.keys(deltas) as CostBucketKey[]).some(
+    (bucket) => Math.abs(Number(deltas[bucket]) || 0) > 0.005,
+  );
+
+  if (!hasDelta) return baseRows;
+
   return baseRows.map((row, idx) => {
     const share =
-      baseRows.length === 1
-        ? 1
-        : totalRowCosts > 0
-          ? (rowCostTotals[idx] || 0) / totalRowCosts
-          : 1 / baseRows.length;
-    const taxShare = missingTaxes * share;
+      totalRowCosts > 0
+        ? (rowCostTotals[idx] || 0) / totalRowCosts
+        : 1 / baseRows.length;
+
     const original: CostMix = {
-      ...row.original,
-      taxes: (Number(row.original.taxes) || 0) + taxShare,
+      labor: (Number(row.original.labor) || 0) + deltas.labor * share,
+      materials: (Number(row.original.materials) || 0) + deltas.materials * share,
+      subs: (Number(row.original.subs) || 0) + deltas.subs * share,
+      taxes: (Number(row.original.taxes) || 0) + deltas.taxes * share,
+      other: (Number(row.original.other) || 0) + deltas.other * share,
     };
 
     return {
