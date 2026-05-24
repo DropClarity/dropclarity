@@ -2286,9 +2286,9 @@ export default function AppPage() {
       )}
 
       {jobModalOpen && (
-        <div className="assignModalOverlay fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/35 p-3 backdrop-blur-sm sm:p-4">
-          <div className="assignModal mx-auto my-4 flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-            <div className="shrink-0 border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-5 sm:p-6">
+        <div className="assignModalOverlay fixed inset-0 z-[10000] overflow-y-auto bg-slate-950/35 p-3 backdrop-blur-sm sm:p-6">
+          <div className="assignModal mx-auto my-6 flex max-h-[82dvh] w-full max-w-[1450px] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-2xl">
+            <div className="assignModalHeader shrink-0 border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-5 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="mb-3 inline-flex rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-slate-600 shadow-sm">
@@ -2314,8 +2314,8 @@ export default function AppPage() {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 sm:p-5">
-              <div className="mb-5 rounded-3xl border border-cyan-100 bg-white p-4 shadow-sm">
+            <div className="assignModalBody min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 sm:p-6">
+              <div className="assignmentQuickApply mb-5 rounded-3xl border border-cyan-100 bg-white p-4 shadow-sm sm:p-5">
                 <div className="mb-3">
                   <div className="text-xs font-black uppercase tracking-wider text-slate-400">
                     Quick apply
@@ -2385,7 +2385,7 @@ export default function AppPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 xl:grid-cols-2">
+              <div className="assignmentFileGrid grid gap-4 xl:grid-cols-2">
                 {uploadedItems.map((it) => {
                   const errors = assignmentErrors[it.id] || {};
                   const roleMissing = !!errors.role;
@@ -2394,7 +2394,7 @@ export default function AppPage() {
                   return (
                     <div
                       key={it.id}
-                      className={`rounded-3xl border bg-white p-5 shadow-sm ${
+                      className={`assignmentFileCard rounded-3xl border bg-white p-5 shadow-sm ${
                         roleMissing || jobMissing
                           ? "border-red-200 ring-4 ring-red-50"
                           : "border-slate-200"
@@ -2502,7 +2502,7 @@ export default function AppPage() {
               </div>
             </div>
 
-            <div className="shrink-0 flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:p-5">
+            <div className="assignModalFooter shrink-0 flex flex-col justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:p-5">
               <div className="text-xs font-bold leading-5 text-slate-500">
                 Revenue = money earned from customers. Cost = bills, receipts, payroll, subcontractors, materials, taxes, and expenses. For multiple jobs, upload revenue and cost exports separately.
               </div>
@@ -2716,6 +2716,52 @@ const analyzePageCss = `
   .uploadHowItWorks{margin:0 14px 14px!important;padding:14px!important}
   .howStepCard{padding:12px}
   .assignmentGuide{margin-bottom:14px!important}
+}
+
+/* Premium assignment modal polish: wider desktop control-center layout with shorter height, softer density, sticky chrome, and responsive mobile/tablet behavior. */
+.assignModalOverlay{display:flex!important;align-items:flex-start!important;justify-content:center!important}
+.assignModal{max-width:min(1450px,calc(100vw - 48px))!important;max-height:82dvh!important;border-radius:30px!important;border-color:rgba(148,163,184,.36)!important;box-shadow:0 32px 90px rgba(2,6,23,.22),0 0 0 1px rgba(255,255,255,.74) inset!important;background:rgba(255,255,255,.98)!important}
+.assignModalHeader{position:relative!important;background:linear-gradient(135deg,rgba(236,254,255,.82),rgba(255,255,255,.94) 44%,rgba(245,243,255,.88))!important;border-bottom-color:rgba(15,23,42,.08)!important;padding:24px 28px!important}
+.assignModalHeader::after{content:"";position:absolute;left:28px;right:28px;bottom:-1px;height:1px;background:linear-gradient(90deg,rgba(34,211,238,.36),rgba(139,92,246,.22),rgba(34,211,238,0))}
+.assignModalBody{background:linear-gradient(180deg,rgba(248,250,252,.82),rgba(248,250,252,.96))!important;padding:24px 28px 30px!important;scrollbar-width:thin;scrollbar-color:rgba(100,116,139,.45) rgba(241,245,249,.9)}
+.assignModalBody::-webkit-scrollbar{width:10px}
+.assignModalBody::-webkit-scrollbar-track{background:rgba(241,245,249,.85);border-radius:999px}
+.assignModalBody::-webkit-scrollbar-thumb{background:rgba(100,116,139,.42);border-radius:999px;border:3px solid rgba(241,245,249,.85)}
+.assignModalFooter{background:rgba(255,255,255,.96)!important;border-top-color:rgba(15,23,42,.08)!important;padding:18px 28px!important;box-shadow:0 -14px 36px rgba(15,23,42,.045)!important}
+.assignmentQuickApply{border-color:rgba(34,211,238,.22)!important;border-radius:24px!important;box-shadow:0 18px 48px rgba(6,182,212,.055),0 1px 0 rgba(255,255,255,.88) inset!important}
+.assignmentGuide{gap:16px!important}
+.assignmentGuideCard{border-radius:20px!important;padding:16px!important;box-shadow:0 12px 30px rgba(2,6,23,.045)!important}
+.assignmentFileGrid{gap:18px!important}
+.assignmentFileCard{position:relative;overflow:hidden;border-radius:24px!important;border-color:rgba(15,23,42,.10)!important;padding:22px!important;box-shadow:0 14px 34px rgba(2,6,23,.055)!important;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+.assignmentFileCard:hover{transform:translateY(-1px);border-color:rgba(34,211,238,.22)!important;box-shadow:0 20px 48px rgba(2,6,23,.075)!important}
+.assignmentFileCard::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,rgba(16,185,129,.55),rgba(34,211,238,.24));opacity:.75}
+.assignmentFileCard:has(span.bg-violet-50)::before{background:linear-gradient(90deg,rgba(124,58,237,.50),rgba(34,211,238,.18))}
+.assignmentFileCard:has(span.bg-slate-100)::before{background:linear-gradient(90deg,rgba(148,163,184,.42),rgba(34,211,238,.14))}
+.assignmentFileCard input,.assignmentFileCard select,.assignmentQuickApply input{min-height:48px!important;border-radius:16px!important}
+.assignmentFileCard button,.assignmentQuickApply button,.assignModalFooter button{min-height:44px!important;border-radius:15px!important}
+.assignmentFileCard .mt-5{margin-top:22px!important}
+.assignmentFileCard .gap-4{gap:18px!important}
+@media(min-width:1280px){
+  .assignmentFileGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(min-width:1536px){
+  .assignModal{max-width:min(1500px,calc(100vw - 72px))!important}
+}
+@media(max-width:1180px){
+  .assignModal{max-width:calc(100vw - 32px)!important;max-height:86dvh!important}
+  .assignModalHeader{padding:22px!important}
+  .assignModalBody{padding:20px 22px 26px!important}
+  .assignModalFooter{padding:16px 22px!important}
+}
+@media(max-width:760px){
+  .assignModalOverlay{display:block!important}
+  .assignModal{max-height:100dvh!important}
+  .assignModalHeader{padding:18px!important}
+  .assignModalBody{padding:16px 14px 22px!important}
+  .assignModalFooter{padding:14px!important}
+  .assignmentFileGrid{gap:14px!important}
+  .assignmentFileCard{padding:16px!important;border-radius:22px!important}
+  .assignmentQuickApply{padding:14px!important;border-radius:22px!important}
 }
 
 `;
