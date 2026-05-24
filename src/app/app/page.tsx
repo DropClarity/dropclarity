@@ -469,7 +469,7 @@ function buildCostMixDisplay(costMix: CostMix, creditsApplied = 0): CostMixDispl
     },
     {
       key: "subs",
-      label: "Subs",
+      label: "Subcontractors",
       color: "rgba(251,146,60,.92)",
       colorClass: "bg-orange-400",
     },
@@ -1052,7 +1052,7 @@ export default function AppPage() {
     },
     {
       title: "Cost Structure",
-      detail: `Labor is ${pct(laborShare)}, materials are ${pct(materialShare)}, and subs are ${pct(subsShare)} of costs.`,
+      detail: `Labor is ${pct(laborShare)}, materials are ${pct(materialShare)}, and subcontractors are ${pct(subsShare)} of costs.`,
       tag: laborShare > 35 ? "Needs attention" : "Healthy",
       color: laborShare > 35 ? "warn" : "good",
     },
@@ -1162,7 +1162,7 @@ export default function AppPage() {
           `Costs: ${money(jobCosts)}`,
           `Net Profit: ${money(jobProfit)}`,
           `Margin: ${pct(jobMargin)}`,
-          `Cost breakdown: Labor ${money(cb.labor)} | Materials ${money(cb.materials)} | Subs ${money(cb.subs)} | Taxes ${money(cb.taxes)} | Other ${money(cb.other)}`,
+          `Cost breakdown: Labor ${money(cb.labor)} | Materials ${money(cb.materials)} | Subcontractors ${money(cb.subs)} | Taxes ${money(cb.taxes)} | Other ${money(cb.other)}`,
         );
       });
     }
@@ -2109,7 +2109,7 @@ export default function AppPage() {
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div>
                         <h4 className="text-base font-black text-slate-950">Need to fix a classification?</h4>
-                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Move job costs between Labor, Materials, Subs, Taxes, and Other without re-uploading files.</p>
+                        <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Move job costs between Labor, Materials, Subcontractors, Taxes, and Other without re-uploading files.</p>
                       </div>
 
                       <button
@@ -2126,7 +2126,7 @@ export default function AppPage() {
                         <div className="grid gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-sm font-black text-slate-600 sm:grid-cols-2 lg:grid-cols-5">
                           <div>Labor: {money(classificationTotals.labor)}</div>
                           <div>Materials: {money(classificationTotals.materials)}</div>
-                          <div>Subs: {money(classificationTotals.subs)}</div>
+                          <div>Subcontractors: {money(classificationTotals.subs)}</div>
                           <div>Taxes: {money(classificationTotals.taxes)}</div>
                           <div>Other: {money(classificationTotals.other)}</div>
                         </div>
@@ -2154,7 +2154,7 @@ export default function AppPage() {
                                 {(["labor", "materials", "subs", "taxes", "other"] as CostBucketKey[]).map((bucket) => (
                                   <label key={bucket} className="block">
                                     <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-                                      {bucket === "subs" ? "Subs" : bucket === "taxes" ? "Taxes" : bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+                                      {bucket === "subs" ? "Subcontractors" : bucket === "taxes" ? "Taxes" : bucket.charAt(0).toUpperCase() + bucket.slice(1)}
                                     </span>
                                     <input
                                       type="number"
