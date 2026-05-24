@@ -2160,7 +2160,7 @@ export default function AppPage() {
                                       type="number"
                                       inputMode="decimal"
                                       step="0.01"
-                                      value={row.edited[bucket] === ("" as any) ? "" : String(row.edited[bucket] ?? 0)}
+                                      value={row.edited[bucket] === ("" as any) ? "" : Number(row.edited[bucket] ?? 0).toFixed(2)}
                                       onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
                                       className="classificationNumberInput mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
                                     />
