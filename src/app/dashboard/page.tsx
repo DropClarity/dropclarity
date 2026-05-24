@@ -457,13 +457,13 @@ function exportAllJobsCsv(state: DashboardState) {
       "Margin %",
       "Labor",
       "Materials",
-      "Subs",
+      "Subcontractors",
       "Taxes",
       "Other",
       "Total Credits",
       "Labor Credits",
       "Materials Credits",
-      "Subs Credits",
+      "Subcontractors Credits",
       "Tax Credits",
       "Other Credits",
       "Status",
@@ -534,7 +534,7 @@ function exportSingleJobCsv(
     ["Revenue", revenue],
     ["Labor", labor],
     ["Materials", materials],
-    ["Subs", subs],
+    ["Subcontractors", subs],
     ["Taxes", taxes],
     ["Other Costs", other],
     ["Credits / Adjustments", -creditsApplied],
@@ -1906,7 +1906,7 @@ function buildCostMixParts(state: DashboardState): CostPart[] {
   return [
     { label: "Labor", value: displayMix.labor, color: "rgba(34,211,238,.95)", shadow: "rgba(34,211,238,.25)" },
     { label: "Materials", value: displayMix.materials, color: "rgba(124,58,237,.90)", shadow: "rgba(124,58,237,.20)" },
-    { label: "Subs", value: displayMix.subs, color: "rgba(37,99,235,.90)", shadow: "rgba(37,99,235,.18)" },
+    { label: "Subcontractors", value: displayMix.subs, color: "rgba(37,99,235,.90)", shadow: "rgba(37,99,235,.18)" },
     { label: "Taxes", value: displayMix.taxes, color: "rgba(59,130,246,.90)", shadow: "rgba(59,130,246,.18)" },
     { label: "Other Costs", value: displayMix.other, color: "rgba(52,211,153,.90)", shadow: "rgba(52,211,153,.20)" },
     { label: "Credits / Adjustments", value: displayMix.credits > 0 ? -displayMix.credits : 0, color: "rgba(100,116,139,.82)", shadow: "rgba(100,116,139,.14)" },
@@ -2194,7 +2194,7 @@ function jobComparisonStats(base: JobRow, allJobs: JobRow[]) {
   const drivers = [
     { label: "Labor", current: parseNumberLoose(baseMix.labor), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.labor))) },
     { label: "Materials", current: parseNumberLoose(baseMix.materials), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.materials))) },
-    { label: "Subs", current: parseNumberLoose(baseMix.subs), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.subs))) },
+    { label: "Subcontractors", current: parseNumberLoose(baseMix.subs), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.subs))) },
     { label: "Taxes", current: parseNumberLoose(baseMix.taxes), average: avgOf(pool.map((j) => parseNumberLoose(j.cost_breakdown?.taxes))) },
     { label: "Other Costs", current: getTrueOtherCostFromBreakdown(baseMix), average: avgOf(pool.map((j) => getTrueOtherCostFromBreakdown(j.cost_breakdown))) },
     { label: "Credits", current: -getJobCreditTotal(base), average: avgOf(pool.map((j) => -getJobCreditTotal(j))) },
@@ -3473,7 +3473,7 @@ function ProfitCommandCenter({
       <div className="wowCostStrip">
         <div><span>Materials share</span><strong>{fmtPct(materialShare)}</strong></div>
         <div><span>Labor share</span><strong>{fmtPct(laborShare)}</strong></div>
-        <div><span>Subs share</span><strong>{fmtPct(subsShare)}</strong></div>
+        <div><span>Subcontractors share</span><strong>{fmtPct(subsShare)}</strong></div>
         <div><span>Tax share</span><strong>{fmtPct(taxShare)}</strong></div>
         <div><span>Other cost share</span><strong>{fmtPct(otherShare)}</strong></div>
       </div>
@@ -3661,7 +3661,7 @@ function ScaleOversightPanel({
   const costShareRows = [
     { label: "Materials", value: materialShare, amount: materialTotal },
     { label: "Labor", value: laborShare, amount: laborTotal },
-    { label: "Subs", value: subsShare, amount: subsTotal },
+    { label: "Subcontractors", value: subsShare, amount: subsTotal },
     { label: "Taxes", value: taxShare, amount: taxTotal },
     { label: "Other", value: otherShare, amount: otherTotal },
   ];
@@ -4720,7 +4720,7 @@ function JobEditor({
             <table className="jobTable spreadsheetJobTable" style={{ minWidth: `${1180 + Math.max(0, job.custom_categories.length) * 150}px` }}>
               <thead>
                 <tr>
-                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subs</th><th>Taxes</th><th>Other Costs</th>
+                  <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subcontractors</th><th>Taxes</th><th>Other Costs</th>
                   {job.custom_categories.map((row, idx) => (
                     <th className="customCostTh" key={`${uid}-custom-head-${idx}`}>
                       <div className="inlineCustomHead">
@@ -4758,7 +4758,7 @@ function JobEditor({
                   {renderMoneyCell("Revenue", "revenue")}
                   {renderMoneyCell("Labor", "labor_cost")}
                   {renderMoneyCell("Materials", "material_cost")}
-                  {renderMoneyCell("Subs", "subs_cost")}
+                  {renderMoneyCell("Subcontractors", "subs_cost")}
                   {renderMoneyCell("Taxes", "tax_cost")}
                   {renderMoneyCell("Other", "other_cost")}
                   {job.custom_categories.map((row, idx) => (
