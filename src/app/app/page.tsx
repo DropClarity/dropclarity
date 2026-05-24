@@ -743,7 +743,12 @@ function drawProfitChart(
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const h = 270;
+  const isMobile = w < 560;
+  const isTablet = w >= 560 && w < 920;
+  const maxBars = isMobile ? 4 : isTablet ? 5 : 8;
+  const chartLabels = labels.slice(0, maxBars);
+  const chartValues = values.slice(0, maxBars);
+  const h = isMobile ? 230 : 270;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -751,63 +756,93 @@ function drawProfitChart(
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  const gx0 = 28;
-  const gx1 = w - 18;
-  const gy0 = 22;
-  const gy1 = h - 58;
-  const labelY = h - 20;
-  const zeroY = gy0 + (gy1 - gy0) / 2;
-  const maxAbs = Math.max(...values.map((v) => Math.abs(v || 0)), 1);
-  const scale = (gy1 - gy0) / 2 / maxAbs;
+  const gx0 = isMobile ? 18 : 30;
+  const gx1 = w - (isMobile ? 14 : 18);
+  const gy0 = isMobile ? 44 : 50;
+  const gy1 = h - (isMobile ? 64 : 70);
+  const labelY = h - 28;
+  const maxAbs = Math.max(...chartValues.map((v) => Math.abs(v || 0)), 1);
+  const zeroY =
+    chartValues.some((v) => v < 0) && chartValues.some((v) => v > 0)
+      ? gy0 + (gy1 - gy0) / 2
+      : chartValues.every((v) => v >= 0)
+        ? gy1
+        : gy0;
+
+  const positiveScale = zeroY > gy0 ? (zeroY - gy0) / maxAbs : 1;
+  const negativeScale = gy1 > zeroY ? (gy1 - zeroY) / maxAbs : 1;
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.055)";
+    ctx.strokeStyle = "rgba(15,23,42,.045)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "rgba(15,23,42,.16)";
+  ctx.strokeStyle = "rgba(15,23,42,.18)";
+  ctx.lineWidth = 1.25;
   ctx.beginPath();
   ctx.moveTo(gx0, zeroY);
   ctx.lineTo(gx1, zeroY);
   ctx.stroke();
+  ctx.lineWidth = 1;
 
-  const n = labels.length || 1;
+  const n = chartLabels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(12, Math.min(28, slot * 0.34));
+  const bw = Math.max(isMobile ? 22 : 24, Math.min(isMobile ? 38 : 44, slot * 0.34));
 
-  values.forEach((value, i) => {
+  chartValues.forEach((value, i) => {
     const x = gx0 + i * slot + slot / 2 - bw / 2;
-    const y = zeroY - value * scale;
-    const top = Math.min(y, zeroY);
-    const height = Math.max(1, Math.abs(zeroY - y));
     const isNeg = value < 0;
+    const barHeight = Math.max(
+      5,
+      Math.abs(value) * (isNeg ? negativeScale : positiveScale),
+    );
+    const top = isNeg ? zeroY : zeroY - barHeight;
+    const height = barHeight;
 
     ctx.fillStyle = isNeg ? "rgba(239,68,68,.90)" : "rgba(34,197,94,.90)";
-    roundRect(ctx, x, top, bw, height, 7);
+    roundRect(ctx, x, top, bw, height, 8);
     ctx.fill();
 
-    ctx.font = "900 12px ui-sans-serif, system-ui";
-    ctx.fillStyle = isNeg ? "rgba(185,28,28,.96)" : "rgba(22,101,52,.96)";
+    const label = shortMoney(value);
+    ctx.font = `900 ${isMobile ? 11 : 12}px ui-sans-serif, system-ui`;
+    const textWidth = ctx.measureText(label).width;
+    const pillW = Math.max(textWidth + 16, 48);
+    const pillH = isMobile ? 22 : 24;
+    const pillX = Math.max(gx0, Math.min(x + bw / 2 - pillW / 2, gx1 - pillW));
+    const rawPillY = isNeg ? top + height + 9 : top - pillH - 10;
+    const pillY = Math.max(gy0 - 34, Math.min(rawPillY, gy1 + 20));
+
+    ctx.fillStyle = "rgba(255,255,255,.98)";
+    roundRect(ctx, pillX, pillY, pillW, pillH, 999);
+    ctx.fill();
+    ctx.strokeStyle = isNeg ? "rgba(239,68,68,.22)" : "rgba(16,185,129,.22)";
+    ctx.stroke();
+
+    ctx.fillStyle = isNeg ? "rgba(185,28,28,.96)" : "rgba(4,120,87,.96)";
     ctx.textAlign = "center";
-
-    const valueLabelY = isNeg
-      ? Math.min(top + height + 17, gy1 + 18)
-      : Math.max(top - 8, gy0 + 12);
-
-    ctx.fillText(shortMoney(value), x + bw / 2, valueLabelY);
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, pillX + pillW / 2, pillY + pillH / 2 + 0.5);
+    ctx.textBaseline = "alphabetic";
   });
 
-  ctx.font = "950 14px ui-sans-serif, system-ui";
-  ctx.fillStyle = "rgba(15,23,42,.82)";
+  ctx.font = `950 ${isMobile ? 11 : 14}px ui-sans-serif, system-ui`;
+  ctx.fillStyle = "rgba(15,23,42,.76)";
   ctx.textAlign = "center";
-  labels.forEach((label, i) => {
+  chartLabels.forEach((label, i) => {
     const x = gx0 + i * slot + slot / 2;
-    ctx.fillText(label, x, labelY + 2);
+    ctx.fillText(isMobile ? shortLabel(label) : label, x, labelY + 2);
   });
+
+  if (labels.length > chartLabels.length) {
+    ctx.font = "800 11px ui-sans-serif, system-ui";
+    ctx.fillStyle = "rgba(100,116,139,.72)";
+    ctx.textAlign = "left";
+    ctx.fillText(`Showing top ${chartLabels.length} jobs. Full list below.`, gx0, h - 7);
+  }
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -833,11 +868,18 @@ function drawRevCostChart(
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
+  const chartCtx = ctx;
 
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const h = 270;
+  const isMobile = w < 560;
+  const isTablet = w >= 560 && w < 920;
+  const maxBars = isMobile ? 4 : isTablet ? 5 : 8;
+  const chartLabels = labels.slice(0, maxBars);
+  const chartRev = rev.slice(0, maxBars);
+  const chartCost = cost.slice(0, maxBars);
+  const h = isMobile ? 250 : 285;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -845,51 +887,95 @@ function drawRevCostChart(
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  const gx0 = 28;
-  const gx1 = w - 18;
-  const gy0 = 22;
-  const gy1 = h - 58;
-  const labelY = h - 20;
-  const maxV = Math.max(...rev, ...cost, 1);
+  const gx0 = isMobile ? 18 : 30;
+  const gx1 = w - (isMobile ? 14 : 18);
+  const gy0 = isMobile ? 52 : 58;
+  const gy1 = h - (isMobile ? 68 : 74);
+  const labelY = h - 30;
+  const maxV = Math.max(...chartRev, ...chartCost, 1);
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.055)";
+    ctx.strokeStyle = "rgba(15,23,42,.045)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  const n = labels.length || 1;
+  const n = chartLabels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(9, Math.min(22, slot * 0.24));
-  const gap = bw * 0.38;
+  const bw = Math.max(isMobile ? 12 : 14, Math.min(isMobile ? 22 : 26, slot * 0.22));
+  const gap = bw * 0.52;
 
   function yFor(v: number) {
     return gy1 - (v / maxV) * (gy1 - gy0);
   }
 
-  labels.forEach((label, i) => {
+  function drawValuePill(
+    text: string,
+    xCenter: number,
+    y: number,
+    tone: "revenue" | "cost",
+    rowOffset = 0,
+  ) {
+    chartCtx.font = `900 ${isMobile ? 10 : 11}px ui-sans-serif, system-ui`;
+    const textWidth = chartCtx.measureText(text).width;
+    const pillW = Math.max(textWidth + 12, isMobile ? 42 : 46);
+    const pillH = isMobile ? 20 : 22;
+    const pillX = Math.max(gx0, Math.min(xCenter - pillW / 2, gx1 - pillW));
+    const preferredY = y - pillH - 9 - rowOffset;
+    const pillY = Math.max(gy0 - 44, Math.min(preferredY, gy1 - pillH));
+
+    chartCtx.fillStyle = "rgba(255,255,255,.98)";
+    roundRect(chartCtx, pillX, pillY, pillW, pillH, 999);
+    chartCtx.fill();
+    chartCtx.strokeStyle = tone === "revenue" ? "rgba(8,145,178,.20)" : "rgba(109,40,217,.20)";
+    chartCtx.stroke();
+
+    chartCtx.fillStyle = tone === "revenue" ? "rgba(8,145,178,.96)" : "rgba(109,40,217,.94)";
+    chartCtx.textAlign = "center";
+    chartCtx.textBaseline = "middle";
+    chartCtx.fillText(text, pillX + pillW / 2, pillY + pillH / 2 + 0.5);
+    chartCtx.textBaseline = "alphabetic";
+  }
+
+  chartLabels.forEach((label, i) => {
     const xBase = gx0 + i * slot + slot / 2;
     const xRev = xBase - bw - gap / 2;
     const xCost = xBase + gap / 2;
 
-    const yR = yFor(rev[i] || 0);
+    const revValue = chartRev[i] || 0;
+    const costValue = chartCost[i] || 0;
+    const yR = yFor(revValue);
+    const yC = yFor(costValue);
+    const revHeight = Math.max(3, gy1 - yR);
+    const costHeight = Math.max(3, gy1 - yC);
+
     ctx.fillStyle = "rgba(34,211,238,.82)";
-    roundRect(ctx, xRev, yR, bw, gy1 - yR, 6);
+    roundRect(ctx, xRev, gy1 - revHeight, bw, revHeight, 7);
     ctx.fill();
 
-    const yC = yFor(cost[i] || 0);
     ctx.fillStyle = "rgba(124,58,237,.72)";
-    roundRect(ctx, xCost, yC, bw, gy1 - yC, 6);
+    roundRect(ctx, xCost, gy1 - costHeight, bw, costHeight, 7);
     ctx.fill();
 
-    ctx.font = "950 14px ui-sans-serif, system-ui";
+    const labelsAreClose = Math.abs(yR - yC) < 26;
+    drawValuePill(shortMoney(revValue), xRev + bw / 2, gy1 - revHeight, "revenue", labelsAreClose ? 18 : 0);
+    drawValuePill(shortMoney(costValue), xCost + bw / 2, gy1 - costHeight, "cost", 0);
+
+    ctx.font = `950 ${isMobile ? 11 : 14}px ui-sans-serif, system-ui`;
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(15,23,42,.82)";
-    ctx.fillText(label, xBase, labelY + 2);
+    ctx.fillStyle = "rgba(15,23,42,.76)";
+    ctx.fillText(isMobile ? shortLabel(label) : label, xBase, labelY + 2);
   });
+
+  if (labels.length > chartLabels.length) {
+    ctx.font = "800 11px ui-sans-serif, system-ui";
+    ctx.fillStyle = "rgba(100,116,139,.72)";
+    ctx.textAlign = "left";
+    ctx.fillText(`Showing top ${chartLabels.length} jobs. Full list below.`, gx0, h - 7);
+  }
 }
 
 function drawDonut(
@@ -1507,28 +1593,41 @@ export default function AppPage() {
   useEffect(() => {
     if (!result) return;
 
-    requestAnimationFrame(() => {
-      if (profitCanvasRef.current) {
-        drawProfitChart(
-          profitCanvasRef.current,
-          chartData.profit.labels,
-          chartData.profit.values,
-        );
-      }
+    let frame = 0;
 
-      if (revCostCanvasRef.current) {
-        drawRevCostChart(
-          revCostCanvasRef.current,
-          chartData.revcost.labels,
-          chartData.revcost.rev,
-          chartData.revcost.cost,
-        );
-      }
+    const drawCharts = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        if (profitCanvasRef.current) {
+          drawProfitChart(
+            profitCanvasRef.current,
+            chartData.profit.labels,
+            chartData.profit.values,
+          );
+        }
 
-      if (donutCanvasRef.current) {
-        drawDonut(donutCanvasRef.current, costMixDisplay.donutParts);
-      }
-    });
+        if (revCostCanvasRef.current) {
+          drawRevCostChart(
+            revCostCanvasRef.current,
+            chartData.revcost.labels,
+            chartData.revcost.rev,
+            chartData.revcost.cost,
+          );
+        }
+
+        if (donutCanvasRef.current) {
+          drawDonut(donutCanvasRef.current, costMixDisplay.donutParts);
+        }
+      });
+    };
+
+    drawCharts();
+    window.addEventListener("resize", drawCharts);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", drawCharts);
+    };
   }, [result, chartData, costMixDisplay]);
 
   useEffect(() => {
@@ -1541,6 +1640,14 @@ export default function AppPage() {
     setClassificationRows(buildClassificationRows(originalAnalyzeResult || result));
   }, [result?.report_id, originalAnalyzeResult?.report_id]);
 
+  function displayClassificationValue(value: number | string) {
+    if (value === ("" as any) || value == null) return "";
+    if (typeof value === "string") return value;
+
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toFixed(2) : "0.00";
+  }
+
   function updateClassificationBucket(rowKey: string, bucket: CostBucketKey, rawValue: string) {
     // Keep the user's exact typed value while editing so fields do not auto-format
     // to 2 decimals after every keystroke. Values are normalized back to numbers
@@ -1548,7 +1655,7 @@ export default function AppPage() {
     const safeValue =
       rawValue === ""
         ? ""
-        : /^-?\\d*(\\.\\d*)?$/.test(rawValue)
+        : /^-?\d*(\.\d*)?$/.test(rawValue)
           ? rawValue
           : String(Number(rawValue) || 0);
 
@@ -1564,6 +1671,33 @@ export default function AppPage() {
             }
           : row
       )
+    );
+  }
+
+  function classificationInputDisplayValue(value: CostMix[CostBucketKey] | string) {
+    if (value === ("" as any) || value == null) return "";
+    if (typeof value === "string") return value;
+
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue.toFixed(2) : "0.00";
+  }
+
+  function formatClassificationBucket(rowKey: string, bucket: CostBucketKey) {
+    setClassificationRows((prev) =>
+      prev.map((row) => {
+        if (row.key !== rowKey) return row;
+
+        const raw = row.edited[bucket];
+        const value = raw === ("" as any) || raw == null ? 0 : Number(raw);
+
+        return {
+          ...row,
+          edited: {
+            ...row.edited,
+            [bucket]: Number.isFinite(value) ? value.toFixed(2) : "0.00",
+          } as CostMix,
+        };
+      })
     );
   }
 
@@ -2167,8 +2301,9 @@ export default function AppPage() {
                                       type="number"
                                       inputMode="decimal"
                                       step="0.01"
-                                      value={row.edited[bucket] === ("" as any) ? "" : String(row.edited[bucket] ?? "")}
+                                      value={displayClassificationValue(row.edited[bucket])}
                                       onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
+                                      onBlur={() => formatClassificationBucket(row.key, bucket)}
                                       className="classificationNumberInput mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
                                     />
                                   </label>
