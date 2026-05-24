@@ -743,12 +743,7 @@ function drawProfitChart(
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const isMobile = w < 560;
-  const isTablet = w >= 560 && w < 920;
-  const maxBars = isMobile ? 4 : isTablet ? 5 : 8;
-  const chartLabels = labels.slice(0, maxBars);
-  const chartValues = values.slice(0, maxBars);
-  const h = isMobile ? 230 : 270;
+  const h = 270;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -756,83 +751,63 @@ function drawProfitChart(
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  const gx0 = isMobile ? 18 : 30;
-  const gx1 = w - (isMobile ? 14 : 18);
-  const gy0 = isMobile ? 34 : 38;
-  const gy1 = h - (isMobile ? 60 : 64);
-  const labelY = h - 24;
+  const gx0 = 28;
+  const gx1 = w - 18;
+  const gy0 = 22;
+  const gy1 = h - 58;
+  const labelY = h - 20;
   const zeroY = gy0 + (gy1 - gy0) / 2;
-  const maxAbs = Math.max(...chartValues.map((v) => Math.abs(v || 0)), 1);
+  const maxAbs = Math.max(...values.map((v) => Math.abs(v || 0)), 1);
   const scale = (gy1 - gy0) / 2 / maxAbs;
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.05)";
+    ctx.strokeStyle = "rgba(15,23,42,.055)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "rgba(15,23,42,.18)";
-  ctx.lineWidth = 1.25;
+  ctx.strokeStyle = "rgba(15,23,42,.16)";
   ctx.beginPath();
   ctx.moveTo(gx0, zeroY);
   ctx.lineTo(gx1, zeroY);
   ctx.stroke();
-  ctx.lineWidth = 1;
 
-  const n = chartLabels.length || 1;
+  const n = labels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(isMobile ? 18 : 20, Math.min(isMobile ? 34 : 38, slot * 0.34));
+  const bw = Math.max(12, Math.min(28, slot * 0.34));
 
-  chartValues.forEach((value, i) => {
+  values.forEach((value, i) => {
     const x = gx0 + i * slot + slot / 2 - bw / 2;
     const y = zeroY - value * scale;
     const top = Math.min(y, zeroY);
-    const height = Math.max(2, Math.abs(zeroY - y));
+    const height = Math.max(1, Math.abs(zeroY - y));
     const isNeg = value < 0;
 
     ctx.fillStyle = isNeg ? "rgba(239,68,68,.90)" : "rgba(34,197,94,.90)";
-    roundRect(ctx, x, top, bw, height, 8);
+    roundRect(ctx, x, top, bw, height, 7);
     ctx.fill();
 
-    const label = shortMoney(value);
-    ctx.font = `900 ${isMobile ? 11 : 12}px ui-sans-serif, system-ui`;
-    const textWidth = ctx.measureText(label).width;
-    const pillW = Math.max(textWidth + 14, 42);
-    const pillH = isMobile ? 21 : 22;
-    const pillX = Math.max(gx0, Math.min(x + bw / 2 - pillW / 2, gx1 - pillW));
-    const rawPillY = isNeg ? top + height + 8 : top - pillH - 8;
-    const pillY = Math.max(gy0 - 26, Math.min(rawPillY, gy1 + 18));
-
-    ctx.fillStyle = "rgba(255,255,255,.95)";
-    roundRect(ctx, pillX, pillY, pillW, pillH, 999);
-    ctx.fill();
-    ctx.strokeStyle = isNeg ? "rgba(239,68,68,.18)" : "rgba(16,185,129,.18)";
-    ctx.stroke();
-
-    ctx.fillStyle = isNeg ? "rgba(185,28,28,.96)" : "rgba(4,120,87,.96)";
+    ctx.font = "900 12px ui-sans-serif, system-ui";
+    ctx.fillStyle = isNeg ? "rgba(185,28,28,.96)" : "rgba(22,101,52,.96)";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(label, pillX + pillW / 2, pillY + pillH / 2 + 0.5);
-    ctx.textBaseline = "alphabetic";
+
+    const valueLabelY = isNeg
+      ? Math.min(top + height + 17, gy1 + 18)
+      : Math.max(top - 8, gy0 + 12);
+
+    ctx.fillText(shortMoney(value), x + bw / 2, valueLabelY);
   });
 
-  ctx.font = `950 ${isMobile ? 11 : 14}px ui-sans-serif, system-ui`;
-  ctx.fillStyle = "rgba(15,23,42,.76)";
+  ctx.font = "950 14px ui-sans-serif, system-ui";
+  ctx.fillStyle = "rgba(15,23,42,.82)";
   ctx.textAlign = "center";
-  chartLabels.forEach((label, i) => {
+  labels.forEach((label, i) => {
     const x = gx0 + i * slot + slot / 2;
-    ctx.fillText(isMobile ? shortLabel(label) : label, x, labelY + 2);
+    ctx.fillText(label, x, labelY + 2);
   });
-
-  if (labels.length > chartLabels.length) {
-    ctx.font = "800 11px ui-sans-serif, system-ui";
-    ctx.fillStyle = "rgba(100,116,139,.72)";
-    ctx.textAlign = "left";
-    ctx.fillText(`Showing top ${chartLabels.length} jobs. Full list below.`, gx0, h - 6);
-  }
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -862,13 +837,7 @@ function drawRevCostChart(
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = canvas.getBoundingClientRect();
   const w = Math.max(1, Math.floor(rect.width));
-  const isMobile = w < 560;
-  const isTablet = w >= 560 && w < 920;
-  const maxBars = isMobile ? 4 : isTablet ? 5 : 8;
-  const chartLabels = labels.slice(0, maxBars);
-  const chartRev = rev.slice(0, maxBars);
-  const chartCost = cost.slice(0, maxBars);
-  const h = isMobile ? 230 : 270;
+  const h = 270;
 
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -876,69 +845,51 @@ function drawRevCostChart(
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  const gx0 = isMobile ? 18 : 30;
-  const gx1 = w - (isMobile ? 14 : 18);
-  const gy0 = isMobile ? 34 : 38;
-  const gy1 = h - (isMobile ? 60 : 64);
-  const labelY = h - 24;
-  const maxV = Math.max(...chartRev, ...chartCost, 1);
+  const gx0 = 28;
+  const gx1 = w - 18;
+  const gy0 = 22;
+  const gy1 = h - 58;
+  const labelY = h - 20;
+  const maxV = Math.max(...rev, ...cost, 1);
 
   for (let i = 0; i < 5; i++) {
     const y = gy0 + (i * (gy1 - gy0)) / 4;
-    ctx.strokeStyle = "rgba(15,23,42,.05)";
+    ctx.strokeStyle = "rgba(15,23,42,.055)";
     ctx.beginPath();
     ctx.moveTo(gx0, y);
     ctx.lineTo(gx1, y);
     ctx.stroke();
   }
 
-  const n = chartLabels.length || 1;
+  const n = labels.length || 1;
   const slot = (gx1 - gx0) / n;
-  const bw = Math.max(isMobile ? 9 : 10, Math.min(isMobile ? 18 : 22, slot * 0.24));
-  const gap = bw * 0.42;
+  const bw = Math.max(9, Math.min(22, slot * 0.24));
+  const gap = bw * 0.38;
 
   function yFor(v: number) {
     return gy1 - (v / maxV) * (gy1 - gy0);
   }
 
-  chartLabels.forEach((label, i) => {
+  labels.forEach((label, i) => {
     const xBase = gx0 + i * slot + slot / 2;
     const xRev = xBase - bw - gap / 2;
     const xCost = xBase + gap / 2;
 
-    const yR = yFor(chartRev[i] || 0);
+    const yR = yFor(rev[i] || 0);
     ctx.fillStyle = "rgba(34,211,238,.82)";
-    roundRect(ctx, xRev, yR, bw, gy1 - yR, 7);
+    roundRect(ctx, xRev, yR, bw, gy1 - yR, 6);
     ctx.fill();
 
-    const yC = yFor(chartCost[i] || 0);
+    const yC = yFor(cost[i] || 0);
     ctx.fillStyle = "rgba(124,58,237,.72)";
-    roundRect(ctx, xCost, yC, bw, gy1 - yC, 7);
+    roundRect(ctx, xCost, yC, bw, gy1 - yC, 6);
     ctx.fill();
 
-    if (!isMobile || n <= 3) {
-      const revLabel = shortMoney(chartRev[i] || 0);
-      const costLabel = shortMoney(chartCost[i] || 0);
-      ctx.font = "850 11px ui-sans-serif, system-ui";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(8,145,178,.92)";
-      ctx.fillText(revLabel, xRev + bw / 2, Math.max(yR - 7, gy0 + 10));
-      ctx.fillStyle = "rgba(109,40,217,.88)";
-      ctx.fillText(costLabel, xCost + bw / 2, Math.max(yC - 7, gy0 + 22));
-    }
-
-    ctx.font = `950 ${isMobile ? 11 : 14}px ui-sans-serif, system-ui`;
+    ctx.font = "950 14px ui-sans-serif, system-ui";
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(15,23,42,.76)";
-    ctx.fillText(isMobile ? shortLabel(label) : label, xBase, labelY + 2);
+    ctx.fillStyle = "rgba(15,23,42,.82)";
+    ctx.fillText(label, xBase, labelY + 2);
   });
-
-  if (labels.length > chartLabels.length) {
-    ctx.font = "800 11px ui-sans-serif, system-ui";
-    ctx.fillStyle = "rgba(100,116,139,.72)";
-    ctx.textAlign = "left";
-    ctx.fillText(`Showing top ${chartLabels.length} jobs. Full list below.`, gx0, h - 6);
-  }
 }
 
 function drawDonut(
@@ -1616,34 +1567,6 @@ export default function AppPage() {
     );
   }
 
-  function formatClassificationBucket(rowKey: string, bucket: CostBucketKey) {
-    setClassificationRows((prev) =>
-      prev.map((row) => {
-        if (row.key !== rowKey) return row;
-
-        const raw = row.edited[bucket];
-        if (raw === ("" as any) || raw == null) {
-          return {
-            ...row,
-            edited: {
-              ...row.edited,
-              [bucket]: "0.00",
-            } as CostMix,
-          };
-        }
-
-        const value = Number(raw);
-        return {
-          ...row,
-          edited: {
-            ...row.edited,
-            [bucket]: Number.isFinite(value) ? value.toFixed(2) : "0.00",
-          } as CostMix,
-        };
-      })
-    );
-  }
-
   function resetClassificationRows() {
     const resetRows = classificationRows.map((row) => ({
       ...row,
@@ -2246,7 +2169,6 @@ export default function AppPage() {
                                       step="0.01"
                                       value={row.edited[bucket] === ("" as any) ? "" : String(row.edited[bucket] ?? "")}
                                       onChange={(e) => updateClassificationBucket(row.key, bucket, e.target.value)}
-                                      onBlur={() => formatClassificationBucket(row.key, bucket)}
                                       className="classificationNumberInput mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100"
                                     />
                                   </label>
