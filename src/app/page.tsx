@@ -561,18 +561,18 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-visible px-1 pb-5 md:gap-5 xl:grid xl:grid-cols-3 xl:gap-6 xl:overflow-visible xl:px-0 xl:pb-0">
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
             {pricing.map((plan) => (
               <article
                 key={plan.name}
-                className={`relative flex min-h-[560px] w-[88%] max-w-[360px] shrink-0 snap-center flex-col rounded-[28px] border bg-white p-5 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(2,6,23,.11)] sm:min-h-[590px] sm:w-[420px] sm:max-w-none sm:p-7 md:w-[440px] xl:min-h-[610px] xl:w-auto xl:snap-none lg:p-8 ${
+                className={`relative flex min-h-[610px] flex-col rounded-[28px] border bg-white p-6 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(2,6,23,.11)] sm:p-7 lg:p-8 ${
                   plan.featured
                     ? "border-violet-400 ring-2 ring-violet-200"
                     : "border-slate-200"
                 }`}
               >
                 {plan.featured ? (
-                  <div className="absolute left-1/2 top-0 w-[210px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500 px-3 py-2 text-center text-[11px] font-black text-white shadow-lg shadow-violet-200 sm:w-[280px] sm:px-4 sm:text-xs xl:left-8 xl:right-8 xl:w-auto xl:translate-x-0">
+                  <div className="absolute left-6 right-6 top-0 -translate-y-1/2 rounded-full bg-violet-500 px-4 py-2 text-center text-xs font-black text-white shadow-lg shadow-violet-200 sm:left-8 sm:right-8">
                     Most businesses start here
                   </div>
                 ) : null}
