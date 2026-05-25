@@ -24,9 +24,19 @@ export default function Home() {
     const video = demoVideoRef.current;
     if (!video) return;
 
+    const mobileVideo = video as HTMLVideoElement & {
+      webkitEnterFullscreen?: () => void;
+      webkitSupportsFullscreen?: boolean;
+    };
+
     try {
       if (video.requestFullscreen) {
         await video.requestFullscreen();
+        return;
+      }
+
+      if (mobileVideo.webkitEnterFullscreen) {
+        mobileVideo.webkitEnterFullscreen();
       }
     } catch {
       // Fullscreen can be blocked by some browsers. The modal player still remains usable.
@@ -187,7 +197,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setShowDemo(true)}
-                className="group inline-flex animate-[subtleDemoBounce_2.4s_ease-in-out_infinite] items-center justify-center gap-2 rounded-full border border-violet-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-900 shadow-lg shadow-violet-100 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-violet-200 motion-reduce:animate-none"
+                className="group inline-flex animate-[dc-watch-demo-bounce_2.4s_ease-in-out_infinite] items-center justify-center gap-2 rounded-full border border-violet-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-900 shadow-lg shadow-violet-100 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-violet-200 motion-reduce:animate-none"
               >
                 <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-500 text-[10px] text-white shadow-sm transition group-hover:bg-violet-600">
                   ▶
@@ -611,56 +621,85 @@ export default function Home() {
 
       {showDemo && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-3 py-5 backdrop-blur-sm sm:px-5"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-5 sm:py-6"
           role="dialog"
           aria-modal="true"
           aria-label="DropClarity demo video"
           onClick={() => setShowDemo(false)}
         >
           <div
-            className="relative w-full max-w-5xl overflow-hidden rounded-[1.5rem] border border-white/15 bg-slate-950 shadow-2xl shadow-slate-950/40 sm:rounded-[2rem]"
+            className="relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950 px-4 py-3 sm:px-5">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-black text-white sm:text-base">DropClarity Platform Demo</div>
-                <div className="mt-0.5 hidden text-xs font-semibold text-slate-400 sm:block">
-                  See how uploads, analysis, dashboards, alerts, and job insights work together.
-                </div>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={expandDemoVideo}
-                  className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black text-white transition hover:bg-white/15"
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
+              <button
+                type="button"
+                onClick={expandDemoVideo}
+                aria-label="Expand demo video"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/65 backdrop-blur transition hover:bg-white/15 hover:text-white sm:h-10 sm:w-10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5 sm:h-5 sm:w-5"
                 >
-                  Expand
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDemo(false)}
-                  className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 text-lg font-black leading-none text-white transition hover:bg-white/15"
-                  aria-label="Close demo video"
+                  <path d="M15 3h6v6" />
+                  <path d="M9 21H3v-6" />
+                  <path d="M21 3l-7 7" />
+                  <path d="M3 21l7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDemo(false)}
+                aria-label="Close demo video"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur transition hover:bg-white/15 hover:text-white sm:h-10 sm:w-10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
                 >
-                  ×
-                </button>
-              </div>
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <div className="bg-black">
-              <video
-                ref={demoVideoRef}
-                src="/videos/dropclarity-demo.mp4"
-                controls
-                autoPlay
-                playsInline
-                className="aspect-video max-h-[78vh] w-full bg-black object-contain"
-              />
-            </div>
+            <video
+              ref={demoVideoRef}
+              src="/videos/dropclarity-demo.mp4"
+              controls
+              autoPlay
+              playsInline
+              className="aspect-video max-h-[88vh] w-full bg-black object-contain"
+            />
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @keyframes dc-watch-demo-bounce {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-4px);
+          }
+        }
+      `}</style>
+
     </main>
   );
 }
