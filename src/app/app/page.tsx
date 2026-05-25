@@ -1046,11 +1046,13 @@ export default function AppPage() {
   const profitCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const revCostCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const donutCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const walkthroughVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const [items, setItems] = useState<QueueItem[]>([]);
   const [toast, setToast] = useState("");
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const [reportCopied, setReportCopied] = useState(false);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [originalAnalyzeResult, setOriginalAnalyzeResult] = useState<any>(null);
@@ -1189,6 +1191,29 @@ export default function AppPage() {
     setToastTone(tone);
     setToast(msg);
     setTimeout(() => setToast(""), 5200);
+  }
+
+  async function expandWalkthroughVideo() {
+    const video = walkthroughVideoRef.current;
+    if (!video) return;
+
+    const mobileVideo = video as HTMLVideoElement & {
+      webkitEnterFullscreen?: () => void;
+      webkitSupportsFullscreen?: boolean;
+    };
+
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+        return;
+      }
+
+      if (mobileVideo.webkitEnterFullscreen) {
+        mobileVideo.webkitEnterFullscreen();
+      }
+    } catch {
+      // Fullscreen can be blocked by some browsers. The modal player still remains usable.
+    }
   }
 
   function uploadHelpMessage(fileName?: string) {
@@ -1803,7 +1828,18 @@ export default function AppPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowWalkthrough(true)}
+                className="walkthroughBtn inline-flex items-center justify-center gap-2 rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-black text-slate-800 shadow-sm shadow-cyan-100 transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-white hover:shadow-md"
+              >
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-[9px] text-white shadow-sm">
+                  ▶
+                </span>
+                Watch walkthrough
+              </button>
+
               <div className={`analysisStatusPill w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm ${analyzing ? "isAnalyzing" : ""}`}>
                 {analyzing
                   ? "Analyzing…"
@@ -2404,6 +2440,75 @@ export default function AppPage() {
         </div>
       </section>
 
+      {showWalkthrough && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-5 sm:py-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="DropClarity analyze walkthrough video"
+          onClick={() => setShowWalkthrough(false)}
+        >
+          <div
+            className="relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
+              <button
+                type="button"
+                onClick={expandWalkthroughVideo}
+                aria-label="Expand walkthrough video"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/65 backdrop-blur transition hover:bg-white/15 hover:text-white sm:h-10 sm:w-10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5 sm:h-5 sm:w-5"
+                >
+                  <path d="M15 3h6v6" />
+                  <path d="M9 21H3v-6" />
+                  <path d="M21 3l-7 7" />
+                  <path d="M3 21l7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowWalkthrough(false)}
+                aria-label="Close walkthrough video"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur transition hover:bg-white/15 hover:text-white sm:h-10 sm:w-10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                >
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <video
+              ref={walkthroughVideoRef}
+              src="/videos/dropclarity-analyze-walkthrough.mp4"
+              controls
+              autoPlay
+              playsInline
+              className="aspect-video max-h-[88vh] w-full bg-black object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {result && (
         <a
           href="/dashboard"
@@ -2724,6 +2829,7 @@ const analyzePageCss = `
 .pageSub{margin-top:9px;max-width:860px;color:rgba(51,65,85,.78);font-size:clamp(14px,1.2vw,17px);line-height:1.5;font-weight:750}
 .analyzeActions{margin-bottom:16px}
 .analyzeActions button,.analyzeActions a{min-height:44px}
+.walkthroughBtn{min-height:40px}
 .dashboardCtaBtn{isolation:isolate;animation:dashboardCtaNudge 3.4s ease-in-out infinite}
 .dashboardCtaGlow{position:absolute;inset:-24px;z-index:0;background:linear-gradient(90deg,rgba(34,211,238,.0),rgba(139,92,246,.16),rgba(34,211,238,.0));transform:translateX(-60%);animation:dashboardCtaSweep 2.9s ease-in-out infinite}
 .dashboardCtaDot{height:7px;width:7px;border-radius:999px;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.09);animation:dashboardCtaDot 1.8s ease-in-out infinite}
@@ -2767,6 +2873,7 @@ const analyzePageCss = `
   .pageTitle{font-size:29px!important;line-height:1.08!important}
   .pageSub{font-size:14px!important;line-height:1.48!important}
   .analyzeTopbar{padding:0!important}
+  .walkthroughBtn{width:100%;min-height:44px}
   .analyzeActions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important}
   .analyzeActions button{display:flex!important;width:100%!important;align-items:center!important;justify-content:center!important;text-align:center!important}
   .uploadPanel,.resultsPanel{width:100%!important;overflow:hidden!important;border-radius:22px!important}
