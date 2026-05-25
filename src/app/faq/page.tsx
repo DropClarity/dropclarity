@@ -6,15 +6,27 @@ export default function FAQPage() {
       items: [
         [
           "What is DropClarity?",
-          "DropClarity is a job profitability analysis tool for contractors, trades, and service operators. It helps turn invoices, vendor bills, and job exports into a clear readout of revenue, costs, margin, risks, and recommended actions.",
+          "DropClarity is a job profitability platform for home service businesses. Upload invoices, bills, spreadsheets, PDFs, or job exports to uncover profit leaks, margin risks, losing jobs, and recommended actions.",
         ],
         [
           "Who is this built for?",
-          "DropClarity is built for operators who want to understand which jobs are making money, which jobs are losing money, and what to fix next without needing spreadsheets, dashboards, or a finance background.",
+          "DropClarity is built for HVAC, plumbing, roofing, electrical, landscaping, restoration, remodeling, and other home service businesses that want clearer visibility into job profitability.",
         ],
         [
           "How is this different from a regular dashboard?",
-          "Most dashboards show numbers and leave you to interpret them. DropClarity focuses on clear explanations, job-level profitability, margin risks, and next steps you can act on.",
+          "Most dashboards show numbers and leave you to interpret them. DropClarity focuses on job-level profitability, margin risks, losing jobs, and recommended actions operators can use immediately.",
+        ],
+        [
+          "Why does job profitability matter?",
+          "A business can stay busy, booked, and growing while still losing money on certain jobs. DropClarity helps expose underpriced work, labor overruns, material cost leaks, and hidden margin problems before they grow.",
+        ],
+        [
+          "Do I need accounting or financial experience?",
+          "No. DropClarity is designed for operators and business owners, not accountants. The platform turns raw job data into simple profitability insights, clear risks, and recommended actions.",
+        ],
+        [
+          "Why use DropClarity instead of spreadsheets or ChatGPT?",
+          "Spreadsheets and general AI tools still require manual setup, prompting, cleanup, and interpretation. DropClarity is purpose-built for job profitability and automatically structures your data, identifies profit leaks, flags losing jobs, and delivers business-ready insights.",
         ],
       ],
     },
@@ -24,15 +36,27 @@ export default function FAQPage() {
       items: [
         [
           "What files can I upload?",
-          "You can start with job invoices, vendor bills, revenue exports, cost exports, and similar job-related files. The goal is to match revenue and costs to jobs so DropClarity can calculate profitability.",
+          "You can upload invoices, bills, spreadsheets, PDFs, job exports, and other files containing revenue or cost data.",
         ],
         [
           "How does the analysis work?",
-          "DropClarity reads the uploaded files, identifies revenue and cost details, groups them by job when possible, and produces a profitability readout with KPIs, job-level comparisons, risks, and recommendations.",
+          "DropClarity analyzes uploaded files, identifies revenue and cost details, groups information by job when possible, and generates profitability insights, KPIs, risks, and recommendations automatically.",
         ],
         [
-          "What if the model gets something wrong?",
-          "You can review the job-level details and adjust fields manually. This is important because real-world job data can be messy, inconsistent, or missing details.",
+          "How quickly can I get results?",
+          "Most analyses are completed in seconds. Larger PDF, image, or multi-job uploads may take longer depending on file size and complexity.",
+        ],
+        [
+          "Can DropClarity analyze multiple jobs at once?",
+          "Yes. Multi-job uploads can be separated and analyzed individually so you can compare profitability across multiple jobs from the same export, spreadsheet, or report.",
+        ],
+        [
+          "What if the analysis gets something wrong?",
+          "You can review job-level details and adjust fields manually if needed. Real-world job data can be inconsistent, incomplete, or formatted differently between systems, so review control is important.",
+        ],
+        [
+          "What insights does the platform generate?",
+          "DropClarity can surface margin risks, cost overruns, losing jobs, unusual cost patterns, recoverable profit opportunities, and AI-generated recommended actions.",
         ],
       ],
     },
@@ -45,12 +69,20 @@ export default function FAQPage() {
           "Yes. The free option is designed for a one-time profitability preview so you can test the value before upgrading.",
         ],
         [
+          "What is the difference between Core and Scale?",
+          "Core gives you the complete profitability dashboard with job analysis, KPIs, saved history, exports, trends, and cost visibility. Scale adds advanced profit oversight with automated high-risk alerts, recoverable profit insights, benchmarking, and priority actions.",
+        ],
+        [
           "Is this a one-time analysis or ongoing tracking?",
-          "Both are possible. You can start with a one-time scan, then upgrade to ongoing monitoring if you want better visibility into profitability trends and problem jobs.",
+          "Both are possible. You can start with a one-time scan, then upgrade to ongoing monitoring if you want continuous visibility into profitability trends and problem jobs.",
         ],
         [
           "Can I cancel anytime?",
-          "Yes. The pricing is designed to be simple and flexible.",
+          "Yes. Plans are flexible and can be canceled anytime.",
+        ],
+        [
+          "Will this replace my accounting software?",
+          "No. DropClarity is designed to complement your existing systems by turning operational job data into clearer profitability insights and business decisions.",
         ],
       ],
     },
@@ -60,20 +92,27 @@ export default function FAQPage() {
       items: [
         [
           "Is my data secure and private?",
-          "DropClarity is designed to handle business files carefully. Your uploaded files are used to generate the analysis and dashboard results connected to your account.",
+          "DropClarity is designed to handle business files carefully and securely. Uploaded files are used to generate profitability analysis and dashboard insights connected to your account.",
         ],
         [
           "Do I need to connect integrations?",
-          "No. You can start with uploads. Integrations and automated workflows can be added later once the core analysis experience is working smoothly.",
+          "No. You can start immediately using uploads without connecting other software or systems.",
         ],
         [
           "Are files stored forever?",
-          "The product can be configured so uploaded files are deleted after analysis or retained for report history depending on the plan and user preferences.",
+          "Uploaded files and report history may be retained depending on your plan and configuration preferences.",
+        ],
+        [
+          "Who owns the uploaded data?",
+          "You retain ownership of your business data and uploaded files. DropClarity uses the information to generate analysis, dashboard reporting, and platform insights for your account.",
+        ],
+        [
+          "Can my team access the same dashboard?",
+          "Team visibility and collaboration capabilities are designed for businesses that want operational oversight across multiple users, reports, and profitability workflows.",
         ],
       ],
     },
   ];
-
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950 [font-family:ui-sans-serif,system-ui,-apple-system,Segoe_UI,Roboto,Arial]">
       <section className="relative overflow-hidden border-b border-slate-100">

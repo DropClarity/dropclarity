@@ -71,7 +71,7 @@ export default function Home() {
       features: [
         "1 job profitability scan",
         "Revenue, cost, and margin summary",
-        "Top AI insight",
+        "AI-detected profit leak",
         "AI-generated recommended action",
         "No saved report history",
       ],
@@ -87,10 +87,10 @@ export default function Home() {
       featured: true,
       features: [
         "Job profitability analysis (revenue, costs, margin)",
-        "Full dashboard with KPIs + profit trends",
-        "Profit by job + losing job detection",
-        "Cost breakdown (labor, materials, subs, other)",
-        "Saved report history",
+        "See which jobs are actually making money",
+        "Detect underpriced and underperforming work",
+        "Instantly see where job costs are eating margin",
+        "Revisit and compare past job performance",
         "Exportable job reports",
       ],
     },
@@ -105,11 +105,11 @@ export default function Home() {
       featured: false,
       features: [
         "Everything in Core",
-        "Instantly see where you're losing money",
-        "Recoverable profit opportunity tracking",
+        "Catch profit leaks before major losses",
+        "Estimate recoverable profit across losing jobs",
         "Automated high-risk alerts (email + dashboard)",
         "Priority actions (what to fix next)",
-        "Smart job benchmarking",
+        "Spot patterns behind your most profitable jobs",
         "Actionable profit recommendations per job",
       ],
     },
@@ -118,15 +118,15 @@ export default function Home() {
   const faqItems = [
     [
       "What is DropClarity?",
-      "DropClarity is a job profitability tool for home service businesses. It turns uploaded revenue and cost data into clear profit insights, margin risks, losing job flags, and recommended actions.",
+      "DropClarity is a job profitability platform for home service businesses. Upload invoices, exports, spreadsheets, or job files to instantly uncover profit leaks, margin risks, losing jobs, and recommended actions.",
     ],
     [
       "Who is this built for?",
-      "DropClarity is built for HVAC, plumbing, roofing, electrical, landscaping, restoration, remodeling, and other home service operators who want to understand which jobs are actually profitable.",
+      "DropClarity is built for HVAC, plumbing, roofing, electrical, landscaping, restoration, remodeling, and other home service businesses that want clearer visibility into job profitability.",
     ],
     [
       "What is the difference between Core and Scale?",
-      "Core gives you the complete profitability dashboard: job analysis, KPIs, saved history, trends, exports, and cost mix visibility. Scale adds the advanced oversight layer: priority actions, high-risk alerts, benchmarks, recoverable profit estimates, team visibility, and future integrations.",
+      "Core gives you the complete profitability dashboard: job analysis, KPIs, saved history, exports, trends, and cost visibility. Scale adds advanced profit oversight with automated high-risk alerts, recoverable profit insights, benchmarking, and priority actions.",
     ],
     [
       "Why does this matter?",
@@ -134,15 +134,23 @@ export default function Home() {
     ],
     [
       "How does the analysis work?",
-      "You upload job files, invoices, bills, exports, spreadsheets, or PDFs. DropClarity reviews the numbers and produces revenue, cost, margin, net profit, AI insights, and recommendations.",
+      "You upload job files, invoices, bills, exports, spreadsheets, or PDFs. DropClarity reviews the numbers and produces revenue, cost, margin, net profit, AI insights, and recommended actions automatically.",
     ],
     [
       "What files can I upload?",
-      "You can start with invoices, bills, job exports, spreadsheets, PDFs, or other files that show revenue and cost details.",
+      "You can upload invoices, bills, spreadsheets, PDFs, job exports, and other files containing revenue or cost data.",
+    ],
+    [
+      "How quickly can I get results?",
+      "Most analyses are completed in seconds. Larger PDF or multi-job uploads may take longer depending on file size and complexity.",
+    ],
+    [
+      "Do I need accounting or financial experience?",
+      "No. DropClarity is designed for operators and business owners, not accountants. The platform turns raw job data into simple profitability insights and recommended actions.",
     ],
     [
       "Why use DropClarity instead of ChatGPT or spreadsheets?",
-      "ChatGPT is a general-purpose tool. You still have to prompt it, structure your data, and interpret the results yourself. DropClarity is built specifically for job profitability. It automatically turns raw job data into structured financial outputs, highlights profit leaks, flags losing jobs, and delivers operator-ready decisions without manual setup.",
+      "ChatGPT is a general-purpose AI tool. DropClarity is purpose-built for job profitability. It automatically structures your financial data, identifies profit leaks, flags losing jobs, and delivers actionable business insights without manual prompting or spreadsheet work.",
     ],
     ["Can I cancel anytime?", "Yes. The pricing is designed to be simple and flexible."],
   ];
