@@ -177,7 +177,7 @@ export default function Home() {
       <section className="relative overflow-hidden border-b border-slate-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_28%,rgba(139,92,246,.18),transparent_32%),radial-gradient(circle_at_82%_72%,rgba(59,130,246,.18),transparent_36%),linear-gradient(135deg,#ffffff,#ffffff,#f8fbff)]" />
 
-        <div className="relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-20 xl:grid-cols-[0.86fr_1.14fr] xl:gap-16 xl:py-28 2xl:py-32">
+        <div className="relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:px-10 lg:py-28 xl:gap-16 2xl:py-32">
           <div className="w-full max-w-[760px]">
             <div className="mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
               Built for home service operators
@@ -237,12 +237,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[820px] min-w-0 xl:max-w-none">
-            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-violet-300/45 via-blue-200/40 to-cyan-100/45 blur-3xl sm:-inset-6 xl:-inset-8" />
+          <div className="relative min-w-0">
+            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-violet-300/55 via-blue-200/45 to-cyan-100/50 blur-3xl sm:-inset-6" />
 
-            <div className="relative min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_28px_90px_rgba(59,130,246,0.22)]">
+            <div className="relative min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl shadow-blue-200/60">
               <div className="border-b border-slate-100 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                   <div>
                     <div className="text-sm font-black text-slate-950">
                       Scale Profit Control Center
@@ -257,32 +257,32 @@ export default function Home() {
                       ● Live
                     </div>
                     <div className="w-fit rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700">
-                      18 Alerts
+                      18 High-Risk Alerts
                     </div>
                     <div className="w-fit rounded-full border border-violet-200 bg-violet-50 px-3 py-2 text-[11px] font-black text-violet-700">
-                      Email sent
+                      Email Alerts
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 sm:p-5">
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    ["Recoverable", "$65,531", "text-orange-600"],
+                    ["Recoverable Profit", "$65,531", "text-orange-600"],
                     ["Net Profit", "$1.19M", "text-emerald-600"],
                     ["Losing Jobs", "6", "text-rose-600"],
                     ["Revenue", "$2.50M", "text-slate-950"],
                   ].map(([label, value, color]) => (
                     <div
                       key={label}
-                      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4"
+                      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
                     >
-                      <div className="text-[9px] font-black uppercase leading-tight tracking-wider text-slate-400 sm:text-[10px]">
+                      <div className="text-[10px] font-black uppercase leading-tight tracking-wider text-slate-400">
                         {label}
                       </div>
                       <div
-                        className={`mt-2 whitespace-nowrap text-[20px] font-black leading-tight tracking-[-0.035em] sm:text-[22px] ${color}`}
+                        className={`mt-2 whitespace-nowrap text-[22px] font-black leading-tight tracking-[-0.035em] ${color}`}
                       >
                         {value}
                       </div>
@@ -291,16 +291,16 @@ export default function Home() {
                 </div>
 
                 <div className="mt-4 rounded-[24px] border border-amber-100 bg-gradient-to-br from-white via-amber-50/55 to-cyan-50/55 p-4 shadow-sm sm:p-5">
-                  <div className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
+                  <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
                     <div className="min-w-0">
-                      <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-600 sm:text-[11px]">
+                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-cyan-600">
                         Profit leaks first
                       </div>
-                      <h3 className="mt-2 text-[24px] font-black leading-tight tracking-[-0.04em] text-slate-950 sm:text-[28px]">
+                      <h3 className="mt-2 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950 sm:text-[28px]">
                         6 jobs losing money
                       </h3>
                       <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-500">
-                        High-impact risks, recoverable profit, and next steps surfaced automatically.
+                        Highest-impact risks, recoverable profit, and next steps surfaced automatically.
                       </p>
 
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -315,15 +315,15 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       {[
-                        ["Top opportunity", "$13,131 gap", "border-violet-100 bg-white"],
+                        ["Top Opportunity", "$13,131 gap", "border-violet-100 bg-white"],
                         ["Re-analyze", "Missing cost check", "border-cyan-100 bg-cyan-50/70"],
                         ["Benchmark", "Pricing below range", "border-amber-100 bg-amber-50/70"],
                         ["Alerts", "Owner notified", "border-rose-100 bg-rose-50/70"],
                       ].map(([label, value, cls]) => (
-                        <div key={label} className={`rounded-2xl border p-3 sm:p-4 ${cls}`}>
-                          <div className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400 sm:text-[10px]">
+                        <div key={label} className={`rounded-2xl border p-4 ${cls}`}>
+                          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
                             {label}
                           </div>
                           <div className="mt-2 text-sm font-black leading-5 text-slate-950">
@@ -355,6 +355,7 @@ export default function Home() {
                       {[
                         ["#1", "Electrical Job", "$13,131"],
                         ["#2", "Roof Repair", "$8,420"],
+                        ["#3", "Plumbing Job", "$5,910"],
                       ].map(([rank, job, amount]) => (
                         <div
                           key={job}
@@ -386,7 +387,7 @@ export default function Home() {
                       AI profit intelligence
                     </div>
                     <div className="mt-1 text-xs font-bold text-slate-400">
-                      Alerts, re-analysis, and next steps
+                      Alerts, benchmarks, and next steps
                     </div>
 
                     <div className="mt-4 grid gap-3">
@@ -395,7 +396,7 @@ export default function Home() {
                         ["Re-analyze", "Missing invoice check", "border-cyan-100 bg-cyan-50 text-cyan-700"],
                         ["Next action", "Fix top profit leak", "border-violet-100 bg-violet-50 text-violet-700"],
                       ].map(([title, meta, cls]) => (
-                        <div key={title} className={`rounded-2xl border p-3 sm:p-4 ${cls}`}>
+                        <div key={title} className={`rounded-2xl border p-4 ${cls}`}>
                           <div className="text-sm font-black">{title}</div>
                           <div className="mt-1 text-xs font-bold opacity-80">{meta}</div>
                         </div>
@@ -404,8 +405,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-4 text-white sm:p-5">
-                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
+                  <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
                       <div className="text-sm font-black">
                         $65,531 recoverable profit identified
@@ -414,7 +415,7 @@ export default function Home() {
                         Top risks prioritized and ready for review.
                       </div>
                     </div>
-                    <div className="w-full rounded-full bg-white px-4 py-3 text-center text-xs font-black text-slate-950 sm:w-fit">
+                    <div className="w-full rounded-full bg-white px-4 py-3 text-center text-xs font-black text-slate-950 md:w-fit">
                       Review Profit Leaks
                     </div>
                   </div>
