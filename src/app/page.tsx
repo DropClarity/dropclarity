@@ -621,21 +621,48 @@ export default function Home() {
             className="relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="absolute right-3 top-3 z-10 flex items-center gap-2 sm:right-4 sm:top-4">
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
               <button
                 type="button"
                 onClick={expandDemoVideo}
-                className="rounded-full border border-white/20 bg-slate-950/70 px-3 py-2 text-xs font-black text-white shadow-lg backdrop-blur transition hover:bg-slate-900/90 sm:px-4"
+                aria-label="Expand demo video"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur transition hover:bg-white/15 hover:text-white sm:h-10 sm:w-10"
               >
-                Expand
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                >
+                  <path d="M15 3h6v6" />
+                  <path d="M9 21H3v-6" />
+                  <path d="M21 3l-7 7" />
+                  <path d="M3 21l7-7" />
+                </svg>
               </button>
               <button
                 type="button"
                 onClick={() => setShowDemo(false)}
-                className="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-slate-950/70 text-lg font-black leading-none text-white shadow-lg backdrop-blur transition hover:bg-slate-900/90 sm:h-10 sm:w-10"
                 aria-label="Close demo video"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur transition hover:bg-white/15 hover:text-white sm:h-10 sm:w-10"
               >
-                ×
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                >
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
