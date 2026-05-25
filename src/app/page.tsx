@@ -611,56 +611,46 @@ export default function Home() {
 
       {showDemo && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-3 py-5 backdrop-blur-sm sm:px-5"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-5 sm:py-6"
           role="dialog"
           aria-modal="true"
           aria-label="DropClarity demo video"
           onClick={() => setShowDemo(false)}
         >
           <div
-            className="relative w-full max-w-5xl overflow-hidden rounded-[1.5rem] border border-white/15 bg-slate-950 shadow-2xl shadow-slate-950/40 sm:rounded-[2rem]"
+            className="relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950 px-4 py-3 sm:px-5">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-black text-white sm:text-base">DropClarity Platform Demo</div>
-                <div className="mt-0.5 hidden text-xs font-semibold text-slate-400 sm:block">
-                  See how uploads, analysis, dashboards, alerts, and job insights work together.
-                </div>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={expandDemoVideo}
-                  className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black text-white transition hover:bg-white/15"
-                >
-                  Expand
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDemo(false)}
-                  className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 text-lg font-black leading-none text-white transition hover:bg-white/15"
-                  aria-label="Close demo video"
-                >
-                  ×
-                </button>
-              </div>
+            <div className="absolute right-3 top-3 z-10 flex items-center gap-2 sm:right-4 sm:top-4">
+              <button
+                type="button"
+                onClick={expandDemoVideo}
+                className="rounded-full border border-white/20 bg-slate-950/70 px-3 py-2 text-xs font-black text-white shadow-lg backdrop-blur transition hover:bg-slate-900/90 sm:px-4"
+              >
+                Expand
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDemo(false)}
+                className="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-slate-950/70 text-lg font-black leading-none text-white shadow-lg backdrop-blur transition hover:bg-slate-900/90 sm:h-10 sm:w-10"
+                aria-label="Close demo video"
+              >
+                ×
+              </button>
             </div>
 
-            <div className="bg-black">
-              <video
-                ref={demoVideoRef}
-                src="/videos/dropclarity-demo.mp4"
-                controls
-                autoPlay
-                playsInline
-                className="aspect-video max-h-[78vh] w-full bg-black object-contain"
-              />
-            </div>
+            <video
+              ref={demoVideoRef}
+              src="/videos/dropclarity-demo.mp4"
+              controls
+              autoPlay
+              playsInline
+              className="aspect-video max-h-[88vh] w-full bg-black object-contain"
+            />
           </div>
         </div>
       )}
+
     </main>
   );
 }
