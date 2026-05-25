@@ -238,152 +238,186 @@ export default function Home() {
           </div>
 
           <div className="relative min-w-0">
-            <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-violet-300/60 via-blue-200/55 to-cyan-100/70 blur-3xl sm:-inset-8" />
+            <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-violet-300/70 via-blue-200/60 to-cyan-100/70 blur-3xl sm:-inset-8" />
 
             <div className="relative min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl shadow-blue-200/70">
-              <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="min-w-0">
-                  <div className="text-sm font-black text-slate-950">Profit Control Dashboard</div>
-                  <div className="mt-1 text-xs font-bold text-slate-400">Latest upload • 24 jobs analyzed • target margin 22%</div>
-                  <div className="mt-1 text-xs font-black text-emerald-600">● Monitoring active</div>
-                </div>
+              <div className="border-b border-slate-100 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div>
+                    <div className="text-sm font-black text-slate-950">Scale Profit Control Center</div>
+                    <div className="mt-1 text-xs font-bold text-slate-400">
+                      Latest upload • 81 jobs analyzed • target margin 22.0%
+                    </div>
+                    <div className="mt-1 text-xs font-black text-emerald-600">
+                      ● Live monitoring active: tracking new jobs automatically
+                    </div>
+                  </div>
 
-                <div className="flex flex-wrap gap-2 text-[11px] font-black">
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">Ready</span>
-                  <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700">5 high-risk jobs</span>
-                  <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-2 text-violet-700">Alerts sent</span>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <div className="w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700">
+                      ● Ready
+                    </div>
+                    <div className="w-fit rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 shadow-sm shadow-rose-100">
+                      🚨 18 High-Risk Alerts
+                    </div>
+                    <div className="w-fit rounded-full border border-violet-200 bg-violet-50 px-3 py-2 text-[11px] font-black text-violet-700">
+                      Email alerts sent
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-orange-500">Recoverable profit</div>
-                    <div className="mt-2 text-2xl font-black tracking-tight text-orange-600">$65,531</div>
-                    <div className="mt-1 text-[11px] font-bold text-slate-400">Gap to target margin</div>
-                  </div>
+              <div className="p-4 sm:p-5">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    ["Recoverable Profit", "$65,531", "text-orange-600", "Gap to 22.0% target"],
+                    ["Net Profit", "$1.19M", "text-emerald-600", "47.8% blended margin"],
+                    ["Losing Jobs", "6", "text-rose-600", "$21k below breakeven"],
+                    ["Revenue", "$2.50M", "text-slate-950", "81 analyzed jobs"],
+                  ].map(([label, value, color, meta]) => (
+                    <div key={label} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                      <div className="text-[10px] font-black uppercase leading-tight tracking-wider text-slate-400">{label}</div>
+                      <div className={`mt-2 whitespace-nowrap text-[22px] font-black leading-tight tracking-[-0.035em] ${color}`}>
+                        {value}
+                      </div>
+                      <div className="mt-1 text-[11px] font-bold leading-4 text-slate-400">{meta}</div>
+                    </div>
+                  ))}
+                </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net profit</div>
-                    <div className="mt-2 text-2xl font-black tracking-tight text-emerald-600">$1.19M</div>
-                    <div className="mt-1 text-[11px] font-bold text-slate-400">47.8% blended margin</div>
-                  </div>
+                <div className="mt-4 rounded-[24px] border border-amber-100 bg-gradient-to-br from-white via-amber-50/55 to-cyan-50/55 p-4 shadow-sm">
+                  <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-cyan-600">Profit leaks first</div>
+                      <h3 className="mt-2 text-[24px] font-black leading-none tracking-[-0.04em] text-slate-950 sm:text-[28px]">
+                        6 jobs losing money
+                      </h3>
+                      <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+                        $65,531 recoverable gap vs. your 22.0% target. Review the highest-impact jobs first.
+                      </p>
 
-                  <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-rose-400">Losing jobs</div>
-                    <div className="mt-2 text-2xl font-black tracking-tight text-rose-600">6</div>
-                    <div className="mt-1 text-[11px] font-bold text-slate-400">Auto-detected</div>
-                  </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {["18 jobs below target", "6 losing jobs", "22.0% target margin"].map((label) => (
+                          <div key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 shadow-sm">
+                            {label}
+                          </div>
+                        ))}
+                      </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Revenue</div>
-                    <div className="mt-2 text-2xl font-black tracking-tight text-slate-950">$2.50M</div>
-                    <div className="mt-1 text-[11px] font-bold text-slate-400">81 analyzed jobs</div>
+                      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                        <div className="rounded-full bg-slate-950 px-4 py-3 text-center text-xs font-black text-white shadow-lg shadow-slate-200">
+                          Review High-Risk Jobs
+                        </div>
+                        <div className="rounded-full border border-slate-200 bg-white px-4 py-3 text-center text-xs font-black text-slate-700">
+                          View Job Log
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        ["Top Opportunity", "DC-ELE-2026006", "$13,131 gap", "border-violet-100 bg-white"],
+                        ["Missing Invoice Check", "Re-analyze job", "1 cost file may be missing", "border-cyan-100 bg-cyan-50/60"],
+                        ["Benchmark Signal", "Pricing below range", "+8.4% margin opportunity", "border-amber-100 bg-amber-50/60"],
+                        ["Alert Status", "Email sent", "Owner notified 16h ago", "border-rose-100 bg-rose-50/60"],
+                      ].map(([label, title, meta, cls]) => (
+                        <div key={label} className={`rounded-2xl border p-4 ${cls}`}>
+                          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">{label}</div>
+                          <div className="mt-2 text-sm font-black leading-5 text-slate-950">{title}</div>
+                          <div className="mt-1 text-xs font-bold leading-5 text-slate-500">{meta}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="mt-4 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+                  <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-lg font-black text-slate-950">Profit leaks first</div>
-                        <div className="mt-1 text-xs font-bold text-slate-400">Highest-impact jobs ranked first</div>
+                        <div className="font-black text-slate-950">Priority action queue</div>
+                        <div className="mt-1 text-xs font-bold text-slate-400">Ranked by recoverable profit impact</div>
                       </div>
-                      <div className="w-fit rounded-full bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700">$21k below breakeven</div>
-                    </div>
-
-                    <div className="mt-6 flex h-44 items-end justify-center gap-7 border-b border-slate-100 px-3 sm:h-48 sm:gap-10">
-                      <div className="flex flex-col items-center">
-                        <div className="mb-2 text-xs font-black text-emerald-600">$18.4k</div>
-                        <div className="h-32 w-11 rounded-t-xl bg-emerald-400 shadow-lg shadow-emerald-100" />
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="mb-2 text-xs font-black text-emerald-600">$9.7k</div>
-                        <div className="h-24 w-11 rounded-t-xl bg-emerald-400 shadow-lg shadow-emerald-100" />
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="mb-2 text-xs font-black text-rose-600">-$3.2k</div>
-                        <div className="h-14 w-11 rounded-t-xl bg-rose-400 shadow-lg shadow-rose-100" />
+                      <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-black text-slate-500">
+                        Ranked
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <div className="text-sm font-black text-slate-950">HVAC Install</div>
-                        <div className="mt-1 text-sm font-black text-emerald-600">$18,420</div>
-                        <div className="mt-2 w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">Healthy</div>
-                      </div>
-
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <div className="text-sm font-black text-slate-950">Roof Repair</div>
-                        <div className="mt-1 text-sm font-black text-emerald-600">$9,740</div>
-                        <div className="mt-2 w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">Healthy</div>
-                      </div>
-
-                      <div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">
-                        <div className="text-sm font-black text-slate-950">Plumbing Job</div>
-                        <div className="mt-1 text-sm font-black text-rose-600">-$3,250</div>
-                        <div className="mt-2 w-fit rounded-full bg-rose-100 px-2.5 py-1 text-[10px] font-black text-rose-700">Critical</div>
-                      </div>
+                    <div className="mt-4 space-y-3">
+                      {[
+                        ["#1", "DC-ELE-2026006", "Materials running $12,922 above benchmark and below breakeven.", "$13,131"],
+                        ["#2", "Roof Repair", "Labor overrun detected after upload re-analysis.", "$8,420"],
+                        ["#3", "Plumbing Job", "Pricing below similar jobs in your history.", "$5,910"],
+                      ].map(([rank, job, note, amount]) => (
+                        <div key={job} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                          <div className="flex gap-3">
+                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-100 text-[11px] font-black text-violet-700">
+                              {rank}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="text-sm font-black text-slate-950">{job}</div>
+                                <div className="text-xs font-black text-orange-600">{amount}</div>
+                              </div>
+                              <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{note}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="grid gap-5">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                      <div className="text-lg font-black text-slate-950">Action queue</div>
-                      <div className="mt-1 text-xs font-bold text-slate-400">What to review next</div>
+                  <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="font-black text-slate-950">AI profit intelligence</div>
+                    <div className="mt-1 text-xs font-bold text-slate-400">
+                      Alerts, benchmarks, recoverable profit, and re-analysis signals
+                    </div>
 
-                      <div className="mt-5 space-y-3">
-                        <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4">
-                          <div>
-                            <div className="text-sm font-black text-slate-950">Review high-risk jobs</div>
-                            <div className="mt-1 text-xs font-bold text-slate-400">5 alerts triggered</div>
-                          </div>
-                          <div className="text-sm font-black text-rose-600">Now</div>
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100">
+                        <div className="text-sm font-black text-rose-700">18 active high-risk alerts</div>
+                        <div className="mt-1 text-xs font-bold leading-5 text-rose-700/80">
+                          Email alerts triggered when jobs dropped below your saved target margin.
                         </div>
+                      </div>
 
-                        <div className="flex items-center justify-between gap-3 rounded-2xl bg-cyan-50 p-4">
-                          <div>
-                            <div className="text-sm font-black text-slate-950">Re-analyze job</div>
-                            <div className="mt-1 text-xs font-bold text-cyan-700/70">Missing invoice check</div>
-                          </div>
-                          <div className="text-sm font-black text-cyan-700">1 file</div>
+                      <div className="rounded-2xl border border-cyan-100 bg-cyan-50 p-4">
+                        <div className="text-sm font-black text-cyan-700">Re-analyze if an invoice was missed</div>
+                        <div className="mt-1 text-xs font-bold leading-5 text-cyan-700/80">
+                          Add missing bills, vendor invoices, or labor exports and refresh the job view.
                         </div>
+                      </div>
 
-                        <div className="flex items-center justify-between gap-3 rounded-2xl bg-violet-50 p-4">
-                          <div>
-                            <div className="text-sm font-black text-slate-950">Fix pricing gap</div>
-                            <div className="mt-1 text-xs font-bold text-violet-700/70">Top opportunity found</div>
-                          </div>
-                          <div className="text-sm font-black text-violet-700">$13.1k</div>
+                      <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
+                        <div className="text-sm font-black text-violet-700">Immediate action recommended</div>
+                        <div className="mt-1 text-xs font-bold leading-5 text-violet-700/80">
+                          Review the top opportunity before more margin is lost on similar work.
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                      <div className="text-lg font-black text-slate-950">AI profit signals</div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
-                          <div className="text-sm font-black text-rose-700">High-risk alerts sent</div>
+                    <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black text-slate-500">
+                      {["Email Alerts", "Recoverable Profit", "Re-analyze", "Benchmarks"].map((label) => (
+                        <div
+                          key={label}
+                          className="inline-flex min-w-fit flex-1 items-center justify-center whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center leading-none sm:flex-none"
+                        >
+                          {label}
                         </div>
-                        <div className="rounded-2xl border border-orange-100 bg-orange-50 p-4">
-                          <div className="text-sm font-black text-orange-700">Recoverable profit found</div>
-                        </div>
-                        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-                          <div className="text-sm font-black text-violet-700">Next action recommended</div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl bg-slate-950 p-5 text-white">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
+                  <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                      <div className="text-sm font-black">$65,531 recoverable profit identified</div>
-                      <div className="mt-1 text-sm font-semibold text-white/65">Review the jobs most likely to protect margin.</div>
+                      <div className="text-sm font-black">$65,531 recoverable profit identified across high-risk jobs</div>
+                      <div className="mt-1 text-sm font-semibold leading-6 text-white/70">
+                        Alerts sent, priority queue created, and top job ready for review.
+                      </div>
                     </div>
-                    <div className="w-full rounded-full bg-white px-5 py-3 text-center text-xs font-black text-slate-950 md:w-fit">
+                    <div className="w-full rounded-full bg-white px-4 py-3 text-center text-xs font-black text-slate-950 md:w-fit">
                       Review Profit Leaks
                     </div>
                   </div>
