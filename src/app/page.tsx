@@ -695,7 +695,7 @@ export default function Home() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
           }
         }
       `}</style>
