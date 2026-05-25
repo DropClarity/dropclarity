@@ -180,7 +180,7 @@ export default function Home() {
         <div className="relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.86fr_1.14fr] lg:px-10 lg:py-28 xl:gap-16 2xl:py-32">
           <div className="w-full max-w-[760px]">
             <div className="mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
-              Built for HVAC, plumbing, roofing, electrical, and home service operators
+              Built for home service operators
             </div>
 
             <h1 className="max-w-[760px] overflow-visible pt-3 pb-3 text-[38px] font-black leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-[48px] sm:leading-[1.06] md:text-[54px] lg:text-[58px] xl:text-[64px] xl:leading-[1.04]">
@@ -191,8 +191,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-5 max-w-[690px] text-[15px] font-semibold leading-7 text-slate-600 sm:text-[17px] sm:leading-8 lg:text-lg">
-              DropClarity shows you exactly which jobs are making money and which ones are quietly losing it.
-              Upload job exports, invoices, bills, or cost files and turn messy numbers into instant job-level profit clarity.
+              Upload invoices, job exports, and cost files to instantly uncover profit leaks, margin risks, and underperforming work.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -228,7 +227,7 @@ export default function Home() {
               {[
                 ["20–30%", "jobs underpriced"],
                 ["$5k–$20k+", "profit lost monthly"],
-                ["Job-level", "profit visibility"],
+                ["Losing jobs", "auto detected"],
               ].map(([a, b]) => (
                 <div key={a} className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur">
                   <div className="text-xl font-black text-slate-950">{a}</div>
