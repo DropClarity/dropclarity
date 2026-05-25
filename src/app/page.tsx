@@ -562,11 +562,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 xl:grid xl:snap-none xl:grid-cols-3 xl:gap-6 xl:overflow-visible xl:px-0 xl:pb-0">
+          <div className="mx-auto mt-10 flex w-full max-w-[340px] snap-x snap-mandatory gap-4 overflow-x-auto px-0 pb-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-[390px] sm:gap-5 md:max-w-[430px] xl:grid xl:max-w-none xl:snap-none xl:grid-cols-3 xl:gap-6 xl:overflow-visible xl:pb-0">
             {pricing.map((plan) => (
               <article
                 key={plan.name}
-                className={`relative flex min-h-[560px] w-[86vw] max-w-[360px] flex-none snap-center flex-col rounded-[28px] border bg-white p-6 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(2,6,23,.11)] sm:w-[390px] sm:max-w-[390px] sm:p-7 md:w-[420px] md:max-w-[420px] lg:w-[430px] lg:max-w-[430px] xl:min-h-[610px] xl:w-auto xl:max-w-none xl:p-8 ${
+                className={`relative flex min-h-[560px] w-full min-w-full flex-none snap-center flex-col rounded-[28px] border bg-white p-6 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(2,6,23,.11)] sm:p-7 xl:min-h-[610px] xl:w-auto xl:min-w-0 xl:max-w-none xl:p-8 ${
                   plan.featured
                     ? "border-violet-400 ring-2 ring-violet-200"
                     : "border-slate-200"
