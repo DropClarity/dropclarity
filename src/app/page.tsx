@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef, useState } from "react";
+
 type PlanId = "core" | "scale";
 
 type PricingPlan = {
@@ -15,6 +17,22 @@ type PricingPlan = {
 };
 
 export default function Home() {
+  const [showDemo, setShowDemo] = useState(false);
+  const demoVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  async function expandDemoVideo() {
+    const video = demoVideoRef.current;
+    if (!video) return;
+
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+      }
+    } catch {
+      // Fullscreen can be blocked by some browsers. The modal player still remains usable.
+    }
+  }
+
   const steps = [
     [
       "Upload your job data",
@@ -166,6 +184,16 @@ export default function Home() {
               >
                 Run Free Profit Scan
               </a>
+              <button
+                type="button"
+                onClick={() => setShowDemo(true)}
+                className="group inline-flex animate-[bounce_2.4s_ease-in-out_infinite] items-center justify-center gap-2 rounded-full border border-violet-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-900 shadow-lg shadow-violet-100 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-violet-200 motion-reduce:animate-none"
+              >
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-500 text-[10px] text-white shadow-sm transition group-hover:bg-violet-600">
+                  ▶
+                </span>
+                Watch Demo
+              </button>
               <a
                 href="#pricing"
                 className="rounded-full border border-slate-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/50"
@@ -580,6 +608,59 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {showDemo && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-3 py-5 backdrop-blur-sm sm:px-5"
+          role="dialog"
+          aria-modal="true"
+          aria-label="DropClarity demo video"
+          onClick={() => setShowDemo(false)}
+        >
+          <div
+            className="relative w-full max-w-5xl overflow-hidden rounded-[1.5rem] border border-white/15 bg-slate-950 shadow-2xl shadow-slate-950/40 sm:rounded-[2rem]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950 px-4 py-3 sm:px-5">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black text-white sm:text-base">DropClarity Platform Demo</div>
+                <div className="mt-0.5 hidden text-xs font-semibold text-slate-400 sm:block">
+                  See how uploads, analysis, dashboards, alerts, and job insights work together.
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={expandDemoVideo}
+                  className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black text-white transition hover:bg-white/15"
+                >
+                  Expand
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDemo(false)}
+                  className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 text-lg font-black leading-none text-white transition hover:bg-white/15"
+                  aria-label="Close demo video"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-black">
+              <video
+                ref={demoVideoRef}
+                src="/videos/dropclarity-demo.mp4"
+                controls
+                autoPlay
+                playsInline
+                className="aspect-video max-h-[78vh] w-full bg-black object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
