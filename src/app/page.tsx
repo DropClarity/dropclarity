@@ -826,7 +826,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-9 grid gap-3 lg:grid-cols-2">
+          <div className="mt-9 grid items-start gap-3 lg:grid-cols-2">
             {faqItems.map(([q, a]) => (
               <details
                 key={q}
