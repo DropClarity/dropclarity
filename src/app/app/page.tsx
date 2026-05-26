@@ -3014,101 +3014,95 @@ const analyzePageCss = `
 }
 
 
-/* Mobile pre-analyze assignment modal: clean full-screen sheet, tighter spacing, and no clipped footer/body on small devices. */
+
+
+/* Mobile/small-device pre-analyze popup: centered compact sheet instead of full-screen zoomed layout. */
 @media(max-width:760px){
   .assignModalOverlay{
     display:flex!important;
-    align-items:stretch!important;
+    align-items:center!important;
     justify-content:center!important;
-    padding:0!important;
-    background:rgba(15,23,42,.48)!important;
-    overflow:hidden!important;
+    padding:18px 14px!important;
+    background:rgba(15,23,42,.58)!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
   }
   .assignModal{
-    width:100%!important;
-    max-width:100%!important;
-    height:100dvh!important;
-    max-height:100dvh!important;
-    min-height:100dvh!important;
-    margin:0!important;
-    border:0!important;
-    border-radius:0!important;
-    box-shadow:none!important;
-    display:flex!important;
-    flex-direction:column!important;
-    background:#fff!important;
+    width:min(100%,430px)!important;
+    max-width:430px!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:calc(100dvh - 36px)!important;
+    margin:0 auto!important;
+    border:1px solid rgba(226,232,240,.92)!important;
+    border-radius:26px!important;
+    box-shadow:0 28px 72px rgba(2,6,23,.28),0 0 0 1px rgba(255,255,255,.72) inset!important;
+    background:rgba(255,255,255,.98)!important;
+    overflow:hidden!important;
   }
   .assignModalHeader{
-    flex:0 0 auto!important;
-    padding:16px 16px 14px!important;
+    padding:18px 18px 15px!important;
+    background:linear-gradient(135deg,rgba(236,254,255,.82),rgba(255,255,255,.96) 46%,rgba(245,243,255,.82))!important;
     border-bottom-color:rgba(15,23,42,.07)!important;
   }
   .assignModalHeader::after{
-    left:16px!important;
-    right:16px!important;
+    left:18px!important;
+    right:18px!important;
   }
   .assignModalHeader .flex{
     gap:12px!important;
   }
   .assignModalHeader .inline-flex{
     margin-bottom:10px!important;
-    max-width:calc(100vw - 84px)!important;
-    white-space:nowrap!important;
-    overflow:hidden!important;
-    text-overflow:ellipsis!important;
+    max-width:calc(100vw - 112px)!important;
     padding:5px 10px!important;
     font-size:10px!important;
     letter-spacing:.10em!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
   }
   .assignModal h2{
+    max-width:calc(100vw - 102px)!important;
     font-size:22px!important;
-    line-height:1.02!important;
+    line-height:1.05!important;
     letter-spacing:-.04em!important;
-    max-width:calc(100vw - 78px)!important;
   }
   .assignModalHeader p{
     margin-top:8px!important;
-    max-width:none!important;
     font-size:13px!important;
-    line-height:1.55!important;
+    line-height:1.5!important;
     font-weight:760!important;
     color:rgba(51,65,85,.78)!important;
   }
   .assignModalHeader button{
     width:42px!important;
-    height:42px!important;
     min-width:42px!important;
+    height:42px!important;
     padding:0!important;
     border-radius:999px!important;
     display:grid!important;
     place-items:center!important;
-    color:#475569!important;
     box-shadow:0 8px 24px rgba(15,23,42,.08)!important;
   }
   .assignModalBody{
     flex:1 1 auto!important;
     min-height:0!important;
     overflow-y:auto!important;
+    overscroll-behavior:contain!important;
     -webkit-overflow-scrolling:touch!important;
-    padding:14px 14px 118px!important;
+    padding:14px 14px 16px!important;
     background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%)!important;
   }
   .assignmentQuickApply{
     margin-bottom:14px!important;
     padding:14px!important;
-    border-radius:22px!important;
+    border-radius:20px!important;
+    box-shadow:0 10px 28px rgba(6,182,212,.05)!important;
   }
-  .assignmentQuickApply .mb-3{
-    margin-bottom:12px!important;
-  }
-  .assignmentQuickApply .text-xs{
-    font-size:11px!important;
-    letter-spacing:.08em!important;
-  }
-  .assignmentQuickApply .text-sm{
-    font-size:13px!important;
-    line-height:1.55!important;
-  }
+  .assignmentQuickApply .mb-3{margin-bottom:11px!important}
+  .assignmentQuickApply .text-xs{font-size:11px!important;letter-spacing:.08em!important}
+  .assignmentQuickApply .text-sm{font-size:12px!important;line-height:1.5!important}
   .assignmentQuickApply .flex.flex-col.gap-3{
     display:grid!important;
     grid-template-columns:1fr!important;
@@ -3117,16 +3111,12 @@ const analyzePageCss = `
   .assignmentQuickApply input,
   .assignmentQuickApply button{
     width:100%!important;
-    min-height:46px!important;
-    border-radius:16px!important;
+    min-height:44px!important;
+    border-radius:15px!important;
     font-size:14px!important;
-    text-align:center!important;
   }
-  .assignmentQuickApply input{
-    text-align:left!important;
-  }
+  .assignmentQuickApply button{text-align:center!important}
   .assignmentGuide{
-    display:grid!important;
     grid-template-columns:1fr!important;
     gap:10px!important;
     margin-bottom:14px!important;
@@ -3136,15 +3126,9 @@ const analyzePageCss = `
     border-radius:18px!important;
     box-shadow:0 8px 22px rgba(2,6,23,.04)!important;
   }
-  .assignmentGuideLabel{
-    font-size:11px!important;
-  }
-  .assignmentGuideText{
-    font-size:12px!important;
-    line-height:1.48!important;
-  }
+  .assignmentGuideLabel{font-size:11px!important}
+  .assignmentGuideText{font-size:12px!important;line-height:1.45!important}
   .assignmentFileGrid{
-    display:grid!important;
     grid-template-columns:1fr!important;
     gap:12px!important;
   }
@@ -3153,44 +3137,51 @@ const analyzePageCss = `
     border-radius:20px!important;
     box-shadow:0 10px 26px rgba(2,6,23,.055)!important;
   }
-  .assignmentFileCard .mt-5{
-    margin-top:16px!important;
+  .assignmentFileCard::before{height:4px!important}
+  .assignmentFileCard .break-words{
+    font-size:14px!important;
+    line-height:1.35!important;
   }
+  .assignmentFileCard .mt-5{margin-top:15px!important}
   .assignmentFileCard .mt-5.grid{
     grid-template-columns:1fr!important;
-    gap:14px!important;
-  }
-  .assignmentFileCard .sm\:flex-row{
-    flex-direction:column!important;
+    gap:13px!important;
   }
   .assignmentFileCard input,
   .assignmentFileCard select{
-    min-height:46px!important;
-    border-radius:16px!important;
+    min-height:44px!important;
+    border-radius:15px!important;
     font-size:16px!important;
   }
   .assignmentFileCard button{
     width:100%!important;
-    min-height:44px!important;
+    min-height:42px!important;
+    border-radius:15px!important;
+  }
+  .assignmentFileCard label{
+    font-size:11px!important;
+    letter-spacing:.08em!important;
+  }
+  .assignmentFileCard .text-xs.font-bold.leading-5{
+    font-size:11px!important;
+    line-height:1.45!important;
   }
   .assignModalFooter{
-    position:fixed!important;
-    left:0!important;
-    right:0!important;
-    bottom:0!important;
-    z-index:2!important;
     flex:0 0 auto!important;
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
     display:block!important;
-    padding:10px 14px calc(12px + env(safe-area-inset-bottom))!important;
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom))!important;
     background:rgba(255,255,255,.96)!important;
-    backdrop-filter:blur(14px)!important;
-    -webkit-backdrop-filter:blur(14px)!important;
-    box-shadow:0 -14px 34px rgba(15,23,42,.08)!important;
+    border-top-color:rgba(15,23,42,.08)!important;
+    box-shadow:0 -12px 28px rgba(15,23,42,.055)!important;
   }
   .assignModalFooter>div:first-child{
     margin-bottom:10px!important;
-    font-size:11px!important;
-    line-height:1.45!important;
+    font-size:10.5px!important;
+    line-height:1.4!important;
     color:rgba(71,85,105,.82)!important;
   }
   .assignModalFooter>div:last-child{
@@ -3200,17 +3191,19 @@ const analyzePageCss = `
   }
   .assignModalFooter button{
     width:100%!important;
-    min-height:46px!important;
-    border-radius:16px!important;
+    min-height:44px!important;
+    border-radius:15px!important;
     font-size:14px!important;
   }
 }
 @media(max-width:380px){
+  .assignModalOverlay{padding:12px 10px!important}
+  .assignModal{max-height:calc(100dvh - 24px)!important;border-radius:22px!important}
+  .assignModalHeader{padding:15px 15px 13px!important}
   .assignModal h2{font-size:20px!important}
-  .assignModalHeader p{font-size:12px!important;line-height:1.48!important}
-  .assignModalBody{padding-left:12px!important;padding-right:12px!important}
+  .assignModalHeader p{font-size:12px!important;line-height:1.45!important}
+  .assignModalBody{padding:12px 12px 14px!important}
   .assignModalFooter{padding-left:12px!important;padding-right:12px!important}
-  .assignModalFooter>div:first-child{font-size:10.5px!important}
 }
 
 `;
