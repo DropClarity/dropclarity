@@ -44,7 +44,7 @@ type SourceFileLink = {
   job_id?: string | null;
 };
 
-type JobUpdateFileRole = "cost" | "revenue" | "combined_invoice";
+type JobUpdateFileRole = "cost" | "revenue";
 
 type JobAdjustmentHistoryItem = {
   id: string;
@@ -1525,7 +1525,7 @@ function readJobAdjustmentHistory(userId: string, jobKey: string): JobAdjustment
             id: String(item.id || `${item.created_at || Date.now()}-${item.filename || "file"}`),
             created_at: String(item.created_at || new Date().toISOString()),
             filename: String(item.filename || "Additional invoice"),
-            role: (item.role === "revenue" || item.role === "combined_invoice" ? item.role : "cost") as JobUpdateFileRole,
+            role: (item.role === "revenue" ? "revenue" : "cost") as JobUpdateFileRole,
             revenue: parseNumberLoose(item.revenue),
             costs: parseNumberLoose(item.costs),
             profit: parseNumberLoose(item.profit),
@@ -1547,7 +1547,6 @@ function writeJobAdjustmentHistory(userId: string, jobKey: string, items: JobAdj
 
 function labelForJobUpdateRole(role: JobUpdateFileRole): string {
   if (role === "revenue") return "Revenue invoice";
-  if (role === "combined_invoice") return "Combined invoice";
   return "Cost invoice";
 }
 
@@ -4844,7 +4843,6 @@ function JobEditor({
                       >
                         <option value="cost">Cost invoice</option>
                         <option value="revenue">Revenue invoice</option>
-                        <option value="combined_invoice">Combined invoice</option>
                       </select>
 
                       <input
