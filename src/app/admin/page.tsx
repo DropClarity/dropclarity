@@ -43,6 +43,10 @@ interface AnalysisRun {
 
   workflow_type?: string | null;
   workflowType?: string | null;
+  workflow?: string | null;
+  workflow_details?: any;
+  workflowDetails?: any;
+  workflow_details_json?: string | null;
   update_role?: string | null;
   updateRole?: string | null;
   job_id?: string | null;
@@ -85,9 +89,14 @@ interface AnalysisRun {
   added_revenue?: number | string | null;
   added_costs?: number | string | null;
   added_profit?: number | string | null;
+  added_cost_breakdown?: CostBreakdown | null;
+  old_revenue?: number | string | null;
+  old_costs?: number | string | null;
   old_profit?: number | string | null;
   new_profit?: number | string | null;
   old_margin?: number | string | null;
+  new_revenue?: number | string | null;
+  new_costs?: number | string | null;
   new_margin?: number | string | null;
 
   processing_ms?: number | string | null;
@@ -185,6 +194,75 @@ function safeArray(value: unknown): any[] {
   return [];
 }
 
+
+function safeObject(value: unknown): Record<string, any> {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, any>;
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return {};
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, any>;
+    } catch {}
+  }
+
+  return {};
+}
+
+function valueFromPaths(source: Record<string, any>, paths: string[]) {
+  for (const path of paths) {
+    const parts = path.split(".");
+    let current: any = source;
+
+    for (const part of parts) {
+      if (current == null || typeof current !== "object" || !(part in current)) {
+        current = undefined;
+        break;
+      }
+
+      current = current[part];
+    }
+
+    if (current != null && current !== "") return current;
+  }
+
+  return undefined;
+}
+
+function getWorkflowDetails(run: AnalysisRun): Record<string, any> {
+  const direct = safeObject(run.workflow_details ?? run.workflowDetails ?? run.workflow_details_json);
+  if (Object.keys(direct).length) return direct;
+
+  const diagnostics = safeObject(run.diagnostics);
+  return safeObject(diagnostics.workflow_details ?? diagnostics.workflowDetails ?? diagnostics.workflow_details_json);
+}
+
+function detailValue(run: AnalysisRun, paths: string[]) {
+  const details = getWorkflowDetails(run);
+  const sources = [
+    run as Record<string, any>,
+    details,
+    safeObject(details.reanalyze),
+    safeObject(details.re_analyze),
+    safeObject(details.job_reanalyze),
+    safeObject(details.update),
+    safeObject(details.added),
+    safeObject(details.before),
+    safeObject(details.after),
+    safeObject(details.comparison),
+  ];
+
+  for (const source of sources) {
+    const value = valueFromPaths(source, paths);
+    if (value != null && value !== "") return value;
+  }
+
+  return undefined;
+}
+
 function normalizeFileUrl(value: unknown) {
   const raw = String(value || "").trim();
   if (!raw) return undefined;
@@ -208,10 +286,17 @@ function fileLabelFromUrl(value: string) {
 }
 
 function getRunFiles(run: AnalysisRun): FileLink[] {
+  const details = getWorkflowDetails(run);
   const objects = [
     ...safeArray(run.file_links),
     ...safeArray(run.uploaded_files),
     ...safeArray(run.files),
+    ...safeArray(details.file_links),
+    ...safeArray(details.uploaded_files),
+    ...safeArray(details.files),
+    ...safeArray(details.source_files),
+    ...safeArray(details.added_files),
+    ...safeArray(details.added_file ? [details.added_file] : []),
   ];
 
   const fromObjects: FileLink[] = objects
@@ -266,23 +351,113 @@ function getRunFiles(run: AnalysisRun): FileLink[] {
     href: normalizeFileUrl(name),
   }));
 
-  const seen = new Set<string>();
+  const seenLabels = new Set<string>();
+  const seenHrefs = new Set<string>();
+
   return [...fromObjects, ...fromUrls, ...fromNames].filter((file) => {
-    const key = `${file.label}|${file.href || ""}`;
-    if (!file.label || seen.has(key)) return false;
-    seen.add(key);
+    const labelKey = String(file.label || "").trim().toLowerCase();
+    const hrefKey = String(file.href || "").trim().toLowerCase();
+
+    if (!labelKey) return false;
+    if (hrefKey && seenHrefs.has(hrefKey)) return false;
+    if (seenLabels.has(labelKey)) return false;
+
+    seenLabels.add(labelKey);
+    if (hrefKey) seenHrefs.add(hrefKey);
+
     return true;
   });
 }
 
 function getWorkflowType(run: AnalysisRun): string {
-  return String(run.workflow_type || run.workflowType || "initial_analyze").trim() || "initial_analyze";
+  return String(run.workflow_type || run.workflowType || run.workflow || detailValue(run, ["workflow_type", "workflowType", "workflow"]) || "initial_analyze").trim() || "initial_analyze";
 }
 
 function workflowLabel(workflow: string) {
   if (workflow === "job_reanalyze") return "Re-analyze";
   if (workflow === "initial_analyze") return "Initial analyze";
   return workflow.replace(/_/g, " ");
+}
+
+function getUpdateRole(run: AnalysisRun) {
+  return String(detailValue(run, ["update_role", "updateRole", "role", "added_file.role", "file.role"]) || "—");
+}
+
+function getJobLabel(run: AnalysisRun) {
+  return String(detailValue(run, ["job_id", "job_name", "job.id", "job.name", "target_job_id", "targetJobId"]) || "—");
+}
+
+function getOldRevenue(run: AnalysisRun) {
+  return n(detailValue(run, ["old_revenue", "before_revenue", "revenue_before", "before.revenue", "original.revenue"]));
+}
+
+function getOldCosts(run: AnalysisRun) {
+  return n(detailValue(run, ["old_costs", "old_cost", "before_costs", "costs_before", "before.costs", "original.costs"]));
+}
+
+function getOldProfit(run: AnalysisRun) {
+  const explicit = detailValue(run, ["old_profit", "profit_before", "before.profit", "original.profit"]);
+  if (explicit != null) return n(explicit);
+  return getOldRevenue(run) - getOldCosts(run);
+}
+
+function getOldMargin(run: AnalysisRun) {
+  const explicit = detailValue(run, ["old_margin", "old_margin_pct", "margin_before", "before.margin_pct", "before.margin"]);
+  if (explicit != null) return n(explicit);
+  const revenue = getOldRevenue(run);
+  return revenue ? (getOldProfit(run) / revenue) * 100 : 0;
+}
+
+function getNewRevenue(run: AnalysisRun) {
+  const explicit = detailValue(run, ["new_revenue", "after_revenue", "revenue_after", "after.revenue", "updated.revenue"]);
+  if (explicit != null) return n(explicit);
+  return getRevenue(run);
+}
+
+function getNewCosts(run: AnalysisRun) {
+  const explicit = detailValue(run, ["new_costs", "new_cost", "after_costs", "costs_after", "after.costs", "updated.costs"]);
+  if (explicit != null) return n(explicit);
+  return getCosts(run);
+}
+
+function getNewProfit(run: AnalysisRun) {
+  const explicit = detailValue(run, ["new_profit", "profit_after", "after.profit", "updated.profit"]);
+  if (explicit != null) return n(explicit);
+  return getProfit(run);
+}
+
+function getNewMargin(run: AnalysisRun) {
+  const explicit = detailValue(run, ["new_margin", "new_margin_pct", "margin_after", "after.margin_pct", "after.margin"]);
+  if (explicit != null) return n(explicit);
+  const revenue = getNewRevenue(run);
+  return revenue ? (getNewProfit(run) / revenue) * 100 : 0;
+}
+
+function getAddedRevenue(run: AnalysisRun) {
+  return n(detailValue(run, ["added_revenue", "revenue_added", "added.revenue", "delta.revenue"]));
+}
+
+function getAddedCosts(run: AnalysisRun) {
+  return n(detailValue(run, ["added_costs", "added_cost", "costs_added", "added.costs", "delta.costs"]));
+}
+
+function getAddedProfit(run: AnalysisRun) {
+  const explicit = detailValue(run, ["added_profit", "profit_added", "added.profit", "delta.profit"]);
+  if (explicit != null) return n(explicit);
+  return getAddedRevenue(run) - getAddedCosts(run);
+}
+
+function getAddedBucket(run: AnalysisRun, bucket: keyof CostBreakdown) {
+  const details = getWorkflowDetails(run);
+  const candidates = [
+    safeObject((run as any).added_cost_breakdown),
+    safeObject(details.added_cost_breakdown),
+    safeObject(details.added?.cost_breakdown),
+    safeObject(details.delta?.cost_breakdown),
+  ];
+  const addedBreakdown = candidates.find((candidate) => Object.keys(candidate).length) || {};
+
+  return n(addedBreakdown?.[bucket]);
 }
 
 function getRevenue(run: AnalysisRun) {
@@ -521,7 +696,7 @@ export default function AdminPage() {
   if (!user) return <RedirectToSignIn />;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-6 font-medium text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1800px] space-y-5">
         {!isAdmin ? (
           <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -747,7 +922,7 @@ function RunRow({ run, selected, onSelect }: { run: AnalysisRun; selected: boole
         </span>
         {workflow === "job_reanalyze" ? (
           <div className="mt-2 text-xs text-slate-500">
-            {run.update_role || run.updateRole || "cost"} · {run.job_id || run.job_name || "job"}
+            {getUpdateRole(run)} · {getJobLabel(run)}
           </div>
         ) : null}
       </td>
@@ -832,8 +1007,8 @@ function RunDetailPanel({ run }: { run: AnalysisRun }) {
             <KeyValue label="Plan" value={run.plan || "free"} />
             <KeyValue label="Report ID" value={run.report_id || "—"} />
             <KeyValue label="Period" value={run.period_label || "—"} />
-            <KeyValue label="Job" value={run.job_id || run.job_name || "—"} />
-            <KeyValue label="Update role" value={run.update_role || run.updateRole || "—"} />
+            <KeyValue label="Job" value={getJobLabel(run)} />
+            <KeyValue label="Update role" value={getUpdateRole(run)} />
             <KeyValue label="Runtime" value={runtime(getRuntime(run))} />
           </div>
         </div>
@@ -848,10 +1023,10 @@ function RunDetailPanel({ run }: { run: AnalysisRun }) {
           </div>
           {workflow === "job_reanalyze" ? (
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <MiniMetric label="Added revenue" value={money(run.added_revenue)} />
-              <MiniMetric label="Added costs" value={money(run.added_costs)} />
-              <MiniMetric label="Old profit" value={money(run.old_profit)} />
-              <MiniMetric label="New profit" value={money(run.new_profit)} tone={n(run.new_profit) < 0 ? "bad" : "good"} />
+              <MiniMetric label="Added revenue" value={money(getAddedRevenue(run))} />
+              <MiniMetric label="Added costs" value={money(getAddedCosts(run))} />
+              <MiniMetric label="Added profit" value={money(getAddedProfit(run))} tone={getAddedProfit(run) < 0 ? "bad" : "good"} />
+              <MiniMetric label="New margin" value={pct(getNewMargin(run))} />
             </div>
           ) : null}
         </div>
@@ -868,6 +1043,28 @@ function RunDetailPanel({ run }: { run: AnalysisRun }) {
           ) : null}
         </div>
       </div>
+
+      {workflow === "job_reanalyze" ? (
+        <div className="px-4 pb-4">
+          <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-950">Re-analyze comparison</h3>
+                <p className="text-xs text-slate-600">Shows the original job result next to the updated result after the added invoice.</p>
+              </div>
+              <span className="rounded-full border border-violet-200 bg-white px-2 py-1 text-xs font-semibold text-violet-700">
+                {getUpdateRole(run)} added
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <ComparisonCard title="Original job" revenue={getOldRevenue(run)} costs={getOldCosts(run)} profit={getOldProfit(run)} margin={getOldMargin(run)} />
+              <ComparisonCard title="Added invoice" revenue={getAddedRevenue(run)} costs={getAddedCosts(run)} profit={getAddedProfit(run)} margin={getAddedRevenue(run) ? (getAddedProfit(run) / getAddedRevenue(run)) * 100 : 0} />
+              <ComparisonCard title="Updated job" revenue={getNewRevenue(run)} costs={getNewCosts(run)} profit={getNewProfit(run)} margin={getNewMargin(run)} />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 px-4 pb-4 xl:grid-cols-[.9fr_1.1fr]">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -913,11 +1110,13 @@ function RunDetailPanel({ run }: { run: AnalysisRun }) {
               files.map((file, idx) => (
                 <div key={`${file.label}-${idx}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <FileAnchor file={file} />
-                  <div className="mt-2 flex flex-wrap gap-1 text-xs text-slate-500">
-                    {file.role ? <span>Role: {file.role}</span> : null}
-                    {file.jobId ? <span>Job: {file.jobId}</span> : null}
-                    {file.mime ? <span>{file.mime}</span> : null}
-                  </div>
+                  {file.role || file.jobId || file.mime ? (
+                    <div className="mt-2 flex flex-wrap gap-1 text-xs text-slate-500">
+                      {file.role ? <span>Role: {file.role}</span> : null}
+                      {file.jobId ? <span>Job: {file.jobId}</span> : null}
+                      {file.mime ? <span>{file.mime}</span> : null}
+                    </div>
+                  ) : null}
                 </div>
               ))
             ) : (
@@ -938,6 +1137,32 @@ function RunDetailPanel({ run }: { run: AnalysisRun }) {
         </details>
       </div>
     </section>
+  );
+}
+
+function ComparisonCard({
+  title,
+  revenue,
+  costs,
+  profit,
+  margin,
+}: {
+  title: string;
+  revenue: number;
+  costs: number;
+  profit: number;
+  margin: number;
+}) {
+  return (
+    <div className="rounded-xl border border-violet-100 bg-white p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">{title}</div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <MiniMetric label="Revenue" value={money(revenue)} />
+        <MiniMetric label="Costs" value={money(costs)} />
+        <MiniMetric label="Profit" value={money(profit)} tone={profit < 0 ? "bad" : "good"} />
+        <MiniMetric label="Margin" value={pct(margin)} />
+      </div>
+    </div>
   );
 }
 
