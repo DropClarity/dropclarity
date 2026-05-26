@@ -3013,4 +3013,204 @@ const analyzePageCss = `
   .assignmentQuickApply{padding:14px!important;border-radius:22px!important}
 }
 
+
+/* Mobile pre-analyze assignment modal: clean full-screen sheet, tighter spacing, and no clipped footer/body on small devices. */
+@media(max-width:760px){
+  .assignModalOverlay{
+    display:flex!important;
+    align-items:stretch!important;
+    justify-content:center!important;
+    padding:0!important;
+    background:rgba(15,23,42,.48)!important;
+    overflow:hidden!important;
+  }
+  .assignModal{
+    width:100%!important;
+    max-width:100%!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    min-height:100dvh!important;
+    margin:0!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    display:flex!important;
+    flex-direction:column!important;
+    background:#fff!important;
+  }
+  .assignModalHeader{
+    flex:0 0 auto!important;
+    padding:16px 16px 14px!important;
+    border-bottom-color:rgba(15,23,42,.07)!important;
+  }
+  .assignModalHeader::after{
+    left:16px!important;
+    right:16px!important;
+  }
+  .assignModalHeader .flex{
+    gap:12px!important;
+  }
+  .assignModalHeader .inline-flex{
+    margin-bottom:10px!important;
+    max-width:calc(100vw - 84px)!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    padding:5px 10px!important;
+    font-size:10px!important;
+    letter-spacing:.10em!important;
+  }
+  .assignModal h2{
+    font-size:22px!important;
+    line-height:1.02!important;
+    letter-spacing:-.04em!important;
+    max-width:calc(100vw - 78px)!important;
+  }
+  .assignModalHeader p{
+    margin-top:8px!important;
+    max-width:none!important;
+    font-size:13px!important;
+    line-height:1.55!important;
+    font-weight:760!important;
+    color:rgba(51,65,85,.78)!important;
+  }
+  .assignModalHeader button{
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    padding:0!important;
+    border-radius:999px!important;
+    display:grid!important;
+    place-items:center!important;
+    color:#475569!important;
+    box-shadow:0 8px 24px rgba(15,23,42,.08)!important;
+  }
+  .assignModalBody{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    padding:14px 14px 118px!important;
+    background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%)!important;
+  }
+  .assignmentQuickApply{
+    margin-bottom:14px!important;
+    padding:14px!important;
+    border-radius:22px!important;
+  }
+  .assignmentQuickApply .mb-3{
+    margin-bottom:12px!important;
+  }
+  .assignmentQuickApply .text-xs{
+    font-size:11px!important;
+    letter-spacing:.08em!important;
+  }
+  .assignmentQuickApply .text-sm{
+    font-size:13px!important;
+    line-height:1.55!important;
+  }
+  .assignmentQuickApply .flex.flex-col.gap-3{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .assignmentQuickApply input,
+  .assignmentQuickApply button{
+    width:100%!important;
+    min-height:46px!important;
+    border-radius:16px!important;
+    font-size:14px!important;
+    text-align:center!important;
+  }
+  .assignmentQuickApply input{
+    text-align:left!important;
+  }
+  .assignmentGuide{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    margin-bottom:14px!important;
+  }
+  .assignmentGuideCard{
+    padding:13px!important;
+    border-radius:18px!important;
+    box-shadow:0 8px 22px rgba(2,6,23,.04)!important;
+  }
+  .assignmentGuideLabel{
+    font-size:11px!important;
+  }
+  .assignmentGuideText{
+    font-size:12px!important;
+    line-height:1.48!important;
+  }
+  .assignmentFileGrid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+  .assignmentFileCard{
+    padding:15px!important;
+    border-radius:20px!important;
+    box-shadow:0 10px 26px rgba(2,6,23,.055)!important;
+  }
+  .assignmentFileCard .mt-5{
+    margin-top:16px!important;
+  }
+  .assignmentFileCard .mt-5.grid{
+    grid-template-columns:1fr!important;
+    gap:14px!important;
+  }
+  .assignmentFileCard .sm\:flex-row{
+    flex-direction:column!important;
+  }
+  .assignmentFileCard input,
+  .assignmentFileCard select{
+    min-height:46px!important;
+    border-radius:16px!important;
+    font-size:16px!important;
+  }
+  .assignmentFileCard button{
+    width:100%!important;
+    min-height:44px!important;
+  }
+  .assignModalFooter{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    z-index:2!important;
+    flex:0 0 auto!important;
+    display:block!important;
+    padding:10px 14px calc(12px + env(safe-area-inset-bottom))!important;
+    background:rgba(255,255,255,.96)!important;
+    backdrop-filter:blur(14px)!important;
+    -webkit-backdrop-filter:blur(14px)!important;
+    box-shadow:0 -14px 34px rgba(15,23,42,.08)!important;
+  }
+  .assignModalFooter>div:first-child{
+    margin-bottom:10px!important;
+    font-size:11px!important;
+    line-height:1.45!important;
+    color:rgba(71,85,105,.82)!important;
+  }
+  .assignModalFooter>div:last-child{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+  }
+  .assignModalFooter button{
+    width:100%!important;
+    min-height:46px!important;
+    border-radius:16px!important;
+    font-size:14px!important;
+  }
+}
+@media(max-width:380px){
+  .assignModal h2{font-size:20px!important}
+  .assignModalHeader p{font-size:12px!important;line-height:1.48!important}
+  .assignModalBody{padding-left:12px!important;padding-right:12px!important}
+  .assignModalFooter{padding-left:12px!important;padding-right:12px!important}
+  .assignModalFooter>div:first-child{font-size:10.5px!important}
+}
+
 `;
