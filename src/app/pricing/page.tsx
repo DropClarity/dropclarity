@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useClerk, useUser } from "@clerk/nextjs";
 
 type PlanId = "core" | "scale";
 
@@ -109,8 +110,64 @@ const pricingQuestions = [
 
 export default function PricingPage() {
   const [pricingIndex, setPricingIndex] = useState(1);
+  const pricingTouchStartX = useRef<number | null>(null);
+  const pricingTouchEndX = useRef<number | null>(null);
+  const { openSignUp } = useClerk();
+  const { isLoaded, isSignedIn } = useUser();
+
+  function openPricingAuth(plan: PlanId) {
+    const redirectUrl = `/pricing?plan=${plan}`;
+
+    try {
+      window.sessionStorage.setItem("dropclarity_pending_checkout_plan", plan);
+      window.sessionStorage.setItem("dropclarity_checkout_return_url", redirectUrl);
+    } catch {
+      // Session storage may be unavailable in some private browsing modes.
+    }
+
+    const clerkRedirectOptions = {
+      redirectUrl,
+      afterSignInUrl: redirectUrl,
+      afterSignUpUrl: redirectUrl,
+      fallbackRedirectUrl: redirectUrl,
+      forceRedirectUrl: redirectUrl,
+    } as Parameters<typeof openSignUp>[0];
+
+    openSignUp(clerkRedirectOptions);
+  }
+
+  function handlePricingTouchEnd() {
+    if (pricingTouchStartX.current === null || pricingTouchEndX.current === null) {
+      pricingTouchStartX.current = null;
+      pricingTouchEndX.current = null;
+      return;
+    }
+
+    const swipeDistance = pricingTouchStartX.current - pricingTouchEndX.current;
+    const minimumSwipeDistance = 45;
+
+    if (Math.abs(swipeDistance) >= minimumSwipeDistance) {
+      setPricingIndex((current) => {
+        if (swipeDistance > 0) {
+          return current === pricing.length - 1 ? 0 : current + 1;
+        }
+
+        return current === 0 ? pricing.length - 1 : current - 1;
+      });
+    }
+
+    pricingTouchStartX.current = null;
+    pricingTouchEndX.current = null;
+  }
 
   async function startCheckout(plan: PlanId) {
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      openPricingAuth(plan);
+      return;
+    }
+
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -124,9 +181,7 @@ export default function PricingPage() {
       return;
     }
 
-    if (data?.url) {
-      window.location.href = data.url;
-    }
+    if (data?.url) window.location.href = data.url;
   }
 
   return (
@@ -154,65 +209,62 @@ export default function PricingPage() {
       <section className="px-5 py-14 sm:px-8 sm:py-16 lg:px-10">
         <div className="mx-auto w-full max-w-[1600px]">
           <div className="xl:hidden">
-            <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setPricingIndex((current) =>
-                    current === 0 ? pricing.length - 1 : current - 1
-                  )
-                }
-                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:flex"
-                aria-label="Show previous pricing plan"
+            <div className="mx-auto max-w-[760px]">
+              <div
+                className="min-w-0 overflow-hidden px-0 pt-4 sm:px-1 sm:pt-6"
+                onTouchStart={(event) => {
+                  pricingTouchStartX.current = event.touches[0]?.clientX ?? null;
+                  pricingTouchEndX.current = null;
+                }}
+                onTouchMove={(event) => {
+                  pricingTouchEndX.current = event.touches[0]?.clientX ?? null;
+                }}
+                onTouchEnd={handlePricingTouchEnd}
               >
-                ‹
-              </button>
-
-              <div className="min-w-0 flex-1 overflow-hidden px-0 pt-5 sm:px-1 sm:pt-6">
                 <div
-                  className="flex transition-transform duration-500 ease-out"
+                  className="flex touch-pan-y transition-transform duration-500 ease-out"
                   style={{ transform: `translateX(-${pricingIndex * 100}%)` }}
                 >
                   {pricing.map((plan) => (
                     <div
                       key={plan.name}
-                      className="w-full shrink-0 px-1 sm:px-3"
+                      className="w-full shrink-0 px-0.5 sm:px-3"
                     >
                       <article
-                        className={`relative mx-auto flex min-h-[540px] max-w-[350px] flex-col overflow-visible rounded-[24px] border bg-white p-5 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition sm:min-h-[560px] sm:max-w-[460px] sm:rounded-[28px] sm:p-6 md:max-w-[560px] md:p-7 ${
+                        className={`relative mx-auto flex min-h-[465px] max-w-[310px] flex-col overflow-visible rounded-[22px] border bg-white p-4 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition sm:min-h-[560px] sm:max-w-[460px] sm:rounded-[28px] sm:p-6 md:max-w-[560px] md:p-7 ${
                           plan.featured
                             ? "border-violet-400 ring-2 ring-violet-200"
                             : "border-slate-200"
                         }`}
                       >
                         {plan.featured ? (
-                          <div className="absolute left-5 right-5 top-0 z-10 -translate-y-1/2 rounded-full bg-violet-500 px-4 py-2 text-center text-[11px] font-black text-white shadow-lg shadow-violet-200 sm:left-7 sm:right-7 sm:text-xs">
+                          <div className="absolute left-4 right-4 top-0 z-10 -translate-y-1/2 rounded-full bg-violet-500 px-3 py-1.5 text-center text-[10px] font-black text-white shadow-lg shadow-violet-200 sm:left-7 sm:right-7 sm:px-4 sm:py-2 sm:text-xs">
                             Most businesses start here
                           </div>
                         ) : null}
 
-                        <div className="flex h-full flex-col pt-3 sm:pt-4">
+                        <div className="flex h-full flex-col pt-2 sm:pt-4">
                           <div>
-                            <h2 className="text-[21px] font-black leading-tight tracking-[-0.03em] text-slate-950 sm:text-[24px]">
+                            <h2 className="text-[19px] font-black leading-tight tracking-[-0.03em] text-slate-950 sm:text-[24px]">
                               {plan.name}
                             </h2>
 
-                            <p className="mt-2 min-h-[22px] text-[13px] font-black leading-5 text-slate-500 sm:mt-3 sm:text-sm">
+                            <p className="mt-2 min-h-[18px] text-[12px] font-black leading-5 text-slate-500 sm:mt-3 sm:min-h-[22px] sm:text-sm">
                               {plan.subtitle}
                             </p>
 
-                            <p className="mt-4 min-h-[72px] text-[13px] font-semibold leading-6 text-slate-500 sm:min-h-[84px] sm:text-[14px] md:text-[15px]">
+                            <p className="mt-3 min-h-[58px] text-[12px] font-semibold leading-5 text-slate-500 sm:mt-4 sm:min-h-[84px] sm:text-[14px] sm:leading-6 md:text-[15px]">
                               {plan.description}
                             </p>
                           </div>
 
-                          <div className="mt-1 border-y border-slate-100 py-5 sm:py-6">
-                            <div className="text-[34px] font-black leading-none tracking-[-0.045em] text-slate-950 sm:text-[40px]">
+                          <div className="mt-1 border-y border-slate-100 py-4 sm:py-6">
+                            <div className="text-[30px] font-black leading-none tracking-[-0.045em] text-slate-950 sm:text-[40px]">
                               {plan.price}
                             </div>
                           </div>
 
-                          <ul className="mt-5 flex-1 space-y-2.5 text-[13px] font-bold leading-5 text-slate-600 sm:mt-6 sm:space-y-3 sm:text-[14px] sm:leading-6">
+                          <ul className="mt-4 flex-1 space-y-2 text-[12px] font-bold leading-5 text-slate-600 sm:mt-6 sm:space-y-3 sm:text-[14px] sm:leading-6">
                             {plan.features.map((feature) => (
                               <li key={feature} className="flex gap-3">
                                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-black text-emerald-600">
@@ -223,11 +275,11 @@ export default function PricingPage() {
                             ))}
                           </ul>
 
-                          <div className="pt-6 sm:pt-8">
+                          <div className="pt-5 sm:pt-8">
                             {plan.href ? (
                               <a
                                 href={plan.href}
-                                className="flex w-full justify-center rounded-2xl bg-slate-900 px-5 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-slate-200 transition hover:bg-slate-800 sm:py-4"
+                                className="flex w-full justify-center rounded-2xl bg-slate-900 px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-slate-200 transition hover:bg-slate-800 sm:py-4"
                               >
                                 {plan.cta}
                               </a>
@@ -235,7 +287,7 @@ export default function PricingPage() {
                               <button
                                 type="button"
                                 onClick={() => startCheckout(plan.id as PlanId)}
-                                className={`flex w-full justify-center rounded-2xl px-5 py-3.5 text-center text-sm font-black text-white shadow-lg transition sm:py-4 ${
+                                className={`flex w-full justify-center rounded-2xl px-5 py-3 text-center text-sm font-black text-white shadow-lg transition sm:py-4 ${
                                   plan.featured
                                     ? "bg-violet-500 shadow-violet-200 hover:bg-violet-600"
                                     : "bg-slate-900 shadow-slate-200 hover:bg-slate-800"
@@ -252,18 +304,6 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setPricingIndex((current) =>
-                    current === pricing.length - 1 ? 0 : current + 1
-                  )
-                }
-                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:flex"
-                aria-label="Show next pricing plan"
-              >
-                ›
-              </button>
             </div>
 
             <div className="mt-6 flex items-center justify-center gap-2">
@@ -280,33 +320,6 @@ export default function PricingPage() {
                   aria-label={`Show ${plan.name} pricing plan`}
                 />
               ))}
-            </div>
-
-            <div className="mt-4 flex items-center justify-center gap-2 sm:hidden">
-              <button
-                type="button"
-                onClick={() =>
-                  setPricingIndex((current) =>
-                    current === 0 ? pricing.length - 1 : current - 1
-                  )
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm"
-                aria-label="Show previous pricing plan"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setPricingIndex((current) =>
-                    current === pricing.length - 1 ? 0 : current + 1
-                  )
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm"
-                aria-label="Show next pricing plan"
-              >
-                ›
-              </button>
             </div>
           </div>
 
