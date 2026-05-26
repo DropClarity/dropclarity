@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type TouchEvent } from "react";
+import { useRef, useState } from "react";
 
 type PlanId = "core" | "scale";
 
@@ -20,8 +20,6 @@ export default function Home() {
   const [showDemo, setShowDemo] = useState(false);
   const [pricingIndex, setPricingIndex] = useState(1);
   const demoVideoRef = useRef<HTMLVideoElement | null>(null);
-  const pricingTouchStartX = useRef<number | null>(null);
-  const pricingTouchEndX = useRef<number | null>(null);
 
   async function expandDemoVideo() {
     const video = demoVideoRef.current;
@@ -44,40 +42,6 @@ export default function Home() {
     } catch {
       // Fullscreen can be blocked by some browsers. The modal player still remains usable.
     }
-  }
-
-  function showPreviousPricingPlan() {
-    setPricingIndex((current) => (current === 0 ? pricing.length - 1 : current - 1));
-  }
-
-  function showNextPricingPlan() {
-    setPricingIndex((current) => (current === pricing.length - 1 ? 0 : current + 1));
-  }
-
-  function handlePricingTouchStart(event: TouchEvent<HTMLDivElement>) {
-    pricingTouchStartX.current = event.touches[0]?.clientX ?? null;
-    pricingTouchEndX.current = null;
-  }
-
-  function handlePricingTouchMove(event: TouchEvent<HTMLDivElement>) {
-    pricingTouchEndX.current = event.touches[0]?.clientX ?? null;
-  }
-
-  function handlePricingTouchEnd() {
-    if (pricingTouchStartX.current === null || pricingTouchEndX.current === null) return;
-
-    const swipeDistance = pricingTouchStartX.current - pricingTouchEndX.current;
-
-    if (Math.abs(swipeDistance) > 45) {
-      if (swipeDistance > 0) {
-        showNextPricingPlan();
-      } else {
-        showPreviousPricingPlan();
-      }
-    }
-
-    pricingTouchStartX.current = null;
-    pricingTouchEndX.current = null;
   }
 
   const steps = [
@@ -202,14 +166,7 @@ export default function Home() {
     const data = await res.json();
 
     if (!res.ok) {
-      const message = String(data?.error || "").toLowerCase();
-
-      if (res.status === 401 || message.includes("sign") || message.includes("auth")) {
-        window.location.href = `/sign-in?redirect_url=${encodeURIComponent("/pricing")}`;
-        return;
-      }
-
-      alert(data?.error || "Checkout failed. Please try again.");
+      alert(data?.error || "Checkout failed. Please sign in and try again.");
       return;
     }
 
@@ -256,7 +213,7 @@ export default function Home() {
                 Watch Demo
               </button>
               <a
-                href="/pricing"
+                href="#pricing"
                 className="rounded-full border border-slate-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/50"
               >
                 View Pricing
@@ -565,29 +522,29 @@ export default function Home() {
       </section>
 
       <section className="border-y border-slate-100 bg-slate-950 text-white">
-        <div className="mx-auto grid w-full max-w-[1500px] gap-10 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-10 lg:py-28">
+        <div className="mx-auto grid w-full max-w-[1500px] gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:px-10 lg:py-24 xl:grid-cols-[0.9fr_1.1fr] xl:items-center xl:py-28">
           <div>
             <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black text-white">
               ROI-focused profitability clarity
             </div>
-            <h2 className="text-[28px] font-black tracking-[-0.035em] sm:text-[34px]">
+            <h2 className="max-w-[720px] text-[28px] font-black leading-[1.18] tracking-[-0.035em] sm:text-[34px] lg:text-[38px] xl:max-w-none">
               One fixed profit leak can pay for DropClarity many times over.
             </h2>
-            <p className="mt-4 text-[15px] font-semibold leading-7 text-white/65 sm:text-[16px]">
+            <p className="mt-4 max-w-[720px] text-[15px] font-semibold leading-7 text-white/65 sm:text-[16px] xl:max-w-none">
               If one underpriced job costs your business $3,000, $8,000, or $15,000 in missed profit, the software is not the expense.
               The hidden margin leak is.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-4 xl:gap-5">
             {[
               ["1", "underpriced job found"],
               ["$14.8k+", "estimated margin opportunity"],
               ["24", "jobs reviewed instantly"],
             ].map(([a, b]) => (
-              <div key={a} className="rounded-3xl border border-white/10 bg-white/10 p-5 sm:p-6">
-                <div className="text-[26px] font-black leading-none tracking-[-0.03em] sm:text-3xl lg:text-4xl">{a}</div>
-                <div className="mt-3 text-[12px] font-bold uppercase leading-5 tracking-wide text-white/50 sm:text-sm">{b}</div>
+              <div key={a} className="rounded-3xl border border-white/10 bg-white/10 p-5 sm:p-6 lg:p-7 xl:p-6">
+                <div className="text-[26px] font-black leading-none tracking-[-0.03em] sm:text-3xl lg:text-[34px] xl:text-4xl">{a}</div>
+                <div className="mt-3 text-[12px] font-bold uppercase leading-5 tracking-wide text-white/50 sm:text-[13px] lg:text-sm">{b}</div>
               </div>
             ))}
           </div>
@@ -609,21 +566,20 @@ export default function Home() {
             <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
               <button
                 type="button"
-                onClick={showPreviousPricingPlan}
+                onClick={() =>
+                  setPricingIndex((current) =>
+                    current === 0 ? pricing.length - 1 : current - 1
+                  )
+                }
                 className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:flex"
                 aria-label="Show previous pricing plan"
               >
                 ‹
               </button>
 
-              <div
-                className="min-w-0 flex-1 overflow-visible px-0 pt-6 sm:px-1 sm:pt-7"
-                onTouchStart={handlePricingTouchStart}
-                onTouchMove={handlePricingTouchMove}
-                onTouchEnd={handlePricingTouchEnd}
-              >
+              <div className="min-w-0 flex-1 overflow-hidden px-0 pt-5 sm:px-1 sm:pt-6">
                 <div
-                  className="flex touch-pan-y select-none transition-transform duration-500 ease-out"
+                  className="flex transition-transform duration-500 ease-out"
                   style={{ transform: `translateX(-${pricingIndex * 100}%)` }}
                 >
                   {pricing.map((plan) => (
@@ -632,7 +588,7 @@ export default function Home() {
                       className="w-full shrink-0 px-1 sm:px-3"
                     >
                       <article
-                        className={`relative mx-auto flex min-h-[540px] max-w-[350px] flex-col overflow-visible rounded-[24px] border bg-white p-5 shadow-[0_14px_42px_rgba(2,6,23,.07)] transition sm:min-h-[560px] sm:max-w-[460px] sm:rounded-[28px] sm:p-6 md:max-w-[560px] md:p-7 ${
+                        className={`relative mx-auto flex min-h-[540px] max-w-[350px] flex-col overflow-visible rounded-[24px] border bg-white p-5 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition sm:min-h-[560px] sm:max-w-[460px] sm:rounded-[28px] sm:p-6 md:max-w-[560px] md:p-7 ${
                           plan.featured
                             ? "border-violet-400 ring-2 ring-violet-200"
                             : "border-slate-200"
@@ -707,7 +663,11 @@ export default function Home() {
 
               <button
                 type="button"
-                onClick={showNextPricingPlan}
+                onClick={() =>
+                  setPricingIndex((current) =>
+                    current === pricing.length - 1 ? 0 : current + 1
+                  )
+                }
                 className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:flex"
                 aria-label="Show next pricing plan"
               >
@@ -734,7 +694,11 @@ export default function Home() {
             <div className="mt-4 flex items-center justify-center gap-2 sm:hidden">
               <button
                 type="button"
-                onClick={showPreviousPricingPlan}
+                onClick={() =>
+                  setPricingIndex((current) =>
+                    current === 0 ? pricing.length - 1 : current - 1
+                  )
+                }
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm"
                 aria-label="Show previous pricing plan"
               >
@@ -742,7 +706,11 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={showNextPricingPlan}
+                onClick={() =>
+                  setPricingIndex((current) =>
+                    current === pricing.length - 1 ? 0 : current + 1
+                  )
+                }
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm"
                 aria-label="Show next pricing plan"
               >
@@ -824,7 +792,8 @@ export default function Home() {
                 </div>
               </article>
             ))}
-          </div>        </div>
+          </div>
+        </div>
       </section>
 
       <section id="faq" className="bg-slate-50/80 px-5 pt-20 pb-28 sm:px-8 sm:pt-24 sm:pb-32 lg:px-10 lg:pt-28 lg:pb-36">
