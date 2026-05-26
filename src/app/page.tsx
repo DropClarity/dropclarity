@@ -498,22 +498,51 @@ export default function Home() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {[
-            [
-              "Underpriced jobs",
-              "Find jobs where the quote looked fine upfront but actual costs destroyed the margin.",
-            ],
-            [
-              "Labor overruns",
-              "See when labor hours or subcontractor costs are eating more profit than expected.",
-            ],
-            [
-              "Material cost leaks",
-              "Catch material-heavy jobs where equipment, parts, or supplies are reducing margin.",
-            ],
-          ].map(([title, desc]) => (
+            {
+              title: "Underpriced jobs",
+              desc: "Find jobs where the quote looked fine upfront but actual costs destroyed the margin.",
+              icon: "invoice",
+            },
+            {
+              title: "Labor overruns",
+              desc: "See when labor hours or subcontractor costs are eating more profit than expected.",
+              icon: "labor",
+            },
+            {
+              title: "Material cost leaks",
+              desc: "Catch material-heavy jobs where equipment, parts, or supplies are reducing margin.",
+              icon: "materials",
+            },
+          ].map(({ title, desc, icon }) => (
             <div key={title} className="rounded-[24px] border border-slate-200 bg-white p-6 text-left shadow-xl shadow-slate-100 sm:p-7">
-              <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-violet-50 text-lg font-black text-violet-600">!</div>
-              <h3 className="text-xl font-black tracking-[-0.01em] text-slate-950">{title}</h3>
+              <div className="flex items-center gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+                  {icon === "invoice" ? (
+                    <svg aria-hidden="true" className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 3h8l4 4v14H6V3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="M14 3v5h5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="M9 12h4M9 16h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <circle cx="16.5" cy="16.5" r="3.5" stroke="currentColor" strokeWidth="2" />
+                      <path d="M16.5 14.7v3.6M15.3 15.5c.35-.45 1.95-.6 2.35.05.45.75-.25 1.25-1.15 1.25s-1.6.45-1.2 1.1c.45.75 2.05.55 2.45.05" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  ) : icon === "labor" ? (
+                    <svg aria-hidden="true" className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                      <path d="M11 6a4 4 0 1 0-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M11 2v4h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="17" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" />
+                      <path d="M13 20c.45-3.1 2-4.6 4-4.6s3.55 1.5 4 4.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M6 14h4M8 12v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <svg aria-hidden="true" className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="M4.5 7.7 12 12l7.5-4.3M12 12v8.5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="m8 5.2 8 4.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  )}
+                </div>
+                <h3 className="text-xl font-black tracking-[-0.01em] text-slate-950">{title}</h3>
+              </div>
               <p className="mt-4 text-[15px] font-semibold leading-7 text-slate-500">{desc}</p>
             </div>
           ))}
