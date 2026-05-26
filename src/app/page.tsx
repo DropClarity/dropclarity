@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type TouchEvent } from "react";
+import { useClerk, useUser } from "@clerk/nextjs";
 
 type PlanId = "core" | "scale";
 
@@ -17,6 +18,8 @@ type PricingPlan = {
 };
 
 export default function Home() {
+  const { openSignUp } = useClerk();
+  const { isSignedIn } = useUser();
   const [showDemo, setShowDemo] = useState(false);
   const [pricingIndex, setPricingIndex] = useState(1);
   const demoVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -193,6 +196,15 @@ export default function Home() {
   ];
 
   async function startCheckout(plan: PlanId) {
+    if (!isSignedIn) {
+      openSignUp({
+        afterSignUpUrl: "/pricing",
+        afterSignInUrl: "/pricing",
+        redirectUrl: "/pricing",
+      } as any);
+      return;
+    }
+
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -205,7 +217,11 @@ export default function Home() {
       const message = String(data?.error || "").toLowerCase();
 
       if (res.status === 401 || message.includes("sign") || message.includes("auth")) {
-        window.location.href = `/sign-in?redirect_url=${encodeURIComponent("/pricing")}`;
+        openSignUp({
+          afterSignUpUrl: "/pricing",
+          afterSignInUrl: "/pricing",
+          redirectUrl: "/pricing",
+        } as any);
         return;
       }
 
@@ -606,18 +622,9 @@ export default function Home() {
           </div>
 
           <div className="mt-10 xl:hidden">
-            <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={showPreviousPricingPlan}
-                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:flex"
-                aria-label="Show previous pricing plan"
-              >
-                ‹
-              </button>
-
+            <div className="mx-auto max-w-[760px]">
               <div
-                className="min-w-0 flex-1 overflow-visible px-0 pt-6 sm:px-1 sm:pt-7"
+                className="min-w-0 overflow-hidden px-0 pt-6 sm:px-1 sm:pt-7"
                 onTouchStart={handlePricingTouchStart}
                 onTouchMove={handlePricingTouchMove}
                 onTouchEnd={handlePricingTouchEnd}
@@ -705,14 +712,6 @@ export default function Home() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={showNextPricingPlan}
-                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:flex"
-                aria-label="Show next pricing plan"
-              >
-                ›
-              </button>
             </div>
 
             <div className="mt-6 flex items-center justify-center gap-2">
