@@ -6645,7 +6645,6 @@ const dashboardCss = `
 @keyframes softSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 
 @media(max-width:1300px){.dc-bg .scaleCommandGrid{grid-template-columns:1fr 1fr}.dc-bg .scaleCommandHero{grid-column:1/-1}.dc-bg .scaleGridPremiumV2{grid-template-columns:1fr 1fr}.dc-bg .benchmarkGridV2{grid-template-columns:1fr 1fr}.dc-bg .alertsExplainerCard{grid-column:span 2}}
-@media(max-width:1024px){.dc-bg .scaleCommandGrid{grid-template-columns:1fr}.dc-bg .scaleCommandHero{grid-column:auto}.dc-bg .scaleGridPremiumV2{grid-template-columns:1fr}.dc-bg .benchmarkGridV2{grid-template-columns:1fr}.dc-bg .alertsExplainerCard{grid-column:auto}.dc-bg .marginTargetTopWrap{padding:12px 14px}}
 @media(max-width:760px){.dc-bg .scaleControlHead{align-items:flex-start;flex-direction:column}.dc-bg .scaleHeadRight{justify-content:flex-start}.dc-bg .scaleCommandGrid{grid-template-columns:1fr;padding:14px 14px 0}.dc-bg .scaleCommandHero{grid-column:auto}.dc-bg .scaleGridPremiumV2{grid-template-columns:1fr}.dc-bg .benchmarkGridV2{grid-template-columns:1fr}.dc-bg .alertsExplainerCard{grid-column:auto}.dc-bg .targetInputRow{flex-wrap:wrap}.dc-bg .targetInput{width:110px}.dc-bg .heroScaleTitle{font-size:23px}}
 
 
