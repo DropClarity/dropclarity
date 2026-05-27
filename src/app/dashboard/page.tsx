@@ -10232,4 +10232,62 @@ main.dc-bg .scaleMiniStats strong{
     flex:1 1 auto!important;
   }
 }
+
+/* Keep primary dashboard section titles anchored on tablet instead of drifting to center. */
+@media (max-width:1180px){
+  main.dc-bg:not(.internal-view-bg) .dcPrimarySection > .dcSectionHeader,
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader,
+  main.dc-bg:not(.internal-view-bg) .dcHealthSection > .dcSectionHeader{
+    display:flex!important;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    text-align:left!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcPrimarySection > .dcSectionHeader > div,
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader > div,
+  main.dc-bg:not(.internal-view-bg) .dcHealthSection > .dcSectionHeader > div{
+    width:100%!important;
+    min-width:0!important;
+    text-align:left!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcPrimarySection > .dcSectionHeader h2,
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader h2,
+  main.dc-bg:not(.internal-view-bg) .dcHealthSection > .dcSectionHeader h2,
+  main.dc-bg:not(.internal-view-bg) .dcPrimarySection > .dcSectionHeader p,
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader p,
+  main.dc-bg:not(.internal-view-bg) .dcHealthSection > .dcSectionHeader p{
+    text-align:left!important;
+    margin-left:0!important;
+    margin-right:0!important;
+  }
+}
+
+@media (min-width:761px) and (max-width:900px){
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader .dcSectionCta{
+    width:100%!important;
+    justify-content:center!important;
+  }
+}
+
+@media (max-width:760px){
+  main.dc-bg:not(.internal-view-bg) .dcPrimarySection > .dcSectionHeader,
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader,
+  main.dc-bg:not(.internal-view-bg) .dcHealthSection > .dcSectionHeader{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader .dcSectionCta{
+    width:100%!important;
+    justify-content:center!important;
+  }
+}
 `;
