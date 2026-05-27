@@ -8839,6 +8839,147 @@ main.dc-bg .customAmountInput{
   }
 }
 
+/* Tablet dashboard controls: keep the desktop rhythm without cramped scrolling. */
+@media (min-width:761px) and (max-width:1180px){
+  main.dc-bg:not(.internal-view-bg) .topbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:start!important;
+    gap:18px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:auto!important;
+    min-width:min(100%,330px)!important;
+    max-width:360px!important;
+    align-items:stretch!important;
+    padding:8px!important;
+    border-radius:24px!important;
+    background:rgba(255,255,255,.78)!important;
+    border:1px solid rgba(15,23,42,.065)!important;
+    box-shadow:0 16px 42px rgba(15,23,42,.055)!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    justify-content:stretch!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow .pill,
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow .btn,
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow .uploadPulseBtn{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+    white-space:nowrap!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopWrap{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:9px!important;
+    padding:9px 10px!important;
+    border-radius:18px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopText{
+    display:block!important;
+    min-width:0!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopControls{
+    width:auto!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-end!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    display:grid!important;
+    grid-template-columns:minmax(210px,.45fr) minmax(0,1fr)!important;
+    align-items:center!important;
+    gap:14px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    justify-content:stretch!important;
+    gap:10px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeButtons{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:8px!important;
+    overflow:visible!important;
+    padding-bottom:0!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeBtn{
+    width:100%!important;
+    min-width:0!important;
+    padding:9px 8px!important;
+    justify-content:center!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight > .btn{
+    width:auto!important;
+    min-width:max-content!important;
+    justify-self:end!important;
+    white-space:nowrap!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .customDates{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) auto!important;
+    gap:8px!important;
+  }
+}
+
+@media (min-width:761px) and (max-width:980px){
+  main.dc-bg:not(.internal-view-bg) .topbar{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:100%!important;
+    max-width:none!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(300px,.72fr)!important;
+    align-items:center!important;
+    gap:10px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    grid-template-columns:1fr!important;
+    align-items:stretch!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight > .btn{
+    justify-self:center!important;
+  }
+}
+
 /* DropClarity cleanup: remove redundant blue section bubbles; keep the Start Here guide rail and status/action pills. */
 main.dc-bg .pageKicker,
 main.dc-bg .dcSectionEyebrow,
