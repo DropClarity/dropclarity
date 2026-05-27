@@ -9914,4 +9914,322 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
     font-size:18px!important;
   }
 }
+
+/* Responsive guardrail layer: fluid tablets and internal pages without changing the desktop composition. */
+main.dc-bg .panel,
+main.dc-bg .jobHero,
+main.dc-bg .hero,
+main.dc-bg .rangeWrap,
+main.dc-bg .topbarRight,
+main.dc-bg .marginTargetTopWrap,
+main.dc-bg .jobStats,
+main.dc-bg .kpis,
+main.dc-bg .profitSnapshotMetrics,
+main.dc-bg .scaleMiniStats,
+main.dc-bg .internalQuickActions,
+main.dc-bg .internalUtilityRight{
+  min-width:0!important;
+}
+
+main.dc-bg .stat,
+main.dc-bg .kpi,
+main.dc-bg .profitSnapshotMetric,
+main.dc-bg .scaleMiniStats > div{
+  min-width:0!important;
+  overflow:hidden!important;
+}
+
+main.dc-bg .statLabel,
+main.dc-bg .kLabel,
+main.dc-bg .profitSnapshotMetric span,
+main.dc-bg .scaleMiniStats span{
+  overflow-wrap:anywhere!important;
+}
+
+main.dc-bg .statValue,
+main.dc-bg .kValue,
+main.dc-bg .profitSnapshotMetric strong,
+main.dc-bg .scaleMiniStats strong{
+  max-width:100%!important;
+  overflow-wrap:anywhere!important;
+}
+
+@media (max-width:1180px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    width:100%!important;
+    max-width:none!important;
+    padding-inline:clamp(14px,2.2vw,24px)!important;
+  }
+
+  main.dc-bg .jobHero,
+  main.dc-bg .jobPage,
+  main.dc-bg .cleanModeShell,
+  main.dc-bg .allJobsDetailShell,
+  main.dc-bg .reportsManagerPage,
+  main.dc-bg .highRiskPage{
+    width:100%!important;
+    max-width:none!important;
+  }
+
+  main.dc-bg .jobHeroBody,
+  main.dc-bg .decisionJobHeroBody,
+  main.dc-bg .heroBody{
+    grid-template-columns:1fr!important;
+    gap:14px!important;
+  }
+
+  main.dc-bg .jobStats{
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,148px),1fr))!important;
+    gap:12px!important;
+  }
+
+  main.dc-bg .jobStats .stat{
+    min-height:0!important;
+    padding:16px!important;
+  }
+
+  main.dc-bg .jobStats .statValue{
+    font-size:clamp(19px,2.45vw,25px)!important;
+    line-height:1.08!important;
+    letter-spacing:-.035em!important;
+  }
+
+  main.dc-bg .jobStats .statSub{
+    font-size:13px!important;
+    line-height:1.45!important;
+  }
+
+  main.dc-bg .internalQuickControls,
+  main.dc-bg .internalUtilityTopbar{
+    display:block!important;
+    width:100%!important;
+  }
+
+  main.dc-bg .internalQuickSpacer,
+  main.dc-bg .internalUtilityLeft{
+    display:none!important;
+  }
+
+  main.dc-bg .internalQuickActions,
+  main.dc-bg .internalUtilityRight{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,136px),1fr))!important;
+    align-items:stretch!important;
+    justify-content:stretch!important;
+    gap:9px!important;
+  }
+
+  main.dc-bg .internalUtilityRight .statusRow{
+    display:contents!important;
+  }
+
+  main.dc-bg .internalQuickActions > .btn,
+  main.dc-bg .internalQuickActions > a.btn,
+  main.dc-bg .internalUtilityRight .statusRow .pill,
+  main.dc-bg .internalUtilityRight .statusRow .btn,
+  main.dc-bg .internalUtilityRight .statusRow .uploadPulseBtn{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+    white-space:nowrap!important;
+  }
+
+  main.dc-bg .internalQuickActions .marginTargetTopWrap,
+  main.dc-bg .internalUtilityRight .marginTargetTopWrap{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    max-width:none!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    justify-content:stretch!important;
+    gap:10px!important;
+    border-radius:18px!important;
+    padding:10px 12px!important;
+    margin:0!important;
+  }
+
+  main.dc-bg .internalQuickActions .marginTargetTopText,
+  main.dc-bg .internalUtilityRight .marginTargetTopText,
+  main.dc-bg .topbarRight .marginTargetTopText{
+    min-width:0!important;
+    display:block!important;
+  }
+
+  main.dc-bg .internalQuickActions .marginTargetTopControls,
+  main.dc-bg .internalUtilityRight .marginTargetTopControls,
+  main.dc-bg .topbarRight .marginTargetTopControls{
+    width:auto!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+  }
+
+  main.dc-bg .internalQuickActions .compactTargetInputGroup,
+  main.dc-bg .internalUtilityRight .compactTargetInputGroup,
+  main.dc-bg .topbarRight .compactTargetInputGroup{
+    min-width:82px!important;
+  }
+
+  main.dc-bg .spreadsheetJobHead{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    align-items:stretch!important;
+    gap:12px!important;
+  }
+
+  main.dc-bg .spreadsheetJobActions{
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,132px),1fr))!important;
+    gap:8px!important;
+    width:100%!important;
+  }
+
+  main.dc-bg .spreadsheetJobActions .btn{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+  }
+
+  main.dc-bg .jobAnalysisHeader{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:start!important;
+  }
+}
+
+@media (min-width:901px) and (max-width:1180px){
+  main.dc-bg:not(.internal-view-bg) .topbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(310px,360px)!important;
+    align-items:start!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:100%!important;
+    max-width:360px!important;
+    align-self:start!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopWrap{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    border-radius:18px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    grid-template-columns:minmax(190px,.34fr) minmax(0,1fr)!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight > .btn{
+    justify-self:end!important;
+  }
+}
+
+@media (min-width:769px) and (max-width:900px){
+  main.dc-bg:not(.internal-view-bg) .topbar{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:100%!important;
+    max-width:none!important;
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:9px!important;
+    padding:8px!important;
+    border-radius:22px!important;
+    background:rgba(255,255,255,.78)!important;
+    border:1px solid rgba(15,23,42,.065)!important;
+    box-shadow:0 16px 42px rgba(15,23,42,.045)!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    display:contents!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow .pill,
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow .btn,
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow .uploadPulseBtn{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopWrap{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    border-radius:18px!important;
+    padding:10px 12px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    grid-template-columns:1fr!important;
+    align-items:stretch!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-width:768px){
+  main.dc-bg .jobStats{
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr))!important;
+  }
+
+  main.dc-bg .jobAnalysisHeader{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .sectionSubtle{
+    text-align:left!important;
+  }
+}
+
+@media (max-width:520px){
+  main.dc-bg .jobStats,
+  main.dc-bg .internalQuickActions,
+  main.dc-bg .internalUtilityRight{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .internalQuickActions .marginTargetTopWrap,
+  main.dc-bg .internalUtilityRight .marginTargetTopWrap,
+  main.dc-bg .topbarRight .marginTargetTopWrap{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .internalQuickActions .marginTargetTopControls,
+  main.dc-bg .internalUtilityRight .marginTargetTopControls,
+  main.dc-bg .topbarRight .marginTargetTopControls{
+    width:100%!important;
+  }
+
+  main.dc-bg .internalQuickActions .compactTargetInputGroup,
+  main.dc-bg .internalUtilityRight .compactTargetInputGroup,
+  main.dc-bg .topbarRight .compactTargetInputGroup{
+    flex:1 1 auto!important;
+  }
+}
 `;
