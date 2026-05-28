@@ -40,6 +40,8 @@ type SourceFileLink = {
   mime?: string | null;
   kind?: string | null;
   role?: string | null;
+  parse_mode?: string | null;
+  file_category?: string | null;
   size?: number | string | null;
   size_bytes?: number | string | null;
   job_id?: string | null;
@@ -797,13 +799,31 @@ type JobFileUpdateResponse = {
   cost_mix?: CostBreakdown;
 };
 
-async function apiUploadDashboardFile(token: string | null, file: File): Promise<SourceFileLink> {
+function fileAnalysisMetadata(filename: string, mime?: string | null) {
+  const lower = String(filename || "").toLowerCase();
+  const mimeType = String(mime || "").toLowerCase();
+  const isStructured =
+    lower.endsWith(".csv") ||
+    lower.endsWith(".xlsx") ||
+    lower.endsWith(".xls") ||
+    mimeType.includes("csv") ||
+    mimeType.includes("spreadsheet") ||
+    mimeType.includes("excel");
+
+  return {
+    parse_mode: isStructured ? "code" : "ai",
+    file_category: isStructured ? "structured" : "document",
+  };
+}
+
+async function apiUploadDashboardFile(token: string | null, file: File, userId?: string | null): Promise<SourceFileLink> {
   const form = new FormData();
   form.append("file", file);
 
   const res = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     headers: {
+      ...(userId ? { "X-User-Id": userId } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: form,
@@ -827,16 +847,21 @@ async function apiUploadDashboardFile(token: string | null, file: File): Promise
     data?.cdnUrl ||
     (data?.uuid ? `https://ucarecdn.com/${data.uuid}/?download=1` : null);
 
+  const filename = data?.filename || file.name || "Additional invoice";
+  const mime = data?.mime || file.type || null;
+
   return {
     uuid: data?.uuid || null,
-    filename: data?.filename || file.name || "Additional invoice",
-    mime: data?.mime || file.type || null,
+    filename,
+    mime,
     size: data?.size || file.size || null,
     url: uploadUrl,
     cdnUrl: uploadUrl,
     fileUrl: uploadUrl,
     file_url: uploadUrl,
-  };}
+    ...fileAnalysisMetadata(filename, mime),
+  };
+}
 
 async function apiUpdateJobWithFile(
   token: string | null,
@@ -4419,10 +4444,18 @@ function JobEditor({
       setUpdateStatus("uploading");
       setUpdateMessage("Uploading file...");
       const token = getToken ? await getToken() : null;
-      const uploaded = await apiUploadDashboardFile(token, updateFile);
+      const uploaded = await apiUploadDashboardFile(token, updateFile, userId);
 
       setUpdateStatus("analyzing");
       setUpdateMessage("Analyzing and adding to this job...");
+
+      const enrichedUpload: SourceFileLink = {
+        ...uploaded,
+        kind: "job_export",
+        job_id: job.job_id || base.job_id || null,
+        role: updateFileRole,
+        ...fileAnalysisMetadata(sourceFileName(uploaded, 0) || updateFile.name, uploaded.mime || updateFile.type),
+      };
 
       const result = await apiUpdateJobWithFile(token, {
         reportId: String(base.report_id || ""),
@@ -4430,7 +4463,7 @@ function JobEditor({
         jobId: job.job_id || base.job_id || null,
         jobName: job.job_name || base.job_name || null,
         role: updateFileRole,
-        files: [uploaded],
+        files: [enrichedUpload],
       });
 
       const addedRevenue = parseNumberLoose(result.added?.revenue);
@@ -4441,9 +4474,9 @@ function JobEditor({
       ].filter(Boolean).join(" • ");
 
       const historyItem: JobAdjustmentHistoryItem = {
-        id: `${Date.now()}-${uploaded.uuid || updateFile.name}`,
+        id: `${Date.now()}-${enrichedUpload.uuid || updateFile.name}`,
         created_at: new Date().toISOString(),
-        filename: sourceFileName((result.added?.files || [])[0] || uploaded, 0) || updateFile.name || "Additional invoice",
+        filename: sourceFileName((result.added?.files || [])[0] || enrichedUpload, 0) || updateFile.name || "Additional invoice",
         role: updateFileRole,
         revenue: addedRevenue,
         costs: addedCosts,
@@ -4464,7 +4497,7 @@ function JobEditor({
       // Prefer the finalized /job-file-update source-file records. The immediate
       // /upload object is only a fallback. If both records share the same UUID,
       // dedupeSourceFiles keeps the first one, so resultFiles must come first.
-      setReportSourceFiles((current) => dedupeSourceFiles([...resultFiles, uploaded, ...(current || [])]));
+      setReportSourceFiles((current) => dedupeSourceFiles([...resultFiles, enrichedUpload, ...(current || [])]));
       resetJobEdit(jobKey, userId);
 
       if (onDashboardRefresh) {
