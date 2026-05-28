@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -147,6 +148,7 @@ export default function RootLayout({
             </footer>
           </div>
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
