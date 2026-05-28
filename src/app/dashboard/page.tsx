@@ -1590,6 +1590,41 @@ function labelForJobUpdateRole(role: JobUpdateFileRole): string {
   return "Cost invoice";
 }
 
+function inferAdjustmentCostBucket(item: JobAdjustmentHistoryItem): keyof CostBreakdown {
+  const text = `${item.filename || ""} ${item.role || ""}`.toLowerCase();
+
+  if (/\b(tax|taxes|sales tax|use tax)\b/.test(text)) return "taxes";
+  if (/\b(sub|subs|subcontract|subcontractor|contractor)\b/.test(text)) return "subs";
+  if (/\b(labor|labour|payroll|wage|wages|hour|hours|technician|crew)\b/.test(text)) return "labor";
+  if (/\b(material|materials|supply|supplies|part|parts|equipment|purchase|receipt|hardware|unit)\b/.test(text)) return "materials";
+
+  return "other";
+}
+
+function adjustmentCostDeltas(item: JobAdjustmentHistoryItem): Required<Pick<CostBreakdown, "labor" | "materials" | "subs" | "taxes" | "other">> {
+  const cb = item.cost_breakdown || {};
+  const deltas = {
+    labor: parseNumberLoose(cb.labor),
+    materials: parseNumberLoose(cb.materials),
+    subs: parseNumberLoose(cb.subs),
+    taxes: parseNumberLoose(cb.taxes),
+    other: parseNumberLoose(cb.other),
+  };
+  const hasBucketData = Object.values(deltas).some((value) => Math.abs(value) > 0.005);
+
+  if (hasBucketData) return deltas;
+
+  const bucket = inferAdjustmentCostBucket(item);
+  return {
+    labor: 0,
+    materials: 0,
+    subs: 0,
+    taxes: 0,
+    other: 0,
+    [bucket]: parseNumberLoose(item.costs),
+  };
+}
+
 function seedJobFromBase(base: JobRow): EditableJob {
   const cb = base?.cost_breakdown || {};
   const costs = parseNumberLoose(base?.costs);
@@ -4440,25 +4475,17 @@ function JobEditor({
     setAdjustmentHistory(nextHistory);
 
     const addedRevenue = parseNumberLoose(item.revenue);
-    const addedCosts = parseNumberLoose(item.costs);
-    const cb = item.cost_breakdown || {};
-    const laborDelta = parseNumberLoose(cb.labor);
-    const materialsDelta = parseNumberLoose(cb.materials);
-    const subsDelta = parseNumberLoose(cb.subs);
-    const taxesDelta = parseNumberLoose(cb.taxes);
-    const otherDelta = parseNumberLoose(cb.other);
-    const bucketDeltaTotal = laborDelta + materialsDelta + subsDelta + taxesDelta + otherDelta;
-    const fallbackOtherDelta = Math.abs(bucketDeltaTotal) > 0.005 ? 0 : addedCosts;
+    const costDeltas = adjustmentCostDeltas(item);
 
     setJob((current) => {
       const next: EditableJob = {
         ...current,
         revenue: parseNumberLoose(current.revenue) - addedRevenue,
-        labor_cost: parseNumberLoose(current.labor_cost) - laborDelta,
-        material_cost: parseNumberLoose(current.material_cost) - materialsDelta,
-        subs_cost: parseNumberLoose(current.subs_cost) - subsDelta,
-        tax_cost: parseNumberLoose(current.tax_cost) - taxesDelta,
-        other_cost: parseNumberLoose(current.other_cost) - otherDelta - fallbackOtherDelta,
+        labor_cost: parseNumberLoose(current.labor_cost) - costDeltas.labor,
+        material_cost: parseNumberLoose(current.material_cost) - costDeltas.materials,
+        subs_cost: parseNumberLoose(current.subs_cost) - costDeltas.subs,
+        tax_cost: parseNumberLoose(current.tax_cost) - costDeltas.taxes,
+        other_cost: parseNumberLoose(current.other_cost) - costDeltas.other,
       };
 
       saveJobEdit(jobKey, next, userId);
@@ -9259,8 +9286,8 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .adjustmentHistoryTop{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;min-width:0}
 .dc-bg .adjustmentHistoryTop strong{font-size:12px;font-weight:950;color:#0f172a;line-height:1.2}
 .dc-bg .adjustmentHistoryTop span{font-size:10px;font-weight:800;color:#94a3b8;white-space:nowrap}
-.dc-bg .adjustmentHistoryDelete{appearance:none;width:24px;height:24px;border-radius:999px;border:1px solid rgba(239,68,68,.16);background:rgba(254,242,242,.82);color:#dc2626;font-size:17px;line-height:1;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform .12s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease}
-.dc-bg .adjustmentHistoryDelete:hover{transform:translateY(-1px);border-color:rgba(239,68,68,.28);background:#fff;box-shadow:0 10px 22px rgba(239,68,68,.10)}
+.dc-bg .adjustmentHistoryDelete{appearance:none;width:22px;height:22px;border-radius:8px;border:1px solid transparent;background:transparent;color:#94a3b8;font-size:14px;line-height:1;font-weight:850;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .14s ease,border-color .14s ease,color .14s ease}
+.dc-bg .adjustmentHistoryDelete:hover{border-color:rgba(15,23,42,.08);background:rgba(248,250,252,.92);color:#475569}
 .dc-bg .adjustmentHistoryFile{font-size:12px;font-weight:800;color:#334155;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dc-bg .adjustmentHistoryMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#64748b;line-height:1.25}
 .dc-bg .adjustmentHistoryMeta em{font-style:normal;white-space:nowrap}
