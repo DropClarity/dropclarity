@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
+import posthog from "posthog-js";
 
 type PlanId = "core" | "scale";
 
@@ -161,12 +162,30 @@ export default function PricingPage() {
   }
 
   async function startCheckout(plan: PlanId) {
+    if (plan === "core") {
+      posthog.capture("pricing core clicked", {
+        plan: "core",
+        price_monthly: 499,
+      });
+    }
+
+    if (plan === "scale") {
+      posthog.capture("pricing scale clicked", {
+        plan: "scale",
+        price_monthly: 999,
+      });
+    }
+
     if (!isLoaded) return;
 
     if (!isSignedIn) {
       openPricingAuth(plan);
       return;
     }
+
+    posthog.capture("checkout started", {
+      plan,
+    });
 
     const res = await fetch("/api/checkout", {
       method: "POST",

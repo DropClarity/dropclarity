@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
+import posthog from "posthog-js";
 
 type PlanId = "core" | "scale";
 
@@ -255,13 +256,17 @@ export default function Home() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 href="/app"
+                onClick={() => posthog.capture("analyze cta clicked")}
                 className="rounded-full bg-violet-500 px-8 py-4 text-center text-sm font-black text-white shadow-xl shadow-violet-300 transition hover:-translate-y-0.5 hover:bg-violet-600 hover:shadow-violet-400"
               >
                 Run Free Profit Scan
               </a>
               <button
                 type="button"
-                onClick={() => setShowDemo(true)}
+                onClick={() => {
+                  posthog.capture("demo video opened");
+                  setShowDemo(true);
+                }}
                 className="group inline-flex animate-[dc-watch-demo-bounce_2.4s_ease-in-out_infinite] items-center justify-center gap-2 rounded-full border border-violet-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-900 shadow-lg shadow-violet-100 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50 hover:shadow-violet-200 motion-reduce:animate-none"
               >
                 <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-500 text-[10px] text-white shadow-sm transition group-hover:bg-violet-600">
@@ -271,6 +276,7 @@ export default function Home() {
               </button>
               <a
                 href="/pricing"
+                onClick={() => posthog.capture("pricing viewed from homepage")}
                 className="rounded-full border border-slate-200 bg-white px-7 py-4 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/50"
               >
                 View Pricing
@@ -719,6 +725,7 @@ export default function Home() {
                             {plan.href ? (
                               <a
                                 href={plan.href}
+                                onClick={() => posthog.capture("analyze cta clicked")}
                                 className="flex w-full justify-center rounded-2xl bg-slate-900 px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-slate-200 transition hover:bg-slate-800 sm:py-4"
                               >
                                 {plan.cta}
@@ -815,6 +822,7 @@ export default function Home() {
                     {plan.href ? (
                       <a
                         href={plan.href}
+                        onClick={() => posthog.capture("analyze cta clicked")}
                         className="flex w-full justify-center rounded-2xl bg-slate-900 px-5 py-4 text-center text-sm font-black text-white shadow-lg shadow-slate-200 transition hover:bg-slate-800"
                       >
                         {plan.cta}

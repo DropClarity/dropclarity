@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
+import posthog from "posthog-js";
 
 const API_BASE = "https://dropclarity-api.armanrtajalli.workers.dev/api";
 const FALLBACK_USER_ID = "anon";
@@ -415,6 +416,8 @@ function csvCell(v: unknown) {
 }
 
 function downloadCsv(filename: string, rows: unknown[][]) {
+  posthog.capture("report exported");
+
   const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -3666,6 +3669,7 @@ function ScaleOversightPanel({
   ];
 
   const openJobFromRow = (key: string) => {
+    posthog.capture("high risk alert clicked");
     onOpenJob(key);
   };
 
@@ -5384,7 +5388,7 @@ function HighRiskJobsView({
                 </div>
 
                 <div className="riskActions">
-                  <button className="btn subtleSaveBtn" type="button" onClick={() => { setJobKey(row.key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                  <button className="btn subtleSaveBtn" type="button" onClick={() => { posthog.capture("high risk alert clicked"); setJobKey(row.key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                     Open Job Detail
                   </button>
                   <button className="btn" type="button" onClick={() => { setJobKey(row.key); setView("alljobs"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
@@ -5739,6 +5743,12 @@ export default function DashboardPage() {
     lastDashboardHistoryKeyRef.current = nextKey;
   }, [view, jobKey]);
 
+  useEffect(() => {
+    if (view === "job" && jobKey) {
+      posthog.capture("job detail viewed");
+    }
+  }, [view, jobKey]);
+
   const loadAndRender = useCallback(async (options?: { background?: boolean }) => {
     if (!isLoaded) return;
 
@@ -5780,6 +5790,7 @@ export default function DashboardPage() {
       setState(nextState);
       setScaleSummary(scaleData);
       setMode("ready");
+      posthog.capture("dashboard viewed");
     } catch (e: unknown) {
       if (background) {
         console.error("Background dashboard refresh failed", e);
@@ -5857,6 +5868,9 @@ useEffect(() => {
     setMarginTarget(next);
     setMarginTargetDraft(String(next));
     writeMarginTarget(USER_ID, next);
+    posthog.capture("target margin changed", {
+      target_margin: next,
+    });
 
     try {
       const token = await getToken();
@@ -6011,6 +6025,8 @@ useEffect(() => {
 
     if (!ok) return;
 
+    posthog.capture("report removed");
+
     const originalIdx = allReports.findIndex((r, originalIndex) => {
       if (r === report) return true;
       const sameId = (r.id && report.id && r.id === report.id) || (r.analysis_id && report.analysis_id && r.analysis_id === report.analysis_id);
@@ -6036,6 +6052,8 @@ useEffect(() => {
       return;
     }
 
+    posthog.capture("past report opened");
+
     setJobKey(key);
     setView("job");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -6053,6 +6071,8 @@ useEffect(() => {
     );
 
     if (!ok) return;
+
+    posthog.capture("report removed");
 
     const allKeys = allReports.map((report, idx) => reportDeleteKey(report, idx));
     void persistDeletedReports(allKeys);
@@ -6080,6 +6100,13 @@ useEffect(() => {
     setView("dashboard");
     setJobKey("");
     loadAndRender();
+  };
+
+  const openHighRiskAlerts = () => {
+    posthog.capture("high risk alerts viewed");
+    setView("highrisk");
+    setJobKey("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -6146,7 +6173,7 @@ useEffect(() => {
   state={visibleState}
   setView={setView}
   setJobKey={setJobKey}
-  onOpenHighRisk={() => { setView("highrisk"); setJobKey(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+  onOpenHighRisk={openHighRiskAlerts}
   view={view}
   reports={reports}
   allReportsCount={allReports.length}

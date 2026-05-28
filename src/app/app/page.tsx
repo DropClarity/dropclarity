@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
+import posthog from "posthog-js";
 
 const API_BASE = "https://dropclarity-api.armanrtajalli.workers.dev/api";
 
@@ -1341,6 +1342,10 @@ export default function AppPage() {
       return;
     }
 
+    posthog.capture("upload started", {
+      file_count: selectedFiles.length,
+    });
+
     setResult(null);
     setOriginalAnalyzeResult(null);
     setReportCopied(false);
@@ -1421,6 +1426,7 @@ export default function AppPage() {
             : it,
         ),
       );
+      return true;
     } catch (err: any) {
       setItems((prev) =>
         prev.map((it) =>
@@ -1436,6 +1442,7 @@ export default function AppPage() {
             : it,
         ),
       );
+      return false;
     }
   }
 
@@ -1448,8 +1455,15 @@ export default function AppPage() {
     const targets = items.filter(
       (it) => it.status === "queued" || it.status === "error",
     );
+    let completedCount = 0;
     for (const item of targets) {
-      await uploadOne(item);
+      if (await uploadOne(item)) completedCount += 1;
+    }
+
+    if (completedCount > 0) {
+      posthog.capture("upload completed", {
+        file_count: uploadedItems.length + completedCount,
+      });
     }
   }
 
@@ -1484,6 +1498,10 @@ export default function AppPage() {
       showToast("Please sign in before analyzing files.", "error");
       return;
     }
+
+    posthog.capture("analysis started", {
+      file_count: uploadedItems.length,
+    });
 
     setAnalyzing(true);
 
@@ -1538,10 +1556,21 @@ export default function AppPage() {
 
       if (!res.ok) throw new Error(data?.error || text || "Analyze failed");
 
+      const summary = data?.summary || data?.kpis || {};
+      posthog.capture("analysis completed", {
+        job_count: data?.jobs?.length ?? 1,
+        revenue: summary?.revenue,
+        costs: summary?.costs,
+        margin: summary?.margin ?? summary?.margin_pct ?? summary?.profit_margin_pct,
+      });
+
       setResult(data);
       setOriginalAnalyzeResult(data);
       showToast("Analysis complete.");
     } catch (err: any) {
+      posthog.capture("analysis failed", {
+        error_message: err?.message || "unknown",
+      });
       showToast(err.message || "Analyze failed.", "error");
     } finally {
       setAnalyzing(false);
