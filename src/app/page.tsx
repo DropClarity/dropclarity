@@ -243,7 +243,7 @@ export default function Home() {
             </div>
 
             <h1 className="max-w-[760px] overflow-visible pt-3 pb-3 text-[38px] font-black leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-[48px] sm:leading-[1.06] md:text-[54px] lg:text-[58px] xl:text-[64px] xl:leading-[1.04]">
-              <span className="block leading-[1.04]">Find the Jobs</span>
+              <span className="block leading-[1.04]">DO FIND the Jobs</span>
               <span className="block overflow-visible bg-gradient-to-r from-slate-950 via-violet-700 to-slate-950 bg-clip-text pb-[0.16em] pt-[0.02em] leading-[1.04] text-transparent">
                 Draining Your Profit.
               </span>
