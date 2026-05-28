@@ -200,7 +200,7 @@ export default function PricingPage() {
       return;
     }
 
-    if (data?.url) window.location.href = data.url;
+    if (data?.url) window.location.assign(data.url);
   }
 
   return (
