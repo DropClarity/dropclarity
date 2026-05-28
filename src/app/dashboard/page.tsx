@@ -29,6 +29,8 @@ type CostBreakdown = {
   credits?: number | string;
 };
 
+type CostBucketName = "labor" | "materials" | "subs" | "taxes" | "other";
+
 type SourceFileLink = {
   uuid?: string | null;
   filename?: string | null;
@@ -1585,12 +1587,60 @@ function writeJobAdjustmentHistory(userId: string, jobKey: string, items: JobAdj
   } catch {}
 }
 
+function deletedJobAdjustmentHistoryKey(userId: string, jobKey: string): string {
+  return `dc_job_deleted_adjustment_history_${userId}_${String(jobKey || "job").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+}
+
+function readDeletedJobAdjustmentHistory(userId: string, jobKey: string): JobAdjustmentHistoryItem[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = localStorage.getItem(deletedJobAdjustmentHistoryKey(userId, jobKey));
+    const parsed = JSON.parse(raw || "[]") as JobAdjustmentHistoryItem[];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            id: String(item.id || `${item.created_at || Date.now()}-${item.filename || "file"}`),
+            created_at: String(item.created_at || new Date().toISOString()),
+            filename: String(item.filename || "Additional invoice"),
+            role: (item.role === "revenue" ? "revenue" : "cost") as JobUpdateFileRole,
+            revenue: parseNumberLoose(item.revenue),
+            costs: parseNumberLoose(item.costs),
+            profit: parseNumberLoose(item.profit),
+            cost_breakdown: item.cost_breakdown && typeof item.cost_breakdown === "object"
+              ? {
+                  labor: parseNumberLoose(item.cost_breakdown.labor),
+                  materials: parseNumberLoose(item.cost_breakdown.materials),
+                  subs: parseNumberLoose(item.cost_breakdown.subs),
+                  taxes: parseNumberLoose(item.cost_breakdown.taxes),
+                  other: parseNumberLoose(item.cost_breakdown.other),
+                  credits_total: parseNumberLoose(item.cost_breakdown.credits_total),
+                  credits: parseNumberLoose(item.cost_breakdown.credits),
+                }
+              : undefined,
+          }))
+          .slice(0, 20)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeDeletedJobAdjustmentHistory(userId: string, jobKey: string, items: JobAdjustmentHistoryItem[]) {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(deletedJobAdjustmentHistoryKey(userId, jobKey), JSON.stringify((Array.isArray(items) ? items : []).slice(0, 20)));
+  } catch {}
+}
+
 function labelForJobUpdateRole(role: JobUpdateFileRole): string {
   if (role === "revenue") return "Revenue invoice";
   return "Cost invoice";
 }
 
-function inferAdjustmentCostBucket(item: JobAdjustmentHistoryItem): keyof CostBreakdown {
+function inferAdjustmentCostBucket(item: JobAdjustmentHistoryItem): CostBucketName {
   const text = `${item.filename || ""} ${item.role || ""}`.toLowerCase();
 
   if (/\b(tax|taxes|sales tax|use tax)\b/.test(text)) return "taxes";
@@ -1601,7 +1651,7 @@ function inferAdjustmentCostBucket(item: JobAdjustmentHistoryItem): keyof CostBr
   return "other";
 }
 
-function adjustmentCostDeltas(item: JobAdjustmentHistoryItem): Required<Pick<CostBreakdown, "labor" | "materials" | "subs" | "taxes" | "other">> {
+function adjustmentCostDeltas(item: JobAdjustmentHistoryItem): Record<CostBucketName, number> {
   const cb = item.cost_breakdown || {};
   const deltas = {
     labor: parseNumberLoose(cb.labor),
@@ -1623,6 +1673,30 @@ function adjustmentCostDeltas(item: JobAdjustmentHistoryItem): Required<Pick<Cos
     other: 0,
     [bucket]: parseNumberLoose(item.costs),
   };
+}
+
+function removeAdjustmentFromJob(job: EditableJob, item: JobAdjustmentHistoryItem): EditableJob {
+  const costDeltas = adjustmentCostDeltas(item);
+
+  return {
+    ...job,
+    revenue: parseNumberLoose(job.revenue) - parseNumberLoose(item.revenue),
+    labor_cost: parseNumberLoose(job.labor_cost) - costDeltas.labor,
+    material_cost: parseNumberLoose(job.material_cost) - costDeltas.materials,
+    subs_cost: parseNumberLoose(job.subs_cost) - costDeltas.subs,
+    tax_cost: parseNumberLoose(job.tax_cost) - costDeltas.taxes,
+    other_cost: parseNumberLoose(job.other_cost) - costDeltas.other,
+  };
+}
+
+function applyDeletedAdjustments(job: EditableJob, items: JobAdjustmentHistoryItem[]): EditableJob {
+  return (Array.isArray(items) ? items : []).reduce((current, item) => removeAdjustmentFromJob(current, item), job);
+}
+
+function seedDisplayJobFromBase(base: JobRow, jobKey: string, userId: string): EditableJob {
+  const seed = seedJobFromBase(base || {});
+  const deletedAdjustments = readDeletedJobAdjustmentHistory(userId, jobKey);
+  return mergeJobWithEdits(applyDeletedAdjustments(seed, deletedAdjustments), jobKey, userId);
 }
 
 function seedJobFromBase(base: JobRow): EditableJob {
@@ -4264,7 +4338,7 @@ function JobEditor({
   getToken?: () => Promise<string | null>;
   onHideJob?: (job: JobRow, key: string) => void;
 }) {
-  const [job, setJob] = useState<EditableJob>(() => mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
+  const [job, setJob] = useState<EditableJob>(() => seedDisplayJobFromBase(base || {}, jobKey, userId));
   const history = extractJobHistory(state, base || {});
   const health = summarizeJobHealth(job, history);
   const hasHistory = history.length >= 2;
@@ -4347,7 +4421,7 @@ function JobEditor({
   }, [reportSourceFiles, base]);
 
   useEffect(() => {
-    setJob(mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
+    setJob(seedDisplayJobFromBase(base || {}, jobKey, userId));
     setEditingMoneyField(null);
     setEditingCustomAmountIndex(null);
     setMoneyDrafts({
@@ -4466,27 +4540,20 @@ function JobEditor({
 
   const reset = () => {
     resetJobEdit(jobKey, userId);
-    setJob(mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
+    setJob(seedDisplayJobFromBase(base || {}, jobKey, userId));
   };
 
   const deleteAdjustment = (item: JobAdjustmentHistoryItem) => {
     const nextHistory = adjustmentHistory.filter((entry) => entry.id !== item.id);
+    const deletedHistory = readDeletedJobAdjustmentHistory(userId, jobKey);
+    const nextDeletedHistory = [item, ...deletedHistory.filter((entry) => entry.id !== item.id)].slice(0, 20);
+
     writeJobAdjustmentHistory(userId, jobKey, nextHistory);
+    writeDeletedJobAdjustmentHistory(userId, jobKey, nextDeletedHistory);
     setAdjustmentHistory(nextHistory);
 
-    const addedRevenue = parseNumberLoose(item.revenue);
-    const costDeltas = adjustmentCostDeltas(item);
-
     setJob((current) => {
-      const next: EditableJob = {
-        ...current,
-        revenue: parseNumberLoose(current.revenue) - addedRevenue,
-        labor_cost: parseNumberLoose(current.labor_cost) - costDeltas.labor,
-        material_cost: parseNumberLoose(current.material_cost) - costDeltas.materials,
-        subs_cost: parseNumberLoose(current.subs_cost) - costDeltas.subs,
-        tax_cost: parseNumberLoose(current.tax_cost) - costDeltas.taxes,
-        other_cost: parseNumberLoose(current.other_cost) - costDeltas.other,
-      };
+      const next = removeAdjustmentFromJob(current, item);
 
       saveJobEdit(jobKey, next, userId);
       return next;
