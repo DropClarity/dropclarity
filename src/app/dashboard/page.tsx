@@ -280,6 +280,14 @@ type ScaleSummary = {
   top_opportunities?: ScaleSummaryJob[];
 };
 
+type ConfirmDialogState = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+};
+
 
 type PlanAccess = {
   normalizedPlan: "free" | "core" | "scale";
@@ -5849,6 +5857,7 @@ export default function DashboardPage() {
   const [marginTargetDraft, setMarginTargetDraft] = useState<string>("30");
   const [emailAlertsEnabled, setEmailAlertsEnabledState] = useState<boolean>(true);
   const [alertEmails, setAlertEmailsState] = useState<string[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
   const suppressNextHistorySyncRef = useRef(false);
   const lastDashboardHistoryKeyRef = useRef("");
 
@@ -6176,6 +6185,21 @@ useEffect(() => {
     }
   };
 
+  const openConfirmDialog = (dialog: ConfirmDialogState) => {
+    setConfirmDialog({
+      cancelLabel: "Cancel",
+      ...dialog,
+    });
+  };
+
+  const closeConfirmDialog = () => setConfirmDialog(null);
+
+  const confirmAndClose = () => {
+    const action = confirmDialog?.onConfirm;
+    setConfirmDialog(null);
+    action?.();
+  };
+
   const handleHideJob = (job: JobRow, key: string) => {
     const reportId = String(job?.report_id || "").trim();
     const matchingReportIndex = reportId
@@ -6190,43 +6214,45 @@ useEffect(() => {
     }
 
     const jobLabel = job.job_name || job.job_id || "this job";
-    const ok = window.confirm(
-      `Hide ${jobLabel} from dashboard totals? This removes this saved item from totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device.`
-    );
-
-    if (!ok) return;
-
-    const next = Array.from(new Set([...hiddenJobKeys, key].map(String)));
-    setHiddenJobKeys(next);
-    writeHiddenJobs(USER_ID, next);
-    setJobKey("");
-    if (view === "job") setView("dashboard");
+    openConfirmDialog({
+      title: `Hide ${jobLabel}?`,
+      message: "This removes the job from dashboard totals, charts, job logs, Cost Mix, credits, and Scale metrics on this device.",
+      confirmLabel: "Hide job",
+      onConfirm: () => {
+        const next = Array.from(new Set([...hiddenJobKeys, key].map(String)));
+        setHiddenJobKeys(next);
+        writeHiddenJobs(USER_ID, next);
+        setJobKey("");
+        if (view === "job") setView("dashboard");
+      },
+    });
   };
 
   const handleDeleteReport = (report: ReportRow, idx: number) => {
-    const ok = window.confirm(
-      "Hide this upload from dashboard totals? This removes it from totals, charts, job logs, Cost Mix, credits, and Scale metrics for your account. You can restore it from Manage Reports."
-    );
+    openConfirmDialog({
+      title: "Hide this upload?",
+      message: "This removes it from totals, charts, job logs, Cost Mix, credits, and Scale metrics for your account. You can restore it from Manage Reports.",
+      confirmLabel: "Hide upload",
+      onConfirm: () => {
+        posthog.capture("report removed");
 
-    if (!ok) return;
+        const originalIdx = allReports.findIndex((r, originalIndex) => {
+          if (r === report) return true;
+          const sameId = (r.id && report.id && r.id === report.id) || (r.analysis_id && report.analysis_id && r.analysis_id === report.analysis_id);
+          if (sameId) return true;
+          return (
+            reportDeleteKey(r, originalIndex) === reportDeleteKey(report, idx) ||
+            (String(r.created_at || "") === String(report.created_at || "") &&
+              String(r.period_label || "") === String(report.period_label || "") &&
+              parseNumberLoose(r.net_profit) === parseNumberLoose(report.net_profit))
+          );
+        });
+        const key = reportDeleteKey(report, originalIdx >= 0 ? originalIdx : idx);
+        void persistDeletedReports([...deletedReportKeys, key]);
 
-    posthog.capture("report removed");
-
-    const originalIdx = allReports.findIndex((r, originalIndex) => {
-      if (r === report) return true;
-      const sameId = (r.id && report.id && r.id === report.id) || (r.analysis_id && report.analysis_id && r.analysis_id === report.analysis_id);
-      if (sameId) return true;
-      return (
-        reportDeleteKey(r, originalIndex) === reportDeleteKey(report, idx) ||
-        (String(r.created_at || "") === String(report.created_at || "") &&
-          String(r.period_label || "") === String(report.period_label || "") &&
-          parseNumberLoose(r.net_profit) === parseNumberLoose(report.net_profit))
-      );
+        setJobKey("");
+      },
     });
-    const key = reportDeleteKey(report, originalIdx >= 0 ? originalIdx : idx);
-    void persistDeletedReports([...deletedReportKeys, key]);
-
-    setJobKey("");
   };
 
   const handleOpenReportJob = (report: ReportRow) => {
@@ -6251,18 +6277,19 @@ useEffect(() => {
   };
 
   const handleDeleteAllReports = () => {
-    const ok = window.confirm(
-      "Hide all active reports from dashboard totals? This will clear the dashboard view for your account, but you can restore hidden reports from this same page."
-    );
+    openConfirmDialog({
+      title: "Hide all active reports?",
+      message: "This will clear the dashboard view for your account. You can restore hidden reports from this same page.",
+      confirmLabel: "Hide all",
+      onConfirm: () => {
+        posthog.capture("report removed");
 
-    if (!ok) return;
-
-    posthog.capture("report removed");
-
-    const allKeys = allReports.map((report, idx) => reportDeleteKey(report, idx));
-    void persistDeletedReports(allKeys);
-    setView("reports");
-    setJobKey("");
+        const allKeys = allReports.map((report, idx) => reportDeleteKey(report, idx));
+        void persistDeletedReports(allKeys);
+        setView("reports");
+        setJobKey("");
+      },
+    });
   };
 
   const handleRestoreAllReports = () => {
@@ -6391,6 +6418,34 @@ useEffect(() => {
           currentPlan={access.label}
           onClose={() => setUpgradePrompt(null)}
         />
+      ) : null}
+
+      {confirmDialog ? (
+        <div className="dcConfirmOverlay" role="presentation" onClick={closeConfirmDialog}>
+          <div
+            className="dcConfirmDialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dcConfirmTitle"
+            aria-describedby="dcConfirmMessage"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="dcConfirmClose" type="button" aria-label="Close" onClick={closeConfirmDialog}>
+              x
+            </button>
+            <div className="dcConfirmKicker">Confirm action</div>
+            <h2 id="dcConfirmTitle">{confirmDialog.title}</h2>
+            <p id="dcConfirmMessage">{confirmDialog.message}</p>
+            <div className="dcConfirmActions">
+              <button className="btn dcConfirmCancel" type="button" onClick={closeConfirmDialog}>
+                {confirmDialog.cancelLabel || "Cancel"}
+              </button>
+              <button className="btn dcConfirmPrimary" type="button" onClick={confirmAndClose}>
+                {confirmDialog.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </main>
   );
@@ -7882,6 +7937,16 @@ main.dc-bg .wrap{padding-bottom:56px;}
 .dc-bg .inlineHideJobBtn{margin-left:2px;align-self:center}
 .dc-bg .riskHideJobBtn{align-self:center}
 .dc-bg .stackedHeaderActions{flex-shrink:0}
+.dc-bg .dcConfirmOverlay{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px;background:rgba(15,23,42,.44);backdrop-filter:blur(8px)}
+.dc-bg .dcConfirmDialog{position:relative;width:min(440px,100%);border:1px solid rgba(226,232,240,.88);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.96));box-shadow:0 28px 80px rgba(15,23,42,.22),0 1px 0 rgba(255,255,255,.9) inset;padding:22px;overflow:hidden}
+.dc-bg .dcConfirmClose{position:absolute;top:12px;right:12px;appearance:none;border:0;background:transparent;color:#94a3b8;width:30px;height:30px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;line-height:1;cursor:pointer;transition:background .14s ease,color .14s ease}
+.dc-bg .dcConfirmClose:hover{background:rgba(15,23,42,.055);color:#334155}
+.dc-bg .dcConfirmKicker{font-size:10.5px;font-weight:950;letter-spacing:.11em;text-transform:uppercase;color:#0891b2;margin-bottom:8px;padding-right:34px}
+.dc-bg .dcConfirmDialog h2{margin:0;padding-right:34px;font-size:22px;line-height:1.1;font-weight:990;letter-spacing:-.035em;color:#0f172a}
+.dc-bg .dcConfirmDialog p{margin:10px 0 0;font-size:13.5px;line-height:1.55;font-weight:750;color:#64748b}
+.dc-bg .dcConfirmActions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.dc-bg .dcConfirmCancel{background:#fff;color:#475569;border-color:rgba(15,23,42,.10);box-shadow:none}
+.dc-bg .dcConfirmPrimary{background:linear-gradient(135deg,#0f172a,#334155);color:#fff;border-color:rgba(15,23,42,.12);box-shadow:0 12px 26px rgba(15,23,42,.16)}
 .dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{border:0!important;background:transparent!important;color:rgba(100,116,139,.48)!important;box-shadow:none!important;width:26px!important;height:26px!important;min-width:26px!important;font-size:16px!important}
 .dc-bg .premiumReportHideBtn:hover,.dc-bg .deleteReportBtn:hover{background:rgba(15,23,42,.045)!important;color:rgba(15,23,42,.70)!important;transform:none!important;box-shadow:none!important;border-color:transparent!important}
 .dc-bg .jobTable th,.dc-bg .jobTable td{vertical-align:top!important}
@@ -7893,6 +7958,15 @@ main.dc-bg .wrap{padding-bottom:56px;}
   .dc-bg .lowkeyHideJobBtn{width:30px;height:30px;font-size:16px}
   .dc-bg .premiumReportHideBtn,.dc-bg .deleteReportBtn{width:30px!important;height:30px!important;min-width:30px!important}
   .dc-bg .jobTable .calcCell{min-height:44px}
+}
+@media(max-width:520px){
+  .dc-bg .dcConfirmOverlay{align-items:end;padding:12px}
+  .dc-bg .dcConfirmDialog{width:100%;border-radius:20px;padding:20px 18px calc(18px + env(safe-area-inset-bottom))}
+  .dc-bg .dcConfirmDialog h2{font-size:20px}
+  .dc-bg .dcConfirmDialog p{font-size:13px}
+  .dc-bg .dcConfirmActions{display:grid;grid-template-columns:1fr;gap:9px}
+  .dc-bg .dcConfirmActions .btn{width:100%;justify-content:center}
+  .dc-bg .dcConfirmPrimary{grid-row:1}
 }
 @media (hover:none) and (pointer:coarse){
   .dc-bg .lowkeyHideJobBtn{min-width:36px;min-height:36px}
