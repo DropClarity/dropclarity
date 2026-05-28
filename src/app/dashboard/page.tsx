@@ -57,6 +57,7 @@ type JobAdjustmentHistoryItem = {
   revenue: number;
   costs: number;
   profit: number;
+  cost_breakdown?: CostBreakdown;
 };
 
 type JobRow = {
@@ -1557,6 +1558,17 @@ function readJobAdjustmentHistory(userId: string, jobKey: string): JobAdjustment
             revenue: parseNumberLoose(item.revenue),
             costs: parseNumberLoose(item.costs),
             profit: parseNumberLoose(item.profit),
+            cost_breakdown: item.cost_breakdown && typeof item.cost_breakdown === "object"
+              ? {
+                  labor: parseNumberLoose(item.cost_breakdown.labor),
+                  materials: parseNumberLoose(item.cost_breakdown.materials),
+                  subs: parseNumberLoose(item.cost_breakdown.subs),
+                  taxes: parseNumberLoose(item.cost_breakdown.taxes),
+                  other: parseNumberLoose(item.cost_breakdown.other),
+                  credits_total: parseNumberLoose(item.cost_breakdown.credits_total),
+                  credits: parseNumberLoose(item.cost_breakdown.credits),
+                }
+              : undefined,
           }))
           .slice(0, 20)
       : [];
@@ -4422,6 +4434,42 @@ function JobEditor({
     setJob(mergeJobWithEdits(seedJobFromBase(base || {}), jobKey, userId));
   };
 
+  const deleteAdjustment = (item: JobAdjustmentHistoryItem) => {
+    const nextHistory = adjustmentHistory.filter((entry) => entry.id !== item.id);
+    writeJobAdjustmentHistory(userId, jobKey, nextHistory);
+    setAdjustmentHistory(nextHistory);
+
+    const addedRevenue = parseNumberLoose(item.revenue);
+    const addedCosts = parseNumberLoose(item.costs);
+    const cb = item.cost_breakdown || {};
+    const laborDelta = parseNumberLoose(cb.labor);
+    const materialsDelta = parseNumberLoose(cb.materials);
+    const subsDelta = parseNumberLoose(cb.subs);
+    const taxesDelta = parseNumberLoose(cb.taxes);
+    const otherDelta = parseNumberLoose(cb.other);
+    const bucketDeltaTotal = laborDelta + materialsDelta + subsDelta + taxesDelta + otherDelta;
+    const fallbackOtherDelta = Math.abs(bucketDeltaTotal) > 0.005 ? 0 : addedCosts;
+
+    setJob((current) => {
+      const next: EditableJob = {
+        ...current,
+        revenue: parseNumberLoose(current.revenue) - addedRevenue,
+        labor_cost: parseNumberLoose(current.labor_cost) - laborDelta,
+        material_cost: parseNumberLoose(current.material_cost) - materialsDelta,
+        subs_cost: parseNumberLoose(current.subs_cost) - subsDelta,
+        tax_cost: parseNumberLoose(current.tax_cost) - taxesDelta,
+        other_cost: parseNumberLoose(current.other_cost) - otherDelta - fallbackOtherDelta,
+      };
+
+      saveJobEdit(jobKey, next, userId);
+      return next;
+    });
+
+    setReportSourceFiles((current) => current.filter((file) => sourceFileName(file, 0) !== item.filename));
+    setUpdateStatus("success");
+    setUpdateMessage("Adjustment removed. This job view has been reverted locally.");
+  };
+
   const handleAddInvoiceFile = async () => {
     if (!access.canSaveJobEdits) {
       handleLocked("Updating analyzed jobs with new files", "Core");
@@ -4481,6 +4529,7 @@ function JobEditor({
         revenue: addedRevenue,
         costs: addedCosts,
         profit: addedRevenue - addedCosts,
+        cost_breakdown: result.added?.cost_breakdown,
       };
 
       setAdjustmentHistory((current) => {
@@ -4948,6 +4997,15 @@ function JobEditor({
                                 <div className="adjustmentHistoryTop">
                                   <strong>{labelForJobUpdateRole(item.role)}</strong>
                                   <span>{dateTimeLabel(item.created_at)}</span>
+                                  <button
+                                    className="adjustmentHistoryDelete"
+                                    type="button"
+                                    aria-label={`Remove adjustment ${item.filename}`}
+                                    title="Remove adjustment"
+                                    onClick={() => deleteAdjustment(item)}
+                                  >
+                                    x
+                                  </button>
                                 </div>
                                 <div className="adjustmentHistoryFile">{item.filename}</div>
                                 <div className="adjustmentHistoryMeta">
@@ -9198,9 +9256,11 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .adjustmentHistoryItem{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:11px 12px;border:1px solid rgba(15,23,42,.08);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,250,252,.86));box-shadow:0 10px 24px rgba(15,23,42,.035)}
 .dc-bg .adjustmentHistoryDot{width:10px;height:10px;border-radius:999px;margin-top:5px;background:linear-gradient(135deg,#22d3ee,#7c3aed);box-shadow:0 0 0 5px rgba(34,211,238,.10)}
 .dc-bg .adjustmentHistoryBody{min-width:0;display:flex;flex-direction:column;gap:4px}
-.dc-bg .adjustmentHistoryTop{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.dc-bg .adjustmentHistoryTop{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;min-width:0}
 .dc-bg .adjustmentHistoryTop strong{font-size:12px;font-weight:950;color:#0f172a;line-height:1.2}
 .dc-bg .adjustmentHistoryTop span{font-size:10px;font-weight:800;color:#94a3b8;white-space:nowrap}
+.dc-bg .adjustmentHistoryDelete{appearance:none;width:24px;height:24px;border-radius:999px;border:1px solid rgba(239,68,68,.16);background:rgba(254,242,242,.82);color:#dc2626;font-size:17px;line-height:1;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform .12s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease}
+.dc-bg .adjustmentHistoryDelete:hover{transform:translateY(-1px);border-color:rgba(239,68,68,.28);background:#fff;box-shadow:0 10px 22px rgba(239,68,68,.10)}
 .dc-bg .adjustmentHistoryFile{font-size:12px;font-weight:800;color:#334155;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dc-bg .adjustmentHistoryMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#64748b;line-height:1.25}
 .dc-bg .adjustmentHistoryMeta em{font-style:normal;white-space:nowrap}
@@ -9209,7 +9269,7 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .jobUpdateMessage.success{color:#047857}
 .dc-bg .jobUpdateMessage.error{color:#dc2626}
 .dc-bg .jobUpdateHint{font-size:12px;color:#64748b;line-height:1.45}
-@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}.dc-bg .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}.dc-bg .jobUpdateAiStatus{align-items:flex-start}.dc-bg .adjustmentHistoryTop,.dc-bg .adjustmentHistoryMeta{align-items:flex-start;flex-direction:column;gap:4px}.dc-bg .adjustmentHistoryMeta em{white-space:normal}}
+@media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}.dc-bg .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}.dc-bg .jobUpdateAiStatus{align-items:flex-start}.dc-bg .adjustmentHistoryTop{grid-template-columns:minmax(0,1fr) auto;align-items:flex-start;gap:4px}.dc-bg .adjustmentHistoryTop span{grid-column:1 / 2}.dc-bg .adjustmentHistoryDelete{grid-column:2 / 3;grid-row:1 / 3}.dc-bg .adjustmentHistoryMeta{align-items:flex-start;flex-direction:column;gap:4px}.dc-bg .adjustmentHistoryMeta em{white-space:normal}}
 
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
 @media (max-width: 1180px){.dc-bg .supportGrid{grid-template-columns:1fr 1fr}.dc-bg .sourceDocsPanel{grid-column:1 / -1}}
