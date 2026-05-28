@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
+import PostHogInitializer from "@/components/PostHogInitializer";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -149,6 +150,7 @@ export default function RootLayout({
           </div>
         </ClerkProvider>
         <Analytics />
+        <PostHogInitializer />
       </body>
     </html>
   );
