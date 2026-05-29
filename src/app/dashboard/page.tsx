@@ -4575,6 +4575,12 @@ function JobEditor({
   };
 
   const handleAddInvoiceFile = async () => {
+    posthog.capture("job reanalysis clicked", {
+      role: updateFileRole,
+      has_file: Boolean(updateFile),
+      has_report_reference: Boolean(base?.report_id && base?.id),
+    });
+
     if (!access.canSaveJobEdits) {
       handleLocked("Updating analyzed jobs with new files", "Core");
       return;
