@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RedirectToSignIn, useAuth, useUser } from "@clerk/nextjs";
 
-const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || "https://dropclarity-api.armanrtajalli.workers.dev";
+const WORKER_ORIGIN = (process.env.NEXT_PUBLIC_WORKER_URL || "https://dropclarity-api.armanrtajalli.workers.dev").replace(/\/api\/?$/, "");
 
 type StatusFilter = "all" | "success" | "failed" | "started";
 type WorkflowFilter = "all" | "initial_analyze" | "job_reanalyze" | "other";
@@ -566,7 +566,7 @@ export default function AdminPage() {
       setError("");
 
       const token = await getToken();
-      const res = await fetch(`${WORKER_URL}/api/admin/analysis-runs?limit=250`, {
+      const res = await fetch(`${WORKER_ORIGIN}/api/admin/analysis-runs?limit=250`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
