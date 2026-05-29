@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import posthog from "posthog-js";
 
-const API_BASE = "https://dropclarity-api.armanrtajalli.workers.dev/api";
+const API_BASE =
+  process.env.NEXT_PUBLIC_WORKER_URL ||
+  "https://dropclarity-api.armanrtajalli.workers.dev/api";
 
 type FileRole = "" | "revenue" | "cost";
 
