@@ -3234,7 +3234,7 @@ function JobsLog({
         </div>
       </div>
 
-      <div className="tableWrap">
+      <div className={filtered.length ? "tableWrap jobLogTableWrap" : "tableWrap"}>
         {filtered.length ? (
           <table className="jobsTable">
             <thead>
@@ -3254,7 +3254,20 @@ function JobsLog({
               {filtered.map(({ job, key }) => {
                 const status = statusForJob(job);
                 return (
-                  <tr key={key}>
+                  <tr
+                    key={key}
+                    className="clickableJobRow"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open job ${job.job_name || job.job_id || "Unnamed job"}`}
+                    onClick={() => onOpenJob(key)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onOpenJob(key);
+                      }
+                    }}
+                  >
                     <td>
                       <div className="jobName">{job.job_name || job.job_id || "Unnamed job"}</div>
                       <div className="jobMeta jobsLogAnalyzedMeta">{job.job_id || "No Job ID"} • {analyzedDateLabel(job.created_at)}</div>
@@ -3270,8 +3283,28 @@ function JobsLog({
                     <td><span className={`tag ${status.cls}`}>{status.label}</span></td>
                     <td>
                       <div className="jobRowActions">
-                        <button className="lowkeyHideJobBtn" type="button" onClick={() => onHideJob(job, key)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
-                        <button className="miniBtn" type="button" onClick={() => onOpenJob(key)}>View</button>
+                        <button
+                          className="lowkeyHideJobBtn"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onHideJob(job, key);
+                          }}
+                          title="Hide this job from dashboard totals"
+                          aria-label="Hide this job from dashboard totals"
+                        >
+                          ×
+                        </button>
+                        <button
+                          className="miniBtn"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenJob(key);
+                          }}
+                        >
+                          View
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -3283,6 +3316,90 @@ function JobsLog({
           <div className="empty">No jobs match this filter.</div>
         )}
       </div>
+
+      {filtered.length ? (
+        <div className="jobLogCards" aria-label="Job log cards">
+          {filtered.map(({ job, key }) => {
+            const status = statusForJob(job);
+            const profit = parseNumberLoose(job.profit);
+            const credits = getJobCreditTotal(job);
+
+            return (
+              <div
+                key={`${key}-card`}
+                className="jobLogCard"
+                role="button"
+                tabIndex={0}
+                aria-label={`Open job ${job.job_name || job.job_id || "Unnamed job"}`}
+                onClick={() => onOpenJob(key)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpenJob(key);
+                  }
+                }}
+              >
+                <div className="jobLogCardTop">
+                  <div className="jobLogCardIdentity">
+                    <div className="jobName">{job.job_name || job.job_id || "Unnamed job"}</div>
+                    <div className="jobMeta jobsLogAnalyzedMeta">{job.job_id || "No Job ID"} • {analyzedDateLabel(job.created_at)}</div>
+                  </div>
+                  <span className={`tag ${status.cls}`}>{status.label}</span>
+                </div>
+
+                <div className="jobLogCardMetrics">
+                  <div>
+                    <span>Revenue</span>
+                    <strong>{fmtMoney(job.revenue)}</strong>
+                  </div>
+                  <div>
+                    <span>Costs</span>
+                    <strong>{fmtMoney(job.costs)}</strong>
+                  </div>
+                  <div>
+                    <span>Profit</span>
+                    <strong className={profit < 0 ? "neg" : "pos"}>{fmtMoney(job.profit)}</strong>
+                  </div>
+                  <div>
+                    <span>Margin</span>
+                    <strong>{fmtPct(job.margin_pct)}</strong>
+                  </div>
+                </div>
+
+                <div className="jobLogCardFooter">
+                  <div className={credits > 0 ? "jobLogCardCredits creditText" : "jobLogCardCredits"}>
+                    Credits: {credits > 0 ? fmtMoney(credits) : "None"}
+                  </div>
+                  <div className="jobRowActions">
+                    <button
+                      className="lowkeyHideJobBtn"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHideJob(job, key);
+                      }}
+                      title="Hide this job from dashboard totals"
+                      aria-label="Hide this job from dashboard totals"
+                    >
+                      ×
+                    </button>
+                    <button
+                      className="miniBtn"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenJob(key);
+                      }}
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -11316,6 +11433,204 @@ main.dc-bg .scaleTopOpportunity{
   main.dc-bg .allJobsStackJobName{
     white-space:normal!important;
     text-overflow:clip!important;
+  }
+}
+
+/* Launch polish for dashboard Job Log: clickable rows on desktop, responsive cards on iPad/laptop. */
+main.dc-bg #jobsPanel .clickableJobRow{
+  cursor:pointer!important;
+  transition:background .14s ease, box-shadow .14s ease, transform .12s ease!important;
+}
+
+main.dc-bg #jobsPanel .clickableJobRow:hover{
+  background:rgba(236,254,255,.36)!important;
+}
+
+main.dc-bg #jobsPanel .clickableJobRow:focus-visible{
+  outline:3px solid rgba(34,211,238,.24)!important;
+  outline-offset:-3px!important;
+}
+
+main.dc-bg #jobsPanel .jobRowActions{
+  position:relative!important;
+  z-index:3!important;
+}
+
+main.dc-bg #jobsPanel .jobLogCards{
+  display:none;
+}
+
+@media (max-width:1400px){
+  main.dc-bg:not(.internal-view-bg) .dcOpsGrid{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcOpsGrid .sideStack{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcOpsGrid .pastReportsPanel{
+    grid-column:auto!important;
+  }
+
+  main.dc-bg #jobsPanel .panelHead{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:14px!important;
+    align-items:start!important;
+  }
+
+  main.dc-bg #jobsPanel .tableTools{
+    display:grid!important;
+    grid-template-columns:auto minmax(260px,1fr) minmax(160px,210px)!important;
+    gap:10px!important;
+    width:100%!important;
+    align-items:center!important;
+  }
+
+  main.dc-bg #jobsPanel .allJobsDetailBtn{
+    justify-content:center!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogTableWrap{
+    display:none!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCards{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:12px!important;
+    padding:14px!important;
+    background:linear-gradient(180deg,rgba(248,250,252,.76),rgba(255,255,255,.92))!important;
+    border-top:1px solid rgba(15,23,42,.06)!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCard{
+    display:grid!important;
+    gap:13px!important;
+    min-width:0!important;
+    border:1px solid rgba(15,23,42,.075)!important;
+    border-radius:18px!important;
+    background:#fff!important;
+    box-shadow:0 12px 32px rgba(15,23,42,.045)!important;
+    padding:14px!important;
+    cursor:pointer!important;
+    transition:transform .12s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCard:hover{
+    transform:translateY(-1px)!important;
+    border-color:rgba(8,145,178,.20)!important;
+    box-shadow:0 16px 40px rgba(15,23,42,.07)!important;
+    background:linear-gradient(180deg,#fff,rgba(240,253,250,.36))!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCard:focus-visible{
+    outline:3px solid rgba(34,211,238,.24)!important;
+    outline-offset:2px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardTop{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:12px!important;
+    align-items:start!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardIdentity{
+    min-width:0!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardMetrics{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardMetrics > div{
+    min-width:0!important;
+    border:1px solid rgba(15,23,42,.065)!important;
+    border-radius:14px!important;
+    background:rgba(248,250,252,.72)!important;
+    padding:9px 10px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardMetrics span{
+    display:block!important;
+    font-size:10px!important;
+    line-height:1!important;
+    font-weight:950!important;
+    letter-spacing:.08em!important;
+    text-transform:uppercase!important;
+    color:rgba(100,116,139,.78)!important;
+    margin-bottom:6px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardMetrics strong{
+    display:block!important;
+    min-width:0!important;
+    font-size:13px!important;
+    line-height:1.15!important;
+    font-weight:950!important;
+    color:#0f172a!important;
+    overflow-wrap:anywhere!important;
+    font-variant-numeric:tabular-nums!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardFooter{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    border-top:1px solid rgba(15,23,42,.055)!important;
+    padding-top:11px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardCredits{
+    min-width:0!important;
+    font-size:12px!important;
+    line-height:1.35!important;
+    font-weight:850!important;
+    color:rgba(100,116,139,.86)!important;
+    overflow-wrap:anywhere!important;
+  }
+}
+
+@media (max-width:860px){
+  main.dc-bg #jobsPanel .tableTools{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCards{
+    grid-template-columns:1fr!important;
+    padding:12px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardMetrics{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+@media (max-width:520px){
+  main.dc-bg #jobsPanel .jobLogCard{
+    padding:13px!important;
+    border-radius:17px!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardTop,
+  main.dc-bg #jobsPanel .jobLogCardFooter{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCard .tag,
+  main.dc-bg #jobsPanel .jobLogCardFooter .jobRowActions{
+    justify-self:start!important;
+  }
+
+  main.dc-bg #jobsPanel .jobLogCardMetrics{
+    grid-template-columns:1fr!important;
   }
 }
 
