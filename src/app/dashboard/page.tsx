@@ -5007,8 +5007,18 @@ function JobEditor({
             </table>
               </div>
             </details>
+          </div>
 
             {showBack ? (
+            <div className="jobSupportSection" aria-label="Supporting job details">
+              <div className="jobSupportIntro">
+                <div>
+                  <div className="jobSupportEyebrow">Supporting details</div>
+                  <div className="jobSupportTitle">Notes, benchmarks, and late invoices</div>
+                </div>
+                <div className="jobSupportMeta">Keep the editable job row focused above.</div>
+              </div>
+
             <div className="supportGrid">
               <div className="panel miniPanel">
                 <div className="panelHead"><div><div className="panelTitle">Job notes</div><div className="panelSub">Add context for this job.</div></div></div>
@@ -5160,8 +5170,8 @@ function JobEditor({
                 </div>
               ) : null}
             </div>
+            </div>
             ) : null}
-          </div>
         </div>
 
         {showBack ? (
@@ -9883,13 +9893,90 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 }
 .dc-bg .spreadsheetJobPad{
   padding:0!important;
-  overflow-x:auto!important;
+  overflow-x:hidden!important;
   overflow-y:hidden!important;
   -webkit-overflow-scrolling:touch!important;
   scrollbar-gutter:stable both-edges;
   background:linear-gradient(90deg,rgba(255,255,255,.96),rgba(248,250,252,.72))!important;
 }
 .dc-bg .spreadsheetJobPad::-webkit-scrollbar{height:10px}.dc-bg .spreadsheetJobPad::-webkit-scrollbar-track{background:rgba(226,232,240,.55);border-radius:999px}.dc-bg .spreadsheetJobPad::-webkit-scrollbar-thumb{background:rgba(148,163,184,.72);border-radius:999px;border:2px solid rgba(248,250,252,.95)}
+.dc-bg .jobSupportSection{
+  margin-top:0!important;
+  padding:18px!important;
+  border-top:1px solid rgba(15,23,42,.075)!important;
+  background:linear-gradient(180deg,rgba(248,250,252,.92),rgba(255,255,255,.98))!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+.dc-bg .jobSupportIntro{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  margin-bottom:12px!important;
+  padding:0 2px!important;
+}
+.dc-bg .jobSupportEyebrow{
+  font-size:10.5px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.11em!important;
+  text-transform:uppercase!important;
+  color:rgba(8,145,178,.86)!important;
+}
+.dc-bg .jobSupportTitle{
+  margin-top:5px!important;
+  font-size:16px!important;
+  line-height:1.15!important;
+  font-weight:980!important;
+  letter-spacing:-.018em!important;
+  color:rgba(15,23,42,.94)!important;
+}
+.dc-bg .jobSupportMeta{
+  max-width:260px!important;
+  text-align:right!important;
+  font-size:12px!important;
+  line-height:1.35!important;
+  font-weight:800!important;
+  color:rgba(100,116,139,.82)!important;
+}
+.dc-bg .jobSupportSection .supportGrid{
+  margin-top:0!important;
+  min-width:0!important;
+}
+.dc-bg .jobSupportSection .miniPanel{
+  background:#fff!important;
+  border-color:rgba(15,23,42,.075)!important;
+  box-shadow:0 10px 30px rgba(15,23,42,.045)!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+.dc-bg .jobSupportSection .pad,
+.dc-bg .jobSupportSection .list,
+.dc-bg .jobSupportSection .item,
+.dc-bg .jobSupportSection .jobUpdateControls,
+.dc-bg .jobSupportSection .adjustmentHistoryBody{
+  min-width:0!important;
+}
+.dc-bg .jobSupportSection .noteBox{
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  overflow-wrap:anywhere!important;
+  white-space:pre-wrap!important;
+}
+.dc-bg .jobSupportSection .itemMeta,
+.dc-bg .jobSupportSection .jobUpdateHint,
+.dc-bg .jobSupportSection .jobUpdateMessage,
+.dc-bg .jobSupportSection .adjustmentHistoryFile,
+.dc-bg .jobSupportSection .adjustmentHistoryMeta,
+.dc-bg .jobSupportSection .sourceDocLink{
+  overflow-wrap:anywhere!important;
+}
+.dc-bg .jobSupportSection .jobUpdateUploadBox,
+.dc-bg .jobSupportSection .jobUpdateUploadText{
+  min-width:0!important;
+}
 .dc-bg .spreadsheetJobTable{
   width:100%!important;
   min-width:1180px!important;
@@ -10198,6 +10285,21 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 
   .dc-bg .supportGrid{
     gap:12px!important;
+  }
+
+  .dc-bg .jobSupportSection{
+    padding:14px!important;
+  }
+
+  .dc-bg .jobSupportIntro{
+    display:block!important;
+    margin-bottom:10px!important;
+  }
+
+  .dc-bg .jobSupportMeta{
+    max-width:none!important;
+    margin-top:5px!important;
+    text-align:left!important;
   }
 
   .dc-bg .supportGrid .miniPanel{
