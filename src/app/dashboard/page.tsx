@@ -5017,13 +5017,6 @@ function JobEditor({
             </div>
 
             <div className="responsiveJobInfoForm" aria-label="Editable job information">
-              <div className="responsiveJobInfoHead">
-                <div>
-                  <div className="responsiveJobInfoEyebrow">Job info</div>
-                  <div className="responsiveJobInfoTitle">Edit details without horizontal scrolling</div>
-                </div>
-              </div>
-
               <div className="responsiveJobInfoGrid">
                 <label>
                   <span>Job ID</span>
@@ -5061,7 +5054,7 @@ function JobEditor({
               </summary>
 
               <div className="mobileSpreadsheetScroller">
-            <table className="jobTable spreadsheetJobTable" style={{ minWidth: `${1180 + Math.max(0, job.custom_categories.length) * 150}px` }}>
+            <table className="jobTable spreadsheetJobTable" style={{ minWidth: `${1180 + Math.max(0, job.custom_categories.length) * 190}px` }}>
               <thead>
                 <tr>
                   <th>Job ID</th><th>Job Name</th><th>Type</th><th>Address</th><th>Date</th><th>Revenue</th><th>Labor</th><th>Materials</th><th>Subcontractors</th><th>Taxes</th><th>Other Costs</th>
@@ -5392,7 +5385,7 @@ function JobView({
   );
 }
 
-function CompactCostBucketStrip({ job }: { job: JobRow }) {
+function CompactCostBucketStrip({ job, customCategories = [] }: { job: JobRow; customCategories?: CustomCategory[] }) {
   const breakdown = job.cost_breakdown || {};
   const buckets = [
     ["Labor", parseNumberLoose(breakdown.labor)],
@@ -5401,14 +5394,21 @@ function CompactCostBucketStrip({ job }: { job: JobRow }) {
     ["Taxes", parseNumberLoose(breakdown.taxes)],
     ["Other", parseNumberLoose(breakdown.other)],
   ] as const;
-  const total = buckets.reduce((sum, [, value]) => sum + Math.max(0, value), 0) || 1;
+  const customBuckets = (Array.isArray(customCategories) ? customCategories : [])
+    .map((category, idx) => [
+      String(category?.name || `Custom ${idx + 1}`).trim() || `Custom ${idx + 1}`,
+      parseNumberLoose(category?.amount),
+    ] as const)
+    .filter(([label, value]) => Boolean(label) || Math.abs(value) > 0.005);
+  const allBuckets = [...buckets, ...customBuckets];
+  const total = allBuckets.reduce((sum, [, value]) => sum + Math.max(0, value), 0) || 1;
 
   return (
     <div className="compactCostBuckets" aria-label="Cost mix buckets">
-      {buckets.map(([label, value]) => {
+      {allBuckets.map(([label, value], idx) => {
         const width = Math.max(4, Math.min(100, (Math.max(0, value) / total) * 100));
         return (
-          <div className="compactCostBucket" key={label}>
+          <div className="compactCostBucket" key={`${label}-${idx}`}>
             <div className="compactCostBucketTop">
               <span>{label}</span>
               <strong>{fmtMoney(value)}</strong>
@@ -5572,9 +5572,20 @@ function AllJobsView({
         {filtered.length ? (
           <div className="allJobsStack">
             {visibleJobRows.map(({ job, key }, index) => {
+              const editedJob = seedDisplayJobFromBase(job || {}, key, userId);
               const status = statusForJob(job);
-              const profit = parseNumberLoose(job.profit);
+              const revenue = parseNumberLoose(editedJob.revenue);
               const credits = getJobCreditTotal(job);
+              const costs =
+                parseNumberLoose(editedJob.labor_cost) +
+                parseNumberLoose(editedJob.material_cost) +
+                parseNumberLoose(editedJob.subs_cost) +
+                parseNumberLoose(editedJob.tax_cost) +
+                parseNumberLoose(editedJob.other_cost) +
+                sumCustomCategories(editedJob.custom_categories || []) -
+                credits;
+              const profit = revenue - costs;
+              const margin = revenue !== 0 ? (profit / revenue) * 100 : 0;
 
               return (
               <div
@@ -5631,19 +5642,19 @@ function AllJobsView({
                   <div className="compactAllJobMetrics">
                     <div>
                       <span>Revenue</span>
-                      <strong>{fmtMoney(job.revenue)}</strong>
+                      <strong>{fmtMoney(revenue)}</strong>
                     </div>
                     <div>
                       <span>Costs</span>
-                      <strong>{fmtMoney(job.costs)}</strong>
+                      <strong>{fmtMoney(costs)}</strong>
                     </div>
                     <div>
                       <span>Profit</span>
-                      <strong className={profit < 0 ? "neg" : "pos"}>{fmtMoney(job.profit)}</strong>
+                      <strong className={profit < 0 ? "neg" : "pos"}>{fmtMoney(profit)}</strong>
                     </div>
                     <div>
                       <span>Margin</span>
-                      <strong>{fmtPct(job.margin_pct)}</strong>
+                      <strong>{fmtPct(margin)}</strong>
                     </div>
                     <div>
                       <span>Credits</span>
@@ -5651,7 +5662,20 @@ function AllJobsView({
                     </div>
                   </div>
 
-                  <CompactCostBucketStrip job={job} />
+                  <CompactCostBucketStrip
+                    job={{
+                      ...job,
+                      cost_breakdown: {
+                        ...(job.cost_breakdown || {}),
+                        labor: editedJob.labor_cost,
+                        materials: editedJob.material_cost,
+                        subs: editedJob.subs_cost,
+                        taxes: editedJob.tax_cost,
+                        other: editedJob.other_cost,
+                      },
+                    }}
+                    customCategories={editedJob.custom_categories}
+                  />
                 </div>
               </div>
             );
@@ -11804,7 +11828,7 @@ main.dc-bg .compactAllJobMetrics strong{
 
 main.dc-bg .compactCostBuckets{
   display:grid!important;
-  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))!important;
   gap:9px!important;
 }
 
@@ -11847,6 +11871,62 @@ main.dc-bg .compactCostBucketTrack > div{
   height:100%!important;
   border-radius:999px!important;
   background:linear-gradient(90deg,#22d3ee,#0f766e)!important;
+}
+
+/* Job detail custom-bucket containment: long names and many buckets stay readable inside the horizontal editor. */
+main.dc-bg .responsiveJobInfoForm{
+  padding-top:14px!important;
+}
+
+main.dc-bg .spreadsheetJobTable .customCostTh,
+main.dc-bg .spreadsheetJobTable .customCostCell{
+  width:190px!important;
+  min-width:190px!important;
+  max-width:190px!important;
+}
+
+main.dc-bg .spreadsheetJobTable .inlineCustomHead{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 22px!important;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+
+main.dc-bg .spreadsheetJobTable .customHeaderEdit{
+  display:block!important;
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  line-height:1.15!important;
+}
+
+main.dc-bg .spreadsheetJobTable .customHeaderEdit:focus{
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+
+main.dc-bg .spreadsheetJobTable .inlineCustomRemove{
+  width:22px!important;
+  height:22px!important;
+  min-width:22px!important;
+}
+
+main.dc-bg .spreadsheetJobTable .customCostCell{
+  padding-inline:12px!important;
+}
+
+main.dc-bg .spreadsheetJobTable .customAmountInput{
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
 }
 
 @media (max-width:1180px){
