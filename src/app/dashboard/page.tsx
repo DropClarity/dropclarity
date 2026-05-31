@@ -551,8 +551,8 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       "Taxes",
       "Other",
       ...customNames.map((name) => `Custom: ${name}`),
-      "Custom Categories Total",
       "Credits",
+      "Custom Categories Total",
       "Costs",
       "Profit",
       "Margin %",
@@ -581,8 +581,8 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       csvNumber(row.taxes),
       csvNumber(row.other),
       ...customNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
-      csvNumber(row.customTotal),
       csvNumber(row.credits),
+      csvNumber(row.customTotal),
       csvNumber(row.costs),
       csvNumber(row.profit),
       csvNumber(row.margin, 4),
@@ -2629,6 +2629,7 @@ function RangeControls({
   canExport: boolean;
   onLockedExport: () => void;
 }) {
+  const rangeButtonsRef = useRef<HTMLDivElement | null>(null);
   const ranges: { key: RangeKey; label: string }[] = [
     { key: "all", label: "All" },
     { key: "mtd", label: "MTD" },
@@ -2636,6 +2637,12 @@ function RangeControls({
     { key: "last30", label: "Last 30 Days" },
     { key: "custom", label: "Custom" },
   ];
+
+  useEffect(() => {
+    if (range === "all") {
+      rangeButtonsRef.current?.scrollTo({ left: 0 });
+    }
+  }, [range]);
 
  return (
   <div className="rangeWrap">
@@ -2647,7 +2654,7 @@ function RangeControls({
     </div>
 
     <div className="rangeRight">
-      <div className="rangeButtons">
+      <div className="rangeButtons" ref={rangeButtonsRef}>
         {ranges.map((r) => (
           <button
             key={r.key}
@@ -5842,8 +5849,8 @@ function HighRiskJobsView({
       "Taxes",
       "Other",
       ...highRiskCustomNames.map((name) => `Custom: ${name}`),
-      "Custom Categories Total",
       "Credits",
+      "Custom Categories Total",
       "Costs",
       "Profit",
       "Margin %",
@@ -5861,8 +5868,8 @@ function HighRiskJobsView({
       csvNumber(row.taxes),
       csvNumber(row.other),
       ...highRiskCustomNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
-      csvNumber(row.customTotal),
       csvNumber(row.credits),
+      csvNumber(row.customTotal),
       csvNumber(row.costs),
       csvNumber(row.profit),
       csvNumber(row.margin, 4),
@@ -12287,9 +12294,12 @@ main.dc-bg .spreadsheetJobTable .customAmountInput{
     width:100%!important;
     display:flex!important;
     flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
     gap:8px!important;
     overflow-x:auto!important;
-    padding:1px 2px 6px!important;
+    padding:1px 2px 6px 0!important;
+    scroll-padding-left:0!important;
+    scroll-snap-type:x proximity!important;
     scrollbar-width:none!important;
     -webkit-overflow-scrolling:touch!important;
   }
@@ -12308,6 +12318,7 @@ main.dc-bg .spreadsheetJobTable .customAmountInput{
     line-height:1.1!important;
     justify-content:center!important;
     text-align:center!important;
+    scroll-snap-align:start!important;
   }
 
   main.dc-bg:not(.internal-view-bg) .rangeRight > .btn{
