@@ -552,10 +552,10 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       "Other",
       ...customNames.map((name) => `Custom: ${name}`),
       "Custom Categories Total",
+      "Credits",
       "Costs",
       "Profit",
       "Margin %",
-      "Credits",
       "Status",
     ],
   ];
@@ -582,10 +582,10 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       csvNumber(row.other),
       ...customNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
       csvNumber(row.customTotal),
+      csvNumber(row.credits),
       csvNumber(row.costs),
       csvNumber(row.profit),
       csvNumber(row.margin, 4),
-      csvNumber(row.credits),
       status.label,
     ]);
   });
@@ -630,8 +630,8 @@ function exportSingleJobCsv(
     ["Subcontractors", csvNumber(subs)],
     ["Taxes", csvNumber(taxes)],
     ["Other Costs", csvNumber(other)],
-    ["Credits / Adjustments", csvNumber(-creditsApplied)],
     ["Custom Categories", csvNumber(customTotal)],
+    ["Credits / Adjustments", csvNumber(-creditsApplied)],
     ["Total Costs After Credits", csvNumber(totalCosts)],
     ["Gross Profit", csvNumber(profit)],
     ["Gross Margin %", csvNumber(margin, 4)],
@@ -5843,10 +5843,10 @@ function HighRiskJobsView({
       "Other",
       ...highRiskCustomNames.map((name) => `Custom: ${name}`),
       "Custom Categories Total",
+      "Credits",
       "Costs",
       "Profit",
       "Margin %",
-      "Credits",
       "Recoverable Profit",
       "Top Driver",
       "Status",
@@ -5862,10 +5862,10 @@ function HighRiskJobsView({
       csvNumber(row.other),
       ...highRiskCustomNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
       csvNumber(row.customTotal),
+      csvNumber(row.credits),
       csvNumber(row.costs),
       csvNumber(row.profit),
       csvNumber(row.margin, 4),
-      csvNumber(row.credits),
       csvNumber(row.recoverable),
       row.driver?.label || "",
       row.status,
@@ -12089,6 +12089,286 @@ main.dc-bg .spreadsheetJobTable .customAmountInput{
 
   main.dc-bg .compactAllJobBody{
     padding:12px!important;
+  }
+}
+
+/* Dashboard top-section polish: stable Surface/tablet layout and compact phone navigation. */
+@media (min-width:761px) and (max-width:1180px){
+  main.dc-bg:not(.internal-view-bg) .topbar{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    align-items:stretch!important;
+    gap:14px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dashboardIntro{
+    max-width:100%!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(300px,.56fr)!important;
+    align-items:center!important;
+    gap:10px!important;
+    padding:10px!important;
+    border-radius:24px!important;
+    background:rgba(255,255,255,.80)!important;
+    border:1px solid rgba(15,23,42,.065)!important;
+    box-shadow:0 16px 42px rgba(15,23,42,.05)!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow > *{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+    white-space:nowrap!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopWrap{
+    width:100%!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:9px!important;
+    padding:9px 10px!important;
+    border-radius:18px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopControls{
+    min-width:0!important;
+    flex-wrap:nowrap!important;
+  }
+}
+
+@media (min-width:761px) and (max-width:900px){
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-width:760px){
+  main.dc-bg:not(.internal-view-bg){
+    padding-top:18px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .wrap{
+    padding-inline:12px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbar{
+    gap:12px!important;
+    margin-bottom:12px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .pageTitle{
+    font-size:clamp(28px,7.5vw,34px)!important;
+    line-height:1.06!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .pageSub{
+    font-size:14px!important;
+    line-height:1.48!important;
+    margin-top:9px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:100%!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow > *{
+    width:100%!important;
+    min-width:0!important;
+    min-height:34px!important;
+    padding:8px 10px!important;
+    justify-content:center!important;
+    border-radius:999px!important;
+    font-size:12px!important;
+    white-space:nowrap!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopWrap{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:8px!important;
+    padding:10px!important;
+    border-radius:18px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopText{
+    display:block!important;
+    min-width:0!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopKicker{
+    font-size:10px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetCurrent{
+    margin-top:2px!important;
+    font-size:10.5px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .marginTargetTopControls{
+    width:auto!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-end!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .compactTargetInputGroup{
+    min-width:86px!important;
+    height:36px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .compactTargetSave{
+    height:36px!important;
+    padding:0 11px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    margin:10px 0 12px!important;
+    padding:12px!important;
+    border-radius:20px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeLabel{
+    font-size:16px!important;
+    line-height:1.1!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeSub{
+    max-width:28ch!important;
+    font-size:11.5px!important;
+    line-height:1.35!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeButtons{
+    width:100%!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    gap:8px!important;
+    overflow-x:auto!important;
+    padding:1px 2px 6px!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeButtons::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeBtn{
+    width:auto!important;
+    min-width:106px!important;
+    flex:0 0 auto!important;
+    min-height:36px!important;
+    padding:8px 13px!important;
+    font-size:12px!important;
+    line-height:1.1!important;
+    justify-content:center!important;
+    text-align:center!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeRight > .btn{
+    width:100%!important;
+    min-height:38px!important;
+    justify-content:center!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .customDates{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    gap:8px!important;
+    overflow-x:auto!important;
+    padding:10px!important;
+    margin:8px 0 14px!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail::before{
+    flex:0 0 auto!important;
+    width:auto!important;
+    margin:0!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail a{
+    width:auto!important;
+    min-width:max-content!important;
+    flex:0 0 auto!important;
+    justify-content:center!important;
+    min-height:36px!important;
+    padding:9px 12px!important;
+    font-size:12px!important;
+  }
+}
+
+@media (max-width:390px){
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow > *,
+  main.dc-bg:not(.internal-view-bg) .rangeBtn,
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail a{
+    font-size:11.5px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight .statusRow{
+    gap:7px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .rangeBtn{
+    min-width:98px!important;
   }
 }
 
