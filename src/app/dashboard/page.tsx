@@ -550,9 +550,8 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       "Subcontractors",
       "Taxes",
       "Other",
-      ...customNames.map((name) => `Custom: ${name}`),
+      ...customNames,
       "Credits",
-      "Custom Categories Total",
       "Costs",
       "Profit",
       "Margin %",
@@ -582,7 +581,6 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       csvNumber(row.other),
       ...customNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
       csvNumber(row.credits),
-      csvNumber(row.customTotal),
       csvNumber(row.costs),
       csvNumber(row.profit),
       csvNumber(row.margin, 4),
@@ -610,6 +608,10 @@ function exportSingleJobCsv(
   const totalCosts = labor + materials + subs + taxes + other + customTotal - creditsApplied;
   const profit = revenue - totalCosts;
   const margin = revenue !== 0 ? (profit / revenue) * 100 : 0;
+  const customRows = (job.custom_categories || []).map((category, idx) => [
+    String(category?.name || `Custom ${idx + 1}`).trim() || `Custom ${idx + 1}`,
+    csvNumber(category?.amount),
+  ]);
 
   const rows: unknown[][] = [
     ["DropClarity Single Job Export"],
@@ -629,8 +631,8 @@ function exportSingleJobCsv(
     ["Materials", csvNumber(materials)],
     ["Subcontractors", csvNumber(subs)],
     ["Taxes", csvNumber(taxes)],
+    ...customRows,
     ["Other Costs", csvNumber(other)],
-    ["Custom Categories", csvNumber(customTotal)],
     ["Credits / Adjustments", csvNumber(-creditsApplied)],
     ["Total Costs After Credits", csvNumber(totalCosts)],
     ["Gross Profit", csvNumber(profit)],
@@ -639,13 +641,7 @@ function exportSingleJobCsv(
     ["Notes"],
     [job.notes || ""],
     [],
-    ["Custom Categories"],
-    ["Name", "Amount"],
   ];
-
-  (job.custom_categories || []).forEach((c) => {
-    rows.push([c.name || "", csvNumber(c.amount)]);
-  });
 
   rows.push([]);
   rows.push(["History"]);
@@ -5848,9 +5844,8 @@ function HighRiskJobsView({
       "Subcontractors",
       "Taxes",
       "Other",
-      ...highRiskCustomNames.map((name) => `Custom: ${name}`),
+      ...highRiskCustomNames,
       "Credits",
-      "Custom Categories Total",
       "Costs",
       "Profit",
       "Margin %",
@@ -5869,7 +5864,6 @@ function HighRiskJobsView({
       csvNumber(row.other),
       ...highRiskCustomNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
       csvNumber(row.credits),
-      csvNumber(row.customTotal),
       csvNumber(row.costs),
       csvNumber(row.profit),
       csvNumber(row.margin, 4),
