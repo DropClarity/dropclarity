@@ -455,9 +455,72 @@ function fileSafeName(v: string) {
     .toLowerCase();
 }
 
-function exportAllJobsCsv(state: DashboardState) {
+function getEditedJobFinancials(job: JobRow, key: string, userId: string) {
+  const edited = seedDisplayJobFromBase(job || {}, key, userId);
+  const revenue = parseNumberLoose(edited.revenue);
+  const labor = parseNumberLoose(edited.labor_cost);
+  const materials = parseNumberLoose(edited.material_cost);
+  const subs = parseNumberLoose(edited.subs_cost);
+  const taxes = parseNumberLoose(edited.tax_cost);
+  const other = parseNumberLoose(edited.other_cost);
+  const credits = getJobCreditTotal(job);
+  const customCategories = Array.isArray(edited.custom_categories) ? edited.custom_categories : [];
+  const customTotal = sumCustomCategories(customCategories);
+  const costs = labor + materials + subs + taxes + other + customTotal - credits;
+  const profit = revenue - costs;
+  const margin = revenue !== 0 ? (profit / revenue) * 100 : 0;
+
+  return {
+    edited,
+    revenue,
+    labor,
+    materials,
+    subs,
+    taxes,
+    other,
+    credits,
+    customCategories,
+    customTotal,
+    costs,
+    profit,
+    margin,
+  };
+}
+
+function customCategoryExportNames(rows: { customCategories: CustomCategory[] }[]): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+
+  rows.forEach((row) => {
+    row.customCategories.forEach((category, idx) => {
+      const name = String(category?.name || `Custom ${idx + 1}`).trim() || `Custom ${idx + 1}`;
+      const key = name.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      names.push(name);
+    });
+  });
+
+  return names;
+}
+
+function customCategoryAmountForName(categories: CustomCategory[], name: string): number {
+  const wanted = String(name || "").trim().toLowerCase();
+  return (Array.isArray(categories) ? categories : []).reduce((sum, category, idx) => {
+    const categoryName = String(category?.name || `Custom ${idx + 1}`).trim() || `Custom ${idx + 1}`;
+    return categoryName.toLowerCase() === wanted ? sum + parseNumberLoose(category?.amount) : sum;
+  }, 0);
+}
+
+function exportAllJobsCsv(state: DashboardState, userId: string) {
   const jobs = getAllJobs(state);
   const range = rangeLabel((state.range as RangeKey) || "all");
+  const exportRows = jobs.map((job, idx) => {
+    const key = buildJobKey(job, idx);
+    const financials = getEditedJobFinancials(job, key, userId);
+    return { job, key, ...financials };
+  });
+  const customNames = customCategoryExportNames(exportRows);
 
   const rows: unknown[][] = [
     ["DropClarity All Jobs Export"],
@@ -478,6 +541,8 @@ function exportAllJobsCsv(state: DashboardState) {
       "Subcontractors",
       "Taxes",
       "Other",
+      ...customNames.map((name) => `Custom: ${name}`),
+      "Custom Categories Total",
       "Total Credits",
       "Labor Credits",
       "Materials Credits",
@@ -488,29 +553,37 @@ function exportAllJobsCsv(state: DashboardState) {
     ],
   ];
 
-  jobs.forEach((job) => {
-    const status = statusForJob(job);
+  exportRows.forEach((row) => {
+    const status = statusForJob({
+      ...row.job,
+      revenue: row.revenue,
+      costs: row.costs,
+      profit: row.profit,
+      margin_pct: row.margin,
+    });
 
     rows.push([
-      job.job_name || "",
-      job.job_id || "",
-      dateLabel(job.created_at),
-      job.period_label || "",
-      parseNumberLoose(job.revenue),
-      parseNumberLoose(job.costs),
-      parseNumberLoose(job.profit),
-      parseNumberLoose(job.margin_pct),
-      parseNumberLoose(job.cost_breakdown?.labor),
-      parseNumberLoose(job.cost_breakdown?.materials),
-      parseNumberLoose(job.cost_breakdown?.subs),
-      parseNumberLoose(job.cost_breakdown?.taxes),
-      parseNumberLoose(job.cost_breakdown?.other),
-      getJobCreditTotal(job),
-      getBucketCreditAmount(job.cost_breakdown?.labor),
-      getBucketCreditAmount(job.cost_breakdown?.materials),
-      getBucketCreditAmount(job.cost_breakdown?.subs),
-      getBucketCreditAmount(job.cost_breakdown?.taxes),
-      getBucketCreditAmount(job.cost_breakdown?.other),
+      row.edited.job_name || row.job.job_name || "",
+      row.edited.job_id || row.job.job_id || "",
+      row.edited.job_date || dateLabel(row.job.created_at),
+      row.job.period_label || "",
+      row.revenue,
+      row.costs,
+      row.profit,
+      row.margin,
+      row.labor,
+      row.materials,
+      row.subs,
+      row.taxes,
+      row.other,
+      ...customNames.map((name) => customCategoryAmountForName(row.customCategories, name)),
+      row.customTotal,
+      row.credits,
+      getBucketCreditAmount(row.job.cost_breakdown?.labor),
+      getBucketCreditAmount(row.job.cost_breakdown?.materials),
+      getBucketCreditAmount(row.job.cost_breakdown?.subs),
+      getBucketCreditAmount(row.job.cost_breakdown?.taxes),
+      getBucketCreditAmount(row.job.cost_breakdown?.other),
       status.label,
     ]);
   });
@@ -5527,7 +5600,7 @@ function AllJobsView({
         <button
           className="btn"
           type="button"
-          onClick={() => access.canExport ? exportAllJobsCsv(visibleJobsState) : onLocked("CSV exports", "Core")}
+          onClick={() => access.canExport ? exportAllJobsCsv(visibleJobsState, userId) : onLocked("CSV exports", "Core")}
         >
           {access.canExport ? "Export Visible Jobs CSV" : "Export Visible Jobs CSV 🔒"}
         </button>
@@ -5706,12 +5779,14 @@ function HighRiskJobsView({
   state,
   setView,
   setJobKey,
+  userId,
   marginTarget,
   onHideJob,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
   setJobKey: (v: string) => void;
+  userId: string;
   marginTarget: number;
   onHideJob: (job: JobRow, key: string) => void;
 }) {
@@ -5723,17 +5798,18 @@ function HighRiskJobsView({
     const q = search.trim().toLowerCase();
     const rows = jobs
       .map((job, idx) => {
-        const revenue = parseNumberLoose(job.revenue);
-        const costs = parseNumberLoose(job.costs);
-        const profit = parseNumberLoose(job.profit);
-        const margin = parseNumberLoose(job.margin_pct);
+        const key = buildJobKey(job, idx);
+        const financials = getEditedJobFinancials(job, key, userId);
+        const revenue = financials.revenue;
+        const costs = financials.costs;
+        const profit = financials.profit;
+        const margin = financials.margin;
         const targetProfit = revenue * (marginTarget / 100);
         const recoverable = Math.max(0, targetProfit - profit);
         const comparison = jobComparisonStats(job, jobs);
         const driver = comparison.drivers[0];
         const status = profit < 0 ? "Critical loss" : "Below target";
-        const key = buildJobKey(job, idx);
-        return { job, idx, key, revenue, costs, profit, margin, targetProfit, recoverable, comparison, driver, status };
+        return { job, idx, key, ...financials, revenue, costs, profit, margin, targetProfit, recoverable, comparison, driver, status };
       })
       .filter((row) => row.profit < 0 || row.margin < marginTarget)
       .filter((row) => !q || `${row.job.job_name || ""} ${row.job.job_id || ""} ${row.status}`.toLowerCase().includes(q));
@@ -5746,12 +5822,53 @@ function HighRiskJobsView({
     });
 
     return rows;
-  }, [jobs, marginTarget, search, sort]);
+  }, [jobs, marginTarget, search, sort, userId]);
 
   const totalRecoverable = riskRows.reduce((sum, row) => sum + row.recoverable, 0);
   const losingCount = riskRows.filter((row) => row.profit < 0).length;
   const thinCount = Math.max(0, riskRows.length - losingCount);
   const totalAtRiskRevenue = riskRows.reduce((sum, row) => sum + row.revenue, 0);
+  const highRiskCustomNames = customCategoryExportNames(riskRows);
+  const highRiskExportRows = [
+    [
+      "Job",
+      "Job ID",
+      "Revenue",
+      "Costs",
+      "Profit",
+      "Margin %",
+      "Labor",
+      "Materials",
+      "Subcontractors",
+      "Taxes",
+      "Other",
+      ...highRiskCustomNames.map((name) => `Custom: ${name}`),
+      "Custom Categories Total",
+      "Credits",
+      "Recoverable Profit",
+      "Top Driver",
+      "Status",
+    ],
+    ...riskRows.map((row) => [
+      row.edited.job_name || row.job.job_name || "",
+      row.edited.job_id || row.job.job_id || "",
+      row.revenue,
+      row.costs,
+      row.profit,
+      row.margin,
+      row.labor,
+      row.materials,
+      row.subs,
+      row.taxes,
+      row.other,
+      ...highRiskCustomNames.map((name) => customCategoryAmountForName(row.customCategories, name)),
+      row.customTotal,
+      row.credits,
+      row.recoverable,
+      row.driver?.label || "",
+      row.status,
+    ]),
+  ];
 
   return (
     <div className="highRiskPage enterpriseRiskPage">
@@ -5801,7 +5918,7 @@ function HighRiskJobsView({
             <div className="panelTitle">High-Risk Job Queue</div>
             <div className="panelSub">One row per job. Open the full editor only when the user needs to investigate or adjust the job.</div>
           </div>
-          <button className="btn" type="button" onClick={() => downloadCsv("dropclarity-high-risk-jobs.csv", [["Job", "Job ID", "Revenue", "Costs", "Profit", "Margin %", "Recoverable Profit", "Top Driver", "Status"], ...riskRows.map((row) => [row.job.job_name || "", row.job.job_id || "", row.revenue, row.costs, row.profit, row.margin, row.recoverable, row.driver?.label || "", row.status])])}>
+          <button className="btn" type="button" onClick={() => downloadCsv("dropclarity-high-risk-jobs.csv", highRiskExportRows)}>
             Export High-Risk CSV
           </button>
         </div>
@@ -6613,7 +6730,7 @@ useEffect(() => {
                   customTo={customTo}
                   setCustomTo={setCustomTo}
                   onApply={applyDateRange}
-                  onExportAllJobs={() => exportAllJobsCsv(visibleState)}
+                  onExportAllJobs={() => exportAllJobsCsv(visibleState, USER_ID)}
                   canExport={access.canExport}
                   onLockedExport={() => openUpgradePrompt("CSV exports", "Core")}
                 />
@@ -6625,7 +6742,7 @@ useEffect(() => {
             ) : view === "alljobs" ? (
               <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} userId={USER_ID} access={access} onLocked={openUpgradePrompt} onHideJob={handleHideJob} />
             ) : view === "highrisk" ? (
-              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} marginTarget={marginTarget} onHideJob={handleHideJob} />
+              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} userId={USER_ID} marginTarget={marginTarget} onHideJob={handleHideJob} />
             ) : view === "reports" ? (
               <ReportsManagerView
                 allReports={allReports}
