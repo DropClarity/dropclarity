@@ -11460,7 +11460,7 @@ main.dc-bg #jobsPanel .jobLogCards{
   display:none;
 }
 
-@media (max-width:1400px){
+@media (max-width:1600px){
   main.dc-bg:not(.internal-view-bg) .dcOpsGrid{
     grid-template-columns:1fr!important;
   }
