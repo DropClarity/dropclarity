@@ -5392,25 +5392,52 @@ function JobView({
   );
 }
 
+function CompactCostBucketStrip({ job }: { job: JobRow }) {
+  const breakdown = job.cost_breakdown || {};
+  const buckets = [
+    ["Labor", parseNumberLoose(breakdown.labor)],
+    ["Materials", parseNumberLoose(breakdown.materials)],
+    ["Subs", parseNumberLoose(breakdown.subs)],
+    ["Taxes", parseNumberLoose(breakdown.taxes)],
+    ["Other", parseNumberLoose(breakdown.other)],
+  ] as const;
+  const total = buckets.reduce((sum, [, value]) => sum + Math.max(0, value), 0) || 1;
+
+  return (
+    <div className="compactCostBuckets" aria-label="Cost mix buckets">
+      {buckets.map(([label, value]) => {
+        const width = Math.max(4, Math.min(100, (Math.max(0, value) / total) * 100));
+        return (
+          <div className="compactCostBucket" key={label}>
+            <div className="compactCostBucketTop">
+              <span>{label}</span>
+              <strong>{fmtMoney(value)}</strong>
+            </div>
+            <div className="compactCostBucketTrack">
+              <div style={{ width: `${width}%` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AllJobsView({
   state,
   setView,
   setJobKey,
-  refreshLocal,
   userId,
   access,
   onLocked,
-  getToken,
   onHideJob,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
   setJobKey: (v: string) => void;
-  refreshLocal: () => void;
   userId: string;
   access: PlanAccess;
   onLocked: (feature: string, requiredPlan: string) => void;
-  getToken?: () => Promise<string | null>;
   onHideJob: (job: JobRow, key: string) => void;
 }) {
   const jobs = getAllJobs(state);
@@ -5476,7 +5503,7 @@ function AllJobsView({
         <div>
           <div className="modeEyebrow">Profitability Dashboard</div>
           <div className="modeTitle">All Jobs</div>
-          <div className="modeSub">Bulk editing view — adjust job IDs, names, costs, notes, and categories without opening every job one by one.</div>
+          <div className="modeSub">Scan every analyzed job, review cost mix, and open the full job detail when you need to edit.</div>
         </div>
         <div className="modeHeaderActions">
           <div className="modeCount"><strong>{String(filtered.length)}</strong><span>jobs shown</span></div>
@@ -5495,7 +5522,7 @@ function AllJobsView({
           className="searchInput wideSearch"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search jobs before expanding details..."
+          placeholder="Search jobs..."
         />
         <button
           className="btn"
@@ -5544,40 +5571,91 @@ function AllJobsView({
       <div className="pad allJobsStackPad">
         {filtered.length ? (
           <div className="allJobsStack">
-            {visibleJobRows.map(({ job, key }, index) => (
-              <div key={key} className="allJobsStackItem spreadsheetStackItem">
+            {visibleJobRows.map(({ job, key }, index) => {
+              const status = statusForJob(job);
+              const profit = parseNumberLoose(job.profit);
+              const credits = getJobCreditTotal(job);
+
+              return (
+              <div
+                key={key}
+                className="allJobsStackItem compactAllJobCard"
+                role="button"
+                tabIndex={0}
+                aria-label={`Open full view for ${job.job_name || job.job_id || `Job ${index + 1}`}`}
+                onClick={() => { setJobKey(key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setJobKey(key);
+                    setView("job");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              >
                 <div className="allJobsStackItemHead compactJobStackHeader spreadsheetStackHeader">
                   <div>
                     <div className="allJobsStackJobName">{job.job_name || job.job_id || `Job ${index + 1}`}</div>
                     <div className="allJobsStackJobMeta">Job ID: {job.job_id || "No Job ID"} • {analyzedDateLabel(job.created_at)}</div>
                   </div>
                   <div className="jobRowActions stackedHeaderActions">
-                    <button className="lowkeyHideJobBtn" type="button" onClick={() => onHideJob(job, key)} title="Hide this job from dashboard totals" aria-label="Hide this job from dashboard totals">×</button>
+                    <span className={`tag ${status.cls}`}>{status.label}</span>
+                    <button
+                      className="lowkeyHideJobBtn"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHideJob(job, key);
+                      }}
+                      title="Hide this job from dashboard totals"
+                      aria-label="Hide this job from dashboard totals"
+                    >
+                      ×
+                    </button>
                     <button
                       className="miniBtn compactFullViewBtn"
                       type="button"
-                      onClick={() => { setJobKey(key); setView("job"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setJobKey(key);
+                        setView("job");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
                     >
                       Full view
                     </button>
                   </div>
                 </div>
-                <JobEditor
-                  jobKey={key}
-                  base={job}
-                  state={state}
-                  showBack={false}
-                  userId={userId}
-                  access={access}
-                  onLocked={onLocked}
-                  onBack={() => {}}
-                  onAllJobs={() => {}}
-                  refreshLocal={refreshLocal}
-                  getToken={getToken}
-                  onHideJob={onHideJob}
-                />
+
+                <div className="compactAllJobBody">
+                  <div className="compactAllJobMetrics">
+                    <div>
+                      <span>Revenue</span>
+                      <strong>{fmtMoney(job.revenue)}</strong>
+                    </div>
+                    <div>
+                      <span>Costs</span>
+                      <strong>{fmtMoney(job.costs)}</strong>
+                    </div>
+                    <div>
+                      <span>Profit</span>
+                      <strong className={profit < 0 ? "neg" : "pos"}>{fmtMoney(job.profit)}</strong>
+                    </div>
+                    <div>
+                      <span>Margin</span>
+                      <strong>{fmtPct(job.margin_pct)}</strong>
+                    </div>
+                    <div>
+                      <span>Credits</span>
+                      <strong className={credits > 0 ? "creditText" : ""}>{credits > 0 ? fmtMoney(credits) : "None"}</strong>
+                    </div>
+                  </div>
+
+                  <CompactCostBucketStrip job={job} />
+                </div>
               </div>
-            ))}
+            );
+            })}
 
             {hasMoreAllJobs ? (
               <div className="allJobsLoadMoreWrap">
@@ -5604,20 +5682,12 @@ function HighRiskJobsView({
   state,
   setView,
   setJobKey,
-  refreshLocal,
-  userId,
-  access,
-  onLocked,
   marginTarget,
   onHideJob,
 }: {
   state: DashboardState;
   setView: (v: ViewMode) => void;
   setJobKey: (v: string) => void;
-  refreshLocal: () => void;
-  userId: string;
-  access: PlanAccess;
-  onLocked: (feature: string, requiredPlan: string) => void;
   marginTarget: number;
   onHideJob: (job: JobRow, key: string) => void;
 }) {
@@ -5716,7 +5786,6 @@ function HighRiskJobsView({
           {riskRows.length ? riskRows.map((row, index) => {
             const isLoss = row.profit < 0;
             const driverLabel = row.driver?.label || "Margin";
-            const driverGap = row.driver ? row.driver.gap : 0;
             const marginGap = Math.max(0, marginTarget - row.margin);
             const issue = isLoss
               ? `${driverLabel} appears to be the main pressure point and this job is below breakeven.`
@@ -6530,9 +6599,9 @@ useEffect(() => {
             {view === "job" && jobKey ? (
               <JobView state={visibleState} jobKey={jobKey} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} onDashboardRefresh={() => loadAndRender({ background: true })} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} getToken={getToken} onHideJob={handleHideJob} />
             ) : view === "alljobs" ? (
-              <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} getToken={getToken} onHideJob={handleHideJob} />
+              <AllJobsView state={visibleState} setView={setView} setJobKey={setJobKey} userId={USER_ID} access={access} onLocked={openUpgradePrompt} onHideJob={handleHideJob} />
             ) : view === "highrisk" ? (
-              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} refreshLocal={refreshLocal} userId={USER_ID} access={access} onLocked={openUpgradePrompt} marginTarget={marginTarget} onHideJob={handleHideJob} />
+              <HighRiskJobsView state={visibleState} setView={setView} setJobKey={setJobKey} marginTarget={marginTarget} onHideJob={handleHideJob} />
             ) : view === "reports" ? (
               <ReportsManagerView
                 allReports={allReports}
@@ -11631,6 +11700,196 @@ main.dc-bg #jobsPanel .jobLogCards{
 
   main.dc-bg #jobsPanel .jobLogCardMetrics{
     grid-template-columns:1fr!important;
+  }
+}
+
+/* All Jobs launch cleanup: scan-first cards, readable totals, cost mix retained. */
+main.dc-bg .allJobsSubtotalGrid .stat{
+  min-height:auto!important;
+  overflow:visible!important;
+}
+
+main.dc-bg .allJobsSubtotalGrid .statValue{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  overflow-wrap:anywhere!important;
+  font-size:clamp(20px,2vw,28px)!important;
+  line-height:1.08!important;
+}
+
+main.dc-bg .compactAllJobCard{
+  cursor:pointer!important;
+  border:1px solid rgba(15,23,42,.075)!important;
+  border-radius:20px!important;
+  background:#fff!important;
+  box-shadow:0 12px 34px rgba(15,23,42,.045)!important;
+  overflow:hidden!important;
+  transition:transform .12s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease!important;
+}
+
+main.dc-bg .compactAllJobCard:hover{
+  transform:translateY(-1px)!important;
+  border-color:rgba(8,145,178,.20)!important;
+  box-shadow:0 16px 42px rgba(15,23,42,.065)!important;
+  background:linear-gradient(180deg,#fff,rgba(240,253,250,.32))!important;
+}
+
+main.dc-bg .compactAllJobCard:focus-visible{
+  outline:3px solid rgba(34,211,238,.24)!important;
+  outline-offset:2px!important;
+}
+
+main.dc-bg .compactAllJobCard .spreadsheetStackHeader{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:14px!important;
+  padding:14px 16px!important;
+}
+
+main.dc-bg .compactAllJobCard .stackedHeaderActions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  min-width:0!important;
+  position:relative!important;
+  z-index:3!important;
+}
+
+main.dc-bg .compactAllJobBody{
+  display:grid!important;
+  gap:14px!important;
+  padding:14px 16px 16px!important;
+  border-top:1px solid rgba(15,23,42,.055)!important;
+  background:linear-gradient(180deg,rgba(248,250,252,.68),rgba(255,255,255,.96))!important;
+}
+
+main.dc-bg .compactAllJobMetrics{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+
+main.dc-bg .compactAllJobMetrics > div{
+  min-width:0!important;
+  border:1px solid rgba(15,23,42,.07)!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  padding:10px 11px!important;
+}
+
+main.dc-bg .compactAllJobMetrics span,
+main.dc-bg .compactCostBucketTop span{
+  display:block!important;
+  font-size:10px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  color:rgba(100,116,139,.78)!important;
+}
+
+main.dc-bg .compactAllJobMetrics strong{
+  display:block!important;
+  margin-top:7px!important;
+  font-size:14px!important;
+  line-height:1.15!important;
+  font-weight:950!important;
+  color:#0f172a!important;
+  overflow-wrap:anywhere!important;
+  font-variant-numeric:tabular-nums!important;
+}
+
+main.dc-bg .compactCostBuckets{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+
+main.dc-bg .compactCostBucket{
+  min-width:0!important;
+  border:1px solid rgba(15,23,42,.065)!important;
+  border-radius:14px!important;
+  background:rgba(248,250,252,.78)!important;
+  padding:10px!important;
+}
+
+main.dc-bg .compactCostBucketTop{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:8px!important;
+  min-width:0!important;
+}
+
+main.dc-bg .compactCostBucketTop strong{
+  min-width:0!important;
+  font-size:12px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  color:#0f172a!important;
+  overflow-wrap:anywhere!important;
+  text-align:right!important;
+  font-variant-numeric:tabular-nums!important;
+}
+
+main.dc-bg .compactCostBucketTrack{
+  height:7px!important;
+  margin-top:9px!important;
+  overflow:hidden!important;
+  border-radius:999px!important;
+  background:rgba(226,232,240,.86)!important;
+}
+
+main.dc-bg .compactCostBucketTrack > div{
+  height:100%!important;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,#22d3ee,#0f766e)!important;
+}
+
+@media (max-width:1180px){
+  main.dc-bg .allJobsSubtotalGrid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .compactAllJobMetrics{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .compactCostBuckets{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+
+@media (max-width:760px){
+  main.dc-bg .allJobsSubtotalGrid,
+  main.dc-bg .compactAllJobMetrics,
+  main.dc-bg .compactCostBuckets{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .compactAllJobCard .spreadsheetStackHeader{
+    grid-template-columns:1fr!important;
+    align-items:start!important;
+  }
+
+  main.dc-bg .compactAllJobCard .stackedHeaderActions{
+    justify-content:flex-start!important;
+    flex-wrap:wrap!important;
+  }
+}
+
+@media (max-width:520px){
+  main.dc-bg .allJobsSubtotalGrid,
+  main.dc-bg .compactAllJobMetrics,
+  main.dc-bg .compactCostBuckets{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .compactAllJobBody{
+    padding:12px!important;
   }
 }
 
