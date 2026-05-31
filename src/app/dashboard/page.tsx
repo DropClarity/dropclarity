@@ -2567,7 +2567,7 @@ function RangeControls({
     <div>
       <div className="rangeLabel">Date Range</div>
       <div className="rangeSub">
-        Filter the dashboard before reviewing jobs.
+        Filter every total, chart, job, report, and alert in this workspace.
       </div>
     </div>
 
@@ -2682,7 +2682,7 @@ function InternalDashboardTopBar({
   return (
     <div className="internalUtilityTopbar" aria-label="Dashboard controls">
       <div className="internalUtilityLeft">
-        <div className="internalUtilityText">Focused dashboard view</div>
+        <div className="internalUtilityText">Profit workspace</div>
       </div>
 
       <div className="internalUtilityRight">
@@ -2778,17 +2778,17 @@ function TopBar({
     <div className="topbar">
       <div className="dashboardIntro">
         <h1 className="pageTitle">
-          Find jobs <span className="gradText">draining profit</span>
+          Profit Command <span className="gradText">Center</span>
         </h1>
         <div className="pageSub">
   {mode === "loading" ? (
     "Loading your profitability dashboard..."
   ) : s ? (
     <>
-      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b> jobs. Start with profit leaks, then review high-risk jobs and saved reports.
+      Viewing <b>{rangeLabel((state.range as RangeKey) || "all")}</b>. Start with profit leaks, review the highest-risk jobs, then audit reports when something looks off.
     </>
   ) : (
-    "No reports yet. Upload job files to create your first dashboard."
+    "Upload job files to turn revenue, costs, and invoices into a job-level profitability workspace."
   )}
 </div>
       </div>
@@ -3006,7 +3006,7 @@ function Kpis({ state }: { state: DashboardState }) {
     <div className="panel">
       <div className="panelHead">
         <div>
-          <div className="panelTitle">Business Totals</div>
+          <div className="panelTitle">Executive Totals</div>
           <div className="panelSub">The numbers behind the profit leaks above.</div>
         </div>
       </div>
@@ -3216,7 +3216,7 @@ function JobsLog({
     <div className="panel" id="jobsPanel">
       <div className="panelHead responsiveHead">
         <div>
-          <div className="panelTitle">All Jobs Log</div>
+          <div className="panelTitle">Job Ledger</div>
           <div className="panelSub">Search jobs, open details, hide mistakes, or export the full job log.</div>
         </div>
 
@@ -3311,7 +3311,7 @@ function PastReports({
     <div className="panel pastReportsPanel">
       <div className="panelHead responsiveHead pastReportsHead">
         <div>
-          <div className="panelTitle pastReportsTitle">Past Reports</div>
+          <div className="panelTitle pastReportsTitle">Report History</div>
           <div className="panelSub pastReportsSub">
             Saved uploads feeding the dashboard. Hide mistakes without deleting history.
           </div>
@@ -4165,16 +4165,16 @@ function DashboardBody({
   return (
     <>
       <section className="dcGuideRail" aria-label="Dashboard guide">
-        <a href="#attention"><span>1</span> Review risk</a>
-        <a href="#fixFirst"><span>2</span> Fix biggest leaks</a>
-        <a href="#jobsPanel"><span>3</span> Audit jobs</a>
+        <a href="#attention"><span>1</span> See the risk</a>
+        <a href="#fixFirst"><span>2</span> Decide what to fix</a>
+        <a href="#jobsPanel"><span>3</span> Audit the source</a>
       </section>
 
       <div id="attention" className="dcDashboardSection dcPrimarySection">
         <div className="dcSectionHeader">
           <div>
             <h2>Profit leaks first</h2>
-            <p>Start here when reviewing performance.</p>
+            <p>The fastest read on what is helping or hurting the business.</p>
           </div>
         </div>
         <ProfitLeakSnapshot state={state} marginTarget={marginTarget} onOpenHighRisk={onOpenHighRisk} />
@@ -4183,10 +4183,10 @@ function DashboardBody({
       <div id="fixFirst" className="dcDashboardSection dcActionSection">
         <div className="dcSectionHeader">
           <div>
-            <h2>Fix these first</h2>
-            <p>Highest-impact issues ranked first so you know what to review now.</p>
+            <h2>Decision queue</h2>
+            <p>Highest-impact jobs and margin risks ranked for action.</p>
           </div>
-          <button className="btn dcSectionCta" type="button" onClick={onOpenHighRisk}>Review High-Risk Jobs</button>
+          <button className="btn dcSectionCta" type="button" onClick={onOpenHighRisk}>Open risk queue</button>
         </div>
         <ScaleOversightPanel
           state={state}
@@ -4209,8 +4209,8 @@ function DashboardBody({
       <div className="dcDashboardSection dcHealthSection">
         <div className="dcSectionHeader compact">
           <div>
-            <h2>Business totals</h2>
-            <p>Revenue, costs, margin, and job volume.</p>
+            <h2>Executive totals</h2>
+            <p>Revenue, costs, margin, and job volume for the selected range.</p>
           </div>
         </div>
         <Kpis state={state} />
@@ -4219,8 +4219,8 @@ function DashboardBody({
       <div className="dcDashboardSection dcAccordionSection">
         <button className="dcAccordionHeader" type="button" onClick={() => setAnalyticsOpen((v) => !v)} aria-expanded={analyticsOpen}>
           <div>
-            <h2>Charts and trends</h2>
-            <p>Optional deeper charts when you want trend detail.</p>
+            <h2>Trends and comparisons</h2>
+            <p>Charts for deeper review after the highest-risk jobs are clear.</p>
           </div>
           <span>{analyticsOpen ? "Hide" : "Show"}</span>
         </button>
@@ -4230,8 +4230,8 @@ function DashboardBody({
       <div className="dcDashboardSection dcAccordionSection">
         <button className="dcAccordionHeader" type="button" onClick={() => setCostsOpen((v) => !v)} aria-expanded={costsOpen}>
           <div>
-            <h2>Cost mix, credits, and adjustments</h2>
-            <p>See where costs are concentrated and how credits affect totals.</p>
+            <h2>Cost mix and adjustments</h2>
+            <p>See where costs are concentrated and how credits affect profit.</p>
           </div>
           <span>{costsOpen ? "Hide" : "Show"}</span>
         </button>
@@ -4246,8 +4246,8 @@ function DashboardBody({
       <div className="dcDashboardSection dcOpsSection">
         <div className="dcSectionHeader">
           <div>
-            <h2>Job log and saved reports</h2>
-            <p>Audit jobs, open details, export data, and manage saved reports.</p>
+            <h2>Audit trail</h2>
+            <p>Open job details, export data, and manage the reports feeding this dashboard.</p>
           </div>
         </div>
 
@@ -10892,6 +10892,401 @@ main.dc-bg .scaleMiniStats strong{
   }
 
   main.dc-bg:not(.internal-view-bg) .dcActionSection > .dcSectionHeader .dcSectionCta{
+    width:100%!important;
+    justify-content:center!important;
+  }
+}
+
+/* Launch cockpit layer: one calm, premium operating system across every dashboard view. */
+main.dc-bg{
+  --dc-ink:#0f172a;
+  --dc-muted:#64748b;
+  --dc-soft:#f8fafc;
+  --dc-line:rgba(15,23,42,.075);
+  --dc-panel:#ffffff;
+  --dc-cyan:#0891b2;
+  --dc-emerald:#059669;
+  --dc-amber:#b45309;
+  --dc-red:#dc2626;
+  color:var(--dc-ink)!important;
+  background:
+    radial-gradient(900px 420px at 8% -8%,rgba(34,211,238,.075),transparent 58%),
+    radial-gradient(780px 360px at 96% 0%,rgba(16,185,129,.06),transparent 60%),
+    linear-gradient(180deg,#f8fafc 0%,#ffffff 38%,#f8fafc 100%)!important;
+}
+
+main.dc-bg .wrap{
+  max-width:1680px!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .topbar{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(380px,520px)!important;
+  align-items:start!important;
+  gap:22px!important;
+  padding-top:10px!important;
+  margin-bottom:16px!important;
+}
+
+main.dc-bg .dashboardIntro{
+  max-width:980px!important;
+}
+
+main.dc-bg .pageTitle{
+  font-size:clamp(36px,4.2vw,66px)!important;
+  line-height:.96!important;
+  letter-spacing:-.065em!important;
+  font-weight:990!important;
+  color:#020617!important;
+}
+
+main.dc-bg .pageSub{
+  max-width:760px!important;
+  font-size:clamp(14.5px,1vw,17px)!important;
+  line-height:1.55!important;
+  color:rgba(51,65,85,.78)!important;
+}
+
+main.dc-bg .gradText{
+  background:linear-gradient(90deg,#0891b2,#059669,#2563eb)!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .topbarRight,
+main.dc-bg .internalUtilityRight,
+main.dc-bg .internalQuickActions{
+  border-radius:22px!important;
+  border:1px solid var(--dc-line)!important;
+  background:rgba(255,255,255,.82)!important;
+  box-shadow:0 18px 50px rgba(15,23,42,.055)!important;
+  padding:10px!important;
+  backdrop-filter:blur(14px)!important;
+}
+
+main.dc-bg .pill,
+main.dc-bg .btn,
+main.dc-bg .rangeBtn,
+main.dc-bg .crumbBtn,
+main.dc-bg .miniBtn,
+main.dc-bg .reportsManageLink,
+main.dc-bg .reportMoreLink{
+  border-radius:12px!important;
+  min-height:38px!important;
+  box-shadow:none!important;
+}
+
+main.dc-bg .btn-primary,
+main.dc-bg .uploadPulseBtn,
+main.dc-bg .profitSnapshotPrimary,
+main.dc-bg .dcSectionCta,
+main.dc-bg .allJobsDetailBtn{
+  color:#052f3a!important;
+  border-color:rgba(8,145,178,.18)!important;
+  background:linear-gradient(135deg,rgba(236,254,255,.92),rgba(220,252,231,.84))!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .rangeWrap{
+  display:grid!important;
+  grid-template-columns:minmax(180px,.32fr) minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:16px!important;
+  margin:14px 0 16px!important;
+  border-radius:20px!important;
+  border:1px solid var(--dc-line)!important;
+  background:rgba(255,255,255,.78)!important;
+  box-shadow:0 16px 46px rgba(15,23,42,.045)!important;
+  padding:13px 14px!important;
+}
+
+main.dc-bg .rangeLabel,
+main.dc-bg .marginTargetTopKicker,
+main.dc-bg .sectionEyebrow{
+  letter-spacing:.095em!important;
+}
+
+main.dc-bg .rangeRight{
+  min-width:0!important;
+}
+
+main.dc-bg .rangeButtons{
+  min-width:0!important;
+}
+
+main.dc-bg .rangeBtn.active{
+  background:#0f172a!important;
+  border-color:#0f172a!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .dcGuideRail{
+  margin:0 0 18px!important;
+  padding:10px!important;
+  border-radius:18px!important;
+  border:1px solid var(--dc-line)!important;
+  background:rgba(255,255,255,.70)!important;
+  box-shadow:0 14px 38px rgba(15,23,42,.04)!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .dcGuideRail::before{
+  content:"Workflow"!important;
+  color:rgba(8,145,178,.88)!important;
+  background:rgba(236,254,255,.86)!important;
+  border-color:rgba(8,145,178,.16)!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .dcDashboardSection{
+  margin-top:16px!important;
+}
+
+main.dc-bg:not(.internal-view-bg) .dcPrimarySection,
+main.dc-bg:not(.internal-view-bg) .dcActionSection,
+main.dc-bg:not(.internal-view-bg) .dcHealthSection,
+main.dc-bg:not(.internal-view-bg) .dcOpsSection,
+main.dc-bg:not(.internal-view-bg) .dcAccordionSection{
+  border-radius:24px!important;
+  border:1px solid var(--dc-line)!important;
+  background:rgba(255,255,255,.70)!important;
+  box-shadow:0 18px 52px rgba(15,23,42,.045)!important;
+  overflow:hidden!important;
+}
+
+main.dc-bg .dcSectionHeader,
+main.dc-bg .dcAccordionHeader{
+  padding:18px 20px 14px!important;
+  border-bottom:1px solid rgba(15,23,42,.055)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(248,250,252,.76))!important;
+}
+
+main.dc-bg .dcSectionHeader h2,
+main.dc-bg .dcAccordionHeader h2,
+main.dc-bg .panelTitle,
+main.dc-bg .chartTitle{
+  font-size:clamp(18px,1.25vw,24px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.035em!important;
+  font-weight:980!important;
+}
+
+main.dc-bg .dcSectionHeader p,
+main.dc-bg .dcAccordionHeader p,
+main.dc-bg .panelSub,
+main.dc-bg .chartSub{
+  color:rgba(71,85,105,.72)!important;
+  font-weight:760!important;
+}
+
+main.dc-bg .profitSnapshot{
+  margin:0 18px 18px!important;
+  border-radius:22px!important;
+  border:1px solid rgba(15,23,42,.065)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(240,253,250,.78) 48%,rgba(248,250,252,.95))!important;
+  box-shadow:0 16px 46px rgba(15,23,42,.052)!important;
+}
+
+main.dc-bg .profitSnapshot.risk{
+  background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,247,237,.82) 48%,rgba(248,250,252,.96))!important;
+  border-color:rgba(239,68,68,.13)!important;
+}
+
+main.dc-bg .profitSnapshotMetric,
+main.dc-bg .kpi,
+main.dc-bg .stat,
+main.dc-bg .creditKpiCard,
+main.dc-bg .scaleCard,
+main.dc-bg .premiumReportCard{
+  border-radius:16px!important;
+  border:1px solid rgba(15,23,42,.065)!important;
+  background:#fff!important;
+  box-shadow:0 10px 28px rgba(15,23,42,.035)!important;
+}
+
+main.dc-bg .profitSnapshotMetric strong,
+main.dc-bg .kValue,
+main.dc-bg .statValue{
+  font-variant-numeric:tabular-nums!important;
+}
+
+main.dc-bg .panel,
+main.dc-bg .scalePanel,
+main.dc-bg .chartCard,
+main.dc-bg .creditKpiPanel,
+main.dc-bg .cleanModeShell,
+main.dc-bg .reportsManagerPanel,
+main.dc-bg .jobHero{
+  border:1px solid var(--dc-line)!important;
+  background:rgba(255,255,255,.82)!important;
+  box-shadow:0 16px 48px rgba(15,23,42,.045)!important;
+}
+
+main.dc-bg .panelHead,
+main.dc-bg .chartHead,
+main.dc-bg .premiumScaleHead,
+main.dc-bg .pastReportsHead{
+  border-bottom:1px solid rgba(15,23,42,.055)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.78))!important;
+}
+
+main.dc-bg .tableWrap,
+main.dc-bg .reportsTableWrap{
+  border-top:1px solid rgba(15,23,42,.045)!important;
+  background:#fff!important;
+}
+
+main.dc-bg .jobsTable th,
+main.dc-bg .reportsTable th,
+main.dc-bg .spreadsheetJobTable th{
+  color:rgba(71,85,105,.64)!important;
+  background:#f8fafc!important;
+}
+
+main.dc-bg .jobsTable tbody tr:hover,
+main.dc-bg .reportsTable tbody tr:hover{
+  background:rgba(236,254,255,.34)!important;
+}
+
+main.dc-bg .modeContextHeader,
+main.dc-bg .crumbs{
+  border-bottom:1px solid rgba(15,23,42,.06)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.80))!important;
+}
+
+main.dc-bg .modeTitle,
+main.dc-bg .reportsManagerTitle,
+main.dc-bg .highRiskTitle,
+main.dc-bg .jobHeroTitle{
+  letter-spacing:-.045em!important;
+  color:#020617!important;
+}
+
+main.dc-bg.internal-view-bg{
+  background:
+    radial-gradient(780px 360px at 8% -8%,rgba(34,211,238,.065),transparent 58%),
+    linear-gradient(180deg,#f8fafc 0%,#fff 42%,#f8fafc 100%)!important;
+}
+
+main.dc-bg.internal-view-bg .wrap{
+  max-width:1880px!important;
+}
+
+main.dc-bg .cleanModeToolbar,
+main.dc-bg .reportsManagerTools,
+main.dc-bg .tableTools{
+  min-width:0!important;
+}
+
+main.dc-bg .searchInput,
+main.dc-bg .selectInput,
+main.dc-bg .customDates input,
+main.dc-bg .cellEdit,
+main.dc-bg .compactTargetInputGroup{
+  border-color:rgba(15,23,42,.10)!important;
+  background:#fff!important;
+}
+
+@media (min-width:1280px){
+  main.dc-bg:not(.internal-view-bg) .dcOpsGrid{
+    grid-template-columns:minmax(0,1fr) 400px!important;
+  }
+}
+
+@media (max-width:1180px){
+  main.dc-bg:not(.internal-view-bg) .topbar,
+  main.dc-bg:not(.internal-view-bg) .rangeWrap{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight{
+    width:100%!important;
+  }
+
+  main.dc-bg .profitSnapshot{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-width:900px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    width:100%!important;
+    padding-inline:14px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .topbarRight,
+  main.dc-bg .internalUtilityRight,
+  main.dc-bg .internalQuickActions{
+    border-radius:18px!important;
+  }
+
+  main.dc-bg .dcSectionHeader,
+  main.dc-bg .dcAccordionHeader{
+    padding:15px 14px 12px!important;
+  }
+
+  main.dc-bg .profitSnapshot{
+    margin:0 10px 12px!important;
+    padding:14px!important;
+  }
+
+  main.dc-bg .kpis,
+  main.dc-bg .profitSnapshotMetrics,
+  main.dc-bg .creditKpiGrid,
+  main.dc-bg .jobStats{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .dcOpsGrid,
+  main.dc-bg .grid{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-width:560px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    padding-inline:12px!important;
+  }
+
+  main.dc-bg .pageTitle{
+    font-size:34px!important;
+    letter-spacing:-.055em!important;
+  }
+
+  main.dc-bg .pageSub{
+    font-size:14px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    padding:42px 10px 10px!important;
+  }
+
+  main.dc-bg:not(.internal-view-bg) .dcGuideRail a{
+    width:100%!important;
+    justify-content:flex-start!important;
+  }
+
+  main.dc-bg .kpis,
+  main.dc-bg .profitSnapshotMetrics,
+  main.dc-bg .creditKpiGrid,
+  main.dc-bg .jobStats,
+  main.dc-bg .scaleMiniStats{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .statusRow,
+  main.dc-bg .rangeRight,
+  main.dc-bg .rangeButtons,
+  main.dc-bg .tableTools,
+  main.dc-bg .reportsManagerTools{
+    width:100%!important;
+  }
+
+  main.dc-bg .statusRow .btn,
+  main.dc-bg .statusRow .pill,
+  main.dc-bg .rangeRight > .btn,
+  main.dc-bg .tableTools .btn,
+  main.dc-bg .reportsManagerTools .btn{
     width:100%!important;
     justify-content:center!important;
   }
