@@ -426,8 +426,20 @@ function statusForJob(job: JobRow) {
 }
 
 function csvCell(v: unknown) {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    return String(Object.is(v, -0) ? 0 : v);
+  }
+
   const s = String(v ?? "");
   return `"${s.replace(/"/g, '""')}"`;
+}
+
+function csvNumber(v: unknown, decimals = 2): number {
+  const n = parseNumberLoose(v);
+  if (!Number.isFinite(n)) return 0;
+  const factor = 10 ** decimals;
+  const rounded = Math.round((n + Number.EPSILON) * factor) / factor;
+  return Object.is(rounded, -0) ? 0 : rounded;
 }
 
 function downloadCsv(filename: string, rows: unknown[][]) {
@@ -533,9 +545,6 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       "Date",
       "Period",
       "Revenue",
-      "Costs",
-      "Profit",
-      "Margin %",
       "Labor",
       "Materials",
       "Subcontractors",
@@ -543,12 +552,10 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       "Other",
       ...customNames.map((name) => `Custom: ${name}`),
       "Custom Categories Total",
-      "Total Credits",
-      "Labor Credits",
-      "Materials Credits",
-      "Subcontractors Credits",
-      "Tax Credits",
-      "Other Credits",
+      "Costs",
+      "Profit",
+      "Margin %",
+      "Credits",
       "Status",
     ],
   ];
@@ -567,23 +574,18 @@ function exportAllJobsCsv(state: DashboardState, userId: string) {
       row.edited.job_id || row.job.job_id || "",
       row.edited.job_date || dateLabel(row.job.created_at),
       row.job.period_label || "",
-      row.revenue,
-      row.costs,
-      row.profit,
-      row.margin,
-      row.labor,
-      row.materials,
-      row.subs,
-      row.taxes,
-      row.other,
-      ...customNames.map((name) => customCategoryAmountForName(row.customCategories, name)),
-      row.customTotal,
-      row.credits,
-      getBucketCreditAmount(row.job.cost_breakdown?.labor),
-      getBucketCreditAmount(row.job.cost_breakdown?.materials),
-      getBucketCreditAmount(row.job.cost_breakdown?.subs),
-      getBucketCreditAmount(row.job.cost_breakdown?.taxes),
-      getBucketCreditAmount(row.job.cost_breakdown?.other),
+      csvNumber(row.revenue),
+      csvNumber(row.labor),
+      csvNumber(row.materials),
+      csvNumber(row.subs),
+      csvNumber(row.taxes),
+      csvNumber(row.other),
+      ...customNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
+      csvNumber(row.customTotal),
+      csvNumber(row.costs),
+      csvNumber(row.profit),
+      csvNumber(row.margin, 4),
+      csvNumber(row.credits),
       status.label,
     ]);
   });
@@ -622,17 +624,17 @@ function exportSingleJobCsv(
     ["Job Date", job.job_date || dateLabel(base.created_at)],
     [],
     ["Financial Summary"],
-    ["Revenue", revenue],
-    ["Labor", labor],
-    ["Materials", materials],
-    ["Subcontractors", subs],
-    ["Taxes", taxes],
-    ["Other Costs", other],
-    ["Credits / Adjustments", -creditsApplied],
-    ["Custom Categories", customTotal],
-    ["Total Costs After Credits", totalCosts],
-    ["Gross Profit", profit],
-    ["Gross Margin %", margin],
+    ["Revenue", csvNumber(revenue)],
+    ["Labor", csvNumber(labor)],
+    ["Materials", csvNumber(materials)],
+    ["Subcontractors", csvNumber(subs)],
+    ["Taxes", csvNumber(taxes)],
+    ["Other Costs", csvNumber(other)],
+    ["Credits / Adjustments", csvNumber(-creditsApplied)],
+    ["Custom Categories", csvNumber(customTotal)],
+    ["Total Costs After Credits", csvNumber(totalCosts)],
+    ["Gross Profit", csvNumber(profit)],
+    ["Gross Margin %", csvNumber(margin, 4)],
     [],
     ["Notes"],
     [job.notes || ""],
@@ -642,7 +644,7 @@ function exportSingleJobCsv(
   ];
 
   (job.custom_categories || []).forEach((c) => {
-    rows.push([c.name || "", parseNumberLoose(c.amount)]);
+    rows.push([c.name || "", csvNumber(c.amount)]);
   });
 
   rows.push([]);
@@ -652,10 +654,10 @@ function exportSingleJobCsv(
   history.forEach((h) => {
     rows.push([
       formatMonthLabel(String(h.month_key || "")),
-      parseNumberLoose(h.revenue),
-      parseNumberLoose(h.costs),
-      parseNumberLoose(h.gross_profit),
-      parseNumberLoose(h.gross_margin_pct),
+      csvNumber(h.revenue),
+      csvNumber(h.costs),
+      csvNumber(h.gross_profit),
+      csvNumber(h.gross_margin_pct, 4),
     ]);
   });
 
@@ -4969,7 +4971,7 @@ function JobEditor({
           <div className="stat"><div className="statLabel">Gross Profit</div><div className={`statValue ${gp < 0 ? "neg" : "pos"}`}>{fmtMoney(gp)}</div><div className="statSub">Includes manual edits.</div></div>
           <div className="stat"><div className="statLabel">Gross Margin</div><div className={`statValue ${gm < 0 ? "neg" : "pos"}`}>{fmtPct(gm)}</div><div className="statSub">Based on edited values.</div></div>
           <div className="stat"><div className="statLabel">Revenue</div><div className="statValue">{fmtMoney(job.revenue)}</div><div className="statSub">Editable below.</div></div>
-          <div className="stat"><div className="statLabel">Known Costs</div><div className="statValue">{fmtMoney(knownCosts)}</div><div className="statSub">Cost buckets + custom.</div></div>
+          <div className="stat"><div className="statLabel">Known Costs</div><div className="statValue">{fmtMoney(knownCosts)}</div><div className="statSub">Cost buckets.</div></div>
           <div className="stat"><div className="statLabel">Credits Applied</div><div className="statValue creditText">{fmtMoney(getJobCreditTotal(base))}</div><div className="statSub">Negative cost lines on this job.</div></div>
           <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{job.custom_categories.length}</div><div className="statSub">Commission, labor hours, reserves, etc.</div></div>
         </div>
@@ -5834,9 +5836,6 @@ function HighRiskJobsView({
       "Job",
       "Job ID",
       "Revenue",
-      "Costs",
-      "Profit",
-      "Margin %",
       "Labor",
       "Materials",
       "Subcontractors",
@@ -5844,6 +5843,9 @@ function HighRiskJobsView({
       "Other",
       ...highRiskCustomNames.map((name) => `Custom: ${name}`),
       "Custom Categories Total",
+      "Costs",
+      "Profit",
+      "Margin %",
       "Credits",
       "Recoverable Profit",
       "Top Driver",
@@ -5852,19 +5854,19 @@ function HighRiskJobsView({
     ...riskRows.map((row) => [
       row.edited.job_name || row.job.job_name || "",
       row.edited.job_id || row.job.job_id || "",
-      row.revenue,
-      row.costs,
-      row.profit,
-      row.margin,
-      row.labor,
-      row.materials,
-      row.subs,
-      row.taxes,
-      row.other,
-      ...highRiskCustomNames.map((name) => customCategoryAmountForName(row.customCategories, name)),
-      row.customTotal,
-      row.credits,
-      row.recoverable,
+      csvNumber(row.revenue),
+      csvNumber(row.labor),
+      csvNumber(row.materials),
+      csvNumber(row.subs),
+      csvNumber(row.taxes),
+      csvNumber(row.other),
+      ...highRiskCustomNames.map((name) => csvNumber(customCategoryAmountForName(row.customCategories, name))),
+      csvNumber(row.customTotal),
+      csvNumber(row.costs),
+      csvNumber(row.profit),
+      csvNumber(row.margin, 4),
+      csvNumber(row.credits),
+      csvNumber(row.recoverable),
       row.driver?.label || "",
       row.status,
     ]),
