@@ -9408,6 +9408,7 @@ main.dc-bg .dcGuideRail a span{
 }
 
 .dc-bg .jobUpdatePad{display:flex;flex-direction:column;gap:12px}
+.dc-bg .jobUpdatePanel{container-type:inline-size}
 .dc-bg .jobUpdateControls{display:grid;grid-template-columns:minmax(135px,.48fr) minmax(0,1fr);gap:10px;align-items:stretch}
 .dc-bg .jobUpdateSelect{width:100%;min-height:46px}
 .dc-bg .jobUpdateFileInput{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -9445,7 +9446,7 @@ main.dc-bg .dcGuideRail a span{
 .dc-bg .jobUpdateMessage.success{color:#047857}
 .dc-bg .jobUpdateMessage.error{color:#dc2626}
 .dc-bg .jobUpdateHint{font-size:12px;color:#64748b;line-height:1.45}
-@media (max-width: 1180px){.dc-bg .jobUpdatePanel .jobUpdateControls{grid-template-columns:1fr}}
+@container (max-width: 520px){.dc-bg .jobUpdatePanel .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdatePanel .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdatePanel .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}}
 @media (max-width: 760px){.dc-bg .jobUpdateControls{grid-template-columns:1fr}.dc-bg .jobUpdateBtn{width:100%}.dc-bg .jobUpdateUploadBox{grid-template-columns:auto minmax(0,1fr);padding:10px}.dc-bg .jobUpdateUploadAction{grid-column:1 / -1;text-align:center}.dc-bg .jobUpdateAiStatus{align-items:flex-start}.dc-bg .adjustmentHistoryTop{grid-template-columns:minmax(0,1fr) auto;align-items:flex-start;gap:4px}.dc-bg .adjustmentHistoryTop span{grid-column:1 / 2}.dc-bg .adjustmentHistoryDelete{grid-column:2 / 3;grid-row:1 / 3}.dc-bg .adjustmentHistoryMeta{align-items:flex-start;flex-direction:column;gap:4px}.dc-bg .adjustmentHistoryMeta em{white-space:normal}}
 
 .dc-bg .sourceDocsPanel .panelHead{padding-bottom:10px}
