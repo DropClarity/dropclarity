@@ -4899,6 +4899,38 @@ function JobEditor({
               </div>
             </div>
 
+            <div className="responsiveJobInfoForm" aria-label="Editable job information">
+              <div className="responsiveJobInfoHead">
+                <div>
+                  <div className="responsiveJobInfoEyebrow">Job info</div>
+                  <div className="responsiveJobInfoTitle">Edit details without horizontal scrolling</div>
+                </div>
+              </div>
+
+              <div className="responsiveJobInfoGrid">
+                <label>
+                  <span>Job ID</span>
+                  <input className="cellEdit responsiveJobInfoInput" value={job.job_id} onChange={(e) => setField("job_id", e.target.value)} placeholder="JOB-1021" />
+                </label>
+                <label>
+                  <span>Job name</span>
+                  <input className="cellEdit responsiveJobInfoInput" value={job.job_name} onChange={(e) => setField("job_name", e.target.value)} placeholder="Customer / project" />
+                </label>
+                <label>
+                  <span>Type</span>
+                  <input className="cellEdit responsiveJobInfoInput" value={job.job_type} onChange={(e) => setField("job_type", e.target.value)} placeholder="Install" />
+                </label>
+                <label>
+                  <span>Date</span>
+                  <input className="cellEdit responsiveJobInfoInput" value={job.job_date} onChange={(e) => setField("job_date", e.target.value)} placeholder="YYYY-MM-DD" />
+                </label>
+                <label className="responsiveJobInfoWide">
+                  <span>Address</span>
+                  <input className="cellEdit responsiveJobInfoInput" value={job.job_address} onChange={(e) => setField("job_address", e.target.value)} placeholder="Address" />
+                </label>
+              </div>
+            </div>
+
             <details
               className="mobileSpreadsheetDisclosure"
               open={spreadsheetBreakdownOpen}
@@ -10086,8 +10118,90 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 @media (max-width:900px){.dc-bg .spreadsheetJobHead{align-items:stretch!important}.dc-bg .spreadsheetJobActions{justify-content:flex-start!important}.dc-bg .spreadsheetJobActions .btn{flex:1 1 140px!important;justify-content:center!important}.dc-bg .spreadsheetJobTable{min-width:1080px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1080px!important}.dc-bg .spreadsheetStackHeader{align-items:flex-start!important}.dc-bg .spreadsheetStackHeader .stackedHeaderActions{align-self:stretch!important;justify-content:flex-end!important}}
 @media (max-width:640px){.dc-bg .spreadsheetJobDetail{border-radius:18px!important}.dc-bg .spreadsheetJobHead{padding:13px 14px!important}.dc-bg .spreadsheetJobHead .panelTitle{font-size:19px!important}.dc-bg .spreadsheetJobActions{display:grid!important;grid-template-columns:1fr 1fr!important}.dc-bg .spreadsheetJobActions .btn{width:100%!important;min-width:0!important}.dc-bg .spreadsheetJobPad{border-top:1px solid rgba(15,23,42,.04)!important}.dc-bg .spreadsheetJobTable{min-width:1020px!important}.dc-bg .stackedJobPage .spreadsheetJobTable{min-width:1020px!important}.dc-bg .spreadsheetJobTable th{height:38px!important;font-size:10px!important;padding:0 9px!important}.dc-bg .spreadsheetJobTable td{height:64px!important;padding:7px 8px!important}.dc-bg .spreadsheetJobTable .cellEdit{font-size:12.2px!important;min-height:34px!important;height:34px!important;padding:6px 7px!important}.dc-bg .spreadsheetJobTable .cellHint{display:none!important}.dc-bg .spreadsheetCalcCell{font-size:12.8px!important;min-height:34px!important;height:34px!important}.dc-bg .spreadsheetStackActions .buttonRow{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.dc-bg .spreadsheetStackActions .btn{width:100%!important;justify-content:center!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobName{font-size:14px!important}.dc-bg .spreadsheetStackHeader .allJobsStackJobMeta{font-size:11px!important}}
 
+@media (min-width:769px) and (max-width:1180px){
+  .dc-bg .responsiveJobInfoForm{
+    display:block!important;
+    padding:16px 18px!important;
+    border-bottom:1px solid rgba(15,23,42,.075)!important;
+    background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.86))!important;
+  }
+
+  .dc-bg .responsiveJobInfoHead{
+    margin-bottom:12px!important;
+  }
+
+  .dc-bg .responsiveJobInfoEyebrow{
+    font-size:10.5px!important;
+    line-height:1!important;
+    font-weight:950!important;
+    letter-spacing:.11em!important;
+    text-transform:uppercase!important;
+    color:rgba(8,145,178,.86)!important;
+  }
+
+  .dc-bg .responsiveJobInfoTitle{
+    margin-top:5px!important;
+    font-size:15px!important;
+    line-height:1.2!important;
+    font-weight:950!important;
+    color:#0f172a!important;
+  }
+
+  .dc-bg .responsiveJobInfoGrid{
+    display:grid!important;
+    grid-template-columns:minmax(0,.8fr) minmax(0,1.1fr) minmax(0,.72fr) minmax(0,.86fr)!important;
+    gap:10px!important;
+  }
+
+  .dc-bg .responsiveJobInfoGrid label{
+    display:grid!important;
+    gap:6px!important;
+    min-width:0!important;
+  }
+
+  .dc-bg .responsiveJobInfoGrid label span{
+    font-size:10px!important;
+    line-height:1!important;
+    font-weight:950!important;
+    letter-spacing:.08em!important;
+    text-transform:uppercase!important;
+    color:#94a3b8!important;
+  }
+
+  .dc-bg .responsiveJobInfoWide{
+    grid-column:1 / -1!important;
+  }
+
+  .dc-bg .responsiveJobInfoInput{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:42px!important;
+    box-sizing:border-box!important;
+    border:1px solid rgba(15,23,42,.10)!important;
+    background:#fff!important;
+    border-radius:12px!important;
+    padding:9px 11px!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+
+  .dc-bg .spreadsheetJobTable th:nth-child(-n+5),
+  .dc-bg .spreadsheetJobTable td:nth-child(-n+5){
+    display:none!important;
+  }
+
+  .dc-bg .spreadsheetJobTable{
+    min-width:760px!important;
+  }
+}
+
 /* Mobile job-detail readability upgrade */
 .dc-bg .mobileJobFinancialSummary{
+  display:none;
+}
+
+.dc-bg .responsiveJobInfoForm{
   display:none;
 }
 
@@ -10220,6 +10334,76 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
     font-weight:750;
   }
 
+  .dc-bg .responsiveJobInfoForm{
+    display:block;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:20px;
+    padding:14px;
+    margin-bottom:12px;
+    background:#fff;
+    box-shadow:0 12px 32px rgba(15,23,42,.045);
+  }
+
+  .dc-bg .responsiveJobInfoHead{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+
+  .dc-bg .responsiveJobInfoEyebrow{
+    font-size:10px;
+    line-height:1;
+    font-weight:950;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:#0891b2;
+  }
+
+  .dc-bg .responsiveJobInfoTitle{
+    margin-top:5px;
+    font-size:15px;
+    line-height:1.2;
+    font-weight:950;
+    color:#0f172a;
+  }
+
+  .dc-bg .responsiveJobInfoGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .dc-bg .responsiveJobInfoGrid label{
+    display:grid;
+    gap:6px;
+    min-width:0;
+  }
+
+  .dc-bg .responsiveJobInfoGrid label span{
+    font-size:10px;
+    line-height:1;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#94a3b8;
+  }
+
+  .dc-bg .responsiveJobInfoWide{
+    grid-column:1 / -1;
+  }
+
+  .dc-bg .responsiveJobInfoInput{
+    width:100%;
+    max-width:100%;
+    min-height:42px;
+    box-sizing:border-box;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
   .dc-bg .mobileSpreadsheetDisclosure{
     border:1px solid rgba(15,23,42,.08);
     border-radius:18px;
@@ -10281,6 +10465,15 @@ main.dc-bg .premiumReportProfitBlock .reportViewBtn{
 
   .dc-bg .mobileSpreadsheetScroller .spreadsheetJobTable{
     margin:0!important;
+  }
+
+  .dc-bg .spreadsheetJobTable th:nth-child(-n+5),
+  .dc-bg .spreadsheetJobTable td:nth-child(-n+5){
+    display:none!important;
+  }
+
+  .dc-bg .spreadsheetJobTable{
+    min-width:760px!important;
   }
 
   .dc-bg .supportGrid{
@@ -10493,6 +10686,19 @@ main.dc-bg .scaleMiniStats strong{
     width:100%!important;
     min-width:0!important;
     justify-content:center!important;
+  }
+
+  main.dc-bg .responsiveJobInfoForm{
+    display:block!important;
+  }
+
+  main.dc-bg .spreadsheetJobTable th:nth-child(-n+5),
+  main.dc-bg .spreadsheetJobTable td:nth-child(-n+5){
+    display:none!important;
+  }
+
+  main.dc-bg .spreadsheetJobTable{
+    min-width:760px!important;
   }
 
   main.dc-bg .jobAnalysisHeader{
