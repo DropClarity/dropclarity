@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton, useClerk, useUser } from "@clerk/nextjs";
@@ -156,6 +156,47 @@ function NavLinks({
   mobile?: boolean;
   onNavigate?: () => void;
 }) {
+  const handleNavClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    onNavigate?.();
+
+    if (
+      typeof window === "undefined" ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    if (href === "/" && window.location.pathname === "/") {
+      event.preventDefault();
+      window.history.pushState(window.history.state, "", "/");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (href === "/dashboard" && window.location.pathname === "/dashboard") {
+      event.preventDefault();
+
+      const nextState = {
+        ...(window.history.state || {}),
+        dcDashboard: true,
+        dcView: "dashboard",
+        dcJobKey: "",
+      };
+
+      window.history.pushState(nextState, "", "/dashboard");
+      window.dispatchEvent(new PopStateEvent("popstate", { state: nextState }));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <>
       {navItems.map((item) => {
@@ -166,7 +207,8 @@ function NavLinks({
           <Link
             key={item.href}
             href={item.href}
-            onClick={onNavigate}
+            scroll
+            onClick={(event) => handleNavClick(event, item.href)}
             className={
               mobile
                 ? isActive
