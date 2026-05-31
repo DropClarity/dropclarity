@@ -124,7 +124,7 @@ export default function RootLayout({
                           </a>
 
                           <a
-                            href="https://www.instagram.com/dropclarity/"
+                            href="https://www.facebook.com/profile.php?id=61590549715060"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
