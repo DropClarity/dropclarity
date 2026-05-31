@@ -3237,4 +3237,43 @@ const analyzePageCss = `
   .assignModalFooter{padding-left:12px!important;padding-right:12px!important}
 }
 
+
+/* Responsive fix for Results Smart Insights / Recommended Actions cards only.
+   Prevents the 3-card inner grids from overflowing when the outer results grid
+   is in a two-column laptop / large-tablet layout. */
+.bottomAnalysisGrid{min-width:0!important}
+.bottomAnalysisGrid>div{min-width:0!important;overflow:hidden!important}
+.bottomAnalysisGrid>div>.mt-4.grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))!important;
+  min-width:0!important;
+}
+.bottomAnalysisGrid>div>.mt-4.grid>div,
+.bottomAnalysisGrid>div>.mt-4.grid>label{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+.bottomAnalysisGrid>div>.mt-4.grid .flex{min-width:0!important}
+.bottomAnalysisGrid>div>.mt-4.grid span,
+.bottomAnalysisGrid>div>.mt-4.grid p{
+  min-width:0!important;
+  max-width:100%!important;
+}
+.bottomAnalysisGrid>div>.mt-4.grid span.rounded-full{
+  flex-shrink:1!important;
+  white-space:normal!important;
+  text-align:center!important;
+}
+@media(min-width:1024px) and (max-width:1450px){
+  .bottomAnalysisGrid{grid-template-columns:1fr!important}
+  .bottomAnalysisGrid>div>.mt-4.grid{
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))!important;
+  }
+}
+@media(max-width:760px){
+  .bottomAnalysisGrid>div>.mt-4.grid{grid-template-columns:1fr!important}
+  .bottomAnalysisGrid>div>.mt-4.grid>div,
+  .bottomAnalysisGrid>div>.mt-4.grid>label{padding:14px!important}
+}
+
 `;
