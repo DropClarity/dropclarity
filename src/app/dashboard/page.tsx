@@ -10897,4 +10897,426 @@ main.dc-bg .scaleMiniStats strong{
   }
 }
 
+/* Launch readiness layer: visual stability, responsive containment, and polished interaction states. */
+main.dc-bg,
+main.dc-bg *{
+  box-sizing:border-box;
+}
+
+main.dc-bg{
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+}
+
+main.dc-bg .wrap,
+main.dc-bg .topbar,
+main.dc-bg .rangeWrap,
+main.dc-bg .dcDashboardSection,
+main.dc-bg .profitSnapshot,
+main.dc-bg .scalePanel,
+main.dc-bg .panel,
+main.dc-bg .chartCard,
+main.dc-bg .creditKpiPanel,
+main.dc-bg .jobHero,
+main.dc-bg .jobPage,
+main.dc-bg .allJobsDetailShell,
+main.dc-bg .highRiskPage,
+main.dc-bg .reportsManagerPage,
+main.dc-bg .cleanModeShell,
+main.dc-bg .internalQuickControls,
+main.dc-bg .internalUtilityTopbar{
+  min-width:0!important;
+}
+
+main.dc-bg .panel,
+main.dc-bg .chartCard,
+main.dc-bg .creditKpiPanel,
+main.dc-bg .scalePanel,
+main.dc-bg .cleanModeShell,
+main.dc-bg .jobHero,
+main.dc-bg .reportsManagerPanel,
+main.dc-bg .highRiskHero{
+  isolation:isolate;
+}
+
+main.dc-bg .panel,
+main.dc-bg .chartCard,
+main.dc-bg .creditKpiPanel,
+main.dc-bg .scalePanel,
+main.dc-bg .cleanModeShell,
+main.dc-bg .jobHero,
+main.dc-bg .reportsManagerPanel,
+main.dc-bg .highRiskHero,
+main.dc-bg .profitSnapshot{
+  border-color:rgba(15,23,42,.075)!important;
+}
+
+main.dc-bg .panelHead,
+main.dc-bg .chartHead,
+main.dc-bg .responsiveHead,
+main.dc-bg .modeContextHeader,
+main.dc-bg .reportsManagerHead,
+main.dc-bg .premiumScaleHead,
+main.dc-bg .spreadsheetJobHead{
+  min-width:0!important;
+}
+
+main.dc-bg .panelHead > div,
+main.dc-bg .chartHead > div,
+main.dc-bg .responsiveHead > div,
+main.dc-bg .modeContextHeader > div,
+main.dc-bg .reportsManagerHead > div,
+main.dc-bg .premiumScaleHead > div,
+main.dc-bg .spreadsheetJobHead > div,
+main.dc-bg .dashboardIntro,
+main.dc-bg .topbarRight,
+main.dc-bg .internalUtilityRight,
+main.dc-bg .internalQuickActions,
+main.dc-bg .tableTools,
+main.dc-bg .reportManagerTools,
+main.dc-bg .reportsManagerTools,
+main.dc-bg .modeHeaderActions,
+main.dc-bg .scaleHeadRight{
+  min-width:0!important;
+}
+
+main.dc-bg .pageSub,
+main.dc-bg .panelSub,
+main.dc-bg .chartSub,
+main.dc-bg .modeSub,
+main.dc-bg .heroSub,
+main.dc-bg .jobHeroSub,
+main.dc-bg .reportsManagerSub,
+main.dc-bg .highRiskSub,
+main.dc-bg .itemMeta,
+main.dc-bg .jobMeta,
+main.dc-bg .riskJobMeta,
+main.dc-bg .premiumReportMeta,
+main.dc-bg .allJobsStackJobMeta,
+main.dc-bg .adjustmentHistoryMeta,
+main.dc-bg .jobUpdateHint,
+main.dc-bg .jobUpdateMessage{
+  overflow-wrap:anywhere!important;
+}
+
+main.dc-bg .btn,
+main.dc-bg .miniBtn,
+main.dc-bg .rangeBtn,
+main.dc-bg .crumbBtn,
+main.dc-bg .reportsManageLink,
+main.dc-bg .reportMoreLink,
+main.dc-bg .lowkeyHideJobBtn,
+main.dc-bg .adjustmentHistoryDelete{
+  touch-action:manipulation;
+}
+
+main.dc-bg .btn:focus-visible,
+main.dc-bg .miniBtn:focus-visible,
+main.dc-bg .rangeBtn:focus-visible,
+main.dc-bg .crumbBtn:focus-visible,
+main.dc-bg .reportsManageLink:focus-visible,
+main.dc-bg .reportMoreLink:focus-visible,
+main.dc-bg .lowkeyHideJobBtn:focus-visible,
+main.dc-bg .cellEdit:focus-visible,
+main.dc-bg .searchInput:focus-visible,
+main.dc-bg .selectInput:focus-visible,
+main.dc-bg .compactTargetInput:focus-visible,
+main.dc-bg .customDates input:focus-visible,
+main.dc-bg .jobUpdateUploadBox:focus-visible-within{
+  outline:3px solid rgba(34,211,238,.22)!important;
+  outline-offset:2px!important;
+  border-color:rgba(8,145,178,.46)!important;
+}
+
+main.dc-bg .searchInput,
+main.dc-bg .selectInput,
+main.dc-bg .cellEdit,
+main.dc-bg .compactTargetInput,
+main.dc-bg .customDates input,
+main.dc-bg .targetInput,
+main.dc-bg .jobUpdateSelect{
+  max-width:100%!important;
+}
+
+main.dc-bg .tableWrap,
+main.dc-bg .reportsTableWrap,
+main.dc-bg .comparisonTableWrap,
+main.dc-bg .mobileSpreadsheetScroller{
+  max-width:100%!important;
+  overflow-x:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+main.dc-bg .jobsTable,
+main.dc-bg .reportsTable,
+main.dc-bg .comparisonTable,
+main.dc-bg .jobTable{
+  max-width:none!important;
+}
+
+main.dc-bg .jobsTable td,
+main.dc-bg .reportsTable td,
+main.dc-bg .comparisonTable td{
+  vertical-align:middle!important;
+}
+
+main.dc-bg .jobsTable .jobName,
+main.dc-bg .premiumReportName,
+main.dc-bg .allJobsStackJobName,
+main.dc-bg .riskJobName,
+main.dc-bg .adjustmentHistoryFile,
+main.dc-bg .sourceDocLink{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+}
+
+main.dc-bg .kpi,
+main.dc-bg .stat,
+main.dc-bg .profitSnapshotMetric,
+main.dc-bg .creditKpiCard,
+main.dc-bg .scaleMiniStats > div,
+main.dc-bg .premiumReportMetrics > div,
+main.dc-bg .reportsManagerStat,
+main.dc-bg .watchCard,
+main.dc-bg .miniPanel{
+  min-width:0!important;
+  overflow:hidden!important;
+}
+
+main.dc-bg .kValue,
+main.dc-bg .statValue,
+main.dc-bg .profitSnapshotMetric strong,
+main.dc-bg .creditKpiValue,
+main.dc-bg .scaleRecoveryValue,
+main.dc-bg .reportsManagerTitle{
+  max-width:100%!important;
+  overflow-wrap:anywhere!important;
+}
+
+main.dc-bg canvas{
+  max-width:100%!important;
+  height:auto!important;
+}
+
+main.dc-bg .empty,
+main.dc-bg .trendEmpty,
+main.dc-bg .adjustmentHistoryEmpty,
+main.dc-bg .sourceDocsLoading{
+  border-radius:16px!important;
+  border:1px solid rgba(15,23,42,.075)!important;
+  background:rgba(248,250,252,.82)!important;
+}
+
+main.dc-bg .dcOpsGrid,
+main.dc-bg .grid,
+main.dc-bg .charts,
+main.dc-bg .jobCharts,
+main.dc-bg .supportGrid,
+main.dc-bg .benchmarkGrid,
+main.dc-bg .benchmarkGridV2,
+main.dc-bg .scaleGridPremiumV2,
+main.dc-bg .scaleExecutiveGrid,
+main.dc-bg .scalePremiumGrid,
+main.dc-bg .driverGrid,
+main.dc-bg .comparisonGrid,
+main.dc-bg .reportsManagerBody,
+main.dc-bg .cleanReportsSummaryBody{
+  min-width:0!important;
+}
+
+main.dc-bg .dcOpsGrid > *,
+main.dc-bg .grid > *,
+main.dc-bg .charts > *,
+main.dc-bg .jobCharts > *,
+main.dc-bg .supportGrid > *,
+main.dc-bg .benchmarkGrid > *,
+main.dc-bg .benchmarkGridV2 > *,
+main.dc-bg .scaleGridPremiumV2 > *,
+main.dc-bg .scaleExecutiveGrid > *,
+main.dc-bg .scalePremiumGrid > *,
+main.dc-bg .driverGrid > *,
+main.dc-bg .comparisonGrid > *,
+main.dc-bg .reportsManagerBody > *,
+main.dc-bg .cleanReportsSummaryBody > *{
+  min-width:0!important;
+}
+
+main.dc-bg .jobUpdateControls,
+main.dc-bg .jobUpdateUploadBox,
+main.dc-bg .jobUpdateUploadText,
+main.dc-bg .adjustmentHistoryItem,
+main.dc-bg .adjustmentHistoryBody,
+main.dc-bg .premiumReportTopline,
+main.dc-bg .premiumReportIdentity,
+main.dc-bg .riskQueueCard,
+main.dc-bg .scaleQueueItem,
+main.dc-bg .scaleTopOpportunity{
+  min-width:0!important;
+}
+
+@media (min-width:1181px){
+  main.dc-bg:not(.internal-view-bg) .dcOpsGrid{
+    grid-template-columns:minmax(0,1fr) minmax(340px,410px)!important;
+  }
+
+  main.dc-bg .reportsManagerBody.cleanReportsSummaryBody{
+    grid-template-columns:minmax(0,1fr) minmax(300px,420px)!important;
+  }
+}
+
+@media (max-width:1180px){
+  main.dc-bg .dcOpsGrid,
+  main.dc-bg .grid,
+  main.dc-bg .charts,
+  main.dc-bg .jobCharts,
+  main.dc-bg .highRiskHeroBody,
+  main.dc-bg .reportsManagerBody,
+  main.dc-bg .cleanReportsSummaryBody,
+  main.dc-bg .decisionJobHeroBody{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .sideStack{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .sideStack > .pastReportsPanel{
+    grid-column:1 / -1!important;
+  }
+}
+
+@media (max-width:900px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    width:100%!important;
+    max-width:none!important;
+    padding-inline:14px!important;
+  }
+
+  main.dc-bg .topbar,
+  main.dc-bg .rangeWrap,
+  main.dc-bg .internalUtilityTopbar,
+  main.dc-bg .internalQuickControls,
+  main.dc-bg .modeContextHeader,
+  main.dc-bg .panelHead,
+  main.dc-bg .responsiveHead,
+  main.dc-bg .chartHead,
+  main.dc-bg .scaleCardHeadSplit,
+  main.dc-bg .premiumScaleHead,
+  main.dc-bg .reportsManagerHeroTop{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    align-items:start!important;
+  }
+
+  main.dc-bg .topbarRight,
+  main.dc-bg .rangeRight,
+  main.dc-bg .internalUtilityRight,
+  main.dc-bg .internalQuickActions,
+  main.dc-bg .statusRow,
+  main.dc-bg .tableTools,
+  main.dc-bg .reportManagerTools,
+  main.dc-bg .reportsManagerTools,
+  main.dc-bg .modeHeaderActions{
+    width:100%!important;
+    max-width:none!important;
+  }
+
+  main.dc-bg .profitSnapshotMetrics,
+  main.dc-bg .kpis,
+  main.dc-bg .jobStats,
+  main.dc-bg .creditKpiGrid,
+  main.dc-bg .scaleMiniStats,
+  main.dc-bg .premiumReportMetrics,
+  main.dc-bg .reportsManagerStats,
+  main.dc-bg .allJobsSubtotalGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  main.dc-bg .sideStack{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .jobRowActions,
+  main.dc-bg .riskActions,
+  main.dc-bg .reportsBulkActions{
+    flex-wrap:wrap!important;
+  }
+}
+
+@media (max-width:640px){
+  main.dc-bg .wrap,
+  main.dc-bg.internal-view-bg .wrap{
+    padding-inline:12px!important;
+  }
+
+  main.dc-bg .statusRow,
+  main.dc-bg .rangeRight,
+  main.dc-bg .rangeButtons,
+  main.dc-bg .customDates,
+  main.dc-bg .tableTools,
+  main.dc-bg .reportManagerTools,
+  main.dc-bg .reportsManagerTools,
+  main.dc-bg .modeHeaderActions,
+  main.dc-bg .spreadsheetJobActions,
+  main.dc-bg .buttonRow{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+
+  main.dc-bg .statusRow > *,
+  main.dc-bg .rangeRight > *,
+  main.dc-bg .rangeButtons > *,
+  main.dc-bg .customDates > *,
+  main.dc-bg .tableTools > *,
+  main.dc-bg .reportManagerTools > *,
+  main.dc-bg .reportsManagerTools > *,
+  main.dc-bg .modeHeaderActions > *,
+  main.dc-bg .spreadsheetJobActions > *,
+  main.dc-bg .buttonRow > *,
+  main.dc-bg .riskActions .btn,
+  main.dc-bg .reportsBulkActions .btn{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+  }
+
+  main.dc-bg .profitSnapshotMetrics,
+  main.dc-bg .kpis,
+  main.dc-bg .jobStats,
+  main.dc-bg .creditKpiGrid,
+  main.dc-bg .scaleMiniStats,
+  main.dc-bg .premiumReportMetrics,
+  main.dc-bg .reportsManagerStats,
+  main.dc-bg .allJobsSubtotalGrid,
+  main.dc-bg .mobileJobSummaryGrid,
+  main.dc-bg .responsiveJobInfoGrid{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .premiumReportTopline,
+  main.dc-bg .adjustmentHistoryTop,
+  main.dc-bg .riskJobTop,
+  main.dc-bg .scaleQueueItem,
+  main.dc-bg .profitSnapshotOpportunity{
+    grid-template-columns:1fr!important;
+  }
+
+  main.dc-bg .profitSnapshotOpportunity em,
+  main.dc-bg .scaleQueueImpact,
+  main.dc-bg .premiumReportProfitBlock{
+    justify-self:start!important;
+  }
+
+  main.dc-bg .sourceDocLink,
+  main.dc-bg .premiumReportName,
+  main.dc-bg .jobName,
+  main.dc-bg .allJobsStackJobName{
+    white-space:normal!important;
+    text-overflow:clip!important;
+  }
+}
+
 `;
