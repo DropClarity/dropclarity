@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import posthog from "posthog-js";
 
@@ -19,31 +19,33 @@ type PricingPlan = {
 };
 
 export default function Home() {
+  const demoVideoEmbedUrl = "https://customer-dk0jsm9wurxie5ax.cloudflarestream.com/99a683cbdab9b578a51857cb0f2990a9/iframe";
   const [showDemo, setShowDemo] = useState(false);
   const [pricingIndex, setPricingIndex] = useState(1);
-  const demoVideoRef = useRef<HTMLVideoElement | null>(null);
+  const demoVideoRef = useRef<HTMLIFrameElement | null>(null);
   const pricingTouchStartX = useRef<number | null>(null);
   const pricingTouchEndX = useRef<number | null>(null);
   const { openSignUp } = useClerk();
   const { isLoaded, isSignedIn } = useUser();
 
+  useEffect(() => {
+    if (!showDemo || typeof document === "undefined") return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [showDemo]);
+
   async function expandDemoVideo() {
     const video = demoVideoRef.current;
     if (!video) return;
 
-    const mobileVideo = video as HTMLVideoElement & {
-      webkitEnterFullscreen?: () => void;
-      webkitSupportsFullscreen?: boolean;
-    };
-
     try {
       if (video.requestFullscreen) {
         await video.requestFullscreen();
-        return;
-      }
-
-      if (mobileVideo.webkitEnterFullscreen) {
-        mobileVideo.webkitEnterFullscreen();
       }
     } catch {
       // Fullscreen can be blocked by some browsers. The modal player still remains usable.
@@ -272,7 +274,7 @@ export default function Home() {
                 <span className="grid h-6 w-6 place-items-center rounded-full bg-violet-500 text-[10px] text-white shadow-sm transition group-hover:bg-violet-600">
                   ▶
                 </span>
-                Watch Demo
+                See It In Action
               </button>
               <a
                 href="/pricing"
@@ -886,7 +888,7 @@ export default function Home() {
 
       {showDemo && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-5 sm:py-6"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-3 py-6 backdrop-blur-md sm:px-6 sm:py-8 md:px-8 md:py-10"
           role="dialog"
           aria-modal="true"
           aria-label="DropClarity demo video"
@@ -941,13 +943,13 @@ export default function Home() {
               </button>
             </div>
 
-            <video
+            <iframe
               ref={demoVideoRef}
-              src="/videos/dropclarity-demo.mp4"
-              controls
-              autoPlay
-              playsInline
-              className="aspect-video max-h-[88vh] w-full bg-black object-contain"
+              src={demoVideoEmbedUrl}
+              title="DropClarity demo video"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+              allowFullScreen
+              className="aspect-video max-h-[calc(100dvh-3rem)] w-full border-0 bg-black sm:max-h-[calc(100dvh-4rem)] md:max-h-[calc(100dvh-5rem)]"
             />
           </div>
         </div>
