@@ -19,7 +19,7 @@ type PricingPlan = {
 };
 
 export default function Home() {
-  const demoVideoEmbedUrl = "https://customer-dk0jsm9wurxie5ax.cloudflarestream.com/99a683cbdab9b578a51857cb0f2990a9/iframe";
+  const demoVideoEmbedUrl = "https://customer-dk0jsm9wurxie5ax.cloudflarestream.com/5c1347452ba3076bab79298fcaa6b9ac/iframe";
   const [showDemo, setShowDemo] = useState(false);
   const [pricingIndex, setPricingIndex] = useState(1);
   const demoVideoRef = useRef<HTMLIFrameElement | null>(null);
