@@ -39,8 +39,9 @@ export default function PostHogInitializer() {
 
     if (isSignedIn && user?.id) {
       posthog.identify(user.id, {
+        name: user.fullName || user.username || user.id,
         login_id: user.id,
-        display_name: user.fullName || user.username || "Logged-in user",
+        username: user.username || null,
         is_logged_in: true,
       });
       wasSignedInRef.current = true;
