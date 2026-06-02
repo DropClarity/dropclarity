@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useUser } from "@clerk/nextjs";
 import posthog from "posthog-js";
 
 const posthogApiKey =
@@ -9,6 +10,9 @@ const posthogApiKey =
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
 
 export default function PostHogInitializer() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const wasSignedInRef = useRef(false);
+
   useEffect(() => {
     if (!posthogApiKey) {
       console.warn("NEXT_PUBLIC_POSTHOG_KEY or NEXT_PUBLIC_POSTHOG_API_KEY is not set. PostHog will not initialize.");
@@ -27,6 +31,27 @@ export default function PostHogInitializer() {
       },
     });
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !posthogApiKey) {
+      return;
+    }
+
+    if (isSignedIn && user?.id) {
+      posthog.identify(user.id, {
+        login_id: user.id,
+        display_name: user.fullName || user.username || "Logged-in user",
+        is_logged_in: true,
+      });
+      wasSignedInRef.current = true;
+      return;
+    }
+
+    if (wasSignedInRef.current && isSignedIn === false) {
+      posthog.reset();
+      wasSignedInRef.current = false;
+    }
+  }, [isLoaded, isSignedIn, user?.id, user?.fullName, user?.username]);
 
   return null;
 }
