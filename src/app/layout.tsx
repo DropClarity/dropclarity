@@ -40,6 +40,7 @@ export default function RootLayout({
     <html lang="en" className="bg-slate-50">
       <body className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-950 [color-scheme:light]">
         <ClerkProvider>
+          <PostHogInitializer />
           <div className="flex min-h-dvh flex-col bg-white [overscroll-behavior-y:none]">
             <SiteHeader />
 
@@ -156,7 +157,6 @@ export default function RootLayout({
           </div>
         </ClerkProvider>
         <Analytics />
-        <PostHogInitializer />
       </body>
     </html>
   );
