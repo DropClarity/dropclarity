@@ -4979,14 +4979,6 @@ function JobEditor({
           <div className="stat"><div className="statLabel">Manual Categories</div><div className="statValue">{job.custom_categories.length}</div><div className="statSub">Commission, labor hours, reserves, etc.</div></div>
         </div>
 
-        <div className="jobAnalysisHeader">
-          <div>
-            <div className="sectionEyebrow">Job Analysis</div>
-            <div className="sectionTitle">Edit, adjust, and understand this job’s profitability</div>
-          </div>
-          <div className="sectionSubtle">Focused view for one job.</div>
-        </div>
-
         <JobComparisonPanel base={base} state={state} marginTarget={marginTarget} />
           </>
         ) : null}
