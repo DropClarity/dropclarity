@@ -10,6 +10,7 @@ type PricingPlan = {
   id: "free" | PlanId;
   name: string;
   price: string;
+  originalPrice?: string;
   subtitle: string;
   description: string;
   cta: string;
@@ -17,6 +18,120 @@ type PricingPlan = {
   featured: boolean;
   features: string[];
 };
+
+const blackFridayMessages = [
+  "BLACK FRIDAY DEAL",
+  "SAVE $100/MONTH ON CORE & SCALE",
+  "CORE $399/MO • SCALE $799/MO",
+  "LIMITED-TIME OFFER",
+];
+
+function BlackFridayAnnouncement() {
+  const [dismissed, setDismissed] = useState(false);
+  const [repeatCount, setRepeatCount] = useState(1);
+  const viewportRef = useRef<HTMLAnchorElement>(null);
+  const sequenceRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (dismissed) return;
+    const viewport = viewportRef.current;
+    const sequence = sequenceRef.current;
+    if (!viewport || !sequence) return;
+
+    const resize = () => {
+      const sequenceWidth = sequence.getBoundingClientRect().width;
+      if (sequenceWidth > 0) {
+        setRepeatCount(Math.max(1, Math.ceil(viewport.clientWidth / sequenceWidth)));
+      }
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(viewport);
+    observer.observe(sequence);
+    resize();
+    return () => observer.disconnect();
+  }, [dismissed]);
+
+  if (dismissed) return null;
+
+  return (
+    <aside
+      aria-label="Black Friday promotion"
+      className="black-friday-banner relative flex h-10 w-full border-b border-violet-400/20 bg-slate-950 text-white"
+    >
+      <a
+        ref={viewportRef}
+        href="/pricing"
+        aria-label="Black Friday: Core $399 per month and Scale $799 per month. View pricing."
+        className="flex min-w-0 flex-1 items-center overflow-hidden bg-gradient-to-r from-violet-500/10 via-transparent to-violet-500/10 text-[12px] font-bold leading-5 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-violet-300 sm:text-sm"
+      >
+        <span
+          className="ticker-track flex w-max shrink-0 flex-nowrap whitespace-nowrap"
+          style={{ animationDuration: `${repeatCount * 20}s` }}
+          aria-hidden="true"
+        >
+          {[0, 1].map((copy) => (
+            <span key={copy} className="flex w-max shrink-0 flex-nowrap">
+              {Array.from({ length: repeatCount }, (_, repetition) => (
+                <span
+                  key={repetition}
+                  ref={copy === 0 && repetition === 0 ? sequenceRef : undefined}
+                  className="flex w-max shrink-0 flex-nowrap items-center"
+                >
+                  {blackFridayMessages.map((message) => (
+                    <span key={message} className="inline-flex shrink-0 items-center gap-6 whitespace-nowrap pr-6 sm:gap-8 sm:pr-8">
+                      <span className="whitespace-nowrap">{message}</span>
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3 shrink-0 text-violet-400">
+                        <path d="M8 0 10.2 5.8 16 8l-5.8 2.2L8 16l-2.2-5.8L0 8l5.8-2.2Z" />
+                      </svg>
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </span>
+          ))}
+        </span>
+        <span aria-hidden="true" className="ticker-static whitespace-nowrap px-2 text-center text-[12px] leading-4 sm:text-sm">
+          CORE $399/MO • SCALE $799/MO
+        </span>
+      </a>
+      <button
+        type="button"
+        onClick={() => setDismissed(true)}
+        aria-label="Dismiss Black Friday promotion"
+        className="flex w-11 shrink-0 items-center justify-center border-l border-violet-400/20 bg-slate-950 text-slate-300 transition-colors hover:bg-violet-500/10 hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-violet-300 motion-reduce:transition-none"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" className="h-4 w-4">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
+      <style jsx global>{`
+        .black-friday-banner .ticker-track {
+          animation: black-friday-ticker 20s linear infinite;
+        }
+        .black-friday-banner .ticker-static {
+          display: none;
+        }
+        .black-friday-banner:hover .ticker-track,
+        .black-friday-banner:focus-within .ticker-track {
+          animation-play-state: paused;
+        }
+        @keyframes black-friday-ticker {
+          to { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .black-friday-banner .ticker-track {
+            display: none;
+            animation: none;
+          }
+          .black-friday-banner .ticker-static {
+            display: block;
+            width: 100%;
+          }
+        }
+      `}</style>
+    </aside>
+  );
+}
 
 export default function Home() {
   const demoVideoEmbedUrl = "https://customer-dk0jsm9wurxie5ax.cloudflarestream.com/5c1347452ba3076bab79298fcaa6b9ac/iframe";
@@ -88,7 +203,8 @@ export default function Home() {
     {
       id: "core",
       name: "DropClarity Core",
-      price: "$499/mo",
+      price: "$399/mo",
+      originalPrice: "$499/mo",
       subtitle: "See exactly where your profit is made and lost",
       description:
         "For home service businesses that want full visibility into job profitability to identify margin issues, cost leaks, and underperforming work.",
@@ -106,7 +222,8 @@ export default function Home() {
     {
       id: "scale",
       name: "DropClarity Scale",
-      price: "$999/mo",
+      price: "$799/mo",
+      originalPrice: "$999/mo",
       subtitle: "Real-time profit protection & automated alerts",
       description:
         "For growing home service teams that want to automatically detect profit leaks, flag high-risk jobs, and take action before losses grow.",
@@ -235,11 +352,12 @@ export default function Home() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950 [font-family:ui-sans-serif,system-ui,-apple-system,Segoe_UI,Roboto,Arial]">
-      <section className="relative overflow-hidden border-b border-slate-100">
+      <BlackFridayAnnouncement />
+      <section className="home-hero relative overflow-hidden border-b border-slate-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_28%,rgba(139,92,246,.18),transparent_32%),radial-gradient(circle_at_82%_72%,rgba(59,130,246,.18),transparent_36%),linear-gradient(135deg,#ffffff,#ffffff,#f8fbff)]" />
 
-        <div className="relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-20 xl:grid-cols-[0.86fr_1.14fr] xl:gap-16 xl:py-28 2xl:py-32">
-          <div className="w-full max-w-[760px]">
+        <div className="hero-grid relative mx-auto grid w-full max-w-[1760px] items-center gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-20 xl:grid-cols-[0.86fr_1.14fr] xl:gap-16 xl:py-28 2xl:py-32">
+          <div className="hero-copy w-full max-w-[760px]">
             <div className="mb-5 inline-flex rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-black text-violet-700 shadow-sm shadow-violet-100/70 sm:text-sm">
               Built for home service operators
             </div>
@@ -255,7 +373,7 @@ export default function Home() {
               Upload invoices, job exports, and cost files to instantly uncover profit leaks, margin risks, and underperforming work.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="hero-actions mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 href="/app"
                 onClick={() => posthog.capture("analyze cta clicked")}
@@ -289,7 +407,7 @@ export default function Home() {
               No setup required • Works with your existing job files
             </div>
 
-            <div className="mt-7 grid max-w-[690px] grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="hero-stats mt-7 grid max-w-[690px] grid-cols-1 gap-3 sm:grid-cols-3">
               {[
                 ["20–30%", "jobs underpriced"],
                 ["$5k–$20k+", "profit lost monthly"],
@@ -303,11 +421,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[820px] min-w-0 xl:max-w-none">
+          <div className="hero-preview relative mx-auto w-full max-w-[820px] min-w-0 xl:max-w-none">
             <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-violet-300/45 via-blue-200/40 to-cyan-100/45 blur-3xl sm:-inset-6 xl:-inset-8" />
 
             <div className="relative min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_28px_90px_rgba(59,130,246,0.22)]">
-              <div className="border-b border-slate-100 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
+              <div className="preview-header border-b border-slate-100 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-sm font-black text-slate-950">
@@ -332,8 +450,8 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-5">
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="preview-body p-4 sm:p-5">
+                <div className="preview-metrics grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {[
                     ["Recoverable", "$65,531", "text-orange-600"],
                     ["Net Profit", "$1.19M", "text-emerald-600"],
@@ -356,7 +474,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <div className="mt-4 rounded-[24px] border border-amber-100 bg-gradient-to-br from-white via-amber-50/55 to-cyan-50/55 p-4 shadow-sm sm:p-5">
+                <div className="preview-opportunities mt-4 rounded-[24px] border border-amber-100 bg-gradient-to-br from-white via-amber-50/55 to-cyan-50/55 p-4 shadow-sm sm:p-5">
                   <div className="grid gap-4 lg:grid-cols-[1fr_0.95fr]">
                     <div className="min-w-0">
                       <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-600 sm:text-[11px]">
@@ -401,7 +519,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+                <div className="preview-details mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
                   <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -470,7 +588,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-4 text-white sm:p-5">
+                <div className="preview-summary mt-4 rounded-2xl border border-slate-200 bg-slate-950 p-4 text-white sm:p-5">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                       <div className="text-sm font-black">
@@ -707,7 +825,19 @@ export default function Home() {
                           </div>
 
                           <div className="mt-1 border-y border-slate-100 py-4 sm:py-6">
+                            {plan.originalPrice ? (
+                              <div className="mb-3 flex flex-col items-start gap-2">
+                                <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black leading-5 text-violet-700 sm:text-xs">
+                                  Black Friday promotion
+                                </span>
+                                <span className="text-base font-bold leading-6 text-slate-500 sm:text-lg">
+                                  <span className="sr-only">Original price: </span>
+                                  <s>{plan.originalPrice}</s>
+                                </span>
+                              </div>
+                            ) : null}
                             <div className="text-[30px] font-black leading-none tracking-[-0.045em] text-slate-950 sm:text-[40px]">
+                              {plan.originalPrice ? <span className="sr-only">Promotional price: </span> : null}
                               {plan.price}
                             </div>
                           </div>
@@ -804,7 +934,19 @@ export default function Home() {
                   </div>
 
                   <div className="mt-2 border-y border-slate-100 py-6">
+                    {plan.originalPrice ? (
+                      <div className="mb-3 flex flex-col items-start gap-2">
+                        <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black leading-5 text-violet-700">
+                          Black Friday promotion
+                        </span>
+                        <span className="text-lg font-bold leading-6 text-slate-500">
+                          <span className="sr-only">Original price: </span>
+                          <s>{plan.originalPrice}</s>
+                        </span>
+                      </div>
+                    ) : null}
                     <div className="text-[42px] font-black leading-none tracking-[-0.045em] text-slate-950">
+                      {plan.originalPrice ? <span className="sr-only">Promotional price: </span> : null}
                       {plan.price}
                     </div>
                   </div>
@@ -956,6 +1098,76 @@ export default function Home() {
       )}
 
       <style jsx global>{`
+        /* Keep the full desktop composition on tall monitors; compact only
+           desktop viewports with less vertical space. */
+        @media (min-width: 1280px) and (max-height: 1080px) {
+          .home-hero .hero-grid {
+            max-width: 1600px;
+            grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+            gap: clamp(24px, 2.5vw, 48px);
+            padding-top: clamp(24px, 4vh, 44px);
+            padding-bottom: clamp(24px, 4vh, 44px);
+          }
+          .home-hero .hero-copy { min-width: 0; }
+          .home-hero h1 {
+            font-size: clamp(44px, 3.2vw, 58px);
+            padding-top: 4px;
+            padding-bottom: 4px;
+          }
+          .home-hero .hero-copy > p {
+            margin-top: 12px;
+            font-size: 16px;
+            line-height: 1.65;
+          }
+          .home-hero .hero-actions {
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .home-hero .hero-actions > a,
+          .home-hero .hero-actions > button {
+            padding: 12px 16px;
+            font-size: 12px;
+            white-space: nowrap;
+          }
+          .home-hero .hero-stats { margin-top: 20px; gap: 8px; }
+          .home-hero .hero-stats > div { padding: 12px; }
+          .home-hero .hero-stats > div > div:first-child { font-size: 18px; }
+          .home-hero .hero-stats > div > div:last-child { font-size: 10px; }
+          .home-hero .preview-header { padding: 12px 16px; }
+          .home-hero .preview-header > div { gap: 8px; flex-wrap: wrap; }
+          .home-hero .preview-body { padding: 12px; }
+          .home-hero .preview-metrics { gap: 8px; }
+          .home-hero .preview-metrics > div { padding: 10px; }
+          .home-hero .preview-metrics > div > div:last-child { font-size: 20px; }
+          .home-hero .preview-opportunities,
+          .home-hero .preview-summary { margin-top: 12px; padding: 12px; }
+          .home-hero .preview-opportunities > div { gap: 12px; }
+          .home-hero .preview-opportunities h3 { font-size: 24px; }
+          .home-hero .preview-opportunities p { margin-top: 8px; font-size: 12px; line-height: 1.5; }
+          .home-hero .preview-opportunities > div > div:last-child { gap: 8px; }
+          .home-hero .preview-opportunities > div > div:last-child > div { padding: 10px; }
+          .home-hero .preview-details { margin-top: 12px; gap: 10px; }
+          .home-hero .preview-details > div { padding: 12px; }
+          .home-hero .preview-details > div > div:last-child { margin-top: 10px; gap: 8px; }
+          .home-hero .preview-details > div > div:last-child > div {
+            padding: 10px;
+            margin-top: 8px;
+          }
+          .home-hero .preview-summary > div { gap: 12px; }
+          .home-hero .preview-summary > div > div:last-child { padding: 10px 12px; }
+        }
+        @media (min-width: 1280px) and (max-height: 900px) {
+          .home-hero .hero-grid { padding-top: 24px; padding-bottom: 24px; }
+          .home-hero h1 { font-size: clamp(42px, 3.1vw, 50px); }
+          .home-hero .preview-metrics > div > div:last-child { font-size: 18px; }
+          .home-hero .preview-opportunities h3 { font-size: 21px; }
+          .home-hero .preview-details { font-size: 14px; }
+          .home-hero .preview-summary > div > div:first-child > div:last-child {
+            font-size: 12px;
+            line-height: 1.5;
+          }
+        }
         @keyframes dc-watch-demo-bounce {
           0%,
           100% {

@@ -10,6 +10,7 @@ type PricingPlan = {
   id: "free" | PlanId;
   name: string;
   price: string;
+  originalPrice?: string;
   subtitle: string;
   description: string;
   cta: string;
@@ -39,7 +40,8 @@ const pricing: PricingPlan[] = [
   {
     id: "core",
     name: "DropClarity Core",
-    price: "$499/mo",
+    price: "$399/mo",
+    originalPrice: "$499/mo",
     subtitle: "See exactly where your profit is made and lost",
     description:
       "For home service businesses that want full visibility into job profitability to identify margin issues, cost leaks, and underperforming work.",
@@ -57,7 +59,8 @@ const pricing: PricingPlan[] = [
   {
     id: "scale",
     name: "DropClarity Scale",
-    price: "$999/mo",
+    price: "$799/mo",
+    originalPrice: "$999/mo",
     subtitle: "Real-time profit protection & automated alerts",
     description:
       "For growing home service teams that want to automatically detect profit leaks, flag high-risk jobs, and take action before losses grow.",
@@ -278,7 +281,19 @@ export default function PricingPage() {
                           </div>
 
                           <div className="mt-1 border-y border-slate-100 py-4 sm:py-6">
+                            {plan.originalPrice ? (
+                              <div className="mb-3 flex flex-col items-start gap-2">
+                                <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black leading-5 text-violet-700 sm:text-xs">
+                                  Black Friday promotion
+                                </span>
+                                <span className="text-base font-bold leading-6 text-slate-500 sm:text-lg">
+                                  <span className="sr-only">Original price: </span>
+                                  <s>{plan.originalPrice}</s>
+                                </span>
+                              </div>
+                            ) : null}
                             <div className="text-[30px] font-black leading-none tracking-[-0.045em] text-slate-950 sm:text-[40px]">
+                              {plan.originalPrice ? <span className="sr-only">Promotional price: </span> : null}
                               {plan.price}
                             </div>
                           </div>
@@ -374,7 +389,19 @@ export default function PricingPage() {
                   </div>
 
                   <div className="mt-2 border-y border-slate-100 py-6">
+                    {plan.originalPrice ? (
+                      <div className="mb-3 flex flex-col items-start gap-2">
+                        <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black leading-5 text-violet-700">
+                          Black Friday promotion
+                        </span>
+                        <span className="text-lg font-bold leading-6 text-slate-500">
+                          <span className="sr-only">Original price: </span>
+                          <s>{plan.originalPrice}</s>
+                        </span>
+                      </div>
+                    ) : null}
                     <div className="text-[42px] font-black leading-none tracking-[-0.045em] text-slate-950">
+                      {plan.originalPrice ? <span className="sr-only">Promotional price: </span> : null}
                       {plan.price}
                     </div>
                   </div>
