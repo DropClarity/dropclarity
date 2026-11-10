@@ -1823,7 +1823,7 @@ export default function AppPage() {
     "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:shadow-none disabled:hover:border-slate-200 disabled:hover:shadow-none";
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-white">
+    <main className="analyzePage relative min-h-screen overflow-x-hidden bg-white">
       <style dangerouslySetInnerHTML={{ __html: analyzePageCss }} />
       <section className="analyzeShell relative z-0 overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_18%,#f8fbff_52%,#ffffff_100%)] px-4 py-8 sm:px-5 sm:py-10 lg:px-6 lg:py-12">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -2473,14 +2473,14 @@ export default function AppPage() {
 
       {showWalkthrough && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-5 sm:py-6"
+          className="analyzeWalkthrough fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-2 py-3 backdrop-blur-md sm:px-5 sm:py-6"
           role="dialog"
           aria-modal="true"
           aria-label="DropClarity analyze walkthrough video"
           onClick={() => setShowWalkthrough(false)}
         >
           <div
-            className="relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
+            className="analyzeWalkthroughFrame relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
@@ -3274,6 +3274,98 @@ const analyzePageCss = `
   .bottomAnalysisGrid>div>.mt-4.grid{grid-template-columns:1fr!important}
   .bottomAnalysisGrid>div>.mt-4.grid>div,
   .bottomAnalysisGrid>div>.mt-4.grid>label{padding:14px!important}
+}
+
+/* Compact desktop workspace only; preserve existing mobile and tall-monitor rules. */
+@media (min-width:1024px) and (max-height:1080px) {
+  .analyzePage .analyzeShell{padding-top:28px!important;padding-bottom:32px!important}
+  .analyzePage .analyzeWrap{width:100%;max-width:1600px;min-width:0}
+  .analyzePage .analyzeTopbar{gap:16px;margin-bottom:14px}
+  .analyzePage .analyzeTopbar>div{min-width:0}
+  .analyzePage .pageTitle{font-size:clamp(30px,2.4vw,38px)}
+  .analyzePage .pageSub{max-width:760px;font-size:15px;line-height:1.5}
+  .analyzePage .pageKicker{margin-bottom:8px;font-size:11px;padding:5px 10px}
+  .analyzePage .analyzeActions{gap:10px;margin-bottom:12px}
+  .analyzePage .analyzeActions button{padding:10px 16px;font-size:13px}
+  .analyzePage .uploadPanel>div:first-child,
+  .analyzePage .resultsPanel>div:first-child{padding:14px 16px!important}
+  .analyzePage .uploadPanel h2,
+  .analyzePage .resultsPanel h2{font-size:18px!important}
+  .analyzePage .uploadPanel [role="button"]{margin:14px!important;padding:14px!important}
+  .analyzePage .uploadHowItWorks{margin:0 14px 14px;padding:12px}
+  .analyzePage .howStepCard{gap:10px;padding:11px}
+  .analyzePage .howStepIcon{width:30px;height:30px;border-radius:11px}
+  .analyzePage .uploadPanel>div.grid{padding:0 14px 14px;gap:10px}
+  .analyzePage .uploadPanel>div.grid>div{min-width:0;padding:12px}
+  .analyzePage .resultsPanel{margin-top:16px;font-size:14px}
+  .analyzePage .resultsBody{padding:14px!important}
+  .analyzePage .resultKpiGrid{gap:10px!important}
+  .analyzePage .resultKpiGrid>div{min-width:0;padding:12px!important}
+  .analyzePage .resultKpiGrid>div div:first-child{font-size:11px!important}
+  .analyzePage .resultKpiGrid>div div:nth-child(2){
+    font-size:22px!important;overflow-wrap:anywhere;
+  }
+  .analyzePage .smartSummaryPanel,
+  .analyzePage .costMixPanel,
+  .analyzePage .analysisGrid>div,
+  .analyzePage .bottomAnalysisGrid>div{min-width:0;padding:14px!important}
+  .analyzePage .smartSummaryPanel h3{font-size:24px!important}
+  .analyzePage .analysisGrid,
+  .analyzePage .bottomAnalysisGrid{gap:12px!important}
+  .analyzePage .analysisGrid h3,
+  .analyzePage .bottomAnalysisGrid h3,
+  .analyzePage .costMixPanel h3{font-size:18px!important}
+  .analyzePage .costMixPanel>div.mt-4.grid{
+    grid-template-columns:200px minmax(0,1fr);gap:16px;
+  }
+  .analyzePage .costMixPanel>div.mt-4.grid>div.grid{
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;
+  }
+  .analyzePage .costMixPanel>div.mt-4.grid>div.grid>div{
+    min-width:0;padding:12px;font-size:14px;overflow-wrap:anywhere;
+  }
+  .analyzePage .classificationNumberInput{min-width:0;padding:10px 12px}
+  .analyzePage .assignModalOverlay{padding:20px!important}
+  .analyzePage .assignModal{
+    max-width:min(1360px,calc(100vw - 40px))!important;
+    max-height:calc(100dvh - 40px)!important;margin:0 auto!important;
+  }
+  .analyzePage .assignModalHeader{padding:16px 20px!important}
+  .analyzePage .assignModal h2{font-size:24px!important}
+  .analyzePage .assignModalBody{padding:16px 20px 20px!important;min-height:0}
+  .analyzePage .assignModalFooter{padding:12px 20px!important}
+  .analyzePage .assignmentQuickApply{padding:14px;margin-bottom:14px}
+  .analyzePage .assignmentGuide{gap:10px!important;margin-bottom:14px}
+  .analyzePage .assignmentGuideCard{padding:12px!important}
+  .analyzePage .assignmentFileGrid{gap:12px!important}
+  .analyzePage .assignmentFileCard{min-width:0;padding:16px!important}
+  .analyzePage .assignmentFileCard .mt-5{margin-top:14px!important}
+  .analyzePage .assignmentFileCard .gap-4{gap:12px!important}
+  .analyzePage .assignmentFileCard input,
+  .analyzePage .assignmentFileCard select,
+  .analyzePage .assignmentQuickApply input{
+    min-width:0;min-height:44px!important;padding:10px 12px;
+  }
+  .analyzePage .analyzeWalkthroughFrame{
+    max-width:min(96vw,1400px,calc((100dvh - 64px) * 16 / 9));
+  }
+  .analyzePage .analyzeWalkthrough video{max-height:calc(100dvh - 64px)}
+}
+@media (min-width:1024px) and (max-width:1535px) and (max-height:1080px) {
+  .analyzePage .resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .analyzePage .uploadHowItWorks>div{flex-direction:column}
+  .analyzePage .uploadHowItWorks>div>div:first-child{width:auto}
+  .analyzePage .assignmentFileCard>div.mt-5.grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+@media (min-width:1024px) and (max-height:900px) {
+  .analyzePage .analyzeShell{padding-top:20px!important;padding-bottom:24px!important}
+  .analyzePage .pageTitle{font-size:clamp(28px,2.3vw,34px)}
+  .analyzePage .pageSub{font-size:14px}
+  .analyzePage .assignModalHeader p{font-size:13px;line-height:1.5}
+  .analyzePage .assignModalHeader .inline-flex{margin-bottom:8px}
+  .analyzePage .assignModal h2{font-size:22px!important}
 }
 
 `;
