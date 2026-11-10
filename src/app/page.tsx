@@ -1031,14 +1031,14 @@ export default function Home() {
 
       {showDemo && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-3 py-6 backdrop-blur-md sm:px-6 sm:py-8 md:px-8 md:py-10"
+          className="home-demo-modal fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-3 py-6 backdrop-blur-md sm:px-6 sm:py-8 md:px-8 md:py-10"
           role="dialog"
           aria-modal="true"
           aria-label="DropClarity demo video"
           onClick={() => setShowDemo(false)}
         >
           <div
-            className="relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
+            className="home-demo-frame relative w-full max-w-[min(96vw,1400px)] overflow-hidden rounded-2xl bg-black shadow-2xl shadow-slate-950/50 sm:rounded-[1.75rem]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
@@ -1099,6 +1099,31 @@ export default function Home() {
       )}
 
       <style jsx global>{`
+        /* Match the Analyze walkthrough's desktop header clearance and sizing. */
+        @media (min-width: 1024px) {
+          .home-demo-modal { z-index: 10001; }
+        }
+        @media (min-width: 1024px) and (max-height: 1080px) {
+          .home-demo-modal {
+            padding-top: 120px;
+            padding-bottom: 24px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+          }
+          .home-demo-modal .home-demo-frame {
+            max-width: min(96vw, 1400px, calc((100dvh - 144px) * 16 / 9));
+            max-height: calc(100dvh - 144px);
+            flex-shrink: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+          }
+          .home-demo-modal iframe {
+            display: block;
+            height: auto;
+            max-height: none;
+            aspect-ratio: 16 / 9;
+          }
+        }
         /* Keep the full desktop composition on tall monitors; compact only
            desktop viewports with less vertical space. */
         @media (min-width: 1280px) and (max-height: 1080px) {
