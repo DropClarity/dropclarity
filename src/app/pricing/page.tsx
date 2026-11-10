@@ -210,7 +210,7 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950 [font-family:ui-sans-serif,system-ui,-apple-system,Segoe_UI,Roboto,Arial]">
       <section className="relative overflow-hidden border-b border-slate-100">
-        <div className="absolute inset-0 bg-[radial-gradient(1050px_520px_at_12%_-12%,rgba(124,58,237,.13),transparent_58%),radial-gradient(900px_520px_at_92%_4%,rgba(34,211,238,.12),transparent_62%),linear-gradient(180deg,#ffffff,#fbfdff)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,#ffffff_100%),linear-gradient(110deg,rgba(124,58,237,.018),rgba(15,23,42,.008))] md:bg-[linear-gradient(180deg,transparent_0%,#ffffff_100%),linear-gradient(110deg,rgba(124,58,237,.04),rgba(15,23,42,.018))]" />
 
         <div className="relative mx-auto w-full max-w-[1600px] px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-18">
           <div className="mx-auto max-w-5xl text-center">
