@@ -3368,4 +3368,51 @@ const analyzePageCss = `
   .analyzePage .assignModal h2{font-size:22px!important}
 }
 
+/* Reuse the Dashboard's final desktop canvas and intro typography.
+   Keep analyzeWrap sizing intact so the Analyze cards retain their dimensions. */
+@media (min-width:1024px) {
+  .analyzePage {
+    background:
+      radial-gradient(820px 360px at 8% -12%,rgba(34,211,238,.08),transparent 60%),
+      radial-gradient(760px 360px at 92% -12%,rgba(124,58,237,.075),transparent 62%),
+      linear-gradient(180deg,#ffffff 0%,#fbfcff 34%,#f6f8fb 100%);
+  }
+  .analyzePage .analyzeShell{background:transparent}
+  .analyzePage .analyzeShell>div.pointer-events-none{display:none}
+  .analyzePage .analyzeTopbar{align-items:center;margin-bottom:14px}
+  .analyzePage .analyzeTopbar>div:first-child{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-family:Inter,"SF Pro Text","SF Pro Display",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .analyzePage .analyzeTopbar .pageKicker{
+    margin-bottom:10px;
+    padding:5px 10px;
+    font-size:11.5px;
+    letter-spacing:.09em;
+  }
+  .analyzePage .analyzeTopbar .pageTitle{
+    max-width:760px;
+    font-family:Inter,"SF Pro Display",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    font-size:clamp(28px,2.45vw,42px);
+    font-weight:850;
+    line-height:1.04!important;
+    letter-spacing:-.035em;
+    color:#0f172a;
+  }
+  .analyzePage .analyzeTopbar .pageTitle .gradText{letter-spacing:-.04em}
+  .analyzePage .analyzeTopbar .pageSub{
+    max-width:850px;
+    margin-top:9px;
+    font-size:15.5px;
+    font-weight:620;
+    line-height:1.55;
+    letter-spacing:-.01em;
+    color:rgba(51,65,85,.68);
+  }
+}
+
 `;
