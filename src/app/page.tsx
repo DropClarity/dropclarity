@@ -22,7 +22,7 @@ type PricingPlan = {
 
 const blackFridayMessages = [
   "BLACK FRIDAY DEAL",
-  "SAVE $100/MONTH ON CORE & SCALE",
+  "SAVE UP TO $200/MONTH ON CORE & SCALE",
   "CORE $399/MO • SCALE $799/MO",
   "LIMITED-TIME OFFER",
 ];
