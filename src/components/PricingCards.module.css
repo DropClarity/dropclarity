@@ -1,0 +1,72 @@
+/* Natural card height keeps every feature and CTA inside the carousel track. */
+.card {
+  min-width: 0;
+  max-height: none;
+}
+
+.card > div:last-child > * {
+  flex-shrink: 0;
+}
+
+/* Preserve the roomy composition on tall desktop monitors. */
+@media (min-width: 1024px) and (max-height: 1080px) {
+  .card {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .card > div:last-child {
+    padding-top: 12px;
+  }
+
+  .card h2,
+  .card h3 {
+    font-size: 22px;
+  }
+
+  .card > div:last-child > div:first-child > p:first-of-type {
+    min-height: 22px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .card > div:last-child > div:first-child > p:last-of-type {
+    min-height: 60px;
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .card > div:last-child > div:nth-child(2) {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  .card > div:last-child > div:nth-child(2) > div:last-child {
+    font-size: 34px;
+  }
+
+  .card ul {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .card ul > li {
+    margin-block: 0;
+  }
+
+  .card > div:last-child > div:last-child {
+    padding-top: 20px;
+  }
+
+  .card > div:last-child > div:last-child > a,
+  .card > div:last-child > div:last-child > button {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}

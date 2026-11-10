@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import posthog from "posthog-js";
+import pricingStyles from "@/components/PricingCards.module.css";
 
 type PlanId = "core" | "scale";
 
@@ -233,7 +234,7 @@ export default function PricingPage() {
           <div className="xl:hidden">
             <div className="mx-auto max-w-[760px]">
               <div
-                className="min-w-0 overflow-hidden px-0 pt-4 sm:px-1 sm:pt-6"
+                className="min-w-0 overflow-x-clip overflow-y-visible px-0 pb-8 pt-4 sm:px-1 sm:pt-6"
                 onTouchStart={(event) => {
                   pricingTouchStartX.current = event.touches[0]?.clientX ?? null;
                   pricingTouchEndX.current = null;
@@ -244,16 +245,16 @@ export default function PricingPage() {
                 onTouchEnd={handlePricingTouchEnd}
               >
                 <div
-                  className="flex touch-pan-y transition-transform duration-500 ease-out"
+                  className="flex items-stretch touch-pan-y transition-transform duration-500 ease-out"
                   style={{ transform: `translateX(-${pricingIndex * 100}%)` }}
                 >
                   {pricing.map((plan) => (
                     <div
                       key={plan.name}
-                      className="w-full shrink-0 px-0.5 sm:px-3"
+                      className="flex w-full min-w-0 shrink-0 px-0.5 sm:px-3"
                     >
                       <article
-                        className={`relative mx-auto flex min-h-[465px] max-w-[310px] flex-col overflow-visible rounded-[22px] border bg-white p-4 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition sm:min-h-[560px] sm:max-w-[460px] sm:rounded-[28px] sm:p-6 md:max-w-[560px] md:p-7 ${
+                        className={`${pricingStyles.card} relative mx-auto flex h-auto min-h-0 w-full max-w-[310px] flex-col overflow-visible rounded-[22px] border bg-white p-4 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition sm:max-w-[460px] sm:rounded-[28px] sm:p-6 md:max-w-[560px] md:p-7 ${
                           plan.featured
                             ? "border-violet-400 ring-2 ring-violet-200"
                             : "border-slate-200"
@@ -265,7 +266,7 @@ export default function PricingPage() {
                           </div>
                         ) : null}
 
-                        <div className="flex h-full flex-col pt-2 sm:pt-4">
+                        <div className="flex min-w-0 flex-1 flex-col pt-2 sm:pt-4">
                           <div>
                             <h2 className="text-[19px] font-black leading-tight tracking-[-0.03em] text-slate-950 sm:text-[24px]">
                               {plan.name}
@@ -361,7 +362,7 @@ export default function PricingPage() {
             {pricing.map((plan) => (
               <article
                 key={plan.name}
-                className={`relative flex min-h-[610px] flex-col overflow-visible rounded-[28px] border bg-white p-8 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(2,6,23,.11)] ${
+                className={`${pricingStyles.card} relative flex min-h-[610px] flex-col overflow-visible rounded-[28px] border bg-white p-8 shadow-[0_18px_60px_rgba(2,6,23,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(2,6,23,.11)] ${
                   plan.featured
                     ? "border-violet-400 ring-2 ring-violet-200"
                     : "border-slate-200"
@@ -373,7 +374,7 @@ export default function PricingPage() {
                   </div>
                 ) : null}
 
-                <div className="flex h-full flex-col pt-4">
+                <div className="flex min-w-0 flex-1 flex-col pt-4">
                   <div>
                     <h2 className="text-[25px] font-black leading-tight tracking-[-0.03em] text-slate-950">
                       {plan.name}
