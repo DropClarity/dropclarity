@@ -3346,10 +3346,6 @@ const analyzePageCss = `
   .analyzePage .assignmentQuickApply input{
     min-width:0;min-height:44px!important;padding:10px 12px;
   }
-  .analyzePage .analyzeWalkthroughFrame{
-    max-width:min(96vw,1400px,calc((100dvh - 64px) * 16 / 9));
-  }
-  .analyzePage .analyzeWalkthrough video{max-height:calc(100dvh - 64px)}
 }
 @media (min-width:1024px) and (max-width:1535px) and (max-height:1080px) {
   .analyzePage .resultKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
@@ -3366,6 +3362,34 @@ const analyzePageCss = `
   .analyzePage .assignModalHeader p{font-size:13px;line-height:1.5}
   .analyzePage .assignModalHeader .inline-flex{margin-bottom:8px}
   .analyzePage .assignModal h2{font-size:22px!important}
+}
+
+/* Desktop walkthrough: clear the 96px navigation header on short viewports.
+   Leave mobile and the existing tall-desktop modal geometry unchanged. */
+@media (min-width:1024px) {
+  .analyzePage .analyzeWalkthrough{z-index:10001}
+}
+@media (min-width:1024px) and (max-height:1080px) {
+  .analyzePage .analyzeWalkthrough{
+    padding-top:120px;
+    padding-bottom:24px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .analyzePage .analyzeWalkthroughFrame{
+    max-width:min(96vw,1400px,calc((100dvh - 144px) * 16 / 9));
+    max-height:calc(100dvh - 144px);
+    flex-shrink:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .analyzePage .analyzeWalkthrough video{
+    display:block;
+    height:auto;
+    max-height:none;
+    aspect-ratio:16 / 9;
+    object-fit:contain;
+  }
 }
 
 /* Reuse the Dashboard's final desktop canvas and intro typography.
