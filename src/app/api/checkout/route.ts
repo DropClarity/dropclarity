@@ -22,6 +22,21 @@ function checkoutKey(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+async function assertNoSubscription(customerId: string) {
+  for await (const subscription of stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  })) {
+    if (!["canceled", "incomplete_expired"].includes(subscription.status)) {
+      throw new CheckoutError(
+        "You already have a subscription or payment in progress. Please manage it through the billing portal.",
+        409
+      );
+    }
+  }
+}
+
 function normalizeCheckoutPlan(plan: unknown): Plan | null {
   const value = String(plan || "").toLowerCase().trim();
 
@@ -117,33 +132,49 @@ export async function POST(req: NextRequest) {
       customerId = storedCustomerId;
     }
 
-    for await (const subscription of stripe.subscriptions.list({
-      customer: customerId,
-      status: "all",
-      limit: 100,
-    })) {
-      if (!["canceled", "incomplete_expired"].includes(subscription.status)) {
-        throw new CheckoutError(
-          "You already have a subscription or payment in progress. Please manage it through the billing portal.",
-          409
-        );
-      }
-    }
+    await assertNoSubscription(customerId);
 
     const appUrl =
       process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
       "http://localhost:3000";
 
     const previousSessions = await stripe.checkout.sessions.list({ customer: customerId, limit: 1 });
+    const openSessions: Stripe.Checkout.Session[] = [];
     for await (const openSession of stripe.checkout.sessions.list({
       customer: customerId,
       status: "open",
       limit: 100,
     })) {
       if (openSession.mode !== "subscription") continue;
+      openSessions.push(openSession);
+    }
+    if (openSessions.length > 1) {
+      throw new CheckoutError("Multiple checkouts are open. Please contact support before trying again.", 409);
+    }
+    if (openSessions.length === 1) {
+      const openSession = await stripe.checkout.sessions.retrieve(openSessions[0].id);
+      const sessionCustomer = typeof openSession.customer === "string"
+        ? openSession.customer : openSession.customer?.id;
+      const previousPlan = normalizeCheckoutPlan(openSession.metadata?.plan);
+      if (
+        sessionCustomer !== customerId ||
+        openSession.client_reference_id !== userId ||
+        !previousPlan ||
+        openSession.metadata?.priceId !== PRICE_IDS[previousPlan] ||
+        openSession.mode !== "subscription"
+      ) {
+        throw new CheckoutError("An unrelated checkout is open. Please contact support before trying again.", 409);
+      }
+      if (openSession.status === "complete" || openSession.subscription) {
+        throw new CheckoutError("Your previous checkout has completed. Please refresh the Dashboard or manage your subscription in billing.", 409);
+      }
+      if (openSession.status !== "open" && openSession.status !== "expired") {
+        throw new CheckoutError("Could not confirm the previous checkout state. Please retry.", 409);
+      }
       const appliedCoupon = openSession.discounts?.[0]?.coupon;
       const appliedCouponId = typeof appliedCoupon === "string" ? appliedCoupon : appliedCoupon?.id;
       if (
+        openSession.status === "open" &&
         openSession.client_reference_id === userId &&
         openSession.metadata?.plan === plan &&
         appliedCouponId === couponId &&
@@ -153,28 +184,77 @@ export async function POST(req: NextRequest) {
         openSession.success_url === `${appUrl}/dashboard?checkout=success` &&
         openSession.url
       ) {
+        await assertNoSubscription(customerId);
         return NextResponse.json({ url: openSession.url });
       }
-      throw new CheckoutError(
-        "Another subscription checkout is already open. Complete or let it expire before starting a different checkout.",
-        409
-      );
+      if (openSession.status === "open") {
+        if (previousPlan === plan) {
+          throw new CheckoutError("The existing checkout no longer matches this promotion. Please contact support or let it expire.", 409);
+        }
+        // Validate the replacement window before invalidating a usable checkout.
+        if (coupon.redeem_by - Math.floor(Date.now() / 1000) < 31 * 60) {
+          throw new CheckoutError("The Black Friday checkout window has closed. Your existing checkout was not changed.", 410);
+        }
+        let expiredSession: Stripe.Checkout.Session;
+        try {
+          expiredSession = await stripe.checkout.sessions.expire(openSession.id, {}, {
+            idempotencyKey: checkoutKey(`switch-expire:${customerId}:${openSession.id}`),
+          });
+        } catch {
+          // A timeout may have expired the Session, or a payment may have won
+          // the race. Never create a replacement in the same failed request.
+          const currentSession = await stripe.checkout.sessions.retrieve(openSession.id);
+          if (currentSession.status === "complete" || currentSession.subscription) {
+            throw new CheckoutError("Your previous checkout completed while switching plans. Please refresh the Dashboard or manage your subscription in billing.", 409);
+          }
+          throw new CheckoutError("Could not safely finish closing the previous checkout. Please retry before starting another checkout.", 409);
+        }
+        if (expiredSession.status !== "expired" || expiredSession.subscription) {
+          throw new CheckoutError("Stripe did not confirm the previous checkout was expired. Please retry.", 409);
+        }
+      }
+    }
+
+    await assertNoSubscription(customerId);
+    for await (const conflictingSession of stripe.checkout.sessions.list({
+      customer: customerId, status: "open", limit: 100,
+    })) {
+      if (conflictingSession.mode === "subscription") {
+        throw new CheckoutError("Another checkout operation is in progress. Please retry to resume it.", 409);
+      }
+    }
+    const latestSessions = await stripe.checkout.sessions.list({ customer: customerId, limit: 1 });
+    if (latestSessions.data[0]?.id !== previousSessions.data[0]?.id) {
+      throw new CheckoutError("Checkout changed during this request. Please retry to resume the latest checkout.", 409);
+    }
+    const latestSession = latestSessions.data[0];
+    if (latestSession?.mode === "subscription" && latestSession.status === "complete") {
+      const subscriptionId = typeof latestSession.subscription === "string"
+        ? latestSession.subscription : latestSession.subscription?.id;
+      if (!subscriptionId) {
+        throw new CheckoutError("Your previous checkout is still being processed. Please retry after refreshing the Dashboard.", 409);
+      }
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      if (!["canceled", "incomplete_expired"].includes(subscription.status)) {
+        throw new CheckoutError("Your previous checkout has completed. Please manage your subscription through billing.", 409);
+      }
     }
 
     // Stripe requires at least 30 minutes of Session lifetime. Do not issue
     // a new promotional Session that can remain open beyond the coupon cutoff.
-    if (coupon.redeem_by - now < 31 * 60) {
+    const checkoutNow = Math.floor(Date.now() / 1000);
+    if (coupon.redeem_by - checkoutNow < 31 * 60) {
       throw new CheckoutError("The Black Friday checkout window has closed. No checkout was created.", 410);
     }
     // The same key covers concurrent Core/Scale requests too: a conflicting
-    // request must retry and encounter the open-Session guard rather than bill twice.
+    // request must retry and recheck Stripe state. This is not a cross-instance lock.
     const idempotencyKey = checkoutKey(
       `black-friday-checkout:${userId}:${customerId}:${previousSessions.data[0]?.id || "first"}`
     );
     // An hourly fixed expiry keeps retry parameters stable and stays within Stripe's
     // 30-minute–24-hour window; coupon expiry is always the upper bound.
     const expiresAt = Math.min(
-      now - (now % 3600) + 23 * 3600,
+      checkoutNow - (checkoutNow % 3600) + 23 * 3600,
       coupon.redeem_by
     );
 
@@ -215,9 +295,9 @@ export async function POST(req: NextRequest) {
       discounts: [{ coupon: couponId }],
     }, { idempotencyKey });
 
-    if (!session.url) {
+    if (session.status !== "open" || !session.url) {
       return NextResponse.json(
-        { error: "Stripe did not return a checkout URL" },
+        { error: "Checkout is no longer open. Please retry to check the current subscription state." },
         { status: 500 }
       );
     }
@@ -245,8 +325,8 @@ export async function POST(req: NextRequest) {
     console.error("Checkout route failed:", err);
 
     return NextResponse.json(
-      { error: "Checkout route failed" },
-      { status: 500 }
+      { error: "Could not safely confirm checkout with Stripe. Please retry; no fallback checkout will be created." },
+      { status: 503 }
     );
   }
 }
