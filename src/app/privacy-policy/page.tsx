@@ -71,8 +71,63 @@ export default function PrivacyPolicyPage() {
             document analysis.
           </p>
           <p>
-            These providers may process information only as needed to support the services they provide to
-            DropClarity.
+            These providers process information to support their services. We also use PostHog for product
+            analytics and, with your marketing consent, Meta for advertising measurement, as described below.
+          </p>
+        </>
+      ),
+    },
+    {
+      title: "Cookies, Browser Storage, and Marketing Preferences",
+      content: (
+        <>
+          <p>
+            DropClarity uses cookies and browser storage for account access, service functionality, and
+            analytics. Our consent banner controls optional Meta marketing tracking only. Rejecting marketing
+            does not affect authentication, billing, uploads, or analysis. Existing product analytics,
+            including PostHog, operate separately and are not switched off by this marketing choice.
+          </p>
+          <p>
+            Meta tracking is off until you select Accept marketing. Select Reject marketing to keep it off.
+            Use Cookie preferences in the footer on any page to review your choice or withdraw consent.
+            Withdrawal stops future Meta events; it does not undo data already sent. Global Privacy Control
+            and Do Not Track browser signals keep Meta tracking off even if a saved choice permits it.
+          </p>
+          <p>
+            Your choice is stored in this browser under dropclarity_marketing_consent until you change it
+            or clear site storage. It does not follow you across browsers or devices. If storage is unavailable,
+            Meta tracking stays off and you may be asked again. With consent, we also use a short-lived
+            session storage record and a local registration marker to prevent duplicate signup events.
+            These records contain Clerk identifiers locally; they are not sent to Meta. Meta may receive its
+            own cookies with pixel requests, subject to your browser settings. Use your browser controls to
+            remove cookies and site storage; clearing storage resets your saved choice.
+          </p>
+        </>
+      ),
+    },
+    {
+      title: "Meta Pixel Advertising Measurement",
+      content: (
+        <>
+          <p>
+            With your marketing consent, we use Meta Pixel to measure Facebook and Instagram advertising.
+            We send PageView events when you load a page or navigate between pages, and a
+            CompleteRegistration event after a confirmed new Clerk signup. Existing-account logins are
+            not registration events. Events blocked before consent are not replayed as browsing history.
+          </p>
+          <p>
+            Our image-based pixel sends the event name, Pixel ID, a sanitized page address without query
+            strings or fragments, a timestamp, and a random event identifier. Referrer information is
+            suppressed. Meta also receives network information such as your IP address and browser user
+            agent, and may associate events with its own cookies or accounts to measure advertising.
+            We do not send Meta your name, email, Clerk identifiers, uploaded files, filenames, customer
+            details, job information, financial results, or payment information. We do not load Meta’s
+            JavaScript SDK or enable automatic advanced matching or automatic form and click tracking.
+          </p>
+          <p>
+            Meta processes information under its own policies. Learn more in the{" "}
+            <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer"
+              className="text-violet-700 underline underline-offset-2">Meta Privacy Policy</a>.
           </p>
         </>
       ),
@@ -159,7 +214,7 @@ export default function PrivacyPolicyPage() {
         <section className="legalHero">
           <p className="legalEyebrow">Privacy Policy</p>
           <h1>Privacy Policy</h1>
-          <p className="legalUpdated">Last updated: May 1, 2026</p>
+          <p className="legalUpdated">Last updated: November 16, 2026</p>
           <p className="legalIntro">
             DropClarity is built for businesses handling real financial data. This Privacy Policy explains
             what information we collect, how we use it, and how we protect the job files, cost data,
@@ -169,7 +224,8 @@ export default function PrivacyPolicyPage() {
 
         <section className="legalSections" aria-label="Privacy Policy sections">
           {sections.map((section, index) => (
-            <article className="legalSection" key={section.title}>
+            <article className="legalSection" key={section.title}
+              id={section.title === "Cookies, Browser Storage, and Marketing Preferences" ? "cookies" : undefined}>
               <div className="legalNumber" aria-hidden="true">
                 {index + 1}
               </div>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
 import PostHogInitializer from "@/components/PostHogInitializer";
+import MetaPixelInitializer from "@/components/MetaPixelInitializer";
+import CookieConsent, { CookiePreferencesButton } from "@/components/CookieConsent";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -41,6 +43,8 @@ export default function RootLayout({
       <body className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-950 [color-scheme:light]">
         <ClerkProvider>
           <PostHogInitializer />
+          <MetaPixelInitializer />
+          <CookieConsent />
           <div className="flex min-h-dvh flex-col bg-white [overscroll-behavior-y:none]">
             <SiteHeader />
 
@@ -95,6 +99,7 @@ export default function RootLayout({
                               {link.label}
                             </Link>
                           ))}
+                          <CookiePreferencesButton />
                         </nav>
                       </div>
 
