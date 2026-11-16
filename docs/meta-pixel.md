@@ -69,12 +69,35 @@ PostHog continues independently as disclosed in the policy.
 Registration uses no image request. The server sends only CompleteRegistration,
 the original registration time, an HMAC-derived opaque event ID, the site origin
 with `/`, and IP/user-agent network metadata. The IP is UNHASHED and comes from
-the verified Clerk session, not an untrusted forwarded-IP header. User-Agent is
+the verified Clerk session, falling back to Vercel ingress metadata as described
+below. User-Agent is
 UNHASHED (limited to 512 characters). These are personal/pseudonymous network
 identifiers, not anonymous data. No names, email, raw Clerk
 identifiers, external_id, cookies, filenames, uploaded content, customer/job
 information, financial data, referrer, URL queries or DOM content are sent.
 No advanced matching or automatic event collection is enabled.
+
+### IP fallback and trust boundary
+
+When Clerk's optional `session.latestActivity.ipAddress` is absent or invalid,
+the endpoint uses the documented `x-vercel-forwarded-for` request metadata ONLY
+when server-side `VERCEL === "1"`. This server environment flag cannot be enabled
+by a browser header or JSON body. No new dependency is needed for this documented
+platform header. See https://vercel.com/docs/headers/request-headers#x-vercel-forwarded-for.
+
+Both IP sources are validated using Node's `net.isIP`. The fallback accepts a
+single IPv4 or IPv6 address, not a chain, port, hostname, or zone identifier.
+It does not read `X-Forwarded-For`, `X-Real-IP`, or `CF-Connecting-IP`. Outside
+Vercel, it remains disabled even if these headers are supplied.
+
+Trust depends on Vercel controlling/sanitizing the ingress header. This is NOT
+cryptographic authentication of arbitrary headers on a self-hosted origin;
+never manually enable VERCEL=1 there. If a proxy fronts Vercel, the address may
+identify that proxy rather than the visitor. Custom trusted-proxy configurations
+must be reviewed separately; no forwarded-chain or Cloudflare-header override
+is added here. Clerk's valid IP is always preferred. If neither source yields
+a valid IP, registration remains retryable rather than sending invented data.
+The only payload change is the source of the EXISTING `client_ip_address` field.
 
 ## Delivery and duplicate prevention
 
@@ -171,6 +194,18 @@ Meta dataset/token and test code, then:
    client association is available. No account data should appear in payloads.
 
 A server 503 can mean missing configuration, Clerk lookup failure, unavailable
-session IP, Meta rejection, timeout or a metadata write failure. Responses do
-not expose tokens or customer data. Use provider dashboards and the local mocks
-for investigation; do not enable payload logging in production.
+IP, Meta rejection, timeout or a metadata write failure. Responses stay generic.
+Minimal `meta_registration_failure` warnings now distinguish these conditions
+using fixed reason/stage labels and, where available, a numeric upstream HTTP
+status. Examples: `missing_meta_access_token`, `missing_client_ip`,
+`missing_user_agent`, `invalid_pixel_id`, `invalid_signing_secret`,
+`meta_http_error`, and `meta_invalid_ack`. Generic provider failures include the
+operation stage, e.g. `clerk_session` or `clerk_metadata`.
+
+Application diagnostics NEVER include IPs, User-Agent, request/response bodies,
+URLs, headers, credentials, Clerk identifiers, event IDs, or exception messages/
+stacks. Normal opt-out and ineligible responses are not failure logs. Provider
+platforms may independently retain their own standard access metadata. No
+diagnostic fields are sent to Meta and no additional environment variable is
+required for this fallback. Use existing logs before creating another account;
+never enable raw payload logging in production.

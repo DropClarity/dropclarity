@@ -1,4 +1,19 @@
 import { createHmac } from "node:crypto";
+import { isIP } from "node:net";
+
+function validIp(value: string | undefined | null): string | undefined {
+  const ip = value?.trim();
+  // Reject lists, ports, zone identifiers, and malformed/untrusted values.
+  return ip && !ip.includes("%") && isIP(ip) !== 0 ? ip : undefined;
+}
+
+/** Trust only Vercel's documented ingress metadata on a Vercel deployment.
+ * Never use arbitrary forwarded chains or a request header claiming Vercel.
+ * Behind another proxy, this may identify that proxy rather than the visitor.
+ * https://vercel.com/docs/headers/request-headers#x-vercel-forwarded-for */
+export function vercelClientIp(request: Request, onVercel: boolean): string | undefined {
+  return onVercel ? validIp(request.headers.get("x-vercel-forwarded-for")) : undefined;
+}
 
 export const REGISTRATION_METADATA_KEY = "dropclarityMetaRegistrationV1";
 export const REGISTRATION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -23,10 +38,14 @@ export type RegistrationDependencies = {
   run?<T>(operation: () => Promise<T>): Promise<T>;
   signal?: AbortSignal;
   isConsentCurrent?(): boolean;
+  diagnostic?(reason: "tracking_busy" | "missing_meta_access_token" | "missing_client_ip" |
+    "missing_user_agent" | "meta_http_error" | "meta_invalid_ack", upstreamStatus?: number): void;
 };
 export type RegistrationRequest = {
   userId: string; sessionId: string; attemptId?: string;
   consent: boolean; privacyBlocked: boolean; userAgent: string; origin: string;
+  // Populated by the server from Vercel ingress, NEVER from the JSON body.
+  requestIp?: string;
 };
 export type RegistrationStatus = "ineligible" | "eligible" | "sent" | "retry";
 
@@ -36,7 +55,10 @@ export async function processRegistration(
   input: RegistrationRequest, deps: RegistrationDependencies,
 ): Promise<RegistrationStatus> {
   const key = `${deps.pixelId}:${input.userId}`;
-  if (active.has(key) || active.size >= 4) return "retry";
+  if (active.has(key) || active.size >= 4) {
+    deps.diagnostic?.("tracking_busy");
+    return "retry";
+  }
   active.add(key);
   try { return await verifyAndSend(input, deps); }
   finally { active.delete(key); }
@@ -88,8 +110,10 @@ async function verifyAndSend(
       deps.now() - record.registeredAt >= REGISTRATION_WINDOW_MS) return "ineligible";
   if (record.sentAt) return "sent";
   if (!input.consent || input.privacyBlocked || deps.isConsentCurrent?.() === false) return "eligible";
-  const ip = session.latestActivity?.ipAddress;
-  if (!deps.accessToken || !ip || !input.userAgent) return "retry";
+  if (!deps.accessToken) { deps.diagnostic?.("missing_meta_access_token"); return "retry"; }
+  const ip = validIp(session.latestActivity?.ipAddress) ?? validIp(input.requestIp);
+  if (!ip) { deps.diagnostic?.("missing_client_ip"); return "retry"; }
+  if (!input.userAgent) { deps.diagnostic?.("missing_user_agent"); return "retry"; }
 
   // Same dataset as PageView. No DOM access, profile matching, or business data.
   const response = await run(() => {
@@ -112,11 +136,15 @@ async function verifyAndSend(
     });
   });
   if (!response.ok) {
+    deps.diagnostic?.("meta_http_error", response.status);
     void response.body?.cancel().catch(() => {});
     return "retry";
   }
   const acknowledgement = await run(() => response.json());
-  if (acknowledgement.events_received !== 1 || acknowledgement.error) return "retry";
+  if (acknowledgement.events_received !== 1 || acknowledgement.error) {
+    deps.diagnostic?.("meta_invalid_ack", response.status);
+    return "retry";
+  }
   // A lost acknowledgement/write is retried with the original event_id.
   await run(() => deps.saveRecord(input.userId, { ...record!, sentAt: deps.now() }));
   return "sent";

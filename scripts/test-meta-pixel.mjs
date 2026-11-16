@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import * as crypto from 'node:crypto';
+import { isIP } from 'node:net';
 import { test } from 'node:test';
 import ts from 'typescript';
 
@@ -22,7 +23,8 @@ function storage() {
   const data = new Map();
   return { getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v), removeItem: k => data.delete(k) };
 }
-const service = load('src/lib/meta-registration-server.ts', {}, { 'node:crypto': crypto });
+const serviceImports = { 'node:crypto': crypto, 'node:net': { isIP } };
+const service = load('src/lib/meta-registration-server.ts', {}, serviceImports);
 function fixture() {
   const now = Date.now();
   const metadata = { stripeCustomerId: 'unrelated-billing-value' };
@@ -68,7 +70,7 @@ test('refreshes, later visits, and concurrent requests do not resend an accepted
   const f = fixture();
   await Promise.all([1, 2, 3].map(() => service.processRegistration(f.input, f.deps)));
   await service.processRegistration(f.input, f.deps);
-  const reloadedService = load('src/lib/meta-registration-server.ts', {}, { 'node:crypto': crypto });
+  const reloadedService = load('src/lib/meta-registration-server.ts', {}, serviceImports);
   await reloadedService.processRegistration(f.input, f.deps);
   assert.equal(f.calls.length, 1);
 });
@@ -507,6 +509,7 @@ test('browser withdrawal aborts pending registration and reports the newer denia
 
 function hardenedRouteFixture(overrides = {}) {
   const f = fixture();
+  const diagnostics = [];
   const guards = load('src/lib/meta-registration-security.ts');
   let clerkReads = 0;
   const fakeClerk = {
@@ -516,6 +519,7 @@ function hardenedRouteFixture(overrides = {}) {
   };
   const route = load('src/app/api/meta-registration/route.ts', {
     Request, Response,
+    console: { warn: (...args) => diagnostics.push(args) },
     process: { env: {
       NEXT_PUBLIC_META_PIXEL_ID: f.deps.pixelId, META_EVENT_SIGNING_SECRET: 'dedicated-secret-with-at-least-32-random-characters',
       META_CONVERSIONS_API_ACCESS_TOKEN: f.deps.accessToken, ...overrides.env,
@@ -526,13 +530,13 @@ function hardenedRouteFixture(overrides = {}) {
     '@/lib/meta-registration-server': service,
     '@/lib/meta-registration-security': overrides.guards ?? guards,
   });
-  function request(consent = true, revision = 1) {
+  function request(consent = true, revision = 1, headers = {}) {
     return new Request('https://www.dropclarity.com/api/meta-registration', {
-      method: 'POST', headers: { origin: 'https://www.dropclarity.com', 'Content-Type': 'application/json', 'User-Agent': 'Test Browser' },
+      method: 'POST', headers: { origin: 'https://www.dropclarity.com', 'Content-Type': 'application/json', 'User-Agent': 'Test Browser', ...headers },
       body: JSON.stringify({ marketingConsent: consent, consentRevision: revision, attemptId: 'sua_new' }),
     });
   }
-  return { ...f, guards, fakeClerk, route, request, clerkReads: () => clerkReads };
+  return { ...f, guards, fakeClerk, route, request, diagnostics, clerkReads: () => clerkReads };
 }
 
 test('actual route rate-limits before Clerk reads and still processes withdrawal when quota is exhausted', async () => {
@@ -594,4 +598,90 @@ test('overall route deadline aborts Meta delivery and never acknowledges a timed
   assert.equal(response.status, 504);
   assert.equal(aborted, true);
   assert.equal(f.metadata[service.REGISTRATION_METADATA_KEY].sentAt, undefined);
+});
+
+test('Vercel IP fallback accepts only a single valid platform IP and is disabled elsewhere', () => {
+  const request = headers => new Request('https://www.dropclarity.com/api/meta-registration', { headers });
+  assert.equal(service.vercelClientIp(request({ 'x-vercel-forwarded-for': '203.0.113.7' }), true), '203.0.113.7');
+  assert.equal(service.vercelClientIp(request({ 'x-vercel-forwarded-for': '2001:db8::7' }), true), '2001:db8::7');
+  assert.equal(service.vercelClientIp(request({ 'x-vercel-forwarded-for': '203.0.113.7', 'vercel': '1' }), false), undefined);
+  assert.equal(service.vercelClientIp(request({ 'x-forwarded-for': '203.0.113.7', 'cf-connecting-ip': '203.0.113.8', 'x-real-ip': '203.0.113.9' }), true), undefined);
+  for (const ip of ['bad', '203.0.113.7, 203.0.113.8', '203.0.113.7:443', '[2001:db8::1]', 'fe80::1%eth0']) {
+    assert.equal(service.vercelClientIp(request({ 'x-vercel-forwarded-for': ip }), true), undefined);
+  }
+});
+
+test('verified Clerk IP remains preferred over the platform fallback', async () => {
+  const f = fixture();
+  f.input.requestIp = '203.0.113.8';
+  assert.equal(await service.processRegistration(f.input, f.deps), 'sent');
+  assert.equal(f.calls[0].payload.data[0].user_data.client_ip_address, '192.0.2.1');
+});
+
+test('actual Vercel route delivers with missing Clerk activity and adds no new Meta fields', async () => {
+  const f = hardenedRouteFixture({ env: { VERCEL: '1' } });
+  delete f.session.latestActivity;
+  const response = await f.route.POST(f.request(true, 1, { 'x-vercel-forwarded-for': '203.0.113.8' }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, 'sent');
+  const event = f.calls[0].payload.data[0];
+  assert.equal(event.user_data.client_ip_address, '203.0.113.8');
+  assert.deepEqual(Object.keys(event).sort(), ['action_source', 'event_id', 'event_name', 'event_source_url', 'event_time', 'user_data']);
+  assert.deepEqual(Object.keys(event.user_data).sort(), ['client_ip_address', 'client_user_agent']);
+  assert.equal(f.diagnostics.length, 0);
+});
+
+test('fallback never bypasses consent, GPC, or DNT', async () => {
+  for (const headers of [{ 'sec-gpc': '1' }, { dnt: '1' }, {}]) {
+    const f = hardenedRouteFixture({ env: { VERCEL: '1' } });
+    delete f.session.latestActivity;
+    const consent = Object.keys(headers).length > 0;
+    const response = await f.route.POST(f.request(consent, 1, { 'x-vercel-forwarded-for': '203.0.113.8', ...headers }));
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, 'eligible');
+    assert.equal(f.calls.length, 0);
+  }
+});
+
+test('missing token, IP and User-Agent yield distinct sanitized reasons without marking sent', async () => {
+  for (const reason of ['missing_meta_access_token', 'missing_client_ip', 'missing_user_agent']) {
+    const f = hardenedRouteFixture({ env: reason === 'missing_meta_access_token' ? { META_CONVERSIONS_API_ACCESS_TOKEN: undefined } : {} });
+    const headers = {};
+    if (reason === 'missing_client_ip') {
+      delete f.session.latestActivity;
+      // Client-supplied headers must not become trusted in local/self-hosted mode.
+      headers['x-vercel-forwarded-for'] = '203.0.113.8';
+      headers.vercel = '1';
+    }
+    if (reason === 'missing_user_agent') headers['User-Agent'] = '';
+    const response = await f.route.POST(f.request(true, 1, headers));
+    assert.equal(response.status, 503);
+    assert.equal(f.calls.length, 0);
+    assert.equal(f.metadata[service.REGISTRATION_METADATA_KEY].sentAt, undefined);
+    assert.equal(f.diagnostics.length, 1);
+    assert.equal(f.diagnostics[0][1].reason, reason);
+    const log = JSON.stringify(f.diagnostics);
+    for (const value of ['192.0.2.1', '203.0.113.8', 'Test Browser', 'test-token', 'user_new', 'session_first', 'sua_new']) {
+      assert.equal(log.includes(value), false);
+    }
+  }
+});
+
+test('Meta and Clerk failures log only static stage/reason and numeric status, not error contents', async () => {
+  const secretCanary = 'sensitive@example.invalid secret-token customer-job-data';
+  const meta = hardenedRouteFixture({ fetch: async () => new Response(secretCanary, { status: 401 }) });
+  assert.equal((await meta.route.POST(meta.request())).status, 503);
+  assert.equal(meta.diagnostics.length, 1);
+  assert.equal(meta.diagnostics[0][1].reason, 'meta_http_error');
+  assert.equal(meta.diagnostics[0][1].upstreamStatus, 401);
+  assert.equal(meta.diagnostics[0][1].stage, 'meta_delivery');
+  assert.equal(JSON.stringify(meta.diagnostics).includes(secretCanary), false);
+  const clerk = hardenedRouteFixture();
+  clerk.fakeClerk.sessions.getSession = async () => { throw Object.assign(Error(secretCanary), { status: 403 }); };
+  assert.equal((await clerk.route.POST(clerk.request())).status, 503);
+  assert.equal(clerk.diagnostics.length, 1);
+  assert.equal(clerk.diagnostics[0][1].reason, 'tracking_failed');
+  assert.equal(clerk.diagnostics[0][1].stage, 'clerk_session');
+  assert.equal(clerk.diagnostics[0][1].upstreamStatus, 403);
+  assert.equal(JSON.stringify(clerk.diagnostics).includes(secretCanary), false);
 });

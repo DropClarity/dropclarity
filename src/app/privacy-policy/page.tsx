@@ -127,7 +127,7 @@ export default function PrivacyPolicyPage() {
             agent, and may associate events with its own cookies or accounts to measure advertising.
             After consent, confirmed registrations are sent from our server using Meta’s Conversions API
             with the registration timestamp, a stable opaque event identifier, site origin, IP address from
-            the authenticated session, and browser user agent. No registration event is sent before consent.
+            the authenticated session or Vercel request metadata, and browser user agent. No registration event is sent before consent.
             Delayed consent can qualify during the original signup session for up to seven days.
             We do not send Meta your name, email, Clerk identifiers, uploaded files, filenames, customer
             details, job information, financial results, or payment information. We do not load Meta’s
