@@ -1,126 +1,176 @@
-# Meta Pixel setup
+﻿# Meta registration tracking
 
-No deployment has been performed. No changes to PostHog, Clerk UI/redirects,
-billing, uploads, or analysis are required by this integration.
+PageView continues to use the existing consent-gated image pixel unchanged.
+CompleteRegistration uses Meta's supported Conversions API and the SAME dataset
+ID. No Meta JavaScript SDK, second pixel, database, webhook, or Cloudflare worker
+change is introduced. Authentication UI, signup redirects, billing, uploads,
+analysis and PostHog are unchanged.
 
-## Configuration
+## Verification and persistence
 
-In Vercel, open the **DropClarity project → Settings → Environment Variables**.
-Add `NEXT_PUBLIC_META_PIXEL_ID` with the numeric Pixel/Dataset ID from Meta
-Events Manager (not an access token). Select **Production**. For testing, use a
-separate test pixel in **Preview** and/or **Development**. Save the variable.
-Next.js embeds public variables at build time: a new build/deployment is required
-after setting or changing it. Deploy only after approval.
+The earliest useful correlation point is creation of a Clerk signup attempt,
+BEFORE it completes. The root initializer uses Clerk Core 3's reactive useSignUp
+signal to retain only its opaque attempt ID in sessionStorage (maximum seven
+days). It does not require frontend status/createdUserId/createdSessionId to
+survive navigation. This minimal authentication correlation reference may be
+retained before marketing consent; it contains no profile or business data.
 
-For local testing add `NEXT_PUBLIC_META_PIXEL_ID=YOUR_NUMERIC_ID` to `.env.local`
-and restart the dev server. Missing/invalid IDs disable tracking.
+Once Clerk reports an active authenticated session, the browser calls the
+same-origin /api/meta-registration endpoint. Clerk Backend API retrieves the
+persisted signup attempt and verifies its completed state, createdUserId AND
+createdSessionId against authenticated auth() values. It also tries the backend
+client's associated signUpId if browser storage is unavailable or lost. A recent
+account creation timestamp alone NEVER establishes eligibility. If neither
+reference can be recovered, the endpoint fails closed rather than count a login.
 
-## Built-in marketing consent
+Verified eligibility is retained in the namespaced Clerk private metadata field
+`dropclarityMetaRegistrationV1`, using the same metadata mechanism already used
+for billing. The update merges this field without replacing billing metadata.
+It contains only the original session ID, opaque event ID, registration time,
+and (after acknowledgement) delivery time. This survives page refreshes and
+redirects. No signup webhook or new persistent database is required.
 
-The site includes a compact responsive banner with equally styled Accept
-marketing and Reject marketing buttons. Meta defaults to OFF until explicit
-acceptance. The choice persists in this browser; Cookie preferences in the footer
-reopens the controls for review or withdrawal. No external consent manager is
-required for these Meta controls. PostHog and other existing analytics are
-unchanged and are explicitly outside this marketing choice.
+Consent received later can send the event during the ORIGINAL signup session,
+within Meta's seven-day event-time limit. A subsequent sign-in session cannot
+qualify. Clearing browser storage cannot create a duplicate once Clerk stores
+the delivery marker. Retain that marker for the account lifetime to prevent
+replays; browser attempt references are removed after server verification.
 
-The banner calls `setMarketingConsent(true)` / `setMarketingConsent(false)` from
-`src/lib/meta-pixel.ts`. GPC and DNT override acceptance. If saving fails, tracking
-stays off even if a previous grant was saved. The banner explains unavailable
-storage and browser privacy overrides. A rejection clears the pending signup
-receipt; registration deduplication markers remain to prevent repeat conversion.
+## Consent and privacy
 
-If replacing this banner with an external consent manager, save `granted` or `denied` to localStorage key
-`dropclarity_marketing_consent`, then dispatch
-`window.dispatchEvent(new Event('dropclarity:marketing-consent-changed'))`.
-Initialize this choice from the manager's saved state on each page load; propagate
-withdrawal through the same interface. Global Privacy Control and Do Not Track
-override a grant. Storage failures keep tracking disabled.
+The banner appearance, footer preference control, and PageView behavior are
+unchanged. PageView is off until explicit marketing acceptance. Registration
+verification may run without consent, but NO request to Meta occurs until the
+browser grants consent. The endpoint also enforces request GPC/DNT headers.
+Rejection/withdrawal blocks new marketing requests from the normal browser flow.
+Pending browser requests are aborted, including on cross-tab storage changes.
+The browser also reports an increasing preference revision with its choice.
+This is a CLIENT-REPORTED ordering hint, NOT server-verifiable proof of consent.
+The endpoint rejects stale revisions and invalidates pending grants on withdrawal
+within the SAME running instance, before rate/concurrency checks when reached.
+It rechecks the gate and cancellation immediately before Meta dispatch and
+passes cancellation through to the outbound fetch.
 
-For a consenting developer's local test only, the browser console equivalent is:
+These controls cannot guarantee cross-instance revocation: a withdrawal may hit
+one Vercel instance while pending delivery runs on another; ingress disconnects
+may not propagate, and requests can be reordered. Process-local gates expire
+after one hour or disappear on instance restart. Forged first-party requests can
+still assert consent. Already-dispatched events cannot be recalled.
 
-```js
-localStorage.setItem('dropclarity_marketing_consent', 'granted');
-window.dispatchEvent(new Event('dropclarity:marketing-consent-changed'));
-```
+Clerk private metadata supports deep merge, not an atomic compare-and-dispatch
+or shared lock. Storing a boolean there would NOT solve the race safely, so no
+supposedly authoritative consent record has been added. Strict enforcement needs
+a shared coordinator (e.g. a Cloudflare Durable Object keyed by consent scope)
+that orders grant/revoke/dispatch and supplies global limits. That infrastructure
+is not configured in this repository and was not introduced. If strict shared
+revocation is a deployment requirement, keep CAPI disabled until it is available.
+PostHog continues independently as disclosed in the policy.
 
-Replace `granted` with `denied` and dispatch again to test withdrawal. This is a
-manual test procedure; normal visitors should use the banner. Events that
-already reached Meta cannot be withdrawn by this code.
+Registration uses no image request. The server sends only CompleteRegistration,
+the original registration time, an HMAC-derived opaque event ID, the site origin
+with `/`, and IP/user-agent network metadata. The IP is UNHASHED and comes from
+the verified Clerk session, not an untrusted forwarded-IP header. User-Agent is
+UNHASHED (limited to 512 characters). These are personal/pseudonymous network
+identifiers, not anonymous data. No names, email, raw Clerk
+identifiers, external_id, cookies, filenames, uploaded content, customer/job
+information, financial data, referrer, URL queries or DOM content are sent.
+No advanced matching or automatic event collection is enabled.
 
-## Transport and privacy
+## Delivery and duplicate prevention
 
-The integration uses Meta's documented IMG pixel transport, appended to the DOM
-at runtime. It does not load `fbevents.js`, perform automatic event detection,
-read forms, or enable advanced matching. It sends only the Pixel ID, standard
-event name, a sanitized URL, empty referrer, timestamp, and random event ID.
-HTTP referrers are suppressed per image. Only fixed application routes are
-allowed in the URL; unknown paths map to `/`. Queries and hashes are never sent.
-No Clerk IDs, email, names, filenames, job/customer data, prices, or upload
-contents are sent. Meta still receives browser network metadata such as IP and
-user agent, and may receive its own cookies subject to browser controls.
+The server writes `sentAt` ONLY after Meta returns an HTTP success AND
+`events_received: 1` without an error. Failed/blocked/malformed responses and
+missing configuration remain retryable. Requests time out, and the browser
+retries briefly, on navigation, on connectivity recovery, or on refresh.
+There is no background marketing queue that bypasses browser consent.
 
-This intentionally trades SDK features, first-party `_fbp`/`_fbc` cookies and
-click-ID attribution for isolation from customer data. No Meta script can read
-the application's DOM. Image transport has limitations compared with Meta's
-recommended SDK; confirm receipt in Events Manager, especially iOS in-app
-browsers. See https://developers.facebook.com/documentation/meta-pixel/advanced.
+A stable event_id is persisted BEFORE delivery, retained on every retry and
+used with Meta's deduplication. Concurrent requests in one instance are rejected
+rather than queued, with Retry-After;
+Clerk private metadata prevents normal repeat sends across instances/reloads.
+Concurrent instances or a lost acknowledgement can produce repeated HTTP
+attempts with the SAME event ID. This is normal-operation exactly-once counting,
+not an impossible guarantee of exactly-once distributed network delivery.
+Meta's deduplication window is finite: an outage after Meta accepts an event but
+before Clerk records sentAt can leave an uncertain outcome, especially if a
+retry happens outside that window. No compare-and-swap database is introduced.
 
-## Event rules
+## Abuse protection and deadlines
 
-- PageView: initial consented load and each pathname navigation, including Back
-  and Forward. Query/hash-only changes do not create events. Consent granted
-  later sends the current page only; declined visits are not replayed.
-- CompleteRegistration: requires Clerk's `signUp.status === 'complete'`,
-  `createdUserId`, and `createdSessionId` matching the active signed-in user and
-  session. A short-lived receipt survives redirect/reload in this tab. Both the
-  user and session must be under 30 minutes old; age alone never proves signup.
-  Receipts are stored only with marketing consent. A grant within this window
-  may send the registration if Clerk's completed attempt is still available.
-  Incomplete/failed
-  attempts, existing-account sign-ins, and older returning users do not qualify.
-- Registration attempts are claimed in localStorage per pixel/user before
-  sending, with an in-memory guard and Web Lock for concurrent tabs where
-  supported. Clerk IDs stay local. Storage failures suppress conversion.
-  Blocked/failed requests are not retried. This is at-most-once browser tracking,
-  not guaranteed delivery or global deduplication across cleared storage/devices.
-  Signup state lost by Clerk before it can be observed suppresses conversion;
-  there is no unsafe age-based fallback or server-side Conversions API.
+All limits below are IN-MEMORY, per running Vercel instance, and reset on cold
+start. They are not account-wide or globally distributed protections:
 
-## Test before launch
+- Each user: 16 requests/minute and 64/hour across sessions.
+- Each session: 10 requests/minute and 40/hour.
+- At most four tracking operations, at most one per user; NO waiting queue.
+- At most 16 preflight requests (including authentication and body parsing).
+- Rate and consent maps are capped at 4096 entries each; full maps fail closed.
+- JSON is read as a stream with a 1024-BYTE limit, including chunked bodies.
+  Oversized Content-Length is rejected before reading. Invalid UTF-8 is rejected.
+- The whole request has a 12-second budget, including auth, body reading, Clerk
+  calls, and Meta response reading. Vercel maxDuration is 15 seconds. Deadline
+  expiry returns 504 and prevents subsequent steps/dispatch. Meta fetch also
+  has a 10-second timeout and obeys cancellation.
+- The Clerk SDK cannot forcibly cancel every in-flight request. Timed-out work
+  retains its concurrency/preflight slot until those calls settle, preventing
+  abandoned calls from accumulating. It cannot start follow-up tracking work.
+- Meta 429/5xx and Clerk 429 responses create per-instance cooldowns. Retry-After
+  is bounded to one hour; browser retries honor it. Limits return 429/503 with
+  Retry-After, without blocking authentication or changing account access.
 
-1. In Meta Events Manager choose the matching dataset/pixel, open **Test events**,
-   and use the browser website test option to open your local or approved preview
-   URL. Use a fresh browser profile with tracking blockers disabled for the test.
-2. Before granting marketing consent, verify DevTools Network has no requests to
-   `facebook.com/tr`. Grant test consent: expect exactly one PageView. Navigate
-   through site links and Back/Forward: one PageView per pathname transition.
-   Reload: one new PageView. Confirm events appear in Test events.
-3. Create a genuinely NEW Clerk test account (test email and each enabled OAuth
-   method). Complete verification and required session tasks. Expect exactly one
-   CompleteRegistration after the session becomes active. Refresh and navigate:
-   no additional registration. Sign out/in with that account and with an older
-   account: no registration. Abandon/fail signup: no registration.
-4. Reject/revoke consent: no further Meta requests on navigation or signup.
-   Repeat with GPC/DNT enabled. Verify grant after refusal sends only current
-   PageView, not browsing history.
-5. Inspect each `tr` request: `dl` has only origin and a fixed route, `dr` is empty,
-   no Referer header, and no customer information or query/hash values. Test a
-   dashboard URL containing synthetic private query values and an unknown path.
-6. Review Meta Diagnostics after testing. Image pixels may not be reported by
-   browser helpers the same way as the full JS SDK; network requests plus Events
-   Manager receipt are the decisive checks.
+Multi-instance abuse can still consume shared Clerk/hosting quotas. Use existing
+Vercel/Cloudflare edge controls if configured; this code does not provision them
+or claim they exist. A global limit needs the shared coordinator described above.
 
-Automated local checks: `node scripts/test-meta-pixel.mjs`, `npx.cmd tsc --noEmit`,
-and `npx.cmd eslint src/components/MetaPixelInitializer.tsx src/lib/meta-pixel.ts`.
+## Configuration before enabling registration delivery
 
-Privacy/cookie disclosures are included in `/privacy-policy#cookies`. Before
-launch, review the disclosures for your business. These controls cover Meta;
-they do not make a broader compliance determination about existing analytics.
-In Events Manager keep
-automatic advanced matching and automatic events disabled; do not install a
-second pixel via GTM, Vercel, or Meta's event setup tool. Associate the dataset
-with the correct ad account, verify domain ownership if requested by Meta, and
-select CompleteRegistration as the campaign's conversion event. Conversions API
-is optional and is not installed by this change. No access token or Clerk
-webhook is required for this browser-only integration.
+Keep the existing `NEXT_PUBLIC_META_PIXEL_ID` in Vercel -> DropClarity project ->
+Settings -> Environment Variables. It is the same numeric Pixel/Dataset ID for
+PageView and registration. Do not change it or install another pixel.
+
+Add **server-only** `META_CONVERSIONS_API_ACCESS_TOKEN` using a token generated
+for that dataset in Meta Events Manager's Conversions API setup. Never prefix
+this variable with NEXT_PUBLIC_, put it in source code, or expose it to browsers.
+Existing `CLERK_SECRET_KEY` is also required (already used by app routes).
+Add **server-only** `META_EVENT_SIGNING_SECRET`: at least 32 characters of
+cryptographically random secret material. It is mandatory; there is no fallback
+to the Clerk authentication secret. Keep it stable across instances/redeploys.
+It HMACs a namespaced dataset/signup-attempt reference to produce the event ID.
+Existing persisted IDs are reused even if the secret rotates, so retries do not
+change IDs. Avoid rotation during concurrent first-time eligibility writes.
+No Cloudflare Worker bindings, new Clerk webhook settings or packages were added.
+If the Meta token is absent, PageView still works and verified registrations stay
+pending rather than being marked sent. Only deploy after approval.
+
+For local testing, put these settings in ignored `.env.local`, restart Next.js,
+and optionally set server-only `META_TEST_EVENT_CODE` from Events Manager's
+Test Events tab. The optional test code applies ONLY to server registration
+requests. Remove it after testing (Meta says test-code events may still be used
+for measurement). Browser PageView uses the normal browser Test Events workflow.
+
+## Validation
+
+Run `node scripts/test-meta-pixel.mjs`, `npx.cmd tsc --noEmit`, `npm.cmd run lint`,
+and `npm.cmd run build`. Tests mock Clerk and Meta; they do not create real
+accounts, send live conversions, or prove receipt in Events Manager.
+
+Before deployment, run the app locally with a test Clerk instance, the matching
+Meta dataset/token and test code, then:
+
+1. Reject marketing, create a NEW account and complete verification/tasks.
+   Expect /api/meta-registration to return eligible, with no request to Meta.
+2. Accept marketing after arriving on the destination page or after refresh.
+   Expect the endpoint to return sent, then one server CompleteRegistration in
+   Events Manager. Verify PageView remains a separate browser event.
+3. Refresh/navigate and sign out/in: no additional registration. Test an older
+   account, incomplete signup, pending Clerk tasks, GPC and DNT: no conversion.
+4. Temporarily use an invalid Meta token locally: endpoint returns retry/503,
+   no sentAt is stored, and fixing the token plus refreshing retries safely.
+5. Test email verification, all enabled OAuth methods, sign-in-to-sign-up
+   transfers, and hard redirects. Confirm the reactive attempt ID OR backend
+   client association is available. No account data should appear in payloads.
+
+A server 503 can mean missing configuration, Clerk lookup failure, unavailable
+session IP, Meta rejection, timeout or a metadata write failure. Responses do
+not expose tokens or customer data. Use provider dashboards and the local mocks
+for investigation; do not enable payload logging in production.

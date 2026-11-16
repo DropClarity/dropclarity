@@ -1,6 +1,7 @@
 // Deliberately use Meta's IMG transport: no third-party script gets DOM access.
 export const META_CONSENT_KEY = "dropclarity_marketing_consent";
 export const META_CONSENT_EVENT = "dropclarity:marketing-consent-changed";
+const revisionKey = "dropclarity_marketing_consent_revision";
 let storageFailed = false;
 
 export function marketingPreference(): "granted" | "denied" | "unset" | "unavailable" {
@@ -26,9 +27,19 @@ export function hasMarketingConsent(): boolean {
   }
 }
 
+/** Ordering hint for best-effort cancellation; not server-verified consent. */
+export function marketingConsentRevision(): number {
+  try {
+    const value = Number(localStorage.getItem(revisionKey) ?? "0");
+    return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+  } catch { return 0; }
+}
+
 /** Call from a consent manager ONLY after an explicit marketing choice. */
 export function setMarketingConsent(granted: boolean): boolean {
   try {
+    const revision = Math.max(Date.now(), marketingConsentRevision() + 1);
+    localStorage.setItem(revisionKey, String(revision));
     localStorage.setItem(META_CONSENT_KEY, granted ? "granted" : "denied");
     storageFailed = false;
   } catch {
@@ -54,7 +65,7 @@ export function metaPageUrl(origin: string, pathname: string): string {
 
 export function sendMetaEvent(
   pixelId: string,
-  event: "PageView" | "CompleteRegistration",
+  event: "PageView",
   pathname: string,
 ): boolean {
   if (!/^\d+$/.test(pixelId) || !hasMarketingConsent()) return false;

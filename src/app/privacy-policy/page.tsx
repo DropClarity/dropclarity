@@ -88,17 +88,22 @@ export default function PrivacyPolicyPage() {
             including PostHog, operate separately and are not switched off by this marketing choice.
           </p>
           <p>
-            Meta tracking is off until you select Accept marketing. Select Reject marketing to keep it off.
+            Meta tracking is off until you select Accept. Select Reject to keep it off.
             Use Cookie preferences in the footer on any page to review your choice or withdraw consent.
-            Withdrawal stops future Meta events; it does not undo data already sent. Global Privacy Control
+            Withdrawal stops new marketing requests from this browser and cancels pending requests where
+            possible; it does not undo data already sent. Global Privacy Control
             and Do Not Track browser signals keep Meta tracking off even if a saved choice permits it.
           </p>
           <p>
             Your choice is stored in this browser under dropclarity_marketing_consent until you change it
-            or clear site storage. It does not follow you across browsers or devices. If storage is unavailable,
-            Meta tracking stays off and you may be asked again. With consent, we also use a short-lived
-            session storage record and a local registration marker to prevent duplicate signup events.
-            These records contain Clerk identifiers locally; they are not sent to Meta. Meta may receive its
+            or clear site storage, alongside a preference revision used to cancel stale requests.
+            It does not follow you across browsers or devices. If storage is unavailable,
+            Meta tracking stays off and you may be asked again. During signup, we temporarily retain an
+            opaque authentication attempt reference in this tab to verify registration across redirects.
+            It contains no profile or uploaded information and is removed after verification or expires after
+            seven days. We keep a minimal registration verification and delivery marker in Clerk private
+            metadata to avoid counting sign-ins, refreshes, and retries as new registrations. Clerk identifiers
+            in these records are not sent to Meta. Meta may receive its
             own cookies with pixel requests, subject to your browser settings. Use your browser controls to
             remove cookies and site storage; clearing storage resets your saved choice.
           </p>
@@ -116,10 +121,14 @@ export default function PrivacyPolicyPage() {
             not registration events. Events blocked before consent are not replayed as browsing history.
           </p>
           <p>
-            Our image-based pixel sends the event name, Pixel ID, a sanitized page address without query
+            Our image-based PageView pixel sends the event name, Pixel ID, a sanitized page address without query
             strings or fragments, a timestamp, and a random event identifier. Referrer information is
             suppressed. Meta also receives network information such as your IP address and browser user
             agent, and may associate events with its own cookies or accounts to measure advertising.
+            After consent, confirmed registrations are sent from our server using Meta’s Conversions API
+            with the registration timestamp, a stable opaque event identifier, site origin, IP address from
+            the authenticated session, and browser user agent. No registration event is sent before consent.
+            Delayed consent can qualify during the original signup session for up to seven days.
             We do not send Meta your name, email, Clerk identifiers, uploaded files, filenames, customer
             details, job information, financial results, or payment information. We do not load Meta’s
             JavaScript SDK or enable automatic advanced matching or automatic form and click tracking.
